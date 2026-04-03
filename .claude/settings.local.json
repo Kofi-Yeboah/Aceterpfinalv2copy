@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx shadcn@latest init -d -y)",
+      "Bash(node -e \"const { resolveConfig } = require\\('./node_modules/@shadcn/ui/dist/index.js'\\); console.log\\(resolveConfig\\)\")",
+      "Bash(ls node_modules/.bin/shadcn*)",
+      "Bash(npx shadcn@latest --version)",
+      "Bash(npm install:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(node fix-figma-assets.mjs)",
+      "Bash(npm run:*)",
+      "Bash(node fix-recharts.mjs)"
+    ]
+  }
+}
