@@ -1,8 +1,8 @@
 import { Eye, EyeOff, UserIcon, Building2, ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import svgPaths from "../imports/svg-bfl2kj9cou";
-const imgImage36 = "https://picsum.photos/seed/1437/800/600";
-const imgImage68 = "https://picsum.photos/seed/1480/800/600";
+const imgImage36 = "/acet-logo.png";
+const imgImage68 = "/acet-image.png";
 
 interface LoginProps {
   onLogin: () => void;
@@ -57,7 +57,7 @@ export function Login({ onLogin }: LoginProps) {
         {/* Logo and Title */}
         <div className="content-stretch flex flex-col gap-[12px] items-center relative shrink-0">
           <div className="h-[65px] relative shrink-0 w-[187px]">
-            <img alt="ACET Logo" className="absolute inset-0 max-w-none object-50%-50% object-cover pointer-events-none size-full" src={imgImage36} />
+            <img alt="ACET Logo" className="absolute inset-0 max-w-none object-contain pointer-events-none size-full" src={imgImage36} />
           </div>
           <div className="content-stretch flex flex-col gap-[6px] items-center leading-[24px] relative shrink-0 text-center">
             <p className="font-['Montserrat:SemiBold',sans-serif] font-semibold relative shrink-0 text-[18px] text-slate-900 tracking-[-0.36px] w-[352px]">

@@ -1,5 +1,5 @@
 import { useState } from "react";
-const imgImage35 = "https://picsum.photos/seed/1424/800/600";
+const imgImage35 = "/acet-logo-white.png";
 import { NavigationSidebar } from "./components/NavigationSidebar";
 import { Login } from "./components/Login";
 import { EmployeeHome } from "./pages/EmployeeHome";
@@ -539,9 +539,9 @@ export default function App() {
           <div className="relative">
             <button 
               onClick={() => setShowProfileDropdown(!showProfileDropdown)}
-              className="w-10 h-10 rounded-full bg-slate-300 overflow-hidden hover:ring-2 hover:ring-white/30 transition-all cursor-pointer"
+              className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center hover:ring-2 hover:ring-white/30 transition-all cursor-pointer"
             >
-              <img alt="Profile" className="w-full h-full object-cover" src={imgImage35} />
+              <span className="text-white text-sm font-semibold">AC</span>
             </button>
             {showProfileDropdown && (
               <>
