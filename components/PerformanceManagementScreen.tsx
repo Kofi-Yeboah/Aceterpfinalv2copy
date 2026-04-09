@@ -97,6 +97,25 @@ const DEPARTMENTS = [
 
 const YEARS = ["2026", "2025", "2024", "2023"];
 
+const STAFF_NAMES = [
+  "Ama Darko", "Kwame Asante", "Naomi Ansah", "Beatrice Osei",
+  "Richard Antwi", "Priscilla Tetteh", "Yaw Osei",
+];
+
+const LINE_MANAGERS = [
+  "Kofi Mensah", "Abena Owusu", "Nana Yaw", "Mercy Adjei", "Ama Darko",
+];
+
+const DEPT_OPTIONS = [
+  "Human Resources", "Finance", "Project Management", "Procurement",
+  "Legal", "Monitoring & Evaluation",
+];
+
+const ROLES = [
+  "HR Manager", "HR Officer", "Finance Officer", "Accountant",
+  "Project Coordinator", "Procurement Officer", "Legal Counsel",
+];
+
 const STATUS_TABS = ["All", "Draft", "In Progress", "Submitted", "Approved", "Rejected"] as const;
 type StatusTab = (typeof STATUS_TABS)[number];
 
@@ -829,25 +848,76 @@ export function PerformanceManagementScreen() {
               <div className="bg-white border border-slate-200 rounded-xl p-6">
                 <h3 className="text-[14px] text-slate-800 border-b border-slate-100 pb-3 mb-4">Employee Information</h3>
                 <div className="grid grid-cols-2 gap-4">
-                  {[
-                    { label: "Staff Name", field: "staffName" as const, placeholder: "Full name" },
-                    { label: "Line Manager", field: "lineManager" as const, placeholder: "Manager name" },
-                    { label: "Date", field: "date" as const, placeholder: "DD / MM / YYYY", type: "date" },
-                    { label: "Department", field: "department" as const, placeholder: "Department" },
-                    { label: "Role / Job Title", field: "role" as const, placeholder: "Job title" },
-                    { label: "Review Period", field: "reviewPeriod" as const, placeholder: "e.g. Jan – Dec 2025" },
-                  ].map(({ label, field, placeholder, type }) => (
-                    <div key={field}>
-                      <label className="block text-[12px] text-slate-500 mb-1">{label}</label>
-                      <input
-                        type={type || "text"}
-                        value={formData[field]}
-                        onChange={(e) => setFormData((prev) => ({ ...prev, [field]: e.target.value }))}
-                        placeholder={placeholder}
-                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-[13px] text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                  ))}
+                  {/* Staff Name */}
+                  <div>
+                    <label className="block text-[12px] text-slate-500 mb-1">Staff Name</label>
+                    <select
+                      value={formData.staffName}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, staffName: e.target.value }))}
+                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-[13px] text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    >
+                      <option value="">Select staff</option>
+                      {STAFF_NAMES.map((n) => <option key={n} value={n}>{n}</option>)}
+                    </select>
+                  </div>
+                  {/* Line Manager */}
+                  <div>
+                    <label className="block text-[12px] text-slate-500 mb-1">Line Manager</label>
+                    <select
+                      value={formData.lineManager}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, lineManager: e.target.value }))}
+                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-[13px] text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    >
+                      <option value="">Select manager</option>
+                      {LINE_MANAGERS.map((n) => <option key={n} value={n}>{n}</option>)}
+                    </select>
+                  </div>
+                  {/* Date */}
+                  <div>
+                    <label className="block text-[12px] text-slate-500 mb-1">Date</label>
+                    <input
+                      type="date"
+                      value={formData.date}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, date: e.target.value }))}
+                      placeholder="DD / MM / YYYY"
+                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-[13px] text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  {/* Department */}
+                  <div>
+                    <label className="block text-[12px] text-slate-500 mb-1">Department</label>
+                    <select
+                      value={formData.department}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, department: e.target.value }))}
+                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-[13px] text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    >
+                      <option value="">Select department</option>
+                      {DEPT_OPTIONS.map((d) => <option key={d} value={d}>{d}</option>)}
+                    </select>
+                  </div>
+                  {/* Role / Job Title */}
+                  <div>
+                    <label className="block text-[12px] text-slate-500 mb-1">Role / Job Title</label>
+                    <select
+                      value={formData.role}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, role: e.target.value }))}
+                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-[13px] text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    >
+                      <option value="">Select role</option>
+                      {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
+                    </select>
+                  </div>
+                  {/* Review Period */}
+                  <div>
+                    <label className="block text-[12px] text-slate-500 mb-1">Review Period</label>
+                    <input
+                      type="text"
+                      value={formData.reviewPeriod}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, reviewPeriod: e.target.value }))}
+                      placeholder="e.g. Jan – Dec 2025"
+                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-[13px] text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
                 </div>
               </div>
 

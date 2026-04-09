@@ -22,6 +22,7 @@ import {
   History,
   RotateCcw,
   Users,
+  ChevronUp,
 } from "lucide-react";
 import { createPortal } from "react-dom";
 import { cn } from "../lib/utils";
@@ -148,9 +149,9 @@ interface AdditionalDonor {
   contractEnd: string;
   totalBudget: string;
   linkedProposal: string;
-  contractualDeliverables: string;
-  reportingRequirements: string;
-  contractMilestones: string;
+  deliverables: Deliverable[];
+  reportingReqs: ReportingReq[];
+  milestones: Milestone[];
 }
 
 // ── Props ──
@@ -192,8 +193,12 @@ export function AddProjectForm({ onBack, onSave }: AddProjectFormProps) {
     { id: "m1", title: "", targetDate: "", description: "" },
   ]);
 
+  // ── Step state ──
+  const [step, setStep] = useState<"main" | "donors">("main");
+
   // ── Additional Donors ──
   const [additionalDonors, setAdditionalDonors] = useState<AdditionalDonor[]>([]);
+  const [collapsedDonors, setCollapsedDonors] = useState<Record<string, boolean>>({});
 
   // ── File uploads ──
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([
@@ -278,17 +283,45 @@ export function AddProjectForm({ onBack, onSave }: AddProjectFormProps) {
         contractEnd: "",
         totalBudget: "",
         linkedProposal: "",
-        contractualDeliverables: "",
-        reportingRequirements: "",
-        contractMilestones: "",
+        deliverables: [{ id: `add${Date.now()}`, title: "", description: "", dueDate: "", isPrimary: false }],
+        reportingReqs: [{ id: `adr${Date.now()}`, reportType: "", frequency: "", dueOffset: "", recipient: "" }],
+        milestones: [{ id: `adm${Date.now()}`, title: "", targetDate: "", description: "" }],
       },
     ]);
   };
   const removeAdditionalDonor = (id: string) => {
     setAdditionalDonors(additionalDonors.filter((d) => d.id !== id));
   };
-  const updateAdditionalDonor = (id: string, field: keyof AdditionalDonor, value: string) => {
+  const updateAdditionalDonor = (id: string, field: string, value: unknown) => {
     setAdditionalDonors(additionalDonors.map((d) => (d.id === id ? { ...d, [field]: value } : d)));
+  };
+  // Sub-item helpers for additional donors
+  const addAdDonorDeliverable = (adId: string) => {
+    setAdditionalDonors(additionalDonors.map((d) => d.id === adId ? { ...d, deliverables: [...d.deliverables, { id: `add${Date.now()}`, title: "", description: "", dueDate: "", isPrimary: false }] } : d));
+  };
+  const removeAdDonorDeliverable = (adId: string, delId: string) => {
+    setAdditionalDonors(additionalDonors.map((d) => d.id === adId ? { ...d, deliverables: d.deliverables.filter((x) => x.id !== delId) } : d));
+  };
+  const updateAdDonorDeliverable = (adId: string, delId: string, field: keyof Deliverable, value: string | boolean) => {
+    setAdditionalDonors(additionalDonors.map((d) => d.id === adId ? { ...d, deliverables: d.deliverables.map((x) => x.id === delId ? { ...x, [field]: value } : x) } : d));
+  };
+  const addAdDonorReportingReq = (adId: string) => {
+    setAdditionalDonors(additionalDonors.map((d) => d.id === adId ? { ...d, reportingReqs: [...d.reportingReqs, { id: `adr${Date.now()}`, reportType: "", frequency: "", dueOffset: "", recipient: "" }] } : d));
+  };
+  const removeAdDonorReportingReq = (adId: string, reqId: string) => {
+    setAdditionalDonors(additionalDonors.map((d) => d.id === adId ? { ...d, reportingReqs: d.reportingReqs.filter((x) => x.id !== reqId) } : d));
+  };
+  const updateAdDonorReportingReq = (adId: string, reqId: string, field: keyof ReportingReq, value: string) => {
+    setAdditionalDonors(additionalDonors.map((d) => d.id === adId ? { ...d, reportingReqs: d.reportingReqs.map((x) => x.id === reqId ? { ...x, [field]: value } : x) } : d));
+  };
+  const addAdDonorMilestone = (adId: string) => {
+    setAdditionalDonors(additionalDonors.map((d) => d.id === adId ? { ...d, milestones: [...d.milestones, { id: `adm${Date.now()}`, title: "", targetDate: "", description: "" }] } : d));
+  };
+  const removeAdDonorMilestone = (adId: string, msId: string) => {
+    setAdditionalDonors(additionalDonors.map((d) => d.id === adId ? { ...d, milestones: d.milestones.filter((x) => x.id !== msId) } : d));
+  };
+  const updateAdDonorMilestone = (adId: string, msId: string, field: keyof Milestone, value: string) => {
+    setAdditionalDonors(additionalDonors.map((d) => d.id === adId ? { ...d, milestones: d.milestones.map((x) => x.id === msId ? { ...x, [field]: value } : x) } : d));
   };
 
   // ── File upload simulation ──
@@ -375,6 +408,8 @@ export function AddProjectForm({ onBack, onSave }: AddProjectFormProps) {
       <div className="flex-1 overflow-auto">
         <form onSubmit={handleSubmit} className="max-w-4xl mx-auto p-6 space-y-5">
 
+          {step === "main" && (
+          <>
           {/* ═══ Section 1: Contract Details ═══ */}
           <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
             <div className="px-6 py-3 border-b border-slate-200 flex items-center gap-2 bg-[#ffffff]">
@@ -669,7 +704,11 @@ export function AddProjectForm({ onBack, onSave }: AddProjectFormProps) {
               </div>
             </div>
           </div>
+          </>
+          )}
 
+          {step === "donors" && (
+          <>
           {/* ═══ Section 1.5: Additional Donors ═══ */}
           <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
             <div className="px-6 py-3 border-b border-slate-200 flex items-center justify-between bg-[#ffffff]">
@@ -694,18 +733,30 @@ export function AddProjectForm({ onBack, onSave }: AddProjectFormProps) {
                     ? LINKED_PROPOSALS.filter((p) => p.donor === ad.donor)
                     : LINKED_PROPOSALS;
                   
+                  const isCollapsed = collapsedDonors[ad.id] ?? false;
                   return (
-                    <div key={ad.id} className="border border-slate-200 rounded-xl p-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-[11px] text-slate-400">Additional Donor #{idx + 1}</span>
+                    <div key={ad.id} className="border border-indigo-200 rounded-xl bg-indigo-50/40 overflow-hidden">
+                      <div
+                        className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-indigo-50/60 transition-colors"
+                        onClick={() => setCollapsedDonors((prev) => ({ ...prev, [ad.id]: !prev[ad.id] }))}
+                      >
+                        <div className="flex items-center gap-2">
+                          <ChevronUp size={14} className={cn("text-indigo-400 transition-transform", isCollapsed && "rotate-180")} />
+                          <span className="text-[12px] font-medium text-indigo-700">Additional Donor #{idx + 1}</span>
+                          {isCollapsed && ad.donor && (
+                            <span className="text-[11px] text-indigo-400">— {ad.donor}</span>
+                          )}
+                        </div>
                         <button
                           type="button"
-                          onClick={() => removeAdditionalDonor(ad.id)}
+                          onClick={(e) => { e.stopPropagation(); removeAdditionalDonor(ad.id); }}
                           className="p-1 hover:bg-red-50 rounded-lg transition-colors"
                         >
                           <Trash2 size={13} className="text-red-400" />
                         </button>
                       </div>
+                      {!isCollapsed && (
+                      <div className="px-4 pb-4 pt-1">
 
                       {/* Donor Selection */}
                       <div className="mb-3">
@@ -843,46 +894,141 @@ export function AddProjectForm({ onBack, onSave }: AddProjectFormProps) {
                       </div>
 
                       {/* Contractual Deliverables */}
-                      <div className="mb-3">
-                        <label className="block text-[10px] text-slate-400 uppercase tracking-wider mb-1">
-                          Contractual Deliverables
-                        </label>
-                        <textarea
-                          value={ad.contractualDeliverables}
-                          onChange={(e) => updateAdditionalDonor(ad.id, "contractualDeliverables", e.target.value)}
-                          rows={2}
-                          className="w-full px-3 py-2 border border-slate-300 rounded-lg text-[12px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none placeholder:text-slate-400"
-                          placeholder="List key deliverables for this donor..."
-                        />
+                      <div className="mb-3 border border-slate-200 rounded-lg overflow-hidden">
+                        <div className="px-3 py-2 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                          <div className="flex items-center gap-1.5">
+                            <CheckCircle2 size={12} className="text-green-600" />
+                            <span className="text-[10px] text-slate-600 uppercase tracking-wider font-medium">Contractual Deliverables</span>
+                          </div>
+                          <button type="button" onClick={() => addAdDonorDeliverable(ad.id)} className="flex items-center gap-1 px-2 py-0.5 bg-blue-600 text-white rounded text-[10px] hover:bg-blue-700 transition-colors">
+                            <Plus size={10} /> Add
+                          </button>
+                        </div>
+                        <div className="p-3 space-y-2">
+                          {ad.deliverables.map((del, dIdx) => (
+                            <div key={del.id} className="border border-slate-200 rounded-lg p-3">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-[10px] text-slate-400">#{dIdx + 1}</span>
+                                {ad.deliverables.length > 1 && (
+                                  <button type="button" onClick={() => removeAdDonorDeliverable(ad.id, del.id)} className="p-0.5 hover:bg-red-50 rounded transition-colors">
+                                    <Trash2 size={11} className="text-red-400" />
+                                  </button>
+                                )}
+                              </div>
+                              <div className="grid grid-cols-3 gap-2">
+                                <div className="col-span-2">
+                                  <label className="block text-[10px] text-slate-400 uppercase tracking-wider mb-1">Title</label>
+                                  <input type="text" value={del.title} onChange={(e) => updateAdDonorDeliverable(ad.id, del.id, "title", e.target.value)} className="w-full px-2 py-1.5 border border-slate-300 rounded-lg text-[12px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-slate-400" placeholder="e.g. Inception Report" />
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] text-slate-400 uppercase tracking-wider mb-1">Due Date</label>
+                                  <input type="date" value={del.dueDate} onChange={(e) => updateAdDonorDeliverable(ad.id, del.id, "dueDate", e.target.value)} className="w-full px-2 py-1.5 border border-slate-300 rounded-lg text-[12px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                </div>
+                              </div>
+                              <div className="mt-2">
+                                <label className="block text-[10px] text-slate-400 uppercase tracking-wider mb-1">Description</label>
+                                <textarea value={del.description} onChange={(e) => updateAdDonorDeliverable(ad.id, del.id, "description", e.target.value)} rows={2} className="w-full px-2 py-1.5 border border-slate-300 rounded-lg text-[12px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none placeholder:text-slate-400" placeholder="Deliverable description and acceptance criteria" />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
 
                       {/* Reporting Requirements */}
-                      <div className="mb-3">
-                        <label className="block text-[10px] text-slate-400 uppercase tracking-wider mb-1">
-                          Reporting Requirements
-                        </label>
-                        <textarea
-                          value={ad.reportingRequirements}
-                          onChange={(e) => updateAdditionalDonor(ad.id, "reportingRequirements", e.target.value)}
-                          rows={2}
-                          className="w-full px-3 py-2 border border-slate-300 rounded-lg text-[12px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none placeholder:text-slate-400"
-                          placeholder="Specify reporting requirements for this donor..."
-                        />
+                      <div className="mb-3 border border-slate-200 rounded-lg overflow-hidden">
+                        <div className="px-3 py-2 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                          <div className="flex items-center gap-1.5">
+                            <Calendar size={12} className="text-orange-500" />
+                            <span className="text-[10px] text-slate-600 uppercase tracking-wider font-medium">Reporting Requirements</span>
+                          </div>
+                          <button type="button" onClick={() => addAdDonorReportingReq(ad.id)} className="flex items-center gap-1 px-2 py-0.5 bg-blue-600 text-white rounded text-[10px] hover:bg-blue-700 transition-colors">
+                            <Plus size={10} /> Add
+                          </button>
+                        </div>
+                        <div className="p-3 space-y-2">
+                          {ad.reportingReqs.map((req, rIdx) => (
+                            <div key={req.id} className="border border-slate-200 rounded-lg p-3">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-[10px] text-slate-400">Requirement #{rIdx + 1}</span>
+                                {ad.reportingReqs.length > 1 && (
+                                  <button type="button" onClick={() => removeAdDonorReportingReq(ad.id, req.id)} className="p-0.5 hover:bg-red-50 rounded transition-colors">
+                                    <Trash2 size={11} className="text-red-400" />
+                                  </button>
+                                )}
+                              </div>
+                              <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                  <label className="block text-[10px] text-slate-400 uppercase tracking-wider mb-1">Report Type</label>
+                                  <select value={req.reportType} onChange={(e) => updateAdDonorReportingReq(ad.id, req.id, "reportType", e.target.value)} className="w-full px-2 py-1.5 border border-slate-300 rounded-lg text-[12px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                                    <option value="">Select type</option>
+                                    {REPORT_TYPES.map((rt) => <option key={rt} value={rt}>{rt}</option>)}
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] text-slate-400 uppercase tracking-wider mb-1">Frequency</label>
+                                  <select value={req.frequency} onChange={(e) => updateAdDonorReportingReq(ad.id, req.id, "frequency", e.target.value)} className="w-full px-2 py-1.5 border border-slate-300 rounded-lg text-[12px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                                    <option value="">Select frequency</option>
+                                    {FREQUENCIES.map((f) => <option key={f} value={f}>{f}</option>)}
+                                  </select>
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2 mt-2">
+                                <div>
+                                  <label className="block text-[10px] text-slate-400 uppercase tracking-wider mb-1">Due Offset</label>
+                                  <input type="text" value={req.dueOffset} onChange={(e) => updateAdDonorReportingReq(ad.id, req.id, "dueOffset", e.target.value)} className="w-full px-2 py-1.5 border border-slate-300 rounded-lg text-[12px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-slate-400" placeholder="e.g. 30 days after period end" />
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] text-slate-400 uppercase tracking-wider mb-1">Recipient</label>
+                                  <input type="text" value={req.recipient} onChange={(e) => updateAdDonorReportingReq(ad.id, req.id, "recipient", e.target.value)} className="w-full px-2 py-1.5 border border-slate-300 rounded-lg text-[12px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-slate-400" placeholder="e.g. Donor Programme Officer" />
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
 
                       {/* Contract Milestones */}
-                      <div>
-                        <label className="block text-[10px] text-slate-400 uppercase tracking-wider mb-1">
-                          Contract Milestones
-                        </label>
-                        <textarea
-                          value={ad.contractMilestones}
-                          onChange={(e) => updateAdditionalDonor(ad.id, "contractMilestones", e.target.value)}
-                          rows={2}
-                          className="w-full px-3 py-2 border border-slate-300 rounded-lg text-[12px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none placeholder:text-slate-400"
-                          placeholder="List contract milestones for this donor..."
-                        />
+                      <div className="border border-slate-200 rounded-lg overflow-hidden">
+                        <div className="px-3 py-2 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                          <div className="flex items-center gap-1.5">
+                            <Flag size={12} className="text-emerald-600" />
+                            <span className="text-[10px] text-slate-600 uppercase tracking-wider font-medium">Contract Milestones</span>
+                          </div>
+                          <button type="button" onClick={() => addAdDonorMilestone(ad.id)} className="flex items-center gap-1 px-2 py-0.5 bg-blue-600 text-white rounded text-[10px] hover:bg-blue-700 transition-colors">
+                            <Plus size={10} /> Add
+                          </button>
+                        </div>
+                        <div className="p-3 space-y-2">
+                          {ad.milestones.map((ms, mIdx) => (
+                            <div key={ms.id} className="border border-slate-200 rounded-lg p-3">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-[10px] text-slate-400">Milestone #{mIdx + 1}</span>
+                                {ad.milestones.length > 1 && (
+                                  <button type="button" onClick={() => removeAdDonorMilestone(ad.id, ms.id)} className="p-0.5 hover:bg-red-50 rounded transition-colors">
+                                    <Trash2 size={11} className="text-red-400" />
+                                  </button>
+                                )}
+                              </div>
+                              <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                  <label className="block text-[10px] text-slate-400 uppercase tracking-wider mb-1">Milestone Title</label>
+                                  <input type="text" value={ms.title} onChange={(e) => updateAdDonorMilestone(ad.id, ms.id, "title", e.target.value)} className="w-full px-2 py-1.5 border border-slate-300 rounded-lg text-[12px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-slate-400" placeholder="e.g. Inception Phase Complete" />
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] text-slate-400 uppercase tracking-wider mb-1">Target Date</label>
+                                  <input type="date" value={ms.targetDate} onChange={(e) => updateAdDonorMilestone(ad.id, ms.id, "targetDate", e.target.value)} className="w-full px-2 py-1.5 border border-slate-300 rounded-lg text-[12px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                </div>
+                              </div>
+                              <div className="mt-2">
+                                <label className="block text-[10px] text-slate-400 uppercase tracking-wider mb-1">Description / Conditions</label>
+                                <input type="text" value={ms.description} onChange={(e) => updateAdDonorMilestone(ad.id, ms.id, "description", e.target.value)} className="w-full px-2 py-1.5 border border-slate-300 rounded-lg text-[12px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-slate-400" placeholder="Conditions for payment release" />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
+                      </div>
+                      )}
                     </div>
                   );
                 })}
@@ -898,6 +1044,22 @@ export function AddProjectForm({ onBack, onSave }: AddProjectFormProps) {
             )}
           </div>
 
+          {/* Back to Project button on donors screen */}
+          <div className="flex items-center justify-between pt-2 pb-6">
+            <button
+              type="button"
+              onClick={() => setStep("main")}
+              className="px-5 py-2.5 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors text-sm flex items-center gap-2"
+            >
+              <ArrowLeft size={14} />
+              Back to Project
+            </button>
+          </div>
+          </>
+          )}
+
+          {step === "main" && (
+          <>
           {/* ═══ Section 2: Linked Documents (Donor/Partnership Module) ═══ */}
           <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
             <div className="px-6 py-3 border-b border-slate-200 flex items-center justify-between bg-[#ffffff]">
@@ -1444,6 +1606,14 @@ export function AddProjectForm({ onBack, onSave }: AddProjectFormProps) {
                 Cancel
               </button>
               <button
+                type="button"
+                onClick={() => setStep("donors")}
+                className="px-5 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm flex items-center gap-2"
+              >
+                <Users size={14} />
+                Add New Donors
+              </button>
+              <button
                 type="submit"
                 className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm flex items-center gap-2"
               >
@@ -1452,6 +1622,8 @@ export function AddProjectForm({ onBack, onSave }: AddProjectFormProps) {
               </button>
             </div>
           </div>
+          </>
+          )}
         </form>
       </div>
 
