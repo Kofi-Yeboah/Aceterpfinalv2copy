@@ -1608,14 +1608,14 @@ export function AddProjectForm({ onBack, onSave }: AddProjectFormProps) {
               <button
                 type="button"
                 onClick={() => setStep("donors")}
-                className="px-5 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm flex items-center gap-2"
+                className="px-6 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm flex items-center gap-2 whitespace-nowrap"
               >
                 <Users size={14} />
                 Add New Donors
               </button>
               <button
                 type="submit"
-                className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm flex items-center gap-2"
+                className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm flex items-center gap-2 whitespace-nowrap"
               >
                 <CheckCircle2 size={14} />
                 Create Project
