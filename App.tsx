@@ -129,9 +129,9 @@ import { TimelineReport } from "./pages/TimelineReport";
 import { BudgetVsActualProjectReport } from "./pages/BudgetVsActualProjectReport";
 import { TaskCompletionReport } from "./pages/TaskCompletionReport";
 import { LegalContractsDashboard } from "./pages/LegalContractsDashboard";
-import { ContractRepository } from "./components/ContractRepository";
-import { DraftingTemplates } from "./components/DraftingTemplates";
-import { RequestsQueue } from "./components/RequestsQueue";
+import { ContractRepository } from "./pages/ContractRepository";
+import { DraftingTemplates } from "./pages/DraftingTemplates";
+import { RequestsQueue } from "./pages/RequestsQueue";
 import { KnowledgeHubDashboard } from "./pages/KnowledgeHubDashboard";
 import { ProposalLibrary } from "./components/ProposalLibrary";
 import { ProjectArtifacts } from "./components/ProjectArtifacts";
@@ -143,6 +143,7 @@ import { BudgetBuilder } from "./components/BudgetBuilder";
 import { RiskManagementPlanBuilder } from "./components/RiskManagementPlanBuilder";
 import { CommsPlanBuilder } from "./components/CommsPlanBuilder";
 import { Settings } from "./components/Settings";
+import { NotificationTray } from "./components/NotificationTray";
 import { HRPettyCashApprovals } from "./pages/HRPettyCashApprovals";
 import { HRExpenseClaimApprovals } from "./pages/HRExpenseClaimApprovals";
 import { HRManpowerApprovals } from "./pages/HRManpowerApprovals";
@@ -153,6 +154,7 @@ export default function App() {
   const [selectedMenuItem, setSelectedMenuItem] = useState<string>("EMPLOYEE SELF-SERVICE-Home");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const [showNotificationTray, setShowNotificationTray] = useState(false);
   const [previousMenuItem, setPreviousMenuItem] = useState<string>("");
 
   const handleLogin = () => {
@@ -531,14 +533,25 @@ export default function App() {
           <img alt="Logo" className="h-full w-auto object-contain" src={imgImage35} />
         </div>
         <div className="flex items-center gap-4">
-          <button className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors">
+          <button
+            onClick={() => {
+              setShowProfileDropdown(false);
+              setShowNotificationTray((previous) => !previous);
+            }}
+            className="relative w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
+            aria-label="Open notifications"
+          >
             <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
             </svg>
+            <span className="absolute right-2 top-2 flex h-2.5 w-2.5 rounded-full bg-amber-300 ring-2 ring-[#0900a5]" />
           </button>
           <div className="relative">
             <button 
-              onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+              onClick={() => {
+                setShowNotificationTray(false);
+                setShowProfileDropdown(!showProfileDropdown);
+              }}
               className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center hover:ring-2 hover:ring-white/30 transition-all cursor-pointer"
             >
               <span className="text-white text-sm font-semibold">AC</span>
@@ -576,6 +589,15 @@ export default function App() {
       <NavigationSidebar 
         selectedItem={selectedMenuItem}
         onSelectItem={setSelectedMenuItem}
+      />
+
+      <NotificationTray
+        isOpen={showNotificationTray}
+        onClose={() => setShowNotificationTray(false)}
+        onViewAll={() => {
+          setShowNotificationTray(false);
+          setSelectedMenuItem("FAVORITES-Notification Center");
+        }}
       />
 
       {/* Main Content */}
