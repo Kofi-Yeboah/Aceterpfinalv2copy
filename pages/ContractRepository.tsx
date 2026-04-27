@@ -348,6 +348,7 @@ export function ContractRepository() {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = Math.min(startIndex + itemsPerPage, totalResults);
   const currentContracts = filtered.slice(startIndex, endIndex);
+  const signableContract = showSignModal && signatureData ? selectedContract : null;
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -1212,7 +1213,7 @@ export function ContractRepository() {
         </div>
       </div>
       {/* Sign Contract Modal */}
-      {showSignModal && signatureData && selectedContract && (
+      {signableContract && signatureData && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowSignModal(false)}>
           <div className="bg-white rounded-2xl w-full max-w-md mx-4 overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
@@ -1226,15 +1227,15 @@ export function ContractRepository() {
               <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-2">
                 <div className="flex justify-between">
                   <span className="text-[11px] text-slate-500" style={{ fontFamily: F }}>Contract</span>
-                  <span className="text-[11px] text-slate-900 font-medium" style={{ fontFamily: F }}>{selectedContract.contractNumber}</span>
+                  <span className="text-[11px] text-slate-900 font-medium" style={{ fontFamily: F }}>{signableContract.contractNumber}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-[11px] text-slate-500" style={{ fontFamily: F }}>Title</span>
-                  <span className="text-[11px] text-slate-900" style={{ fontFamily: F }}>{selectedContract.title}</span>
+                  <span className="text-[11px] text-slate-900" style={{ fontFamily: F }}>{signableContract.title}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-[11px] text-slate-500" style={{ fontFamily: F }}>Value</span>
-                  <span className="text-[11px] text-slate-900" style={{ fontFamily: F }}>{selectedContract.value > 0 ? formatCurrency(selectedContract.value) : "N/A"}</span>
+                  <span className="text-[11px] text-slate-900" style={{ fontFamily: F }}>{signableContract.value > 0 ? formatCurrency(signableContract.value) : "N/A"}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-[11px] text-slate-500" style={{ fontFamily: F }}>Signed By</span>
@@ -1250,7 +1251,7 @@ export function ContractRepository() {
               <button onClick={() => setShowSignModal(false)} className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-[12px] hover:bg-slate-200 transition-colors" style={{ fontFamily: F }}>
                 Cancel
               </button>
-              <button onClick={() => handleApplySignature(selectedContract.contractNumber)}
+              <button onClick={() => handleApplySignature(signableContract.contractNumber)}
                 className="px-4 py-2 text-white rounded-lg text-[12px] hover:opacity-90 transition-colors flex items-center gap-1.5"
                 style={{ backgroundColor: "#0B01D0", fontFamily: F }}>
                 <PenLine size={13} />
