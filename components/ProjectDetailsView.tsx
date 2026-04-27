@@ -841,11 +841,24 @@ export function ProjectDetailsView({ project, onBack, onNavigateToWBS, onNavigat
   const [showWBSChangeRequest, setShowWBSChangeRequest] = useState(false);
   const [showBudgetChangeRequest, setShowBudgetChangeRequest] = useState(false);
   const [submittedCRs, setSubmittedCRs] = useState<ChangeRequest[]>([]);
+  const [expandedDonorCards, setExpandedDonorCards] = useState<Record<string, boolean>>(() =>
+    donorSetupCards.reduce((acc, donorCard) => {
+      acc[donorCard.id] = true;
+      return acc;
+    }, {} as Record<string, boolean>)
+  );
 
   const handleCRSubmit = (cr: ChangeRequest) => {
     setSubmittedCRs(prev => [...prev, cr]);
     setShowWBSChangeRequest(false);
     setShowBudgetChangeRequest(false);
+  };
+
+  const toggleDonorCard = (cardId: string) => {
+    setExpandedDonorCards((prev) => ({
+      ...prev,
+      [cardId]: !prev[cardId],
+    }));
   };
   
   // Set initial tab based on stage - switch to first unlocked tab if current is locked
@@ -1264,48 +1277,65 @@ export function ProjectDetailsView({ project, onBack, onNavigateToWBS, onNavigat
 
               {donorSetupCards.map((donorCard, donorIndex) => (
                 <div key={donorCard.id} className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-                  <div className="px-6 py-5 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[#0B01D0] text-white text-[11px] font-semibold">
-                            {donorIndex + 1}
-                          </span>
-                          <h3 className="text-[16px] font-semibold text-slate-900">{donorCard.donor}</h3>
-                          <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-100 border-0 shadow-none">
-                            Donor Requirement Set
-                          </Badge>
+                  <button
+                    type="button"
+                    onClick={() => toggleDonorCard(donorCard.id)}
+                    className="w-full px-6 py-5 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white text-left transition-colors hover:from-slate-100 hover:to-white"
+                  >
+                    <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+                      <div className="flex items-start gap-3">
+                        <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[#0B01D0] text-white text-[11px] font-semibold shrink-0">
+                          {donorIndex + 1}
+                        </span>
+                        <div>
+                          <div className="flex flex-wrap items-center gap-2 mb-2">
+                            <h3 className="text-[16px] font-semibold text-slate-900">{donorCard.donor}</h3>
+                            <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-100 border-0 shadow-none">
+                              Donor Requirement Set
+                            </Badge>
+                          </div>
+                          <p className="text-[12px] text-slate-500">Configuration segmented for this donor&apos;s contractual commitments and reporting obligations.</p>
                         </div>
-                        <p className="text-[12px] text-slate-500">Configuration segmented for this donor&apos;s contractual commitments and reporting obligations.</p>
                       </div>
-                      <div className="grid grid-cols-3 gap-3 min-w-[420px]">
-                        <div className="rounded-lg border border-slate-200 bg-white px-4 py-3">
-                          <p className="text-[10px] uppercase tracking-wider text-slate-500 font-medium mb-1">Budget</p>
-                          <div className="flex items-center gap-1.5">
-                            <DollarSign className="w-3.5 h-3.5 text-slate-400" />
-                            <span className="text-[13px] font-semibold text-slate-900">{donorCard.totalBudget}</span>
+                      <div className="flex flex-col gap-3 xl:items-end">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 xl:min-w-[420px]">
+                          <div className="rounded-lg border border-slate-200 bg-white px-4 py-3">
+                            <p className="text-[10px] uppercase tracking-wider text-slate-500 font-medium mb-1">Budget</p>
+                            <div className="flex items-center gap-1.5">
+                              <DollarSign className="w-3.5 h-3.5 text-slate-400" />
+                              <span className="text-[13px] font-semibold text-slate-900">{donorCard.totalBudget}</span>
+                            </div>
+                          </div>
+                          <div className="rounded-lg border border-slate-200 bg-white px-4 py-3">
+                            <p className="text-[10px] uppercase tracking-wider text-slate-500 font-medium mb-1">Contract Start</p>
+                            <div className="flex items-center gap-1.5">
+                              <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                              <span className="text-[13px] font-medium text-slate-900">{donorCard.contractStartDate}</span>
+                            </div>
+                          </div>
+                          <div className="rounded-lg border border-slate-200 bg-white px-4 py-3">
+                            <p className="text-[10px] uppercase tracking-wider text-slate-500 font-medium mb-1">Contract End</p>
+                            <div className="flex items-center gap-1.5">
+                              <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                              <span className="text-[13px] font-medium text-slate-900">{donorCard.contractEndDate}</span>
+                            </div>
                           </div>
                         </div>
-                        <div className="rounded-lg border border-slate-200 bg-white px-4 py-3">
-                          <p className="text-[10px] uppercase tracking-wider text-slate-500 font-medium mb-1">Contract Start</p>
-                          <div className="flex items-center gap-1.5">
-                            <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                            <span className="text-[13px] font-medium text-slate-900">{donorCard.contractStartDate}</span>
-                          </div>
-                        </div>
-                        <div className="rounded-lg border border-slate-200 bg-white px-4 py-3">
-                          <p className="text-[10px] uppercase tracking-wider text-slate-500 font-medium mb-1">Contract End</p>
-                          <div className="flex items-center gap-1.5">
-                            <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                            <span className="text-[13px] font-medium text-slate-900">{donorCard.contractEndDate}</span>
-                          </div>
+                        <div className="inline-flex items-center gap-2 self-start rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-medium text-slate-600 xl:self-end">
+                          <span>{expandedDonorCards[donorCard.id] ? "Collapse details" : "Expand details"}</span>
+                          {expandedDonorCards[donorCard.id] ? (
+                            <ChevronUp className="w-4 h-4 text-slate-500" />
+                          ) : (
+                            <ChevronDown className="w-4 h-4 text-slate-500" />
+                          )}
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </button>
 
-                  <div className="p-6 space-y-6">
-                    <div className="grid grid-cols-2 gap-6">
+                  {expandedDonorCards[donorCard.id] && (
+                    <div className="p-6 space-y-6">
+                      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
                       <div className="border border-slate-200 rounded-lg p-4 bg-slate-50/30">
                         <div className="flex items-center gap-2 mb-3">
                           <Link2 className="w-4 h-4 text-[#0B01D0]" />
@@ -1349,9 +1379,8 @@ export function ProjectDetailsView({ project, onBack, onNavigateToWBS, onNavigat
                           <p className="text-sm text-slate-400">No linked contract</p>
                         )}
                       </div>
-                    </div>
+                      </div>
 
-                    <div className="grid grid-cols-2 gap-6">
                       <div className="border border-slate-200 rounded-lg overflow-hidden">
                         <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
                           <div className="flex items-center gap-2">
@@ -1432,9 +1461,7 @@ export function ProjectDetailsView({ project, onBack, onNavigateToWBS, onNavigat
                           </table>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="grid grid-cols-[1.2fr_0.8fr] gap-6">
                       <div className="border border-slate-200 rounded-lg overflow-hidden">
                         <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
                           <div className="flex items-center gap-2">
@@ -1498,7 +1525,7 @@ export function ProjectDetailsView({ project, onBack, onNavigateToWBS, onNavigat
                         </div>
                       </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               ))}
             </div>
