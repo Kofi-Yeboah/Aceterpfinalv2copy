@@ -49,6 +49,69 @@ interface GanttMarker {
   date: string;
 }
 
+interface LinkedProposal {
+  id: string;
+  title: string;
+  donor: string;
+  date: string;
+  budget: string;
+}
+
+interface LinkedContract {
+  id: string;
+  title: string;
+  donor: string;
+  signedDate: string;
+  value: string;
+}
+
+interface SetupDeliverable {
+  id: string;
+  title: string;
+  description: string;
+  dueDate: string;
+  isPrimary: boolean;
+}
+
+interface SetupReportingRequirement {
+  id: string;
+  reportType: string;
+  frequency: string;
+  dueOffset: string;
+  recipient: string;
+}
+
+interface SetupMilestone {
+  id: string;
+  title: string;
+  targetDate: string;
+  payment: string;
+  description: string;
+}
+
+interface SupportingDocument {
+  id: string;
+  name: string;
+  size: string;
+  version: number;
+  uploadedAt: string;
+  uploadedBy: string;
+}
+
+interface DonorSetupCard {
+  id: string;
+  donor: string;
+  contractStartDate: string;
+  contractEndDate: string;
+  totalBudget: string;
+  linkedProposal: LinkedProposal | null;
+  linkedContract: LinkedContract | null;
+  deliverables: SetupDeliverable[];
+  reportingRequirements: SetupReportingRequirement[];
+  milestones: SetupMilestone[];
+  supportingDocuments: SupportingDocument[];
+}
+
 interface ProjectDetailsViewProps {
   project: {
     id: string;
@@ -530,12 +593,13 @@ interface ProjectConfig {
   contractStartDate: string;
   contractEndDate: string;
   totalBudget: string;
-  linkedProposal: { id: string; title: string; donor: string; date: string; budget: string } | null;
-  linkedContract: { id: string; title: string; donor: string; signedDate: string; value: string } | null;
-  deliverables: { id: string; title: string; description: string; dueDate: string; isPrimary: boolean }[];
-  reportingRequirements: { id: string; reportType: string; frequency: string; dueOffset: string; recipient: string }[];
-  milestones: { id: string; title: string; targetDate: string; payment: string; description: string }[];
-  supportingDocuments: { id: string; name: string; size: string; version: number; uploadedAt: string; uploadedBy: string }[];
+  linkedProposal: LinkedProposal | null;
+  linkedContract: LinkedContract | null;
+  deliverables: SetupDeliverable[];
+  reportingRequirements: SetupReportingRequirement[];
+  milestones: SetupMilestone[];
+  supportingDocuments: SupportingDocument[];
+  donorCards: DonorSetupCard[];
 }
 
 const getProjectConfig = (projectId: string): ProjectConfig => {
@@ -566,6 +630,61 @@ const getProjectConfig = (projectId: string): ProjectConfig => {
         { id: "uf1", name: "Signed-Contract-WB-v1.pdf", size: "3.2 MB", version: 1, uploadedAt: "Jan 10, 2025", uploadedBy: "PMO Admin" },
         { id: "uf2", name: "Budget-Breakdown-Final.xlsx", size: "1.8 MB", version: 2, uploadedAt: "Jan 12, 2025", uploadedBy: "PMO Admin" },
       ],
+      donorCards: [
+        {
+          id: "dc1",
+          donor: "World Bank",
+          contractStartDate: "Jan 15, 2025",
+          contractEndDate: "Aug 30, 2025",
+          totalBudget: "$450,000",
+          linkedProposal: { id: "PROP-2025-088", title: "Youth Employment Skills Training", donor: "World Bank", date: "Aug 15, 2025", budget: "$420,000" },
+          linkedContract: { id: "CTR-2025-038", title: "World Bank – Youth Employment Contract", donor: "World Bank", signedDate: "Nov 10, 2025", value: "$420,000" },
+          deliverables: [
+            { id: "d1", title: "Baseline Study Report", description: "Comprehensive baseline assessment of regional integration status", dueDate: "Mar 15, 2025", isPrimary: true },
+            { id: "d2", title: "Stakeholder Consultation Summary", description: "Summary report of all stakeholder consultations conducted", dueDate: "Apr 30, 2025", isPrimary: false },
+            { id: "d3", title: "Final Policy Recommendations", description: "Detailed policy recommendations based on research findings", dueDate: "Aug 15, 2025", isPrimary: true },
+          ],
+          reportingRequirements: [
+            { id: "r1", reportType: "Narrative Report", frequency: "Quarterly", dueOffset: "15 days after quarter end", recipient: "World Bank Country Office" },
+            { id: "r2", reportType: "Financial Report", frequency: "Quarterly", dueOffset: "30 days after quarter end", recipient: "World Bank Finance Division" },
+            { id: "r3", reportType: "Audit Report", frequency: "Annually", dueOffset: "60 days after fiscal year end", recipient: "World Bank Audit Team" },
+          ],
+          milestones: [
+            { id: "m1", title: "Inception Phase Complete", targetDate: "Feb 28, 2025", payment: "$90,000", description: "Completion of inception phase including stakeholder mapping" },
+            { id: "m2", title: "Mid-term Review", targetDate: "May 15, 2025", payment: "$135,000", description: "Successful mid-term review with satisfactory progress" },
+            { id: "m3", title: "Final Delivery & Close-out", targetDate: "Aug 30, 2025", payment: "$225,000", description: "Submission and acceptance of all final deliverables" },
+          ],
+          supportingDocuments: [
+            { id: "uf1", name: "Signed-Contract-WB-v1.pdf", size: "3.2 MB", version: 1, uploadedAt: "Jan 10, 2025", uploadedBy: "PMO Admin" },
+            { id: "uf2", name: "Budget-Breakdown-Final.xlsx", size: "1.8 MB", version: 2, uploadedAt: "Jan 12, 2025", uploadedBy: "PMO Admin" },
+          ],
+        },
+        {
+          id: "dc2",
+          donor: "AfDB",
+          contractStartDate: "Feb 01, 2025",
+          contractEndDate: "Sep 15, 2025",
+          totalBudget: "$175,000",
+          linkedProposal: { id: "PROP-2025-102", title: "Youth Employment Skills Training - Digital Labs Addendum", donor: "AfDB", date: "Sep 02, 2025", budget: "$175,000" },
+          linkedContract: { id: "CTR-2025-051", title: "AfDB – Digital Labs Co-Funding Addendum", donor: "AfDB", signedDate: "Dec 03, 2025", value: "$175,000" },
+          deliverables: [
+            { id: "d4", title: "Digital Lab Equipment Deployment", description: "Deployment of learning lab equipment across all pilot hubs", dueDate: "Jun 20, 2025", isPrimary: true },
+            { id: "d5", title: "Trainer Certification Pack", description: "Certification package for facilitators assigned to the digital labs", dueDate: "Jul 12, 2025", isPrimary: false },
+          ],
+          reportingRequirements: [
+            { id: "r4", reportType: "Progress Report", frequency: "Monthly", dueOffset: "7 days after month end", recipient: "AfDB Portfolio Officer" },
+            { id: "r5", reportType: "Financial Report", frequency: "Quarterly", dueOffset: "21 days after quarter end", recipient: "AfDB Finance Desk" },
+          ],
+          milestones: [
+            { id: "m4", title: "Co-Funding Activation", targetDate: "Mar 10, 2025", payment: "$50,000", description: "Execution of addendum and activation of co-funding stream" },
+            { id: "m5", title: "Lab Commissioning", targetDate: "Jul 31, 2025", payment: "$125,000", description: "All pilot labs commissioned and accepted by donor team" },
+          ],
+          supportingDocuments: [
+            { id: "uf3", name: "AfDB-CoFunding-Addendum.pdf", size: "2.1 MB", version: 1, uploadedAt: "Jan 18, 2025", uploadedBy: "PMO Admin" },
+            { id: "uf4", name: "Digital-Lab-Budget.xlsx", size: "986 KB", version: 3, uploadedAt: "Jan 25, 2025", uploadedBy: "Finance PMO" },
+          ],
+        },
+      ],
     },
     "2": {
       donor: "UNESCO",
@@ -588,6 +707,32 @@ const getProjectConfig = (projectId: string): ProjectConfig => {
       ],
       supportingDocuments: [
         { id: "uf1", name: "UNESCO-Agreement-Signed.pdf", size: "2.9 MB", version: 1, uploadedAt: "Feb 20, 2024", uploadedBy: "PMO Admin" },
+      ],
+      donorCards: [
+        {
+          id: "dc1",
+          donor: "UNESCO",
+          contractStartDate: "Mar 1, 2024",
+          contractEndDate: "Nov 15, 2024",
+          totalBudget: "$320,000",
+          linkedProposal: { id: "PROP-2025-098", title: "Girls Education Empowerment Program", donor: "UNESCO", date: "Nov 20, 2025", budget: "$180,000" },
+          linkedContract: { id: "CTR-2025-042", title: "UNESCO – Girls Education Program Agreement", donor: "UNESCO", signedDate: "Dec 22, 2025", value: "$180,000" },
+          deliverables: [
+            { id: "d1", title: "Digital Economy Landscape Analysis", description: "Analysis of digital economy status across 5 target countries", dueDate: "May 30, 2024", isPrimary: true },
+            { id: "d2", title: "Policy Brief Series (5 papers)", description: "Policy briefs for each target country", dueDate: "Sep 30, 2024", isPrimary: true },
+          ],
+          reportingRequirements: [
+            { id: "r1", reportType: "Progress Report", frequency: "Monthly", dueOffset: "10 days after month end", recipient: "UNESCO Programme Specialist" },
+            { id: "r2", reportType: "Financial Report", frequency: "Quarterly", dueOffset: "30 days after quarter end", recipient: "UNESCO Finance Office" },
+          ],
+          milestones: [
+            { id: "m1", title: "Research Phase Complete", targetDate: "Jun 30, 2024", payment: "$128,000", description: "Completion of all country-level research activities" },
+            { id: "m2", title: "Final Publication & Dissemination", targetDate: "Nov 15, 2024", payment: "$192,000", description: "Publication and dissemination of all policy briefs" },
+          ],
+          supportingDocuments: [
+            { id: "uf1", name: "UNESCO-Agreement-Signed.pdf", size: "2.9 MB", version: 1, uploadedAt: "Feb 20, 2024", uploadedBy: "PMO Admin" },
+          ],
+        },
       ],
     },
   };
@@ -618,6 +763,35 @@ const getProjectConfig = (projectId: string): ProjectConfig => {
     supportingDocuments: [
       { id: "uf1", name: "Contract-Draft-v1.pdf", size: "2.4 MB", version: 1, uploadedAt: "May 20, 2025", uploadedBy: "PMO Admin" },
     ],
+    donorCards: [
+      {
+        id: "dc1",
+        donor: "USAID",
+        contractStartDate: "Jun 1, 2025",
+        contractEndDate: "Dec 31, 2026",
+        totalBudget: "$500,000",
+        linkedProposal: { id: "PROP-2025-075", title: "Rural Education Access Enhancement", donor: "USAID", date: "Apr 25, 2025", budget: "$220,000" },
+        linkedContract: { id: "CTR-2025-028", title: "USAID – Rural Education Contract", donor: "USAID", signedDate: "Jul 05, 2025", value: "$220,000" },
+        deliverables: [
+          { id: "d1", title: "Project Inception Report", description: "Detailed inception report with work plan and methodology", dueDate: "Jul 15, 2025", isPrimary: true },
+          { id: "d2", title: "Mid-term Progress Report", description: "Comprehensive progress report at project midpoint", dueDate: "Mar 31, 2026", isPrimary: false },
+          { id: "d3", title: "Final Completion Report", description: "Final report documenting all achievements and lessons learned", dueDate: "Dec 15, 2026", isPrimary: true },
+        ],
+        reportingRequirements: [
+          { id: "r1", reportType: "Narrative Report", frequency: "Quarterly", dueOffset: "15 days after quarter end", recipient: "USAID Mission Office" },
+          { id: "r2", reportType: "Financial Report", frequency: "Quarterly", dueOffset: "30 days after quarter end", recipient: "USAID Finance Team" },
+          { id: "r3", reportType: "M&E Report", frequency: "Semi-Annually", dueOffset: "30 days after period end", recipient: "USAID M&E Specialist" },
+        ],
+        milestones: [
+          { id: "m1", title: "Inception Complete", targetDate: "Jul 31, 2025", payment: "$100,000", description: "Approved inception report and work plan" },
+          { id: "m2", title: "Mid-term Milestone", targetDate: "Jun 30, 2026", payment: "$200,000", description: "Satisfactory mid-term progress review" },
+          { id: "m3", title: "Project Completion", targetDate: "Dec 31, 2026", payment: "$200,000", description: "Final deliverables accepted and project closed" },
+        ],
+        supportingDocuments: [
+          { id: "uf1", name: "Contract-Draft-v1.pdf", size: "2.4 MB", version: 1, uploadedAt: "May 20, 2025", uploadedBy: "PMO Admin" },
+        ],
+      },
+    ],
   };
 };
 
@@ -625,6 +799,21 @@ export function ProjectDetailsView({ project, onBack, onNavigateToWBS, onNavigat
   const rawPhases = getProjectPhases(project.id);
   const ganttData = getGanttData(project.id);
   const projectConfig = getProjectConfig(project.id);
+  const donorSetupCards = projectConfig.donorCards?.length
+    ? projectConfig.donorCards
+    : [{
+        id: "fallback",
+        donor: projectConfig.donor,
+        contractStartDate: projectConfig.contractStartDate,
+        contractEndDate: projectConfig.contractEndDate,
+        totalBudget: projectConfig.totalBudget,
+        linkedProposal: projectConfig.linkedProposal,
+        linkedContract: projectConfig.linkedContract,
+        deliverables: projectConfig.deliverables,
+        reportingRequirements: projectConfig.reportingRequirements,
+        milestones: projectConfig.milestones,
+        supportingDocuments: projectConfig.supportingDocuments,
+      }];
   const contractStartMonth = new Date(projectConfig.contractStartDate).getMonth();
   const ganttMarkers = getGanttMarkers(projectConfig, contractStartMonth);
   
@@ -1062,204 +1251,256 @@ export function ProjectDetailsView({ project, onBack, onNavigateToWBS, onNavigat
               </div>
             </div>
 
-            {/* Linked Documents */}
-            <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
-              <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
-                <div className="flex items-center gap-2">
-                  <Link2 className="w-4 h-4 text-[#0B01D0]" />
-                  <h2 className="text-[14px] font-semibold text-slate-900">Linked Documents</h2>
+            <div className="space-y-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-[15px] font-semibold text-slate-900">Donor Setup Cards</h2>
+                  <p className="text-[12px] text-slate-500 mt-1">Each donor keeps its own contract documents, budget, deliverables, reporting obligations, and milestone schedule.</p>
                 </div>
+                <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-0 shadow-none">
+                  {donorSetupCards.length} {donorSetupCards.length === 1 ? "Donor" : "Donors"}
+                </Badge>
               </div>
-              <div className="px-6 py-5 grid grid-cols-2 gap-6">
-                {/* Linked Proposal */}
-                <div className="border border-slate-200 rounded-lg p-4">
-                  <p className="text-[10px] text-slate-500 uppercase tracking-wider font-medium mb-3">Linked Won Proposal</p>
-                  {projectConfig.linkedProposal ? (
-                    <div className="flex items-start gap-3">
-                      <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
-                        <FileText className="w-4 h-4 text-blue-600" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-slate-900 truncate">{projectConfig.linkedProposal.title}</p>
-                        <p className="text-[11px] text-slate-500 mt-0.5">{projectConfig.linkedProposal.id} &middot; {projectConfig.linkedProposal.donor}</p>
-                        <p className="text-[11px] text-slate-400 mt-0.5">Won: {projectConfig.linkedProposal.date} &middot; {projectConfig.linkedProposal.budget}</p>
-                      </div>
-                      <ExternalLink className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-1" />
-                    </div>
-                  ) : (
-                    <p className="text-sm text-slate-400">No linked proposal</p>
-                  )}
-                </div>
-                {/* Linked Contract */}
-                <div className="border border-slate-200 rounded-lg p-4">
-                  <p className="text-[10px] text-slate-500 uppercase tracking-wider font-medium mb-3">Linked Signed Contract</p>
-                  {projectConfig.linkedContract ? (
-                    <div className="flex items-start gap-3">
-                      <div className="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0">
-                        <FileSignature className="w-4 h-4 text-emerald-600" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-slate-900 truncate">{projectConfig.linkedContract.title}</p>
-                        <p className="text-[11px] text-slate-500 mt-0.5">{projectConfig.linkedContract.id} &middot; {projectConfig.linkedContract.donor}</p>
-                        <p className="text-[11px] text-slate-400 mt-0.5">Signed: {projectConfig.linkedContract.signedDate} &middot; {projectConfig.linkedContract.value}</p>
-                      </div>
-                      <ExternalLink className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-1" />
-                    </div>
-                  ) : (
-                    <p className="text-sm text-slate-400">No linked contract</p>
-                  )}
-                </div>
-              </div>
-            </div>
 
-            {/* Contractual Deliverables */}
-            <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
-              <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <ClipboardList className="w-4 h-4 text-[#0B01D0]" />
-                  <h2 className="text-[14px] font-semibold text-slate-900">Contractual Deliverables</h2>
-                  <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-[11px] font-medium">{projectConfig.deliverables.length}</span>
-                </div>
-                <span className="text-[11px] text-slate-500">{projectConfig.deliverables.filter(d => d.isPrimary).length} Primary</span>
-              </div>
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-blue-600">
-                    <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Deliverable</th>
-                    <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Description</th>
-                    <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Due Date</th>
-                    <th className="text-center px-6 py-3 text-[12px] text-white font-semibold">Type</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {projectConfig.deliverables.map((d, idx) => (
-                    <tr key={d.id} className={`border-b border-slate-100 ${idx % 2 === 0 ? "bg-white" : "bg-slate-50/50"}`}>
-                      <td className="px-6 py-3 text-[12px] text-slate-900 font-medium">{d.title}</td>
-                      <td className="px-6 py-3 text-[12px] text-slate-600 max-w-[300px]">
-                        <span className="line-clamp-2">{d.description}</span>
-                      </td>
-                      <td className="px-6 py-3 text-[12px] text-slate-700">{d.dueDate}</td>
-                      <td className="px-6 py-3 text-center">
-                        {d.isPrimary ? (
-                          <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-100 text-[10px] shadow-none border-0">
-                            <Lock className="w-3 h-3 mr-1" />
-                            Primary
+              {donorSetupCards.map((donorCard, donorIndex) => (
+                <div key={donorCard.id} className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                  <div className="px-6 py-5 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[#0B01D0] text-white text-[11px] font-semibold">
+                            {donorIndex + 1}
+                          </span>
+                          <h3 className="text-[16px] font-semibold text-slate-900">{donorCard.donor}</h3>
+                          <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-100 border-0 shadow-none">
+                            Donor Requirement Set
                           </Badge>
-                        ) : (
-                          <Badge className="bg-slate-100 text-slate-600 hover:bg-slate-100 text-[10px] shadow-none border-0">
-                            Secondary
-                          </Badge>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Reporting Requirements */}
-            <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
-              <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
-                <div className="flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-[#0B01D0]" />
-                  <h2 className="text-[14px] font-semibold text-slate-900">Reporting Requirements</h2>
-                  <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-[11px] font-medium">{projectConfig.reportingRequirements.length}</span>
-                </div>
-              </div>
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-blue-600">
-                    <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Report Type</th>
-                    <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Frequency</th>
-                    <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Due</th>
-                    <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Recipient</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {projectConfig.reportingRequirements.map((r, idx) => (
-                    <tr key={r.id} className={`border-b border-slate-100 ${idx % 2 === 0 ? "bg-white" : "bg-slate-50/50"}`}>
-                      <td className="px-6 py-3 text-[12px] text-slate-900 font-medium">{r.reportType}</td>
-                      <td className="px-6 py-3">
-                        <Badge className="bg-indigo-50 text-indigo-700 hover:bg-indigo-50 text-[10px] shadow-none border-0">{r.frequency}</Badge>
-                      </td>
-                      <td className="px-6 py-3 text-[12px] text-slate-600">{r.dueOffset}</td>
-                      <td className="px-6 py-3 text-[12px] text-slate-700">{r.recipient}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Contract Milestones */}
-            <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
-              <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-[#0B01D0]" />
-                  <h2 className="text-[14px] font-semibold text-slate-900">Contract Milestones</h2>
-                  <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-[11px] font-medium">{projectConfig.milestones.length}</span>
-                </div>
-              </div>
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-blue-600">
-                    <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Milestone</th>
-                    <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Description</th>
-                    <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Target Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {projectConfig.milestones.map((m, idx) => (
-                    <tr key={m.id} className={`border-b border-slate-100 ${idx % 2 === 0 ? "bg-white" : "bg-slate-50/50"}`}>
-                      <td className="px-6 py-3 text-[12px] text-slate-900 font-medium">{m.title}</td>
-                      <td className="px-6 py-3 text-[12px] text-slate-600 max-w-[300px]">
-                        <span className="line-clamp-2">{m.description}</span>
-                      </td>
-                      <td className="px-6 py-3 text-[12px] text-slate-700">{m.targetDate}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-
-            </div>
-
-            {/* Supporting Documents */}
-            <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
-              <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
-                <div className="flex items-center gap-2">
-                  <FileSignature className="w-4 h-4 text-[#0B01D0]" />
-                  <h2 className="text-[14px] font-semibold text-slate-900">Supporting Documents</h2>
-                  <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-[11px] font-medium">{projectConfig.supportingDocuments.length}</span>
-                </div>
-              </div>
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-blue-600">
-                    <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">File Name</th>
-                    <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Size</th>
-                    <th className="text-center px-6 py-3 text-[12px] text-white font-semibold">Version</th>
-                    <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Uploaded</th>
-                    <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Uploaded By</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {projectConfig.supportingDocuments.map((doc, idx) => (
-                    <tr key={doc.id} className={`border-b border-slate-100 ${idx % 2 === 0 ? "bg-white" : "bg-slate-50/50"}`}>
-                      <td className="px-6 py-3">
-                        <div className="flex items-center gap-2">
-                          <FileText className="w-4 h-4 text-slate-400" />
-                          <span className="text-[12px] text-slate-900 font-medium">{doc.name}</span>
                         </div>
-                      </td>
-                      <td className="px-6 py-3 text-[12px] text-slate-600">{doc.size}</td>
-                      <td className="px-6 py-3 text-center">
-                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-50 text-blue-700 text-[11px] font-medium">v{doc.version}</span>
-                      </td>
-                      <td className="px-6 py-3 text-[12px] text-slate-600">{doc.uploadedAt}</td>
-                      <td className="px-6 py-3 text-[12px] text-slate-700">{doc.uploadedBy}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                        <p className="text-[12px] text-slate-500">Configuration segmented for this donor&apos;s contractual commitments and reporting obligations.</p>
+                      </div>
+                      <div className="grid grid-cols-3 gap-3 min-w-[420px]">
+                        <div className="rounded-lg border border-slate-200 bg-white px-4 py-3">
+                          <p className="text-[10px] uppercase tracking-wider text-slate-500 font-medium mb-1">Budget</p>
+                          <div className="flex items-center gap-1.5">
+                            <DollarSign className="w-3.5 h-3.5 text-slate-400" />
+                            <span className="text-[13px] font-semibold text-slate-900">{donorCard.totalBudget}</span>
+                          </div>
+                        </div>
+                        <div className="rounded-lg border border-slate-200 bg-white px-4 py-3">
+                          <p className="text-[10px] uppercase tracking-wider text-slate-500 font-medium mb-1">Contract Start</p>
+                          <div className="flex items-center gap-1.5">
+                            <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                            <span className="text-[13px] font-medium text-slate-900">{donorCard.contractStartDate}</span>
+                          </div>
+                        </div>
+                        <div className="rounded-lg border border-slate-200 bg-white px-4 py-3">
+                          <p className="text-[10px] uppercase tracking-wider text-slate-500 font-medium mb-1">Contract End</p>
+                          <div className="flex items-center gap-1.5">
+                            <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                            <span className="text-[13px] font-medium text-slate-900">{donorCard.contractEndDate}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-6 space-y-6">
+                    <div className="grid grid-cols-2 gap-6">
+                      <div className="border border-slate-200 rounded-lg p-4 bg-slate-50/30">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Link2 className="w-4 h-4 text-[#0B01D0]" />
+                          <p className="text-[12px] font-semibold text-slate-900">Linked Won Proposal</p>
+                        </div>
+                        {donorCard.linkedProposal ? (
+                          <div className="flex items-start gap-3">
+                            <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+                              <FileText className="w-4 h-4 text-blue-600" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-slate-900 truncate">{donorCard.linkedProposal.title}</p>
+                              <p className="text-[11px] text-slate-500 mt-0.5">{donorCard.linkedProposal.id} &middot; {donorCard.linkedProposal.donor}</p>
+                              <p className="text-[11px] text-slate-400 mt-0.5">Won: {donorCard.linkedProposal.date} &middot; {donorCard.linkedProposal.budget}</p>
+                            </div>
+                            <ExternalLink className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-1" />
+                          </div>
+                        ) : (
+                          <p className="text-sm text-slate-400">No linked proposal</p>
+                        )}
+                      </div>
+
+                      <div className="border border-slate-200 rounded-lg p-4 bg-slate-50/30">
+                        <div className="flex items-center gap-2 mb-3">
+                          <FileSignature className="w-4 h-4 text-[#0B01D0]" />
+                          <p className="text-[12px] font-semibold text-slate-900">Linked Signed Contract</p>
+                        </div>
+                        {donorCard.linkedContract ? (
+                          <div className="flex items-start gap-3">
+                            <div className="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0">
+                              <FileSignature className="w-4 h-4 text-emerald-600" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-slate-900 truncate">{donorCard.linkedContract.title}</p>
+                              <p className="text-[11px] text-slate-500 mt-0.5">{donorCard.linkedContract.id} &middot; {donorCard.linkedContract.donor}</p>
+                              <p className="text-[11px] text-slate-400 mt-0.5">Signed: {donorCard.linkedContract.signedDate} &middot; {donorCard.linkedContract.value}</p>
+                            </div>
+                            <ExternalLink className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-1" />
+                          </div>
+                        ) : (
+                          <p className="text-sm text-slate-400">No linked contract</p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-6">
+                      <div className="border border-slate-200 rounded-lg overflow-hidden">
+                        <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <ClipboardList className="w-4 h-4 text-[#0B01D0]" />
+                            <h4 className="text-[13px] font-semibold text-slate-900">Contractual Deliverables</h4>
+                          </div>
+                          <span className="text-[11px] text-slate-500">{donorCard.deliverables.filter((item) => item.isPrimary).length} Primary</span>
+                        </div>
+                        <div className="overflow-x-auto">
+                          <table className="w-full">
+                            <thead>
+                              <tr className="bg-blue-600">
+                                <th className="text-left px-4 py-2.5 text-[11px] text-white font-semibold">Deliverable</th>
+                                <th className="text-left px-4 py-2.5 text-[11px] text-white font-semibold">Due</th>
+                                <th className="text-center px-4 py-2.5 text-[11px] text-white font-semibold">Type</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {donorCard.deliverables.map((item, idx) => (
+                                <tr key={item.id} className={idx % 2 === 0 ? "bg-white border-b border-slate-100" : "bg-slate-50/50 border-b border-slate-100"}>
+                                  <td className="px-4 py-3">
+                                    <p className="text-[12px] font-medium text-slate-900">{item.title}</p>
+                                    <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-2">{item.description}</p>
+                                  </td>
+                                  <td className="px-4 py-3 text-[12px] text-slate-700">{item.dueDate}</td>
+                                  <td className="px-4 py-3 text-center">
+                                    {item.isPrimary ? (
+                                      <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-100 text-[10px] shadow-none border-0">
+                                        <Lock className="w-3 h-3 mr-1" />
+                                        Primary
+                                      </Badge>
+                                    ) : (
+                                      <Badge className="bg-slate-100 text-slate-600 hover:bg-slate-100 text-[10px] shadow-none border-0">
+                                        Secondary
+                                      </Badge>
+                                    )}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+
+                      <div className="border border-slate-200 rounded-lg overflow-hidden">
+                        <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <FileText className="w-4 h-4 text-[#0B01D0]" />
+                            <h4 className="text-[13px] font-semibold text-slate-900">Reporting Requirements</h4>
+                          </div>
+                          <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-0 shadow-none text-[10px]">
+                            {donorCard.reportingRequirements.length} Items
+                          </Badge>
+                        </div>
+                        <div className="overflow-x-auto">
+                          <table className="w-full">
+                            <thead>
+                              <tr className="bg-blue-600">
+                                <th className="text-left px-4 py-2.5 text-[11px] text-white font-semibold">Report Type</th>
+                                <th className="text-left px-4 py-2.5 text-[11px] text-white font-semibold">Frequency</th>
+                                <th className="text-left px-4 py-2.5 text-[11px] text-white font-semibold">Recipient</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {donorCard.reportingRequirements.map((item, idx) => (
+                                <tr key={item.id} className={idx % 2 === 0 ? "bg-white border-b border-slate-100" : "bg-slate-50/50 border-b border-slate-100"}>
+                                  <td className="px-4 py-3">
+                                    <p className="text-[12px] font-medium text-slate-900">{item.reportType}</p>
+                                    <p className="text-[11px] text-slate-500 mt-0.5">{item.dueOffset}</p>
+                                  </td>
+                                  <td className="px-4 py-3">
+                                    <Badge className="bg-indigo-50 text-indigo-700 hover:bg-indigo-50 text-[10px] shadow-none border-0">{item.frequency}</Badge>
+                                  </td>
+                                  <td className="px-4 py-3 text-[12px] text-slate-700">{item.recipient}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-[1.2fr_0.8fr] gap-6">
+                      <div className="border border-slate-200 rounded-lg overflow-hidden">
+                        <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <TrendingUp className="w-4 h-4 text-[#0B01D0]" />
+                            <h4 className="text-[13px] font-semibold text-slate-900">Contract Milestones</h4>
+                          </div>
+                          <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-0 shadow-none text-[10px]">
+                            {donorCard.milestones.length} Milestones
+                          </Badge>
+                        </div>
+                        <div className="overflow-x-auto">
+                          <table className="w-full">
+                            <thead>
+                              <tr className="bg-blue-600">
+                                <th className="text-left px-4 py-2.5 text-[11px] text-white font-semibold">Milestone</th>
+                                <th className="text-left px-4 py-2.5 text-[11px] text-white font-semibold">Target Date</th>
+                                <th className="text-left px-4 py-2.5 text-[11px] text-white font-semibold">Payment</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {donorCard.milestones.map((item, idx) => (
+                                <tr key={item.id} className={idx % 2 === 0 ? "bg-white border-b border-slate-100" : "bg-slate-50/50 border-b border-slate-100"}>
+                                  <td className="px-4 py-3">
+                                    <p className="text-[12px] font-medium text-slate-900">{item.title}</p>
+                                    <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-2">{item.description}</p>
+                                  </td>
+                                  <td className="px-4 py-3 text-[12px] text-slate-700">{item.targetDate}</td>
+                                  <td className="px-4 py-3 text-[12px] font-medium text-slate-900">{item.payment}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+
+                      <div className="border border-slate-200 rounded-lg overflow-hidden">
+                        <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <FileSignature className="w-4 h-4 text-[#0B01D0]" />
+                            <h4 className="text-[13px] font-semibold text-slate-900">Supporting Documents</h4>
+                          </div>
+                          <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-0 shadow-none text-[10px]">
+                            {donorCard.supportingDocuments.length} Files
+                          </Badge>
+                        </div>
+                        <div className="divide-y divide-slate-100">
+                          {donorCard.supportingDocuments.map((doc) => (
+                            <div key={doc.id} className="px-4 py-3">
+                              <div className="flex items-start gap-2.5">
+                                <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
+                                  <FileText className="w-4 h-4 text-slate-500" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-[12px] font-medium text-slate-900 truncate">{doc.name}</p>
+                                  <p className="text-[11px] text-slate-500 mt-0.5">{doc.size} &middot; v{doc.version}</p>
+                                  <p className="text-[11px] text-slate-400 mt-0.5">{doc.uploadedAt} &middot; {doc.uploadedBy}</p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
