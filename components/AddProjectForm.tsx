@@ -7,7 +7,6 @@ import {
   Lock,
   Unlock,
   FileText,
-  ExternalLink,
   Upload,
   Shield,
   AlertTriangle,
@@ -142,6 +141,14 @@ interface UploadedFile {
   uploadedBy: string;
 }
 
+interface LinkedDocumentUpload {
+  id: string;
+  name: string;
+  size: string;
+  uploadedAt: string;
+  uploadedBy: string;
+}
+
 interface AdditionalDonor {
   id: string;
   donor: string;
@@ -177,6 +184,8 @@ export function AddProjectForm({ onBack, onSave }: AddProjectFormProps) {
   // ── Linked documents ──
   const [linkedProposal, setLinkedProposal] = useState("");
   const [linkedContract, setLinkedContract] = useState("");
+  const [linkedProposalUpload, setLinkedProposalUpload] = useState<LinkedDocumentUpload | null>(null);
+  const [linkedContractUpload, setLinkedContractUpload] = useState<LinkedDocumentUpload | null>(null);
 
   // ── Deliverables ──
   const [deliverables, setDeliverables] = useState<Deliverable[]>([
@@ -211,12 +220,9 @@ export function AddProjectForm({ onBack, onSave }: AddProjectFormProps) {
   const donorRef = useRef<HTMLButtonElement>(null);
   const projectLeadRef = useRef<HTMLButtonElement>(null);
   const projectCoordinatorRef = useRef<HTMLButtonElement>(null);
-  const proposalRef = useRef<HTMLButtonElement>(null);
-  const contractRef = useRef<HTMLButtonElement>(null);
   const reportTypeRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const frequencyRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const additionalDonorRefs = useRef<Record<string, HTMLButtonElement | null>>({});
-  const additionalProposalRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   // ── Lock confirmation ──
   const [lockConfirm, setLockConfirm] = useState<string | null>(null);
@@ -324,6 +330,34 @@ export function AddProjectForm({ onBack, onSave }: AddProjectFormProps) {
     setAdditionalDonors(additionalDonors.map((d) => d.id === adId ? { ...d, milestones: d.milestones.map((x) => x.id === msId ? { ...x, [field]: value } : x) } : d));
   };
 
+  const createLinkedDocumentUpload = (label: string, donorName?: string): LinkedDocumentUpload => ({
+    id: `doc-${Date.now()}`,
+    name: `${label.replace(/\s+/g, "-")}${donorName ? `-${donorName.replace(/\s+/g, "-")}` : ""}-v1.pdf`,
+    size: `${(Math.random() * 2 + 1).toFixed(1)} MB`,
+    uploadedAt: "Apr 28, 2026",
+    uploadedBy: "PMO Admin",
+  });
+
+  const handleLinkedProposalUpload = () => {
+    const matchedProposal = LINKED_PROPOSALS.find((proposal) => proposal.donor === donor);
+    const uploadedDoc = createLinkedDocumentUpload(matchedProposal?.title || "Proposal-Document", donor);
+    setLinkedProposalUpload(uploadedDoc);
+    setLinkedProposal(uploadedDoc.name);
+  };
+
+  const handleLinkedContractUpload = () => {
+    const matchedContract = LINKED_CONTRACTS.find((contract) => contract.donor === donor);
+    const uploadedDoc = createLinkedDocumentUpload(matchedContract?.title || "Signed-Contract", donor);
+    setLinkedContractUpload(uploadedDoc);
+    setLinkedContract(uploadedDoc.name);
+  };
+
+  const handleAdditionalProposalUpload = (adId: string, donorName: string) => {
+    const matchedProposal = LINKED_PROPOSALS.find((proposal) => proposal.donor === donorName);
+    const uploadedDoc = createLinkedDocumentUpload(matchedProposal?.title || "Proposal-Document", donorName);
+    updateAdditionalDonor(adId, "linkedProposal", uploadedDoc.name);
+  };
+
   // ── File upload simulation ──
   const handleFileUpload = () => {
     const nextVersion = uploadedFiles.length + 1;
@@ -364,14 +398,6 @@ export function AddProjectForm({ onBack, onSave }: AddProjectFormProps) {
   };
 
   const primaryCount = deliverables.filter((d) => d.isPrimary).length;
-
-  // Filter proposals/contracts by selected donor
-  const filteredProposals = donor
-    ? LINKED_PROPOSALS.filter((p) => p.donor === donor)
-    : LINKED_PROPOSALS;
-  const filteredContracts = donor
-    ? LINKED_CONTRACTS.filter((c) => c.donor === donor)
-    : LINKED_CONTRACTS;
 
   return (
     <div className="h-full flex flex-col bg-slate-50 overflow-hidden">
@@ -729,10 +755,6 @@ export function AddProjectForm({ onBack, onSave }: AddProjectFormProps) {
             {additionalDonors.length > 0 ? (
               <div className="p-6 space-y-4">
                 {additionalDonors.map((ad, idx) => {
-                  const filteredAdProposals = ad.donor
-                    ? LINKED_PROPOSALS.filter((p) => p.donor === ad.donor)
-                    : LINKED_PROPOSALS;
-                  
                   const isCollapsed = collapsedDonors[ad.id] ?? false;
                   return (
                     <div key={ad.id} className="border border-indigo-200 rounded-xl bg-indigo-50/40 overflow-hidden">
@@ -845,52 +867,42 @@ export function AddProjectForm({ onBack, onSave }: AddProjectFormProps) {
                         <label className="block text-[10px] text-slate-400 uppercase tracking-wider mb-1">
                           Linked Proposal Document
                         </label>
-                        <button
-                          ref={(el) => { additionalProposalRefs.current[ad.id] = el; }}
-                          type="button"
-                          onClick={() => setOpenDropdown(openDropdown === `ad-proposal-${ad.id}` ? null : `ad-proposal-${ad.id}`)}
-                          className="w-full flex items-center justify-between px-3 py-2 border border-slate-300 rounded-lg bg-white hover:bg-slate-50 transition-colors"
-                        >
-                          <span className={cn("text-[12px]", ad.linkedProposal ? "text-slate-900" : "text-slate-400")}>
-                            {ad.linkedProposal
-                              ? LINKED_PROPOSALS.find((p) => p.id === ad.linkedProposal)?.title || ad.linkedProposal
-                              : "Select proposal"}
-                          </span>
-                          <ChevronDown size={13} className="text-slate-400" />
-                        </button>
-                        {openDropdown === `ad-proposal-${ad.id}` && (
-                          <PortalDropdown anchorRef={{ current: additionalProposalRefs.current[ad.id] } as React.RefObject<HTMLElement>} onClose={closeAllDropdowns} width={500}>
-                            {filteredAdProposals.length === 0 ? (
-                              <div className="px-4 py-3 text-[12px] text-slate-400 text-center">
-                                {ad.donor ? `No proposals found for ${ad.donor}` : "Select a donor first"}
+                        <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50/60 p-3">
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+                                <Upload size={14} className="text-blue-600" />
                               </div>
-                            ) : (
-                              filteredAdProposals.map((p) => (
-                                <button
-                                  key={p.id}
-                                  type="button"
-                                  onClick={() => {
-                                    updateAdditionalDonor(ad.id, "linkedProposal", p.id);
-                                    closeAllDropdowns();
-                                  }}
-                                  className={cn(
-                                    "w-full px-4 py-2.5 text-left hover:bg-slate-50 transition-colors",
-                                    ad.linkedProposal === p.id ? "bg-blue-50" : ""
-                                  )}
-                                >
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-[10px] text-blue-600">{p.id}</span>
-                                    <span className="text-[12px] text-slate-900 truncate">{p.title}</span>
-                                  </div>
-                                  <div className="flex items-center gap-3 mt-0.5">
-                                    <span className="text-[10px] text-slate-400">{p.donor}</span>
-                                    <span className="text-[10px] text-slate-400">{p.budget}</span>
-                                  </div>
-                                </button>
-                              ))
-                            )}
-                          </PortalDropdown>
-                        )}
+                              <div className="min-w-0">
+                                <p className={cn("text-[12px] font-medium truncate", ad.linkedProposal ? "text-slate-900" : "text-slate-500")}>
+                                  {ad.linkedProposal || "Upload proposal document for this donor"}
+                                </p>
+                                <p className="text-[10px] text-slate-400 mt-0.5">PDF, DOCX, XLSX accepted</p>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleAdditionalProposalUpload(ad.id, ad.donor)}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-[11px] text-slate-700 hover:bg-slate-100 transition-colors shrink-0"
+                            >
+                              <Upload size={12} />
+                              {ad.linkedProposal ? "Replace" : "Upload"}
+                            </button>
+                          </div>
+                          {ad.linkedProposal && (
+                            <div className="mt-3 flex items-center gap-2 px-3 py-2 rounded-lg border border-blue-200 bg-blue-50">
+                              <FileText size={13} className="text-blue-600 shrink-0" />
+                              <span className="text-[11px] text-blue-800 truncate flex-1">{ad.linkedProposal}</span>
+                              <button
+                                type="button"
+                                onClick={() => updateAdditionalDonor(ad.id, "linkedProposal", "")}
+                                className="p-0.5 hover:bg-blue-100 rounded"
+                              >
+                                <X size={12} className="text-blue-600" />
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </div>
 
                       {/* Contractual Deliverables */}
@@ -1066,13 +1078,8 @@ export function AddProjectForm({ onBack, onSave }: AddProjectFormProps) {
               <div className="flex items-center gap-2">
                 <Link2 size={15} className="text-blue-600" />
                 <h2 className="text-[13px] text-slate-900">Linked Documents</h2>
-                <span className="text-[10px] text-slate-400 ml-1">from Donor & Partnership Management</span>
+                <span className="text-[10px] text-slate-400 ml-1">upload the signed source files for project setup</span>
               </div>
-              {donor && (
-                <span className="text-[10px] text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
-                  Filtered by: {donor}
-                </span>
-              )}
             </div>
             <div className="p-6 space-y-5">
               {/* Linked Proposal */}
@@ -1080,63 +1087,37 @@ export function AddProjectForm({ onBack, onSave }: AddProjectFormProps) {
                 <label className="block text-[12px] text-slate-600 mb-1.5">
                   Linked Proposal Document <span className="text-red-500">*</span>
                 </label>
-                <button
-                  ref={proposalRef}
-                  type="button"
-                  onClick={() => setOpenDropdown(openDropdown === "proposal" ? null : "proposal")}
-                  className="w-full flex items-center justify-between px-3.5 py-2.5 border border-slate-300 rounded-lg bg-white hover:bg-slate-50 transition-colors"
-                >
-                  <span className={cn("text-sm", linkedProposal ? "text-slate-900" : "text-slate-400")}>
-                    {linkedProposal
-                      ? LINKED_PROPOSALS.find((p) => p.id === linkedProposal)?.title || linkedProposal
-                      : "Select won proposal from Donor module"}
-                  </span>
-                  <ChevronDown size={15} className="text-slate-400" />
-                </button>
-                {openDropdown === "proposal" && (
-                  <PortalDropdown anchorRef={proposalRef} onClose={closeAllDropdowns} width={600}>
-                    {filteredProposals.length === 0 ? (
-                      <div className="px-4 py-3 text-[12px] text-slate-400 text-center">
-                        {donor ? `No won proposals found for ${donor}` : "No proposals available"}
+                <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50/60 p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
+                        <Upload size={16} className="text-blue-600" />
                       </div>
-                    ) : (
-                      filteredProposals.map((p) => (
-                        <button
-                          key={p.id}
-                          type="button"
-                          onClick={() => { setLinkedProposal(p.id); closeAllDropdowns(); }}
-                          className={cn(
-                            "w-full px-4 py-2.5 text-left hover:bg-slate-50 transition-colors flex items-center justify-between gap-3",
-                            linkedProposal === p.id ? "bg-blue-50" : ""
-                          )}
-                        >
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="text-[10px] text-blue-600">{p.id}</span>
-                              <span className="text-sm text-slate-900 truncate">{p.title}</span>
-                            </div>
-                            <div className="flex items-center gap-3 mt-0.5">
-                              <span className="text-[10px] text-slate-400">Donor: {p.donor}</span>
-                              <span className="text-[10px] text-slate-400">Submitted: {p.date}</span>
-                              <span className="text-[10px] text-green-600">Won</span>
-                            </div>
-                          </div>
-                          <span className="text-[11px] text-slate-500 shrink-0">{p.budget}</span>
-                        </button>
-                      ))
-                    )}
-                  </PortalDropdown>
-                )}
-                {linkedProposal && (
+                      <div className="min-w-0">
+                        <p className={cn("text-sm font-medium truncate", linkedProposalUpload ? "text-slate-900" : "text-slate-500")}>
+                          {linkedProposalUpload?.name || "Upload the approved proposal document"}
+                        </p>
+                        <p className="text-[11px] text-slate-400 mt-0.5">Drag in or upload the donor-approved proposal file</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleLinkedProposalUpload}
+                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white border border-slate-200 text-[12px] text-slate-700 hover:bg-slate-100 transition-colors shrink-0"
+                    >
+                      <Upload size={13} />
+                      {linkedProposalUpload ? "Replace file" : "Upload file"}
+                    </button>
+                  </div>
+                </div>
+                {linkedProposalUpload && (
                   <div className="mt-2 flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
                     <FileText size={14} className="text-blue-600 shrink-0" />
                     <span className="text-[11px] text-blue-800 flex-1 truncate">
-                      {LINKED_PROPOSALS.find((p) => p.id === linkedProposal)?.title}
+                      {linkedProposalUpload.name}
                     </span>
-                    <button type="button" className="text-[10px] text-blue-700 hover:underline flex items-center gap-0.5 shrink-0">
-                      <ExternalLink size={10} /> View in Donor Module
-                    </button>
-                    <button type="button" onClick={() => setLinkedProposal("")} className="p-0.5 hover:bg-blue-100 rounded">
+                    <span className="text-[10px] text-blue-700 shrink-0">{linkedProposalUpload.size}</span>
+                    <button type="button" onClick={() => { setLinkedProposal(""); setLinkedProposalUpload(null); }} className="p-0.5 hover:bg-blue-100 rounded">
                       <X size={12} className="text-blue-600" />
                     </button>
                   </div>
@@ -1148,62 +1129,37 @@ export function AddProjectForm({ onBack, onSave }: AddProjectFormProps) {
                 <label className="block text-[12px] text-slate-600 mb-1.5">
                   Linked Signed Contract Document <span className="text-red-500">*</span>
                 </label>
-                <button
-                  ref={contractRef}
-                  type="button"
-                  onClick={() => setOpenDropdown(openDropdown === "contract" ? null : "contract")}
-                  className="w-full flex items-center justify-between px-3.5 py-2.5 border border-slate-300 rounded-lg bg-white hover:bg-slate-50 transition-colors"
-                >
-                  <span className={cn("text-sm", linkedContract ? "text-slate-900" : "text-slate-400")}>
-                    {linkedContract
-                      ? LINKED_CONTRACTS.find((c) => c.id === linkedContract)?.title || linkedContract
-                      : "Select signed contract from Legal module"}
-                  </span>
-                  <ChevronDown size={15} className="text-slate-400" />
-                </button>
-                {openDropdown === "contract" && (
-                  <PortalDropdown anchorRef={contractRef} onClose={closeAllDropdowns} width={600}>
-                    {filteredContracts.length === 0 ? (
-                      <div className="px-4 py-3 text-[12px] text-slate-400 text-center">
-                        {donor ? `No signed contracts found for ${donor}` : "No contracts available"}
+                <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50/60 p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-10 h-10 rounded-xl bg-cyan-50 flex items-center justify-center shrink-0">
+                        <Upload size={16} className="text-cyan-600" />
                       </div>
-                    ) : (
-                      filteredContracts.map((c) => (
-                        <button
-                          key={c.id}
-                          type="button"
-                          onClick={() => { setLinkedContract(c.id); closeAllDropdowns(); }}
-                          className={cn(
-                            "w-full px-4 py-2.5 text-left hover:bg-slate-50 transition-colors flex items-center justify-between gap-3",
-                            linkedContract === c.id ? "bg-blue-50" : ""
-                          )}
-                        >
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="text-[10px] text-cyan-600">{c.id}</span>
-                              <span className="text-sm text-slate-900 truncate">{c.title}</span>
-                            </div>
-                            <div className="flex items-center gap-3 mt-0.5">
-                              <span className="text-[10px] text-slate-400">Signed: {c.signedDate}</span>
-                              <span className="text-[10px] text-green-600">Active</span>
-                            </div>
-                          </div>
-                          <span className="text-[11px] text-slate-500 shrink-0">{c.value}</span>
-                        </button>
-                      ))
-                    )}
-                  </PortalDropdown>
-                )}
-                {linkedContract && (
+                      <div className="min-w-0">
+                        <p className={cn("text-sm font-medium truncate", linkedContractUpload ? "text-slate-900" : "text-slate-500")}>
+                          {linkedContractUpload?.name || "Upload the signed contract document"}
+                        </p>
+                        <p className="text-[11px] text-slate-400 mt-0.5">Add the executed contract file for PMO setup</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleLinkedContractUpload}
+                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white border border-slate-200 text-[12px] text-slate-700 hover:bg-slate-100 transition-colors shrink-0"
+                    >
+                      <Upload size={13} />
+                      {linkedContractUpload ? "Replace file" : "Upload file"}
+                    </button>
+                  </div>
+                </div>
+                {linkedContractUpload && (
                   <div className="mt-2 flex items-center gap-2 px-3 py-2 bg-cyan-50 border border-cyan-200 rounded-lg">
                     <FileSignature size={14} className="text-cyan-600 shrink-0" />
                     <span className="text-[11px] text-cyan-800 flex-1 truncate">
-                      {LINKED_CONTRACTS.find((c) => c.id === linkedContract)?.title}
+                      {linkedContractUpload.name}
                     </span>
-                    <button type="button" className="text-[10px] text-cyan-700 hover:underline flex items-center gap-0.5 shrink-0">
-                      <ExternalLink size={10} /> View in Legal Module
-                    </button>
-                    <button type="button" onClick={() => setLinkedContract("")} className="p-0.5 hover:bg-cyan-100 rounded">
+                    <span className="text-[10px] text-cyan-700 shrink-0">{linkedContractUpload.size}</span>
+                    <button type="button" onClick={() => { setLinkedContract(""); setLinkedContractUpload(null); }} className="p-0.5 hover:bg-cyan-100 rounded">
                       <X size={12} className="text-cyan-600" />
                     </button>
                   </div>
