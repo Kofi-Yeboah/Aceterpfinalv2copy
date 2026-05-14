@@ -497,7 +497,7 @@ function PlanItemDetail({ item, onClose }: PlanItemDetailProps) {
             <div className="space-y-3">
               <div><label className={labelCls}>Activity Description</label><input className={inputCls} value={editForm.activityDescription} onChange={e => setEditForm(f => ({ ...f, activityDescription: e.target.value }))} /></div>
               <div className="grid grid-cols-2 gap-4">
-                <div><label className={labelCls}>Category</label><select className={inputCls} value={editForm.category} onChange={e => setEditForm(f => ({ ...f, category: e.target.value }))}>{CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}</select></div>
+                <div><label className={labelCls}>Category</label><select className={inputCls} value={editForm.category} onChange={e => setEditForm(f => ({ ...f, category: e.target.value as typeof f.category }))}>{CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}</select></div>
                 <div><label className={labelCls}>Estimated Value</label><input type="number" className={inputCls} value={editForm.estimatedValue} onChange={e => setEditForm(f => ({ ...f, estimatedValue: e.target.value }))} /></div>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -515,7 +515,7 @@ function PlanItemDetail({ item, onClose }: PlanItemDetailProps) {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div><label className={labelCls}>Status</label>
-                  <select className={inputCls} value={editForm.status} onChange={e => setEditForm(f => ({ ...f, status: e.target.value }))}>
+                  <select className={inputCls} value={editForm.status} onChange={e => setEditForm(f => ({ ...f, status: e.target.value as typeof f.status }))}>
                     {["Not Started", "In Progress", "Under Evaluation", "Awarded", "Contracted", "Completed", "Delayed"].map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
                 </div>
