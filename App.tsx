@@ -63,6 +63,10 @@ import { ProposalsAgreements } from "./components/ProposalsAgreements";
 import { PotentialProjects } from "./components/PotentialProjects";
 import { GrantCompliance } from "./components/GrantCompliance";
 import { AdvocacyImpactHub } from "./components/AdvocacyImpactHub";
+import { StakeholderManagement } from "./components/StakeholderManagement";
+import { AdvocacyCalendar } from "./components/AdvocacyCalendar";
+import { AdvocacyContentCollateral } from "./components/AdvocacyContentCollateral";
+import { ImpactMonitoring } from "./components/ImpactMonitoring";
 import { RequestManagementLeave } from "./components/RequestManagementLeave";
 import { RequestManagementTravel } from "./components/RequestManagementTravel";
 import { HRAdvanceApprovals } from "./pages/HRAdvanceApprovals";
@@ -321,8 +325,16 @@ export default function App() {
         return <PotentialProjects />;
       case "CRM-Grant Management-Compliance":
         return <GrantCompliance />;
-      case "CRM-Advocacy & Impact Hub":
+      case "CRM-Advocacy & Impact Hub-Activity Tracker":
         return <AdvocacyImpactHub />;
+      case "CRM-Advocacy & Impact Hub-Stakeholder Management":
+        return <StakeholderManagement />;
+      case "CRM-Advocacy & Impact Hub-Advocacy Calendar":
+        return <AdvocacyCalendar />;
+      case "CRM-Advocacy & Impact Hub-Content & Collateral":
+        return <AdvocacyContentCollateral />;
+      case "CRM-Advocacy & Impact Hub-Impact Monitoring":
+        return <ImpactMonitoring />;
       case "HR MANAGEMENT-Approvals-Leave":
         return <RequestManagementLeave />;
       case "HR MANAGEMENT-Approvals-Travel":

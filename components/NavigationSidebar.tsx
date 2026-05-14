@@ -241,9 +241,13 @@ export function NavigationSidebar({ selectedItem, onSelectItem }: NavigationSide
         {
           icon: <DocumentIcon />,
           label: "Grant Management",
-          submenu: ["Concepts", "Prospects", "Agreements", "Compliance"],
+          submenu: ["Concepts", "Agreements", "Compliance"],
         },
-        { icon: <MegaphoneIcon />, label: "Advocacy & Impact Hub" },
+        {
+          icon: <MegaphoneIcon />,
+          label: "Advocacy & Impact Hub",
+          submenu: ["Activity Tracker", "Stakeholder Management", "Advocacy Calendar", "Content & Collateral", "Impact Monitoring"],
+        },
       ],
     },
     {
