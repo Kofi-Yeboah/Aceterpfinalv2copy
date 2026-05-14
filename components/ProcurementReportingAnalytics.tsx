@@ -1122,7 +1122,7 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
                       <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                       <XAxis dataKey="name" tick={{ fontSize: 8, fontFamily: F, angle: -30 }} height={50} />
                       <YAxis tick={{ fontSize: 9, fontFamily: F }} domain={[0, 100]} />
-                      <Tooltip contentStyle={{ fontSize: 10, fontFamily: F }} formatter={(v: number) => `${v}%`} />
+                      <Tooltip contentStyle={{ fontSize: 10, fontFamily: F }} formatter={(v) => `${v}%`} />
                       <Bar dataKey="rate" fill="#22c55e" radius={[4, 4, 0, 0]} name="Win Rate %" />
                     </BarChart>
                   </ResponsiveContainer>
@@ -1147,8 +1147,8 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
                   <BarChart data={vendorPaymentReport.map(v => ({ name: v.vendor.length > 15 ? v.vendor.slice(0, 15) + "…" : v.vendor, paid: v.totalPaid, outstanding: v.outstanding }))}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                     <XAxis dataKey="name" tick={{ fontSize: 8, fontFamily: F, angle: -20 }} height={45} />
-                    <YAxis tick={{ fontSize: 9, fontFamily: F }} tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`} />
-                    <Tooltip contentStyle={{ fontSize: 10, fontFamily: F }} formatter={(v: number) => fmt(v)} />
+                    <YAxis tick={{ fontSize: 9, fontFamily: F }} tickFormatter={(v) => `$${(Number(v) / 1000).toFixed(0)}k`} />
+                    <Tooltip contentStyle={{ fontSize: 10, fontFamily: F }} formatter={(v) => fmt(v as number)} />
                     <Bar dataKey="paid" stackId="a" fill="#22c55e" name="Paid" />
                     <Bar dataKey="outstanding" stackId="a" fill="#f59e0b" name="Outstanding" radius={[4, 4, 0, 0]} />
                     <Legend wrapperStyle={{ fontSize: 10, fontFamily: F }} />
@@ -1173,8 +1173,8 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
                     })()}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                       <XAxis dataKey="donor" tick={{ fontSize: 9, fontFamily: F }} />
-                      <YAxis tick={{ fontSize: 9, fontFamily: F }} tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`} />
-                      <Tooltip contentStyle={{ fontSize: 10, fontFamily: F }} formatter={(v: number) => fmt(v)} />
+                      <YAxis tick={{ fontSize: 9, fontFamily: F }} tickFormatter={(v) => `$${(Number(v) / 1000).toFixed(0)}k`} />
+                      <Tooltip contentStyle={{ fontSize: 10, fontFamily: F }} formatter={(v) => fmt(v as number)} />
                       <Bar dataKey="value" fill={BLUE} radius={[4, 4, 0, 0]} name="Total Value" />
                     </BarChart>
                   </ResponsiveContainer>
@@ -1442,7 +1442,7 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
                       })()} cx="50%" cy="50%" innerRadius={40} outerRadius={70} paddingAngle={3} dataKey="value" label={({ name, value }) => `${name}: ${fmt(value)}`}>
                         <Cell fill="#6366f1" /><Cell fill="#22c55e" /><Cell fill="#f59e0b" /><Cell fill="#ef4444" />
                       </Pie>
-                      <Tooltip formatter={(v: number) => fmt(v)} />
+                      <Tooltip formatter={(v) => fmt(v as number)} />
                       <Legend wrapperStyle={{ fontSize: 10, fontFamily: F }} />
                     </PieChart>
                   </ResponsiveContainer>
@@ -1456,8 +1456,8 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
                     })()}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                       <XAxis dataKey="name" tick={{ fontSize: 9, fontFamily: F }} />
-                      <YAxis tick={{ fontSize: 9, fontFamily: F }} tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`} />
-                      <Tooltip contentStyle={{ fontSize: 10, fontFamily: F }} formatter={(v: number) => fmt(v)} />
+                      <YAxis tick={{ fontSize: 9, fontFamily: F }} tickFormatter={(v) => `$${(Number(v) / 1000).toFixed(0)}k`} />
+                      <Tooltip contentStyle={{ fontSize: 10, fontFamily: F }} formatter={(v) => fmt(v as number)} />
                       <Bar dataKey="value" fill={BLUE} radius={[4, 4, 0, 0]} name="Contract Value" />
                     </BarChart>
                   </ResponsiveContainer>
