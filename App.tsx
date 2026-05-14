@@ -372,6 +372,14 @@ export default function App() {
         return <FinancePRApproval />;
       case "FINANCE-Approvals-Senior Management":
         return <SeniorMgmtApproval />;
+      case "FINANCE-Approvals-Expense Claims":
+        return <HRExpenseClaimApprovals />;
+      case "FINANCE-Approvals-Advance Requests":
+        return <HRAdvanceApprovals />;
+      case "FINANCE-Approvals-Petty Cash":
+        return <HRPettyCashApprovals />;
+      case "FINANCE-Approvals-Payroll":
+        return <PayrollApproval />;
       case "FINANCE-Reporting & Analytics-Financial Statements":
         return <FinancialStatements />;
       case "FINANCE-Reporting & Analytics-Project Reports":

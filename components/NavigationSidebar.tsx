@@ -126,7 +126,7 @@ export function NavigationSidebar({ selectedItem, onSelectItem }: NavigationSide
         {
           icon: <ApprovalIcon />,
           label: "Approvals",
-          submenu: ["Payment Approvals", "Budget Approvals", "Procurement Requests"],
+          submenu: ["Payment Approvals", "Budget Approvals", "Procurement Requests", "Expense Claims", "Advance Requests", "Petty Cash", "Payroll", "Senior Management"],
         },
         {
           icon: <ChartIcon />,

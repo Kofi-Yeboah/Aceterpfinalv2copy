@@ -386,9 +386,9 @@ export function PayrollDashboard() {
           )}
 
           {/* ═══ ROW 5: AR Aging + AP Aging + Payroll by Dept ═══ */}
-          {isVisible("arAging") && (
+          {(isVisible("arAging") || isVisible("apAging") || isVisible("payrollDept")) && (
             <div className="grid grid-cols-3 gap-5">
-              {/* Accounts Receivable Aging */}
+              {isVisible("arAging") && (
               <div className="bg-white rounded-xl border border-slate-200 p-5">
                 <h2 className="text-[13px] text-slate-900 mb-4 pb-3 border-b border-slate-100">Accounts Receivable Aging</h2>
                 <ResponsiveContainer width="100%" height={160}>
@@ -413,12 +413,9 @@ export function PayrollDashboard() {
                   </div>
                 </div>
               </div>
-            </div>
-          )}
+              )}
 
-          {isVisible("apAging") && (
-            <div className="grid grid-cols-3 gap-5">
-              {/* Accounts Payable Aging */}
+              {isVisible("apAging") && (
               <div className="bg-white rounded-xl border border-slate-200 p-5">
                 <h2 className="text-[13px] text-slate-900 mb-4 pb-3 border-b border-slate-100">Accounts Payable Aging</h2>
                 <ResponsiveContainer width="100%" height={160}>
@@ -443,12 +440,9 @@ export function PayrollDashboard() {
                   </div>
                 </div>
               </div>
-            </div>
-          )}
+              )}
 
-          {isVisible("payrollDept") && (
-            <div className="grid grid-cols-3 gap-5">
-              {/* Payroll by Department */}
+              {isVisible("payrollDept") && (
               <div className="bg-white rounded-xl border border-slate-200 p-5">
                 <h2 className="text-[13px] text-slate-900 mb-4 pb-3 border-b border-slate-100">Payroll by Department</h2>
                 <ResponsiveContainer width="100%" height={160}>
@@ -468,13 +462,14 @@ export function PayrollDashboard() {
                   ))}
                 </div>
               </div>
+              )}
             </div>
           )}
 
           {/* ═══ ROW 6: Bank Accounts + GL Activity + Voucher Status ═══ */}
-          {isVisible("bankBalances") && (
+          {(isVisible("bankBalances") || isVisible("glActivity") || isVisible("voucherStatus")) && (
             <div className="grid grid-cols-3 gap-5">
-              {/* Bank Account Balances */}
+              {isVisible("bankBalances") && (
               <div className="bg-white rounded-xl border border-slate-200 p-5">
                 <h2 className="text-[13px] text-slate-900 mb-4 pb-3 border-b border-slate-100">Bank & Fund Balances</h2>
                 <div className="space-y-2">
@@ -495,12 +490,9 @@ export function PayrollDashboard() {
                   ))}
                 </div>
               </div>
-            </div>
-          )}
+              )}
 
-          {isVisible("glActivity") && (
-            <div className="grid grid-cols-3 gap-5">
-              {/* GL Activity */}
+              {isVisible("glActivity") && (
               <div className="bg-white rounded-xl border border-slate-200 p-5">
                 <h2 className="text-[13px] text-slate-900 mb-4 pb-3 border-b border-slate-100">General Ledger Activity</h2>
                 <ResponsiveContainer width="100%" height={170}>
@@ -528,12 +520,9 @@ export function PayrollDashboard() {
                   </div>
                 </div>
               </div>
-            </div>
-          )}
+              )}
 
-          {isVisible("voucherStatus") && (
-            <div className="grid grid-cols-3 gap-5">
-              {/* Voucher Status */}
+              {isVisible("voucherStatus") && (
               <div className="bg-white rounded-xl border border-slate-200 p-5">
                 <h2 className="text-[13px] text-slate-900 mb-4 pb-3 border-b border-slate-100">Payment Voucher Status</h2>
                 <ResponsiveContainer width="100%" height={150}>
@@ -556,13 +545,14 @@ export function PayrollDashboard() {
                   ))}
                 </div>
               </div>
+              )}
             </div>
           )}
 
           {/* ═══ ROW 7: Pending Actions + Alerts ═══ */}
-          {isVisible("pendingActions") && (
+          {(isVisible("pendingActions") || isVisible("alerts")) && (
             <div className="grid grid-cols-2 gap-5">
-              {/* Pending Finance Actions */}
+              {isVisible("pendingActions") && (
               <div className="bg-white rounded-xl border border-slate-200 p-5">
                 <h2 className="text-[13px] text-slate-900 mb-4 pb-3 border-b border-slate-100">Pending Finance Actions</h2>
                 <div className="space-y-2.5">
@@ -586,12 +576,9 @@ export function PayrollDashboard() {
                   <p className="text-[10px] text-slate-400 uppercase tracking-wider">Total Pending Items</p>
                 </div>
               </div>
-            </div>
-          )}
+              )}
 
-          {isVisible("alerts") && (
-            <div className="grid grid-cols-2 gap-5">
-              {/* Financial Alerts */}
+              {isVisible("alerts") && (
               <div className="bg-white rounded-xl border border-slate-200 p-5">
                 <h2 className="text-[13px] text-slate-900 mb-4 pb-3 border-b border-slate-100">Financial Alerts & Notifications</h2>
                 <div className="space-y-2.5">
@@ -613,6 +600,7 @@ export function PayrollDashboard() {
                   </p>
                 </div>
               </div>
+              )}
             </div>
           )}
 
