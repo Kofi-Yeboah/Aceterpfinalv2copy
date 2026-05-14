@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { Search, Download, Upload, ChevronDown, MoreHorizontal, X, ArrowLeft } from "lucide-react";
+import { Search, Download, Upload, ChevronDown, MoreHorizontal, X, ArrowLeft, Plus, Check, Clock, User } from "lucide-react";
 import { cn } from "../lib/utils";
 import { Badge } from "./ui/badge";
-import { getGeneratedPRs, subscribe } from "../lib/procurementStore";
+import { getGeneratedPRs, getApprovedPlanItems, createRequisitionFromPlan, subscribe } from "../lib/procurementStore";
 
 interface Requisition {
   id: string;
@@ -17,6 +17,29 @@ interface Requisition {
   dateRequested: string;
   projectName?: string;
   purchaseType: string;
+  // Enhanced fields
+  requisitionTitle?: string;
+  entityType?: "Individual" | "Firm";
+  fundingSource?: string;
+  procurementCategory?: string;
+  deliveryTimeline?: string;
+  serviceStartDate?: string;
+  serviceEndDate?: string;
+  directSelectionJustification?: string;
+  shortlistedEntities?: { name: string; address: string; email: string }[];
+  attachments?: string[];
+  linkedPlanItemId?: string;
+  daysInCurrentStage?: number;
+  currentResponsible?: string;
+  currentStep?: number;
+  sourceType?: "ESS Plan" | "Direct";
+  // Approval statuses for progress tracker
+  deptApproval?: string;
+  procurementApproval?: string;
+  financeApproval?: string;
+  seniorMgmtApproval?: string;
+  requiresSeniorApproval?: boolean;
+  overallApprovalStatus?: string;
 }
 
 interface ProjectPurchase {
@@ -42,6 +65,37 @@ const DEPARTMENTS = ["All Departments", "IT", "HR", "Finance", "Operations", "Ma
 const STATUSES = ["All Statuses", "Pending", "Approved", "Rejected", "In Progress", "Completed", "Pending Dept Approval", "Pending Proc & Finance", "Pending Sr. Mgmt"];
 const PRIORITIES = ["All Priorities", "Low", "Medium", "High", "Urgent"];
 const PURCHASE_TYPES = ["All Purchase Types", "Direct Purchase", "Competitive Bidding", "Request for Quotation", "Single Source", "Framework Agreement"];
+const FUNDING_SOURCES = ["TAP", "ATTP", "Gates Foundation", "World Bank", "AfDB", "Government of Ghana", "Internal"];
+const PROCUREMENT_CATEGORIES = ["Goods", "Services", "Works", "Consultancy"];
+
+const WORKFLOW_STEPS = [
+  { step: 1, label: "Submission", role: "Requesting Officer" },
+  { step: 2, label: "Dept Approval", role: "Department Head" },
+  { step: 3, label: "Procurement Review", role: "Procurement Unit" },
+  { step: 4, label: "Finance Review", role: "Finance Team" },
+  { step: 5, label: "Sr. Mgmt Approval", role: "Senior Management" },
+];
+
+function getDaysInStage(dateRequested: string, status: string): number {
+  if (status === "Approved" || status === "Completed" || status === "Rejected") return 0;
+  const start = new Date(dateRequested);
+  const now = new Date();
+  return Math.max(0, Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
+}
+
+function getResponsibleForStatus(status: string, department?: string): string {
+  switch (status) {
+    case "Pending": return "Requesting Officer";
+    case "Pending Dept Approval": return `Dept Head${department ? " — " + department : ""}`;
+    case "Pending Proc & Finance": return "Procurement & Finance";
+    case "Pending Sr. Mgmt": return "Senior Management";
+    case "Approved": return "Procurement Unit";
+    case "In Progress": return "Procurement Unit";
+    case "Completed": return "N/A";
+    case "Rejected": return "N/A";
+    default: return "—";
+  }
+}
 
 // Mock data: procurement entries from WBS / procurement plan, each linked to a task
 const PROJECT_PURCHASES: Record<string, ProjectPurchase[]> = {
@@ -83,11 +137,30 @@ export function PurchaseRequisitionManagement() {
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [showPriorityDropdown, setShowPriorityDropdown] = useState(false);
   const [showPurchaseTypeDropdown, setShowPurchaseTypeDropdown] = useState(false);
-  // Add Office PR modal removed
+  const [showAddModal, setShowAddModal] = useState(false);
   const [selectedRequisition, setSelectedRequisition] = useState<Requisition | null>(null);
   const [openActionMenuId, setOpenActionMenuId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  // New requisition form state
+  const [formTitle, setFormTitle] = useState("");
+  const [formEntityType, setFormEntityType] = useState<"Individual" | "Firm">("Firm");
+  const [formDescription, setFormDescription] = useState("");
+  const [formDepartment, setFormDepartment] = useState("IT");
+  const [formEstimatedCost, setFormEstimatedCost] = useState("");
+  const [formFundingSource, setFormFundingSource] = useState("TAP");
+  const [formProcCategory, setFormProcCategory] = useState("Goods");
+  const [formPurchaseType, setFormPurchaseType] = useState("Competitive Bidding");
+  const [formLinkedPlanItem, setFormLinkedPlanItem] = useState("");
+  const [formDeliveryTimeline, setFormDeliveryTimeline] = useState("");
+  const [formServiceStartDate, setFormServiceStartDate] = useState("");
+  const [formServiceEndDate, setFormServiceEndDate] = useState("");
+  const [formJustification, setFormJustification] = useState("");
+  const [formShortlisted, setFormShortlisted] = useState<{ name: string; address: string; email: string }[]>([{ name: "", address: "", email: "" }]);
+  const [formAttachments, setFormAttachments] = useState<string[]>([""]);
+  const [formPriority, setFormPriority] = useState("Medium");
+  const [formRequestedBy, setFormRequestedBy] = useState("");
 
   // Subscribe to store for auto-generated PRs from ESS Procurement Plan
   const [, setTick] = useState(0);
@@ -96,8 +169,50 @@ export function PurchaseRequisitionManagement() {
   }, []);
 
   const generatedPRs = getGeneratedPRs();
+  const approvedPlanItems = getApprovedPlanItems();
 
-  // Form state removed — Add Office PR button was removed
+  const resetForm = () => {
+    setFormTitle(""); setFormEntityType("Firm"); setFormDescription("");
+    setFormDepartment("IT"); setFormEstimatedCost(""); setFormFundingSource("TAP");
+    setFormProcCategory("Goods"); setFormPurchaseType("Competitive Bidding");
+    setFormLinkedPlanItem(""); setFormDeliveryTimeline(""); setFormServiceStartDate("");
+    setFormServiceEndDate(""); setFormJustification("");
+    setFormShortlisted([{ name: "", address: "", email: "" }]);
+    setFormAttachments([""]); setFormPriority("Medium"); setFormRequestedBy("");
+  };
+
+  const handleSubmitNewRequisition = () => {
+    if (!formTitle || !formDescription || !formRequestedBy) return;
+    const cost = parseFloat(formEstimatedCost) || 0;
+    createRequisitionFromPlan({
+      planId: "direct",
+      itemId: formLinkedPlanItem || "direct-entry",
+      description: formDescription,
+      category: formProcCategory,
+      quantity: 1,
+      unit: "lot",
+      estimatedCost: cost,
+      targetDate: formDeliveryTimeline || formServiceEndDate || new Date().toISOString().split("T")[0],
+      requestedBy: formRequestedBy,
+      department: formDepartment,
+      requisitionTitle: formTitle,
+      entityType: formEntityType,
+      fundingSource: formFundingSource,
+      deliveryTimeline: formProcCategory === "Goods" ? formDeliveryTimeline : undefined,
+      serviceStartDate: (formProcCategory === "Services" || formProcCategory === "Consultancy") ? formServiceStartDate : undefined,
+      serviceEndDate: (formProcCategory === "Services" || formProcCategory === "Consultancy") ? formServiceEndDate : undefined,
+      directSelectionJustification: (formPurchaseType === "Single Source" || formPurchaseType === "Direct Purchase") ? formJustification : undefined,
+      shortlistedEntities: (formPurchaseType === "Single Source" || formPurchaseType === "Direct Purchase") ? formShortlisted.filter(e => e.name) : undefined,
+      attachments: formAttachments.filter(a => a),
+      linkedPlanItemId: formLinkedPlanItem || undefined,
+    });
+    resetForm();
+    setShowAddModal(false);
+  };
+
+  const needsJustification = formPurchaseType === "Single Source" || formPurchaseType === "Direct Purchase";
+  const showDeliveryTimeline = formProcCategory === "Goods";
+  const showServiceDates = formProcCategory === "Services" || formProcCategory === "Consultancy";
 
   const staticRequisitions: Requisition[] = [
     {
@@ -272,6 +387,28 @@ export function PurchaseRequisitionManagement() {
         : pr.status,
       dateRequested: pr.dateRequested,
       purchaseType: pr.purchaseType,
+      // Enhanced fields
+      requisitionTitle: pr.requisitionTitle,
+      entityType: pr.entityType,
+      fundingSource: pr.fundingSource,
+      procurementCategory: pr.category,
+      deliveryTimeline: pr.deliveryTimeline,
+      serviceStartDate: pr.serviceStartDate,
+      serviceEndDate: pr.serviceEndDate,
+      directSelectionJustification: pr.directSelectionJustification,
+      shortlistedEntities: pr.shortlistedEntities,
+      attachments: pr.attachments,
+      linkedPlanItemId: pr.linkedPlanItemId,
+      daysInCurrentStage: pr.daysInCurrentStage,
+      currentResponsible: pr.currentResponsible,
+      currentStep: pr.currentStep,
+      sourceType: pr.sourceType,
+      deptApproval: pr.deptApproval,
+      procurementApproval: pr.procurementApproval,
+      financeApproval: pr.financeApproval,
+      seniorMgmtApproval: pr.seniorMgmtApproval,
+      requiresSeniorApproval: pr.requiresSeniorApproval,
+      overallApprovalStatus: pr.overallApprovalStatus,
     })),
   ];
 
@@ -365,8 +502,6 @@ export function PurchaseRequisitionManagement() {
         return "bg-slate-50 text-slate-600";
     }
   };
-
-  // handleAddRequisition removed — Add Office PR button was removed
 
   // ─── FULL-PAGE DETAIL VIEW ─────────────────────────────────
   if (selectedRequisition) {
@@ -462,7 +597,158 @@ export function PurchaseRequisitionManagement() {
                 <p className="text-sm font-medium text-indigo-700">{selectedRequisition.projectName}</p>
               </div>
             )}
+
+            {/* Enhanced fields row */}
+            <div className="grid grid-cols-4 gap-6 mt-6 pt-6 border-t border-slate-100">
+              {selectedRequisition.fundingSource && (
+                <div>
+                  <p className="text-xs text-slate-500 mb-1">Funding Source</p>
+                  <p className="text-sm font-medium text-slate-900">{selectedRequisition.fundingSource}</p>
+                </div>
+              )}
+              {selectedRequisition.entityType && (
+                <div>
+                  <p className="text-xs text-slate-500 mb-1">Entity Type</p>
+                  <Badge className="text-xs font-medium shadow-none border-0 bg-slate-100 text-slate-700">{selectedRequisition.entityType}</Badge>
+                </div>
+              )}
+              {selectedRequisition.linkedPlanItemId && (
+                <div>
+                  <p className="text-xs text-slate-500 mb-1">Linked Plan Item</p>
+                  <p className="text-sm font-medium text-indigo-600">{selectedRequisition.linkedPlanItemId}</p>
+                </div>
+              )}
+              {selectedRequisition.sourceType && (
+                <div>
+                  <p className="text-xs text-slate-500 mb-1">Source</p>
+                  <Badge className={cn("text-xs font-medium shadow-none border-0", selectedRequisition.sourceType === "ESS Plan" ? "bg-blue-50 text-blue-600" : "bg-slate-100 text-slate-600")}>
+                    {selectedRequisition.sourceType}
+                  </Badge>
+                </div>
+              )}
+            </div>
+
+            {/* Delivery / Service Dates */}
+            {(selectedRequisition.deliveryTimeline || selectedRequisition.serviceStartDate) && (
+              <div className="grid grid-cols-4 gap-6 mt-4">
+                {selectedRequisition.deliveryTimeline && (
+                  <div>
+                    <p className="text-xs text-slate-500 mb-1">Delivery Timeline</p>
+                    <p className="text-sm font-medium text-slate-900">{selectedRequisition.deliveryTimeline}</p>
+                  </div>
+                )}
+                {selectedRequisition.serviceStartDate && (
+                  <div>
+                    <p className="text-xs text-slate-500 mb-1">Service Start Date</p>
+                    <p className="text-sm font-medium text-slate-900">{formatDate(selectedRequisition.serviceStartDate)}</p>
+                  </div>
+                )}
+                {selectedRequisition.serviceEndDate && (
+                  <div>
+                    <p className="text-xs text-slate-500 mb-1">Service End Date</p>
+                    <p className="text-sm font-medium text-slate-900">{formatDate(selectedRequisition.serviceEndDate)}</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Direct Selection Justification */}
+            {selectedRequisition.directSelectionJustification && (
+              <div className="mt-4 pt-4 border-t border-slate-100">
+                <p className="text-xs text-slate-500 mb-1">Direct Selection Justification</p>
+                <p className="text-sm text-slate-700 bg-amber-50 border border-amber-100 rounded-lg p-3">{selectedRequisition.directSelectionJustification}</p>
+              </div>
+            )}
+
+            {/* Shortlisted Entities */}
+            {selectedRequisition.shortlistedEntities && selectedRequisition.shortlistedEntities.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-slate-100">
+                <p className="text-xs text-slate-500 mb-2">Shortlisted Entities</p>
+                <div className="space-y-2">
+                  {selectedRequisition.shortlistedEntities.map((entity, idx) => (
+                    <div key={idx} className="flex items-center gap-4 bg-slate-50 rounded-lg px-4 py-2 text-sm">
+                      <span className="font-medium text-slate-900 w-1/3">{entity.name}</span>
+                      <span className="text-slate-500 w-1/3">{entity.address}</span>
+                      <span className="text-indigo-600 w-1/3">{entity.email}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Attachments */}
+            {selectedRequisition.attachments && selectedRequisition.attachments.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-slate-100">
+                <p className="text-xs text-slate-500 mb-2">Attachments</p>
+                <div className="flex flex-wrap gap-2">
+                  {selectedRequisition.attachments.map((file, idx) => (
+                    <span key={idx} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 rounded-lg text-xs text-slate-700">
+                      <Upload size={12} className="text-slate-400" />
+                      {file}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
+
+          {/* Real-time Progress Tracker */}
+          {selectedRequisition.currentStep && (
+            <div className="bg-white border border-slate-200 rounded-lg p-6">
+              <h2 className="text-lg font-semibold text-slate-900 mb-2">Approval Progress Tracker</h2>
+              <div className="flex items-center gap-1 mb-4 text-sm text-slate-500">
+                <Clock size={14} />
+                <span>
+                  {selectedRequisition.daysInCurrentStage != null
+                    ? `${selectedRequisition.daysInCurrentStage} days in current stage`
+                    : `${getDaysInStage(selectedRequisition.dateRequested, selectedRequisition.status)} days since submission`}
+                </span>
+                {selectedRequisition.currentResponsible && (
+                  <>
+                    <span className="mx-2">|</span>
+                    <User size={14} />
+                    <span>Currently with: <span className="font-medium text-slate-700">{selectedRequisition.currentResponsible}</span></span>
+                  </>
+                )}
+              </div>
+              <div className="flex items-center gap-0">
+                {WORKFLOW_STEPS.map((ws, idx) => {
+                  const reqStep = selectedRequisition.currentStep || 1;
+                  const isRejected = selectedRequisition.status === "Rejected" || selectedRequisition.overallApprovalStatus === "Rejected";
+                  const isSkipped = ws.step === 5 && !selectedRequisition.requiresSeniorApproval;
+                  let stepStatus: "complete" | "active" | "pending" | "rejected" | "skipped" = "pending";
+                  if (isSkipped) stepStatus = "skipped";
+                  else if (isRejected && ws.step === reqStep) stepStatus = "rejected";
+                  else if (ws.step < reqStep) stepStatus = "complete";
+                  else if (ws.step === reqStep) stepStatus = selectedRequisition.overallApprovalStatus === "Approved" ? "complete" : "active";
+
+                  const colors = {
+                    complete: "bg-green-500 text-white border-green-500",
+                    active: "bg-blue-500 text-white border-blue-500",
+                    pending: "bg-white text-slate-400 border-slate-300",
+                    rejected: "bg-red-500 text-white border-red-500",
+                    skipped: "bg-slate-100 text-slate-300 border-slate-200",
+                  };
+                  const lineColor = stepStatus === "complete" ? "bg-green-400" : stepStatus === "active" ? "bg-blue-300" : "bg-slate-200";
+
+                  return (
+                    <div key={ws.step} className="flex items-center flex-1">
+                      <div className="flex flex-col items-center flex-shrink-0">
+                        <div className={cn("w-9 h-9 rounded-full flex items-center justify-center border-2 text-sm font-semibold", colors[stepStatus])}>
+                          {stepStatus === "complete" ? <Check size={16} /> : stepStatus === "rejected" ? <X size={16} /> : ws.step}
+                        </div>
+                        <p className={cn("text-[10px] mt-1.5 text-center w-20 leading-tight", stepStatus === "active" ? "text-blue-700 font-semibold" : stepStatus === "complete" ? "text-green-700" : "text-slate-400")}>{ws.label}</p>
+                        <p className={cn("text-[9px] text-center w-20 leading-tight", stepStatus === "active" ? "text-blue-500" : "text-slate-300")}>{isSkipped ? "N/A" : ws.role}</p>
+                      </div>
+                      {idx < WORKFLOW_STEPS.length - 1 && (
+                        <div className={cn("h-0.5 flex-1 mx-1 rounded", lineColor)} />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Project Purchases Section — only for Project PRs */}
           {selectedRequisition.projectName && (
@@ -639,6 +925,13 @@ export function PurchaseRequisitionManagement() {
       {/* Header */}
       <div className="px-6 py-4 border-b border-slate-200 bg-white flex justify-between items-center">
         <h1 className="text-2xl font-semibold text-slate-900">Purchase Requisition Management</h1>
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="flex items-center gap-2 px-4 py-2.5 bg-purple-700 text-white rounded-lg hover:bg-purple-800 transition-colors text-sm font-medium shadow-sm"
+        >
+          <Plus size={16} />
+          Add New Requisition
+        </button>
       </div>
 
       {/* Filters Bar */}
@@ -846,6 +1139,12 @@ export function PurchaseRequisitionManagement() {
               <th className="text-center px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">
                 Status
               </th>
+              <th className="text-center px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">
+                Days in Stage
+              </th>
+              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">
+                Responsible
+              </th>
               <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">
                 Date Requested
               </th>
@@ -894,6 +1193,15 @@ export function PurchaseRequisitionManagement() {
                   <span className={`inline-flex items-center px-2 py-1 rounded-xl text-[12px] ${getStatusColor(req.status)}`}>
                     {req.status}
                   </span>
+                </td>
+                <td className="px-4 py-4 text-center">
+                  <span className="text-[12px] text-slate-600">
+                    {req.daysInCurrentStage != null ? req.daysInCurrentStage : getDaysInStage(req.dateRequested, req.status)}
+                    {(req.daysInCurrentStage != null ? req.daysInCurrentStage : getDaysInStage(req.dateRequested, req.status)) > 0 ? "d" : ""}
+                  </span>
+                </td>
+                <td className="px-4 py-4">
+                  <p className="text-[12px] text-slate-500">{req.currentResponsible || getResponsibleForStatus(req.status, req.department)}</p>
                 </td>
                 <td className="px-4 py-4">
                   <p className="text-[12px] text-slate-500">{formatDate(req.dateRequested)}</p>
@@ -988,7 +1296,175 @@ export function PurchaseRequisitionManagement() {
         </div>
       </div>
 
-      {/* Add Office PR modal removed */}
+      {/* Add New Requisition Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-2xl w-full max-w-2xl mx-4 max-h-[90vh] flex flex-col">
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
+              <h2 className="text-lg font-semibold text-slate-900">Add New Requisition</h2>
+              <button onClick={() => { resetForm(); setShowAddModal(false); }} className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors">
+                <X size={18} className="text-slate-500" />
+              </button>
+            </div>
+
+            {/* Modal Body — Scrollable */}
+            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+              {/* Requisition Title */}
+              <div>
+                <label className="text-[11px] uppercase tracking-wide font-semibold text-slate-500 mb-1.5 block">Requisition Title</label>
+                <input type="text" value={formTitle} onChange={(e) => setFormTitle(e.target.value)} placeholder="Enter requisition title" className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
+              </div>
+
+              {/* Individual / Firm Toggle */}
+              <div>
+                <label className="text-[11px] uppercase tracking-wide font-semibold text-slate-500 mb-1.5 block">Entity Type</label>
+                <div className="flex gap-4">
+                  {(["Individual", "Firm"] as const).map((type) => (
+                    <label key={type} className="flex items-center gap-2 cursor-pointer">
+                      <input type="radio" name="entityType" checked={formEntityType === type} onChange={() => setFormEntityType(type)} className="accent-purple-700" />
+                      <span className="text-sm text-slate-700">{type}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Item Description */}
+              <div>
+                <label className="text-[11px] uppercase tracking-wide font-semibold text-slate-500 mb-1.5 block">Item Description</label>
+                <textarea value={formDescription} onChange={(e) => setFormDescription(e.target.value)} placeholder="Describe the items or services needed" rows={3} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none" />
+              </div>
+
+              {/* Department & Estimated Cost */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[11px] uppercase tracking-wide font-semibold text-slate-500 mb-1.5 block">Department</label>
+                  <select value={formDepartment} onChange={(e) => setFormDepartment(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    {DEPARTMENTS.filter(d => d !== "All Departments").map(d => <option key={d} value={d}>{d}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[11px] uppercase tracking-wide font-semibold text-slate-500 mb-1.5 block">Estimated Cost (USD)</label>
+                  <input type="number" value={formEstimatedCost} onChange={(e) => setFormEstimatedCost(e.target.value)} placeholder="0.00" className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
+                </div>
+              </div>
+
+              {/* Funding Source & Procurement Category */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[11px] uppercase tracking-wide font-semibold text-slate-500 mb-1.5 block">Funding Source</label>
+                  <select value={formFundingSource} onChange={(e) => setFormFundingSource(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    {FUNDING_SOURCES.map(f => <option key={f} value={f}>{f}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[11px] uppercase tracking-wide font-semibold text-slate-500 mb-1.5 block">Procurement Category</label>
+                  <select value={formProcCategory} onChange={(e) => setFormProcCategory(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    {PROCUREMENT_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              {/* Purchase Type & Priority */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[11px] uppercase tracking-wide font-semibold text-slate-500 mb-1.5 block">Purchase Type</label>
+                  <select value={formPurchaseType} onChange={(e) => setFormPurchaseType(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    {PURCHASE_TYPES.filter(pt => pt !== "All Purchase Types").map(pt => <option key={pt} value={pt}>{pt}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[11px] uppercase tracking-wide font-semibold text-slate-500 mb-1.5 block">Priority</label>
+                  <select value={formPriority} onChange={(e) => setFormPriority(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    {["Low", "Medium", "High", "Urgent"].map(p => <option key={p} value={p}>{p}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              {/* Link to Procurement Plan Item */}
+              <div>
+                <label className="text-[11px] uppercase tracking-wide font-semibold text-slate-500 mb-1.5 block">Link to Procurement Plan Item</label>
+                <select value={formLinkedPlanItem} onChange={(e) => setFormLinkedPlanItem(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
+                  <option value="">— None —</option>
+                  {approvedPlanItems.map(item => (
+                    <option key={item.id} value={item.ppItemId}>{item.ppItemId} — {item.activityDescription}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Conditional: Delivery Timeline (Goods) */}
+              {showDeliveryTimeline && (
+                <div>
+                  <label className="text-[11px] uppercase tracking-wide font-semibold text-slate-500 mb-1.5 block">Delivery Timeline</label>
+                  <input type="date" value={formDeliveryTimeline} onChange={(e) => setFormDeliveryTimeline(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
+                </div>
+              )}
+
+              {/* Conditional: Service Start / End Date (Services or Consultancy) */}
+              {showServiceDates && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[11px] uppercase tracking-wide font-semibold text-slate-500 mb-1.5 block">Service Start Date</label>
+                    <input type="date" value={formServiceStartDate} onChange={(e) => setFormServiceStartDate(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
+                  </div>
+                  <div>
+                    <label className="text-[11px] uppercase tracking-wide font-semibold text-slate-500 mb-1.5 block">Service End Date</label>
+                    <input type="date" value={formServiceEndDate} onChange={(e) => setFormServiceEndDate(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
+                  </div>
+                </div>
+              )}
+
+              {/* Conditional: Direct Selection Justification */}
+              {needsJustification && (
+                <div>
+                  <label className="text-[11px] uppercase tracking-wide font-semibold text-slate-500 mb-1.5 block">Direct Selection Justification</label>
+                  <textarea value={formJustification} onChange={(e) => setFormJustification(e.target.value)} placeholder="Provide justification for single source / direct purchase" rows={3} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none" />
+                </div>
+              )}
+
+              {/* Conditional: Shortlisted Entities */}
+              {needsJustification && (
+                <div>
+                  <label className="text-[11px] uppercase tracking-wide font-semibold text-slate-500 mb-1.5 block">Shortlisted Entities</label>
+                  <div className="space-y-3">
+                    {formShortlisted.map((entity, idx) => (
+                      <div key={idx} className="grid grid-cols-3 gap-2">
+                        <input type="text" value={entity.name} onChange={(e) => { const updated = [...formShortlisted]; updated[idx] = { ...updated[idx], name: e.target.value }; setFormShortlisted(updated); }} placeholder="Name" className="px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
+                        <input type="text" value={entity.address} onChange={(e) => { const updated = [...formShortlisted]; updated[idx] = { ...updated[idx], address: e.target.value }; setFormShortlisted(updated); }} placeholder="Address" className="px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
+                        <input type="email" value={entity.email} onChange={(e) => { const updated = [...formShortlisted]; updated[idx] = { ...updated[idx], email: e.target.value }; setFormShortlisted(updated); }} placeholder="Email" className="px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
+                      </div>
+                    ))}
+                  </div>
+                  <button onClick={() => setFormShortlisted([...formShortlisted, { name: "", address: "", email: "" }])} className="mt-2 text-xs text-purple-700 font-medium hover:underline">+ Add Another</button>
+                </div>
+              )}
+
+              {/* Upload TOR / Specs */}
+              <div>
+                <label className="text-[11px] uppercase tracking-wide font-semibold text-slate-500 mb-1.5 block">Upload TOR / Specs (filenames)</label>
+                <div className="space-y-2">
+                  {formAttachments.map((file, idx) => (
+                    <input key={idx} type="text" value={file} onChange={(e) => { const updated = [...formAttachments]; updated[idx] = e.target.value; setFormAttachments(updated); }} placeholder="e.g. TOR_Document.pdf" className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
+                  ))}
+                </div>
+                <button onClick={() => setFormAttachments([...formAttachments, ""])} className="mt-2 text-xs text-purple-700 font-medium hover:underline">+ Add Another File</button>
+              </div>
+
+              {/* Requested By */}
+              <div>
+                <label className="text-[11px] uppercase tracking-wide font-semibold text-slate-500 mb-1.5 block">Requested By</label>
+                <input type="text" value={formRequestedBy} onChange={(e) => setFormRequestedBy(e.target.value)} placeholder="Full name of requester" className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-end gap-3 flex-shrink-0">
+              <button onClick={() => { resetForm(); setShowAddModal(false); }} className="px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-700 hover:bg-slate-50 transition-colors">Cancel</button>
+              <button onClick={handleSubmitNewRequisition} disabled={!formTitle || !formDescription || !formRequestedBy} className="px-6 py-2.5 bg-purple-700 text-white rounded-lg text-sm font-medium hover:bg-purple-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Submit Requisition</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

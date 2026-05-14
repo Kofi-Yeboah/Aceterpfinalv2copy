@@ -428,6 +428,12 @@ export default function App() {
       case "PROCUREMENT-Reporting & Analytics-Vendor & Donor Analytics":
       case "PROCUREMENT-Reporting & Analytics-KPI Dashboard":
         return <ProcurementReportingAnalytics initialTab="vendors" />;
+      case "PROCUREMENT-Reporting & Analytics-Contract Reports":
+        return <ProcurementReportingAnalytics initialTab="contracts" />;
+      case "PROCUREMENT-Reporting & Analytics-Donor Reports":
+        return <ProcurementReportingAnalytics initialTab="donors" />;
+      case "PROCUREMENT-Reporting & Analytics-Combined Analysis":
+        return <ProcurementReportingAnalytics initialTab="combined" />;
       case "PAYROLL MANAGEMENT-Dashboard":
         return <PayrollManagementDashboard />;
       case "PAYROLL MANAGEMENT-Payroll":

@@ -2,7 +2,8 @@ import { useState } from "react";
 import {
   Search, Download, Upload, ChevronDown, MoreHorizontal, Plus, X, Eye, Edit2,
   Building2, User, Star, AlertTriangle, ShieldAlert, ShieldBan, ShieldCheck,
-  ArrowLeft, FileText, Check, Paperclip, Upload as UploadIcon
+  ArrowLeft, FileText, Check, Paperclip, Upload as UploadIcon, Clock,
+  Users, Loader, Flag, TrendingUp, CalendarClock
 } from "lucide-react";
 import { SupplierDetailsView, type SupplierDetailData } from "./SupplierDetailsView";
 
@@ -11,7 +12,7 @@ import { SupplierDetailsView, type SupplierDetailData } from "./SupplierDetailsV
    ══════════════════════════════════════════════════════════════════════════════ */
 
 type VendorType = "Firm" | "Individual";
-type VendorStatus = "Active" | "Pending Onboarding" | "Flagged" | "Blacklisted" | "Suspended";
+type VendorStatus = "Active" | "Pending Onboarding" | "Flagged" | "Blacklisted" | "Suspended" | "Pending Reactivation";
 type RiskLevel = "Low" | "Medium" | "High";
 
 interface PerformanceScore {
@@ -43,7 +44,15 @@ interface FirmVendor {
   totalOrders: number;
   totalSpend: number;
   documents: string[];
+  documentExpiry: Record<string, string>;
   dateOnboarded: string;
+}
+
+interface HistoricalRate {
+  assignment: string;
+  rate: number;
+  rateType: "Daily" | "Monthly";
+  period: string;
 }
 
 interface IndividualVendor {
@@ -66,7 +75,10 @@ interface IndividualVendor {
   totalOrders: number;
   totalSpend: number;
   documents: string[];
+  documentExpiry: Record<string, string>;
   dateOnboarded: string;
+  expertAreas: string[];
+  historicalRates: HistoricalRate[];
 }
 
 type Vendor = FirmVendor | IndividualVendor;
@@ -81,9 +93,15 @@ const SUB_CATEGORIES: Record<string, string[]> = {
   Works: ["Construction", "Renovation", "Installation", "Maintenance"],
   Consulting: ["Management Consulting", "IT Consulting", "Financial Advisory", "Legal Services", "Research"],
 };
-const STATUSES: VendorStatus[] = ["Active", "Pending Onboarding", "Flagged", "Blacklisted", "Suspended"];
+const STATUSES: VendorStatus[] = ["Active", "Pending Onboarding", "Flagged", "Blacklisted", "Suspended", "Pending Reactivation"];
 const STATUS_FILTERS = ["All Statuses", ...STATUSES];
 const RISK_LEVELS: RiskLevel[] = ["Low", "Medium", "High"];
+
+const EXPERT_AREAS_OPTIONS = [
+  "Policy Analysis", "Data Science", "M&E", "Gender Studies", "Agricultural Economics",
+  "Public Health", "Climate Change", "Education", "Governance", "Statistics",
+  "Project Management", "Financial Analysis", "Legal Advisory", "IT Systems", "Human Resources",
+];
 
 const FIRM_DOC_CHECKLIST = [
   "Certificate of Incorporation",
@@ -115,6 +133,7 @@ const firmVendors: FirmVendor[] = [
     performance: { quality: 9.2, timeliness: 8.8, responsiveness: 9.0, costManagement: 8.5, compliance: 9.4 },
     totalOrders: 45, totalSpend: 285000,
     documents: ["Certificate of Incorporation", "Tax Clearance Certificate", "SSNIT Clearance", "VAT Registration", "Performance References"],
+    documentExpiry: { "Tax Clearance Certificate": "2026-06-01", "SSNIT Clearance": "2026-08-15", "VAT Registration": "2027-01-10" },
     dateOnboarded: "2022-03-15",
   },
   {
@@ -126,6 +145,7 @@ const firmVendors: FirmVendor[] = [
     performance: { quality: 8.5, timeliness: 9.0, responsiveness: 8.8, costManagement: 9.2, compliance: 8.7 },
     totalOrders: 78, totalSpend: 145000,
     documents: ["Certificate of Incorporation", "Tax Clearance Certificate", "SSNIT Clearance", "VAT Registration", "Performance References"],
+    documentExpiry: { "Tax Clearance Certificate": "2026-07-20", "SSNIT Clearance": "2026-09-30", "VAT Registration": "2027-03-15" },
     dateOnboarded: "2021-08-10",
   },
   {
@@ -137,6 +157,7 @@ const firmVendors: FirmVendor[] = [
     performance: { quality: 8.0, timeliness: 7.5, responsiveness: 8.2, costManagement: 8.8, compliance: 8.0 },
     totalOrders: 32, totalSpend: 52000,
     documents: ["Certificate of Incorporation", "Tax Clearance Certificate", "SSNIT Clearance", "VAT Registration"],
+    documentExpiry: { "Tax Clearance Certificate": "2026-05-20", "SSNIT Clearance": "2026-04-30" },
     dateOnboarded: "2023-01-20",
   },
   {
@@ -148,6 +169,7 @@ const firmVendors: FirmVendor[] = [
     performance: { quality: 9.0, timeliness: 8.5, responsiveness: 9.2, costManagement: 7.8, compliance: 9.0 },
     totalOrders: 15, totalSpend: 98000,
     documents: ["Certificate of Incorporation", "Tax Clearance Certificate", "VAT Registration", "Performance References"],
+    documentExpiry: { "Tax Clearance Certificate": "2026-12-01", "VAT Registration": "2027-06-01" },
     dateOnboarded: "2022-06-01",
   },
   {
@@ -159,6 +181,7 @@ const firmVendors: FirmVendor[] = [
     performance: { quality: 8.8, timeliness: 8.2, responsiveness: 7.9, costManagement: 8.0, compliance: 9.1 },
     totalOrders: 22, totalSpend: 168000,
     documents: ["Certificate of Incorporation", "Tax Clearance Certificate", "SSNIT Clearance", "VAT Registration", "Performance References"],
+    documentExpiry: { "Tax Clearance Certificate": "2026-10-15", "SSNIT Clearance": "2026-11-20", "VAT Registration": "2027-02-28" },
     dateOnboarded: "2023-04-12",
   },
   {
@@ -170,6 +193,7 @@ const firmVendors: FirmVendor[] = [
     performance: { quality: 0, timeliness: 0, responsiveness: 0, costManagement: 0, compliance: 0 },
     totalOrders: 0, totalSpend: 0,
     documents: ["Certificate of Incorporation", "Tax Clearance Certificate"],
+    documentExpiry: { "Tax Clearance Certificate": "2027-03-10" },
     dateOnboarded: "2026-03-10",
   },
   {
@@ -181,6 +205,7 @@ const firmVendors: FirmVendor[] = [
     performance: { quality: 5.2, timeliness: 4.0, responsiveness: 6.0, costManagement: 4.5, compliance: 3.8 },
     totalOrders: 8, totalSpend: 420000,
     documents: ["Certificate of Incorporation", "Tax Clearance Certificate", "SSNIT Clearance", "VAT Registration"],
+    documentExpiry: { "Tax Clearance Certificate": "2025-12-01", "SSNIT Clearance": "2026-01-15", "VAT Registration": "2025-11-30" },
     dateOnboarded: "2020-11-05",
   },
   {
@@ -192,6 +217,7 @@ const firmVendors: FirmVendor[] = [
     performance: { quality: 6.5, timeliness: 5.5, responsiveness: 7.0, costManagement: 6.0, compliance: 5.0 },
     totalOrders: 12, totalSpend: 156000,
     documents: ["Certificate of Incorporation", "Tax Clearance Certificate", "SSNIT Clearance"],
+    documentExpiry: { "Tax Clearance Certificate": "2026-05-30", "SSNIT Clearance": "2026-06-10" },
     dateOnboarded: "2021-02-18",
   },
 ];
@@ -206,7 +232,14 @@ const individualVendors: IndividualVendor[] = [
     performance: { quality: 9.5, timeliness: 9.0, responsiveness: 9.2, costManagement: 8.8, compliance: 9.6 },
     totalOrders: 12, totalSpend: 86000,
     documents: ["CV / Resume", "Passport / National ID Copy", "Proof of Residential Address", "Bank Account Confirmation"],
+    documentExpiry: { "Passport / National ID Copy": "2028-03-15" },
     dateOnboarded: "2023-06-20",
+    expertAreas: ["Policy Analysis", "Data Science", "Agricultural Economics"],
+    historicalRates: [
+      { assignment: "Agricultural Policy Review", rate: 800, rateType: "Daily", period: "Jan 2025 - Mar 2025" },
+      { assignment: "Food Security Assessment", rate: 12000, rateType: "Monthly", period: "Jun 2024 - Dec 2024" },
+      { assignment: "Climate Impact Study", rate: 750, rateType: "Daily", period: "Feb 2024 - Apr 2024" },
+    ],
   },
   {
     id: "i2", vendorId: "VND-2002", type: "Individual", legalName: "Prof. Ama Benyiwa",
@@ -217,7 +250,13 @@ const individualVendors: IndividualVendor[] = [
     performance: { quality: 9.8, timeliness: 9.5, responsiveness: 9.0, costManagement: 9.0, compliance: 9.8 },
     totalOrders: 8, totalSpend: 52000,
     documents: ["CV / Resume", "Passport / National ID Copy", "Proof of Residential Address", "Bank Account Confirmation"],
+    documentExpiry: { "Passport / National ID Copy": "2027-09-01" },
     dateOnboarded: "2023-09-14",
+    expertAreas: ["Financial Analysis", "Gender Studies", "M&E"],
+    historicalRates: [
+      { assignment: "Gender Mainstreaming Workshop", rate: 900, rateType: "Daily", period: "Sep 2025 - Oct 2025" },
+      { assignment: "Financial Inclusion Study", rate: 14000, rateType: "Monthly", period: "Mar 2025 - Aug 2025" },
+    ],
   },
   {
     id: "i3", vendorId: "VND-2003", type: "Individual", legalName: "Nana Yaw Mensah",
@@ -228,7 +267,13 @@ const individualVendors: IndividualVendor[] = [
     performance: { quality: 8.5, timeliness: 8.0, responsiveness: 8.8, costManagement: 8.2, compliance: 8.5 },
     totalOrders: 6, totalSpend: 34000,
     documents: ["CV / Resume", "Passport / National ID Copy", "Proof of Residential Address", "Bank Account Confirmation"],
+    documentExpiry: { "Passport / National ID Copy": "2029-05-20" },
     dateOnboarded: "2024-01-08",
+    expertAreas: ["Project Management", "Governance", "Public Health"],
+    historicalRates: [
+      { assignment: "Health Sector Governance Review", rate: 650, rateType: "Daily", period: "Apr 2025 - Jun 2025" },
+      { assignment: "Public Sector Reform Facilitation", rate: 10000, rateType: "Monthly", period: "Jan 2025 - Mar 2025" },
+    ],
   },
   {
     id: "i4", vendorId: "VND-2004", type: "Individual", legalName: "Akosua Frimpong",
@@ -239,7 +284,12 @@ const individualVendors: IndividualVendor[] = [
     performance: { quality: 9.0, timeliness: 8.5, responsiveness: 9.5, costManagement: 8.0, compliance: 9.2 },
     totalOrders: 4, totalSpend: 28000,
     documents: ["CV / Resume", "Passport / National ID Copy", "Proof of Residential Address", "Bank Account Confirmation"],
+    documentExpiry: { "Passport / National ID Copy": "2028-11-10" },
     dateOnboarded: "2024-05-22",
+    expertAreas: ["Legal Advisory", "Governance", "Human Resources"],
+    historicalRates: [
+      { assignment: "Employment Law Advisory", rate: 1000, rateType: "Daily", period: "Jul 2025 - Sep 2025" },
+    ],
   },
   {
     id: "i5", vendorId: "VND-2005", type: "Individual", legalName: "Kofi Adu-Gyamfi",
@@ -250,7 +300,10 @@ const individualVendors: IndividualVendor[] = [
     performance: { quality: 0, timeliness: 0, responsiveness: 0, costManagement: 0, compliance: 0 },
     totalOrders: 0, totalSpend: 0,
     documents: ["CV / Resume", "Passport / National ID Copy"],
+    documentExpiry: { "Passport / National ID Copy": "2029-01-05" },
     dateOnboarded: "2026-03-12",
+    expertAreas: ["IT Systems", "Data Science"],
+    historicalRates: [],
   },
   {
     id: "i6", vendorId: "VND-2006", type: "Individual", legalName: "Efua Mensah-Bonsu",
@@ -261,7 +314,12 @@ const individualVendors: IndividualVendor[] = [
     performance: { quality: 3.0, timeliness: 2.5, responsiveness: 4.0, costManagement: 3.5, compliance: 2.0 },
     totalOrders: 3, totalSpend: 18000,
     documents: ["CV / Resume", "Passport / National ID Copy"],
+    documentExpiry: { "Passport / National ID Copy": "2026-02-15" },
     dateOnboarded: "2024-08-01",
+    expertAreas: ["Statistics", "M&E"],
+    historicalRates: [
+      { assignment: "M&E Framework Design", rate: 500, rateType: "Daily", period: "Aug 2024 - Oct 2024" },
+    ],
   },
 ];
 
@@ -276,6 +334,30 @@ function avgScore(p: PerformanceScore) {
   return +(nonZero.reduce((a, b) => a + b, 0) / nonZero.length).toFixed(1);
 }
 
+function hasExpiredDocs(v: Vendor): boolean {
+  const now = new Date();
+  return Object.values(v.documentExpiry).some(d => new Date(d) < now);
+}
+
+function hasDocExpiringWithin30Days(v: Vendor): boolean {
+  const now = new Date();
+  const in30 = new Date();
+  in30.setDate(in30.getDate() + 30);
+  return Object.values(v.documentExpiry).some(d => {
+    const exp = new Date(d);
+    return exp >= now && exp <= in30;
+  });
+}
+
+function hasMissingDocs(v: Vendor): boolean {
+  const checklist = v.type === "Firm" ? FIRM_DOC_CHECKLIST : INDIVIDUAL_DOC_CHECKLIST;
+  return checklist.some(doc => !v.documents.includes(doc));
+}
+
+function hasDocWarning(v: Vendor): boolean {
+  return hasExpiredDocs(v) || hasMissingDocs(v);
+}
+
 function getStatusColor(s: VendorStatus) {
   switch (s) {
     case "Active": return "bg-green-50 text-green-600";
@@ -283,6 +365,7 @@ function getStatusColor(s: VendorStatus) {
     case "Flagged": return "bg-orange-50 text-orange-700";
     case "Blacklisted": return "bg-red-50 text-red-700";
     case "Suspended": return "bg-slate-100 text-slate-600";
+    case "Pending Reactivation": return "bg-blue-50 text-blue-600";
   }
 }
 
@@ -342,8 +425,29 @@ export function Suppliers() {
   });
   const [indDocs, setIndDocs] = useState<string[]>([]);
 
+  const [indExpertAreas, setIndExpertAreas] = useState<string[]>([]);
+  const [showExpertDropdown, setShowExpertDropdown] = useState(false);
+
+  // Document expiry fields for onboarding forms
+  const [firmDocExpiry, setFirmDocExpiry] = useState<Record<string, string>>({});
+  const [indDocExpiry, setIndDocExpiry] = useState<Record<string, string>>({});
+
+  // Reactivation confirmation modal
+  const [showReactivateModal, setShowReactivateModal] = useState<Vendor | null>(null);
+
   const [formCategoryDropdown, setFormCategoryDropdown] = useState(false);
   const [formSubCategoryDropdown, setFormSubCategoryDropdown] = useState(false);
+
+  // ── Dashboard Stats ──────────────────────────────────────────────────────
+  const allVendors: Vendor[] = [...firmVendors, ...individualVendors];
+  const activeCount = allVendors.filter(v => v.status === "Active").length;
+  const pendingOnboardingCount = allVendors.filter(v => v.status === "Pending Onboarding").length;
+  const flaggedSuspendedCount = allVendors.filter(v => v.status === "Flagged" || v.status === "Suspended" || v.status === "Blacklisted").length;
+  const expiringDocsCount = allVendors.filter(v => hasDocExpiringWithin30Days(v) || hasExpiredDocs(v)).length;
+  const activeWithScores = allVendors.filter(v => v.status === "Active" && avgScore(v.performance) > 0);
+  const avgPerformanceScore = activeWithScores.length > 0
+    ? +(activeWithScores.reduce((sum, v) => sum + avgScore(v.performance), 0) / activeWithScores.length).toFixed(1)
+    : 0;
 
   // ── Filtering ───────────────────────────────────���──────────────────────────
 
@@ -389,12 +493,13 @@ export function Suppliers() {
       totalOrders: v.totalOrders,
       totalSpend: v.totalSpend,
       documents: v.documents,
+      documentExpiry: v.documentExpiry,
       dateOnboarded: v.dateOnboarded,
       bankName: v.bankName,
     };
     const extra = v.type === "Firm"
       ? { registrationNumber: v.registrationNumber, taxId: v.taxId, registeredAddress: v.registeredAddress }
-      : { idType: v.idType, idNumber: v.idNumber, residentialAddress: v.residentialAddress };
+      : { idType: v.idType, idNumber: v.idNumber, residentialAddress: v.residentialAddress, expertAreas: v.expertAreas, historicalRates: v.historicalRates };
     setSelectedSupplierForDetail({ ...base, ...extra } as SupplierDetailData);
     setShowDetailView(true);
   };
@@ -414,6 +519,9 @@ export function Suppliers() {
     setIndForm({ legalName: "", contactEmail: "", contactPhone: "", idType: "Passport", idNumber: "", residentialAddress: "", bankName: "", bankAccountNumber: "", category: "", subCategory: "" });
     setFirmDocs([]);
     setIndDocs([]);
+    setIndExpertAreas([]);
+    setFirmDocExpiry({});
+    setIndDocExpiry({});
     setFormCategoryDropdown(false);
     setFormSubCategoryDropdown(false);
   };
@@ -525,6 +633,29 @@ export function Suppliers() {
         </div>
       </div>
 
+      {/* ── Dashboard Summary Cards ── */}
+      <div className="px-6 py-3 bg-white border-b border-slate-200 shrink-0">
+        <div className="flex items-center gap-3">
+          {[
+            { label: "Active Vendors", value: activeCount, icon: <Users size={16} />, color: "text-green-600", bg: "bg-green-50" },
+            { label: "Pending Onboarding", value: pendingOnboardingCount, icon: <Loader size={16} />, color: "text-amber-600", bg: "bg-amber-50" },
+            { label: "Flagged / Suspended", value: flaggedSuspendedCount, icon: <Flag size={16} />, color: "text-red-600", bg: "bg-red-50" },
+            { label: "Expiring Documents", value: expiringDocsCount, icon: <CalendarClock size={16} />, color: "text-orange-600", bg: "bg-orange-50" },
+            { label: "Avg Performance", value: avgPerformanceScore > 0 ? `${avgPerformanceScore}/10` : "N/A", icon: <TrendingUp size={16} />, color: "text-purple-600", bg: "bg-purple-50" },
+          ].map((card) => (
+            <div key={card.label} className="flex-1 bg-white border border-slate-200 rounded-xl p-3 flex items-center gap-3">
+              <div className={`w-9 h-9 rounded-lg ${card.bg} flex items-center justify-center shrink-0`} style={{ color: "#0B01D0" }}>
+                {card.icon}
+              </div>
+              <div>
+                <p className="text-[18px] font-semibold text-slate-900" style={{ fontFamily: F }}>{card.value}</p>
+                <p className="text-[10px] text-slate-500" style={{ fontFamily: F }}>{card.label}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* ── Tables ── */}
       <div className="flex-1 overflow-auto">
         {activeTab === "firms" ? (
@@ -548,7 +679,12 @@ export function Suppliers() {
                 <tr><td colSpan={10} className="text-center py-12 text-[13px] text-slate-400" style={{ fontFamily: F }}>No firms found.</td></tr>
               ) : filteredFirms.map((v, i) => (
                 <tr key={v.id} className={`border-b border-slate-100 hover:bg-slate-50 transition-colors cursor-pointer ${i % 2 === 0 ? "bg-white" : "bg-slate-50/50"}`} onClick={() => openDetail(v)}>
-                  <td className="px-4 py-3 text-[12px] text-purple-700 font-medium" style={{ fontFamily: F }}>{v.vendorId}</td>
+                  <td className="px-4 py-3 text-[12px] text-purple-700 font-medium" style={{ fontFamily: F }}>
+                    <div className="flex items-center gap-1.5">
+                      {v.vendorId}
+                      {hasDocWarning(v) && <AlertTriangle size={12} className="text-amber-500" title="Expired or missing documents" />}
+                    </div>
+                  </td>
                   <td className="px-4 py-3">
                     <p className="text-[12px] text-slate-900 font-medium" style={{ fontFamily: F }}>{v.legalBusinessName}</p>
                     <p className="text-[11px] text-slate-400" style={{ fontFamily: F }}>{v.contactPerson}</p>
@@ -588,7 +724,7 @@ export function Suppliers() {
                             {v.status === "Active" && <button onClick={() => setOpenActionMenuId(null)} className="w-full px-3 py-2 text-left text-[12px] text-amber-700 hover:bg-amber-50 flex items-center gap-2" style={{ fontFamily: F }}><AlertTriangle size={13} /> Flag Vendor</button>}
                             {v.status === "Flagged" && <button onClick={() => setOpenActionMenuId(null)} className="w-full px-3 py-2 text-left text-[12px] text-red-700 hover:bg-red-50 flex items-center gap-2" style={{ fontFamily: F }}><ShieldBan size={13} /> Blacklist</button>}
                             {(v.status === "Active" || v.status === "Flagged") && <button onClick={() => setOpenActionMenuId(null)} className="w-full px-3 py-2 text-left text-[12px] text-slate-600 hover:bg-slate-50 flex items-center gap-2" style={{ fontFamily: F }}><ShieldAlert size={13} /> Suspend</button>}
-                            {(v.status === "Suspended" || v.status === "Flagged") && <button onClick={() => setOpenActionMenuId(null)} className="w-full px-3 py-2 text-left text-[12px] text-green-700 hover:bg-green-50 flex items-center gap-2" style={{ fontFamily: F }}><ShieldCheck size={13} /> Reactivate</button>}
+                            {(v.status === "Suspended" || v.status === "Flagged" || v.status === "Blacklisted") && <button onClick={() => { setShowReactivateModal(v); setOpenActionMenuId(null); }} className="w-full px-3 py-2 text-left text-[12px] text-green-700 hover:bg-green-50 flex items-center gap-2" style={{ fontFamily: F }}><ShieldCheck size={13} /> Reactivate</button>}
                           </div>
                         </>
                       )}
@@ -620,7 +756,12 @@ export function Suppliers() {
                 <tr><td colSpan={10} className="text-center py-12 text-[13px] text-slate-400" style={{ fontFamily: F }}>No individual consultants found.</td></tr>
               ) : filteredIndividuals.map((v, i) => (
                 <tr key={v.id} className={`border-b border-slate-100 hover:bg-slate-50 transition-colors cursor-pointer ${i % 2 === 0 ? "bg-white" : "bg-slate-50/50"}`} onClick={() => openDetail(v)}>
-                  <td className="px-4 py-3 text-[12px] text-purple-700 font-medium" style={{ fontFamily: F }}>{v.vendorId}</td>
+                  <td className="px-4 py-3 text-[12px] text-purple-700 font-medium" style={{ fontFamily: F }}>
+                    <div className="flex items-center gap-1.5">
+                      {v.vendorId}
+                      {hasDocWarning(v) && <AlertTriangle size={12} className="text-amber-500" title="Expired or missing documents" />}
+                    </div>
+                  </td>
                   <td className="px-4 py-3 text-[12px] text-slate-900 font-medium" style={{ fontFamily: F }}>{v.legalName}</td>
                   <td className="px-4 py-3">
                     <p className="text-[12px] text-slate-900" style={{ fontFamily: F }}>{v.contactEmail}</p>
@@ -663,7 +804,7 @@ export function Suppliers() {
                             {v.status === "Active" && <button onClick={() => setOpenActionMenuId(null)} className="w-full px-3 py-2 text-left text-[12px] text-amber-700 hover:bg-amber-50 flex items-center gap-2" style={{ fontFamily: F }}><AlertTriangle size={13} /> Flag</button>}
                             {v.status === "Flagged" && <button onClick={() => setOpenActionMenuId(null)} className="w-full px-3 py-2 text-left text-[12px] text-red-700 hover:bg-red-50 flex items-center gap-2" style={{ fontFamily: F }}><ShieldBan size={13} /> Blacklist</button>}
                             {(v.status === "Active" || v.status === "Flagged") && <button onClick={() => setOpenActionMenuId(null)} className="w-full px-3 py-2 text-left text-[12px] text-slate-600 hover:bg-slate-50 flex items-center gap-2" style={{ fontFamily: F }}><ShieldAlert size={13} /> Suspend</button>}
-                            {(v.status === "Suspended" || v.status === "Flagged") && <button onClick={() => setOpenActionMenuId(null)} className="w-full px-3 py-2 text-left text-[12px] text-green-700 hover:bg-green-50 flex items-center gap-2" style={{ fontFamily: F }}><ShieldCheck size={13} /> Reactivate</button>}
+                            {(v.status === "Suspended" || v.status === "Flagged" || v.status === "Blacklisted") && <button onClick={() => { setShowReactivateModal(v); setOpenActionMenuId(null); }} className="w-full px-3 py-2 text-left text-[12px] text-green-700 hover:bg-green-50 flex items-center gap-2" style={{ fontFamily: F }}><ShieldCheck size={13} /> Reactivate</button>}
                           </div>
                         </>
                       )}
@@ -795,16 +936,23 @@ export function Suppliers() {
                   <p className="text-[13px] font-semibold text-slate-800 mt-2" style={{ fontFamily: F }}>Required Documents</p>
                   <div className="space-y-2">
                     {FIRM_DOC_CHECKLIST.map(doc => (
-                      <div key={doc} className={`flex items-center justify-between px-3 py-2 rounded-lg border ${firmDocs.includes(doc) ? "bg-green-50 border-green-200" : "bg-slate-50 border-slate-200"}`}>
-                        <div className="flex items-center gap-2">
-                          {firmDocs.includes(doc) ? <Check size={14} className="text-green-600" /> : <FileText size={14} className="text-slate-400" />}
-                          <span className="text-[12px] text-slate-700" style={{ fontFamily: F }}>{doc}</span>
+                      <div key={doc} className="space-y-1.5">
+                        <div className={`flex items-center justify-between px-3 py-2 rounded-lg border ${firmDocs.includes(doc) ? "bg-green-50 border-green-200" : "bg-slate-50 border-slate-200"}`}>
+                          <div className="flex items-center gap-2">
+                            {firmDocs.includes(doc) ? <Check size={14} className="text-green-600" /> : <FileText size={14} className="text-slate-400" />}
+                            <span className="text-[12px] text-slate-700" style={{ fontFamily: F }}>{doc}</span>
+                          </div>
+                          {!firmDocs.includes(doc) && (
+                            <button onClick={() => handleUploadDoc("firm")} className="text-[11px] text-purple-700 hover:underline flex items-center gap-1" style={{ fontFamily: F }}>
+                              <Paperclip size={12} /> Upload
+                            </button>
+                          )}
                         </div>
-                        {!firmDocs.includes(doc) && (
-                          <button onClick={() => handleUploadDoc("firm")} className="text-[11px] text-purple-700 hover:underline flex items-center gap-1" style={{ fontFamily: F }}>
-                            <Paperclip size={12} /> Upload
-                          </button>
-                        )}
+                        <div className="flex items-center gap-2 pl-6">
+                          <label className="text-[10px] text-slate-500" style={{ fontFamily: F }}>Expiry Date:</label>
+                          <input type="date" value={firmDocExpiry[doc] || ""} onChange={e => setFirmDocExpiry(prev => ({ ...prev, [doc]: e.target.value }))}
+                            className="bg-slate-50 border border-slate-200 rounded h-[28px] px-2 text-[11px] text-slate-700 focus:outline-none focus:ring-1 focus:ring-purple-500" style={{ fontFamily: F }} />
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -902,19 +1050,54 @@ export function Suppliers() {
                     </div>
                   </div>
 
-                  <p className="text-[13px] font-semibold text-slate-800 mt-2" style={{ fontFamily: F }}>Required Documents</p>
+                  <p className="text-[13px] font-semibold text-slate-800 mt-2" style={{ fontFamily: F }}>Expert Areas</p>
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {indExpertAreas.map(area => (
+                      <span key={area} className="inline-flex items-center gap-1 px-2 py-1 bg-purple-50 text-purple-700 border border-purple-200 rounded-full text-[11px]" style={{ fontFamily: F }}>
+                        {area}
+                        <button onClick={() => setIndExpertAreas(prev => prev.filter(a => a !== area))} className="hover:text-red-500"><X size={10} /></button>
+                      </span>
+                    ))}
+                  </div>
+                  <div className="relative">
+                    <button onClick={() => setShowExpertDropdown(!showExpertDropdown)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-lg h-[36px] px-3 flex items-center justify-between text-[12px]" style={{ fontFamily: F }}>
+                      <span className="text-slate-400">Add expert areas...</span>
+                      <ChevronDown size={14} className="text-purple-700" />
+                    </button>
+                    {showExpertDropdown && (
+                      <>
+                        <div className="fixed inset-0 z-10" onClick={() => setShowExpertDropdown(false)} />
+                        <div className="absolute top-full mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg z-20 max-h-[180px] overflow-y-auto">
+                          {EXPERT_AREAS_OPTIONS.filter(a => !indExpertAreas.includes(a)).map(area => (
+                            <button key={area} onClick={() => { setIndExpertAreas(prev => [...prev, area]); }}
+                              className="w-full px-3 py-2 text-left text-[12px] text-slate-900 hover:bg-slate-50" style={{ fontFamily: F }}>{area}</button>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  <p className="text-[13px] font-semibold text-slate-800 mt-4" style={{ fontFamily: F }}>Required Documents</p>
                   <div className="space-y-2">
                     {INDIVIDUAL_DOC_CHECKLIST.map(doc => (
-                      <div key={doc} className={`flex items-center justify-between px-3 py-2 rounded-lg border ${indDocs.includes(doc) ? "bg-green-50 border-green-200" : "bg-slate-50 border-slate-200"}`}>
-                        <div className="flex items-center gap-2">
-                          {indDocs.includes(doc) ? <Check size={14} className="text-green-600" /> : <FileText size={14} className="text-slate-400" />}
-                          <span className="text-[12px] text-slate-700" style={{ fontFamily: F }}>{doc}</span>
+                      <div key={doc} className="space-y-1.5">
+                        <div className={`flex items-center justify-between px-3 py-2 rounded-lg border ${indDocs.includes(doc) ? "bg-green-50 border-green-200" : "bg-slate-50 border-slate-200"}`}>
+                          <div className="flex items-center gap-2">
+                            {indDocs.includes(doc) ? <Check size={14} className="text-green-600" /> : <FileText size={14} className="text-slate-400" />}
+                            <span className="text-[12px] text-slate-700" style={{ fontFamily: F }}>{doc}</span>
+                          </div>
+                          {!indDocs.includes(doc) && (
+                            <button onClick={() => handleUploadDoc("individual")} className="text-[11px] text-purple-700 hover:underline flex items-center gap-1" style={{ fontFamily: F }}>
+                              <Paperclip size={12} /> Upload
+                            </button>
+                          )}
                         </div>
-                        {!indDocs.includes(doc) && (
-                          <button onClick={() => handleUploadDoc("individual")} className="text-[11px] text-purple-700 hover:underline flex items-center gap-1" style={{ fontFamily: F }}>
-                            <Paperclip size={12} /> Upload
-                          </button>
-                        )}
+                        <div className="flex items-center gap-2 pl-6">
+                          <label className="text-[10px] text-slate-500" style={{ fontFamily: F }}>Expiry Date:</label>
+                          <input type="date" value={indDocExpiry[doc] || ""} onChange={e => setIndDocExpiry(prev => ({ ...prev, [doc]: e.target.value }))}
+                            className="bg-slate-50 border border-slate-200 rounded h-[28px] px-2 text-[11px] text-slate-700 focus:outline-none focus:ring-1 focus:ring-purple-500" style={{ fontFamily: F }} />
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -931,6 +1114,61 @@ export function Suppliers() {
                 style={{ backgroundColor: "#0B01D0", fontFamily: F }}
               >
                 Complete Onboarding
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════════════════
+         REACTIVATION CONFIRMATION MODAL
+         ══════════════════════════════════════════════════════════════════════ */}
+      {showReactivateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-[440px] overflow-hidden">
+            <div className="px-6 py-4 border-b border-blue-200 bg-blue-50">
+              <div className="flex items-center gap-3">
+                <ShieldCheck size={20} className="text-blue-600" />
+                <div>
+                  <h3 className="text-[15px] font-semibold text-slate-900" style={{ fontFamily: F }}>Reactivation Requires Approval</h3>
+                  <p className="text-[11px] text-slate-500" style={{ fontFamily: F }}>
+                    {showReactivateModal.type === "Firm"
+                      ? (showReactivateModal as FirmVendor).legalBusinessName
+                      : (showReactivateModal as IndividualVendor).legalName} ({showReactivateModal.vendorId})
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="px-6 py-5">
+              <p className="text-[12px] text-slate-600" style={{ fontFamily: F }}>
+                Reactivation of blacklisted or suspended vendors requires management approval. Clicking "Request Reactivation" will change the vendor status to <span className="font-semibold text-blue-700">Pending Reactivation</span> and notify the management team for review.
+              </p>
+              <div className="mt-3 px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-lg">
+                <p className="text-[11px] text-amber-700 flex items-center gap-1.5" style={{ fontFamily: F }}>
+                  <AlertTriangle size={12} /> The vendor will not be eligible for sourcing until management approves the reactivation.
+                </p>
+              </div>
+            </div>
+            <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-end gap-3">
+              <button onClick={() => setShowReactivateModal(null)}
+                className="px-4 py-2 border border-slate-200 rounded-lg text-[12px] text-slate-600 hover:bg-slate-50 transition-colors" style={{ fontFamily: F }}>
+                Cancel
+              </button>
+              <button onClick={() => {
+                // Change status to Pending Reactivation
+                const vendor = showReactivateModal;
+                if (vendor.type === "Firm") {
+                  const idx = firmVendors.findIndex(v => v.id === vendor.id);
+                  if (idx !== -1) firmVendors[idx].status = "Pending Reactivation";
+                } else {
+                  const idx = individualVendors.findIndex(v => v.id === vendor.id);
+                  if (idx !== -1) individualVendors[idx].status = "Pending Reactivation";
+                }
+                console.log(`Reactivation requested for ${vendor.vendorId} — status set to Pending Reactivation`);
+                setShowReactivateModal(null);
+              }}
+                className="px-5 py-2 rounded-lg text-[12px] font-medium text-white transition-opacity hover:opacity-90 bg-blue-600" style={{ fontFamily: F }}>
+                Request Reactivation
               </button>
             </div>
           </div>

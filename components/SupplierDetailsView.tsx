@@ -27,6 +27,13 @@ interface EvaluationRecord {
   comments: string;
 }
 
+interface HistoricalRate {
+  assignment: string;
+  rate: number;
+  rateType: "Daily" | "Monthly";
+  period: string;
+}
+
 export interface SupplierDetailData {
   id: string;
   vendorId: string;
@@ -43,6 +50,7 @@ export interface SupplierDetailData {
   totalOrders: number;
   totalSpend: number;
   documents: string[];
+  documentExpiry?: Record<string, string>;
   dateOnboarded: string;
   registrationNumber?: string;
   taxId?: string;
@@ -51,6 +59,8 @@ export interface SupplierDetailData {
   idNumber?: string;
   residentialAddress?: string;
   bankName?: string;
+  expertAreas?: string[];
+  historicalRates?: HistoricalRate[];
 }
 
 interface PurchaseOrder {
@@ -111,6 +121,8 @@ function getStatusBadge(status: string) {
       return { emoji: "🔴", bg: "bg-red-100 text-red-800 border-red-300", label: "Suspended" };
     case "Blacklisted":
       return { emoji: "⚫", bg: "bg-slate-200 text-slate-800 border-slate-400", label: "Blacklisted" };
+    case "Pending Reactivation":
+      return { emoji: "🔵", bg: "bg-blue-100 text-blue-800 border-blue-300", label: "Pending Reactivation" };
     default:
       return { emoji: "⚪", bg: "bg-slate-100 text-slate-600 border-slate-300", label: status };
   }
@@ -237,7 +249,7 @@ export function SupplierDetailsView({ supplier, onBack, onStatusChange }: Suppli
     }
     if (onStatusChange && showActionModal) {
       const statusMap: Record<string, string> = {
-        Flag: "Flagged", Suspend: "Suspended", Blacklist: "Blacklisted", Reactivate: "Active",
+        Flag: "Flagged", Suspend: "Suspended", Blacklist: "Blacklisted", Reactivate: "Pending Reactivation",
       };
       onStatusChange(vendorId, statusMap[showActionModal], actionReason);
     }
@@ -365,7 +377,7 @@ export function SupplierDetailsView({ supplier, onBack, onStatusChange }: Suppli
               <ShieldBan size={13} /> Blacklist
             </button>
           )}
-          {(supplier.status === "Flagged" || supplier.status === "Suspended") && (
+          {(supplier.status === "Flagged" || supplier.status === "Suspended" || supplier.status === "Blacklisted") && (
             <button onClick={() => setShowActionModal("Reactivate")}
               className="px-3 py-2 rounded-lg text-[12px] font-medium border border-green-300 bg-green-50 text-green-700 hover:bg-green-100 transition-colors flex items-center gap-1.5"
               style={{ fontFamily: F }}>
@@ -461,6 +473,53 @@ export function SupplierDetailsView({ supplier, onBack, onStatusChange }: Suppli
                 )}
               </div>
             </div>
+
+            {/* Expert Areas (Individual only) */}
+            {rich && supplier.expertAreas && supplier.expertAreas.length > 0 && (
+              <div className="bg-white rounded-xl border border-slate-200 p-6 mb-6">
+                <h2 className="text-[14px] font-semibold text-slate-900 mb-3" style={{ fontFamily: F }}>Expert Areas</h2>
+                <div className="flex flex-wrap gap-2">
+                  {supplier.expertAreas.map(area => (
+                    <span key={area} className="px-3 py-1 bg-purple-50 text-purple-700 border border-purple-200 rounded-full text-[11px] font-medium" style={{ fontFamily: F }}>
+                      {area}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Historical Rates (Individual only) */}
+            {rich && supplier.historicalRates && supplier.historicalRates.length > 0 && (
+              <div className="bg-white rounded-xl border border-slate-200 p-6 mb-6">
+                <h2 className="text-[14px] font-semibold text-slate-900 mb-3" style={{ fontFamily: F }}>Historical Rates</h2>
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-slate-200">
+                      <th className="text-left py-2 px-3 text-[11px] font-semibold text-slate-500" style={{ fontFamily: F }}>Assignment</th>
+                      <th className="text-right py-2 px-3 text-[11px] font-semibold text-slate-500" style={{ fontFamily: F }}>Rate (USD)</th>
+                      <th className="text-center py-2 px-3 text-[11px] font-semibold text-slate-500" style={{ fontFamily: F }}>Type</th>
+                      <th className="text-left py-2 px-3 text-[11px] font-semibold text-slate-500" style={{ fontFamily: F }}>Period</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {supplier.historicalRates.map((hr, i) => (
+                      <tr key={i} className={`border-b border-slate-100 ${i % 2 === 0 ? "" : "bg-slate-50/50"}`}>
+                        <td className="py-2 px-3 text-[12px] text-slate-900" style={{ fontFamily: F }}>{hr.assignment}</td>
+                        <td className="py-2 px-3 text-[12px] text-slate-900 text-right font-medium" style={{ fontFamily: F }}>
+                          {new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0 }).format(hr.rate)}
+                        </td>
+                        <td className="py-2 px-3 text-center">
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${hr.rateType === "Daily" ? "bg-blue-50 text-blue-700" : "bg-green-50 text-green-700"}`}>
+                            {hr.rateType}
+                          </span>
+                        </td>
+                        <td className="py-2 px-3 text-[12px] text-slate-600" style={{ fontFamily: F }}>{hr.period}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
 
             {/* Performance at a Glance */}
             {avg > 0 && (
@@ -612,20 +671,48 @@ export function SupplierDetailsView({ supplier, onBack, onStatusChange }: Suppli
             <h2 className="text-[14px] font-semibold text-slate-900 mb-4" style={{ fontFamily: F }}>Onboarding & Compliance Documents</h2>
             {documents.length > 0 ? (
               <div className="space-y-2">
-                {documents.map((doc, i) => (
-                  <div key={i} className="flex items-center justify-between px-4 py-3 bg-slate-50 rounded-lg border border-slate-100">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center">
-                        <CheckCircle2 size={14} className="text-green-600" />
+                {documents.map((doc, i) => {
+                  const expiry = rich && supplier.documentExpiry ? supplier.documentExpiry[doc] : undefined;
+                  const isExpired = expiry ? new Date(expiry) < new Date() : false;
+                  const isExpiringSoon = expiry ? (() => {
+                    const exp = new Date(expiry);
+                    const now = new Date();
+                    const in30 = new Date();
+                    in30.setDate(in30.getDate() + 30);
+                    return exp >= now && exp <= in30;
+                  })() : false;
+                  return (
+                    <div key={i} className={`flex items-center justify-between px-4 py-3 rounded-lg border ${
+                      isExpired ? "bg-red-50 border-red-200" : isExpiringSoon ? "bg-amber-50 border-amber-200" : "bg-slate-50 border-slate-100"
+                    }`}>
+                      <div className="flex items-center gap-3">
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                          isExpired ? "bg-red-100" : isExpiringSoon ? "bg-amber-100" : "bg-green-100"
+                        }`}>
+                          {isExpired ? <XCircle size={14} className="text-red-600" /> :
+                           isExpiringSoon ? <Clock size={14} className="text-amber-600" /> :
+                           <CheckCircle2 size={14} className="text-green-600" />}
+                        </div>
+                        <div>
+                          <p className="text-[12px] font-medium text-slate-900" style={{ fontFamily: F }}>{doc}</p>
+                          <p className="text-[10px] text-slate-400" style={{ fontFamily: F }}>
+                            {isExpired ? <span className="text-red-500 font-medium">Expired {expiry}</span> :
+                             isExpiringSoon ? <span className="text-amber-600 font-medium">Expiring {expiry}</span> :
+                             expiry ? `Expires ${expiry}` : "Verified · Uploaded on file"}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-[12px] font-medium text-slate-900" style={{ fontFamily: F }}>{doc}</p>
-                        <p className="text-[10px] text-slate-400" style={{ fontFamily: F }}>Verified &middot; Uploaded on file</p>
+                      <div className="flex items-center gap-2">
+                        {(isExpired || isExpiringSoon) && (
+                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-medium ${isExpired ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"}`}>
+                            {isExpired ? "EXPIRED" : "EXPIRING SOON"}
+                          </span>
+                        )}
+                        <button className="text-[11px] text-purple-700 hover:underline" style={{ fontFamily: F }}>View</button>
                       </div>
                     </div>
-                    <button className="text-[11px] text-purple-700 hover:underline" style={{ fontFamily: F }}>View</button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <p className="text-[13px] text-slate-400 text-center py-8" style={{ fontFamily: F }}>No documents on record.</p>
@@ -859,7 +946,7 @@ export function SupplierDetailsView({ supplier, onBack, onStatusChange }: Suppli
                 {showActionModal === "Flag" && "Flagging this vendor will mark them for review. They will remain eligible for active sourcing but will be highlighted for monitoring."}
                 {showActionModal === "Suspend" && "Suspending this vendor will immediately restrict them from participating in any active sourcing. This action can be reversed."}
                 {showActionModal === "Blacklist" && "Blacklisting permanently restricts this vendor from all procurement activities. This is a severe action typically reserved for fraud or gross misconduct."}
-                {showActionModal === "Reactivate" && "Reactivating will restore this vendor to Active status, making them eligible for sourcing activities again."}
+                {showActionModal === "Reactivate" && "Reactivation requires management approval. Submitting will set the vendor status to Pending Reactivation. The vendor will not be eligible for sourcing until management approves."}
               </p>
 
               <div className="mt-4">

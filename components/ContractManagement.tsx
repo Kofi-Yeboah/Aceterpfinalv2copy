@@ -408,6 +408,95 @@ export function ContractManagement() {
                   <p className="text-[13px] text-slate-400">No invoices recorded yet</p>
                 </div>
               )}
+
+              {/* ── FINANCE INTEGRATION SECTION ── */}
+              <div className="max-w-5xl mx-auto py-6 px-4 space-y-6">
+                {/* Remaining Balance */}
+                <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border-2 border-amber-200 p-5 flex items-center justify-between">
+                  <div>
+                    <p className="text-[10px] text-amber-600 uppercase tracking-wider font-semibold mb-1">Remaining Balance</p>
+                    <p className="text-[28px] font-bold text-amber-700">{fmt(balance)}</p>
+                    <p className="text-[11px] text-amber-600 mt-0.5">Contract Value {fmt(c.value)} — Total Paid {fmt(totalPaid)}</p>
+                  </div>
+                  <DollarSign size={32} className="text-amber-300" />
+                </div>
+
+                {/* Budget & Funding Info */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-white rounded-xl border border-slate-200 p-4">
+                    <p className="text-[10px] text-slate-400 uppercase tracking-wider font-medium mb-1">Budget Line</p>
+                    <p className="text-[13px] text-slate-800 font-semibold">{c.budgetLine || "Not assigned"}</p>
+                  </div>
+                  <div className="bg-white rounded-xl border border-slate-200 p-4">
+                    <p className="text-[10px] text-slate-400 uppercase tracking-wider font-medium mb-1">Funding Source</p>
+                    <p className="text-[13px] text-slate-800 font-semibold">{c.fundingSource || "Not assigned"}</p>
+                  </div>
+                </div>
+
+                {/* Payment Processing — only Supervisor Approved invoices get the Process Payment form */}
+                {invoices.filter(inv => inv.status === "Supervisor Approved").length > 0 && (
+                  <section className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                    <div className="px-5 py-3 bg-emerald-50 border-b border-slate-200 flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-md bg-emerald-100 flex items-center justify-center"><DollarSign size={13} className="text-emerald-600" /></div>
+                      <h2 className="text-[13px] font-semibold text-slate-800">Payment Processing</h2>
+                      <span className="ml-auto text-[10px] text-emerald-600 font-medium">{invoices.filter(inv => inv.status === "Supervisor Approved").length} invoice(s) ready for payment</span>
+                    </div>
+                    <div className="p-5 space-y-4">
+                      {invoices.filter(inv => inv.status === "Supervisor Approved").map(inv => (
+                        <PaymentProcessingCard key={inv.id} invoice={inv} contract={c} />
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {/* Invoices in pipeline (not yet Supervisor Approved, not Paid/Queried) */}
+                {invoices.filter(inv => inv.status !== "Paid" && inv.status !== "Queried" && inv.status !== "Supervisor Approved").length > 0 && (
+                  <section className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                    <div className="px-5 py-3 bg-blue-50 border-b border-slate-200 flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-md bg-blue-100 flex items-center justify-center"><Clock size={13} className="text-blue-600" /></div>
+                      <h2 className="text-[13px] font-semibold text-slate-800">Invoices in Approval Pipeline</h2>
+                    </div>
+                    <div className="p-5 space-y-2">
+                      {invoices.filter(inv => inv.status !== "Paid" && inv.status !== "Queried" && inv.status !== "Supervisor Approved").map(inv => (
+                        <div key={inv.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-100">
+                          <div className="flex items-center gap-3">
+                            <span className="text-[11px] font-semibold text-slate-800">{inv.invoiceNumber}</span>
+                            <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-medium", INV_COLORS[inv.status])}>{inv.status}</span>
+                          </div>
+                          <span className="text-[11px] font-medium text-slate-700">{fmt(inv.amount)}</span>
+                        </div>
+                      ))}
+                      <p className="text-[10px] text-slate-400 pt-1">Invoices must reach &quot;Supervisor Approved&quot; status before payment can be processed.</p>
+                    </div>
+                  </section>
+                )}
+
+                {/* Paid Invoices Summary */}
+                {invoices.filter(inv => inv.status === "Paid").length > 0 && (
+                  <section className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                    <div className="px-5 py-3 bg-emerald-50 border-b border-slate-200 flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-md bg-emerald-100 flex items-center justify-center"><CheckCircle size={13} className="text-emerald-600" /></div>
+                      <h2 className="text-[13px] font-semibold text-slate-800">Completed Payments</h2>
+                    </div>
+                    <div className="p-5 space-y-2">
+                      {invoices.filter(inv => inv.status === "Paid").map(inv => (
+                        <div key={inv.id} className="flex items-center justify-between p-3 bg-emerald-50/50 rounded-lg border border-emerald-100">
+                          <div className="flex items-center gap-3">
+                            <span className="text-[11px] font-semibold text-slate-800">{inv.invoiceNumber}</span>
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 text-emerald-700">Paid</span>
+                            {inv.paymentMethod && <span className="text-[10px] text-slate-500">{inv.paymentMethod}</span>}
+                            {inv.referenceNumber && <span className="text-[10px] text-slate-400">Ref: {inv.referenceNumber}</span>}
+                          </div>
+                          <div className="text-right">
+                            <span className="text-[11px] font-medium text-emerald-700">{fmt(inv.amountPaid || inv.amount)}</span>
+                            {inv.datePaid && <p className="text-[9px] text-slate-400">{fmtDate(inv.datePaid)}</p>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                )}
+              </div>
             </div>
           )}
 
@@ -480,6 +569,25 @@ export function ContractManagement() {
                         {cr.approvedBy && (
                           <div className="pt-2 flex items-center gap-2 text-[10px] text-emerald-600">
                             <CheckCircle size={12} /> Approved by {cr.approvedBy} on {fmtDate(cr.approvedDate)}
+                          </div>
+                        )}
+                        {(cr.status === "Approved" || cr.status === "Implemented") && (
+                          <div className="mt-3 bg-emerald-50 rounded-lg border border-emerald-200 p-4">
+                            <p className="text-[11px] font-bold text-emerald-800 mb-3 flex items-center gap-1.5"><BarChart3 size={13} /> Impact Summary</p>
+                            <div className="grid grid-cols-3 gap-3">
+                              <div className="bg-white rounded-lg p-2.5 border border-emerald-100 text-center">
+                                <p className="text-[9px] text-slate-400 uppercase tracking-wider font-medium mb-0.5">Revised Contract Value</p>
+                                <p className="text-[14px] font-semibold text-emerald-700">{cr.revisedValue ? fmt(cr.revisedValue) : fmt(c.value)}</p>
+                              </div>
+                              <div className="bg-white rounded-lg p-2.5 border border-emerald-100 text-center">
+                                <p className="text-[9px] text-slate-400 uppercase tracking-wider font-medium mb-0.5">Revised End Date</p>
+                                <p className="text-[14px] font-semibold text-slate-800">{cr.revisedEndDate ? fmtDate(cr.revisedEndDate) : fmtDate(c.endDate)}</p>
+                              </div>
+                              <div className="bg-white rounded-lg p-2.5 border border-emerald-100 text-center">
+                                <p className="text-[9px] text-slate-400 uppercase tracking-wider font-medium mb-0.5">Updated Deliverables Schedule</p>
+                                <p className="text-[14px] font-semibold text-slate-800">{cr.estimatedTimeImpact !== "None" ? `Extended by ${cr.estimatedTimeImpact}` : "No change"}</p>
+                              </div>
+                            </div>
                           </div>
                         )}
                         {cr.status === "Pending Approval" && (
@@ -562,9 +670,31 @@ export function ContractManagement() {
                           </div>
                         )}
                         {ev.overallScore < 5 && (
-                          <div className="flex items-center gap-2 px-3 py-2 bg-red-50 border border-red-200 rounded-lg">
-                            <Flag size={12} className="text-red-500" />
-                            <p className="text-[11px] text-red-700 font-medium">Poor performer flagged — management approval required for future sourcing</p>
+                          <div className="space-y-2">
+                            <div className="flex items-start gap-3 px-4 py-3 bg-red-50 border-2 border-red-300 rounded-lg">
+                              <AlertTriangle size={16} className="text-red-600 shrink-0 mt-0.5" />
+                              <div className="flex-1">
+                                <p className="text-[12px] text-red-800 font-bold">POOR PERFORMANCE FLAGGED</p>
+                                <p className="text-[11px] text-red-700 mt-0.5">This vendor scored below 5.0. Future sourcing engagement requires management approval.</p>
+                              </div>
+                            </div>
+                            {!ev.vendorFlagged ? (
+                              <button
+                                onClick={() => {
+                                  const updatedEvals = (c.performanceEvaluations || []).map(e =>
+                                    e.id === ev.id ? { ...e, vendorFlagged: true } : e
+                                  );
+                                  updateContract(c.id, { performanceEvaluations: updatedEvals });
+                                }}
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 text-white rounded-lg text-[11px] font-medium hover:bg-red-700"
+                              >
+                                <Flag size={12} /> Flag Vendor
+                              </button>
+                            ) : (
+                              <div className="flex items-center gap-2 text-[11px] text-red-600 font-medium">
+                                <Flag size={12} /> Vendor has been flagged for management review
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
@@ -581,8 +711,30 @@ export function ContractManagement() {
           )}
 
           {/* ── CLOSE-OUT ── */}
-          {detailTab === "closeout" && (
+          {detailTab === "closeout" && (() => {
+            const checklistItems = [closeOut.allDeliverablesCompleted, closeOut.procurementCompliance, closeOut.allPaymentsCompleted, closeOut.performanceFinalized, closeOut.allDocsUploaded];
+            const checkedCount = checklistItems.filter(Boolean).length;
+            const allChecked = checkedCount === 5;
+            const hasCertificate = !!closeOut.completionCertificate;
+            const hasReport = !!closeOut.closureReport;
+            const canClose = allChecked && hasCertificate && hasReport;
+            return (
             <div className="max-w-3xl mx-auto py-6 px-4 space-y-6">
+              {/* Progress Bar */}
+              <div className="bg-white rounded-xl border border-slate-200 p-5">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-[12px] font-semibold text-slate-800">Close-Out Progress</p>
+                  <p className="text-[12px] font-semibold text-slate-600">{checkedCount}/5 items completed</p>
+                </div>
+                <div className="w-full bg-slate-100 rounded-full h-3">
+                  <div
+                    className={cn("h-3 rounded-full transition-all duration-500", checkedCount === 5 ? "bg-emerald-500" : checkedCount >= 3 ? "bg-amber-500" : "bg-red-400")}
+                    style={{ width: `${(checkedCount / 5) * 100}%` }}
+                  />
+                </div>
+                <p className="text-[10px] text-slate-400 mt-1.5">{checkedCount === 5 ? "All checklist items completed" : `${5 - checkedCount} item(s) remaining`}</p>
+              </div>
+
               <section className="bg-white rounded-xl border border-slate-200 overflow-hidden">
                 <div className="px-5 py-3 bg-indigo-50 border-b border-slate-200 flex items-center gap-2">
                   <div className="w-6 h-6 rounded-md bg-[#0B01D0]/10 flex items-center justify-center"><Shield size={13} className="text-[#0B01D0]" /></div>
@@ -618,67 +770,254 @@ export function ContractManagement() {
                 </div>
               </section>
 
-              {closeOut.completionCertificate && (
-                <section className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-                  <div className="px-5 py-3 bg-emerald-50 border-b border-slate-200 flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-md bg-emerald-100 flex items-center justify-center"><FileText size={13} className="text-emerald-600" /></div>
-                    <h2 className="text-[13px] font-semibold text-slate-800">Closure Documents</h2>
-                  </div>
-                  <div className="p-5 space-y-2">
-                    {closeOut.completionCertificate && (
-                      <div className="flex items-center gap-3 p-2.5 bg-slate-50 border border-slate-200 rounded-lg">
-                        <FileText size={14} className="text-emerald-600" />
-                        <div className="flex-1">
-                          <p className="text-[11px] font-medium text-slate-800">Certificate of Completion</p>
-                          <p className="text-[10px] text-slate-400">{closeOut.completionCertificate}</p>
-                        </div>
-                        <button className="text-[10px] text-[#0B01D0] font-medium">Download</button>
-                      </div>
-                    )}
-                    {closeOut.closureReport && (
-                      <div className="flex items-center gap-3 p-2.5 bg-slate-50 border border-slate-200 rounded-lg">
-                        <FileText size={14} className="text-blue-600" />
-                        <div className="flex-1">
-                          <p className="text-[11px] font-medium text-slate-800">Final Contract Closure Report</p>
-                          <p className="text-[10px] text-slate-400">{closeOut.closureReport}</p>
-                        </div>
-                        <button className="text-[10px] text-[#0B01D0] font-medium">Download</button>
-                      </div>
-                    )}
-                    {closeOut.closedDate && (
-                      <p className="text-[10px] text-slate-400 pt-2">Closed on {fmtDate(closeOut.closedDate)} by {closeOut.closedBy}</p>
-                    )}
-                  </div>
-                </section>
-              )}
+              {/* Generate Documents Section */}
+              <section className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                <div className="px-5 py-3 bg-emerald-50 border-b border-slate-200 flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-md bg-emerald-100 flex items-center justify-center"><FileText size={13} className="text-emerald-600" /></div>
+                  <h2 className="text-[13px] font-semibold text-slate-800">Closure Documents</h2>
+                </div>
+                <div className="p-5 space-y-4">
+                  {/* Generate buttons */}
+                  {c.status !== "Closed" && (
+                    <div className="flex items-center gap-3 mb-3">
+                      <button
+                        onClick={() => {
+                          if (!closeOut.completionCertificate) {
+                            updateContract(c.id, {
+                              closeOut: { ...closeOut, completionCertificate: `CompletionCert_${c.contractNumber}.pdf` },
+                            });
+                          }
+                        }}
+                        disabled={!!closeOut.completionCertificate}
+                        className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium", closeOut.completionCertificate ? "bg-slate-100 text-slate-400 cursor-not-allowed" : "bg-emerald-600 text-white hover:bg-emerald-700")}
+                      >
+                        <CheckCircle size={12} /> {closeOut.completionCertificate ? "Certificate Generated" : "Generate Certificate"}
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (!closeOut.closureReport) {
+                            updateContract(c.id, {
+                              closeOut: { ...closeOut, closureReport: `ClosureReport_${c.contractNumber}.pdf` },
+                            });
+                          }
+                        }}
+                        disabled={!!closeOut.closureReport}
+                        className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium", closeOut.closureReport ? "bg-slate-100 text-slate-400 cursor-not-allowed" : "bg-blue-600 text-white hover:bg-blue-700")}
+                      >
+                        <FileText size={12} /> {closeOut.closureReport ? "Report Generated" : "Generate Closure Report"}
+                      </button>
+                    </div>
+                  )}
 
-              {/* Close contract button */}
-              {c.status !== "Closed" && (
+                  {/* ── Certificate of Completion Template Preview ── */}
+                  {closeOut.completionCertificate && (
+                    <div className="border-2 border-emerald-200 rounded-xl overflow-hidden">
+                      <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 px-6 py-4 text-center">
+                        <p className="text-[10px] text-emerald-200 uppercase tracking-[3px] font-semibold">Certificate of Completion</p>
+                        <p className="text-[18px] text-white font-bold mt-1">ACET Procurement</p>
+                      </div>
+                      <div className="bg-white px-6 py-5 space-y-4">
+                        <div className="text-center pb-3 border-b border-slate-100">
+                          <p className="text-[11px] text-slate-500">This certifies that all obligations under the following contract have been fulfilled.</p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-x-6 gap-y-2.5">
+                          {[
+                            ["Contract #", c.contractNumber],
+                            ["Vendor / Consultant", c.party],
+                            ["Contract Value", fmt(c.value)],
+                            ["Category", c.category],
+                            ["Start Date", fmtDate(c.startDate)],
+                            ["End Date", fmtDate(c.endDate)],
+                          ].map(([label, value], i) => (
+                            <div key={i} className="flex justify-between items-center py-1.5 border-b border-dashed border-slate-100">
+                              <span className="text-[10px] text-slate-400 font-medium">{label}</span>
+                              <span className="text-[11px] text-slate-800 font-semibold">{value}</span>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="bg-emerald-50 rounded-lg p-3 border border-emerald-100 text-center">
+                          <CheckCircle size={16} className="text-emerald-600 mx-auto mb-1" />
+                          <p className="text-[11px] text-emerald-800 font-semibold">All deliverables completed and accepted</p>
+                          <p className="text-[10px] text-emerald-600 mt-0.5">All payments processed and settled</p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-6 pt-3 border-t border-slate-100">
+                          <div className="text-center">
+                            <p className="text-[10px] text-slate-400 font-medium mb-1">Date of Certification</p>
+                            <p className="text-[12px] text-slate-800 font-semibold">{fmtDate(closeOut.closedDate || new Date().toISOString().split("T")[0])}</p>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-[10px] text-slate-400 font-medium mb-1">Signed By</p>
+                            <p className="text-[12px] text-slate-800 font-semibold">{closeOut.closedBy || c.owner || "Contract Coordinator"}</p>
+                            <div className="mt-2 border-t border-slate-300 w-32 mx-auto" />
+                            <p className="text-[9px] text-slate-400 mt-0.5">Authorized Signatory</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="bg-slate-50 px-6 py-2 flex items-center justify-between border-t border-slate-200">
+                        <p className="text-[9px] text-slate-400">{closeOut.completionCertificate}</p>
+                        <button className="text-[10px] text-[#0B01D0] font-medium flex items-center gap-1"><Printer size={10} /> Print</button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ── Contract Closure Report Template Preview ── */}
+                  {closeOut.closureReport && (() => {
+                    const reportDeliverables = deliverables;
+                    const reportDelAccepted = reportDeliverables.filter(d => d.status === "Accepted").length;
+                    const reportDelTotal = reportDeliverables.length;
+                    const reportInvoices = invoices;
+                    const reportTotalPaid = reportInvoices.filter(i => i.status === "Paid").reduce((s, i) => s + (i.amountPaid || 0), 0);
+                    const reportEvaluations = evaluations;
+                    const reportLatestScore = reportEvaluations.length > 0 ? reportEvaluations[reportEvaluations.length - 1].overallScore : null;
+                    const reportChanges = changeRequests;
+                    const reportAmendments = reportChanges.filter(cr => cr.status === "Approved" || cr.status === "Implemented").length;
+                    return (
+                    <div className="border-2 border-blue-200 rounded-xl overflow-hidden">
+                      <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">
+                        <p className="text-[10px] text-blue-200 uppercase tracking-[3px] font-semibold">Contract Closure Report</p>
+                        <p className="text-[16px] text-white font-bold mt-1">{c.contractNumber} — {c.title}</p>
+                        <p className="text-[11px] text-blue-200 mt-0.5">{c.party} | {c.category}</p>
+                      </div>
+                      <div className="bg-white px-6 py-5 space-y-5">
+                        {/* Contract Summary */}
+                        <div>
+                          <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mb-2 flex items-center gap-1.5"><FileText size={11} /> Contract Summary</p>
+                          <div className="grid grid-cols-2 gap-x-6 gap-y-1.5">
+                            {[
+                              ["Contract Number", c.contractNumber],
+                              ["Vendor", c.party],
+                              ["Category", c.category],
+                              ["Method", c.method],
+                              ["Contract Value", fmt(c.value)],
+                              ["Duration", `${fmtDate(c.startDate)} — ${fmtDate(c.endDate)}`],
+                              ["Department", c.department],
+                              ["Contract Type", c.contractType || "—"],
+                            ].map(([label, value], i) => (
+                              <div key={i} className="flex justify-between items-center py-1 border-b border-dashed border-slate-100">
+                                <span className="text-[10px] text-slate-400">{label}</span>
+                                <span className="text-[10px] text-slate-700 font-medium">{value}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Deliverables Summary */}
+                        <div className="bg-purple-50 rounded-lg p-3.5 border border-purple-100">
+                          <p className="text-[10px] text-purple-700 font-semibold uppercase tracking-wider mb-1.5 flex items-center gap-1.5"><Package size={11} /> Deliverables Summary</p>
+                          <div className="flex items-center gap-4">
+                            <div className="text-center">
+                              <p className="text-[20px] font-bold text-purple-700">{reportDelAccepted}<span className="text-[12px] text-purple-400">/{reportDelTotal}</span></p>
+                              <p className="text-[9px] text-purple-500">Completed</p>
+                            </div>
+                            <div className="flex-1 bg-purple-100 rounded-full h-2.5">
+                              <div className="bg-purple-600 h-2.5 rounded-full" style={{ width: reportDelTotal > 0 ? `${(reportDelAccepted / reportDelTotal) * 100}%` : "0%" }} />
+                            </div>
+                            <p className="text-[10px] text-purple-600 font-medium">{reportDelTotal > 0 ? Math.round((reportDelAccepted / reportDelTotal) * 100) : 0}%</p>
+                          </div>
+                        </div>
+
+                        {/* Payment Summary */}
+                        <div className="bg-emerald-50 rounded-lg p-3.5 border border-emerald-100">
+                          <p className="text-[10px] text-emerald-700 font-semibold uppercase tracking-wider mb-1.5 flex items-center gap-1.5"><DollarSign size={11} /> Payment Summary</p>
+                          <div className="grid grid-cols-3 gap-3">
+                            <div className="text-center">
+                              <p className="text-[14px] font-bold text-emerald-700">{fmt(reportTotalPaid)}</p>
+                              <p className="text-[9px] text-emerald-500">Total Paid</p>
+                            </div>
+                            <div className="text-center">
+                              <p className="text-[14px] font-bold text-slate-700">{fmt(c.value)}</p>
+                              <p className="text-[9px] text-slate-400">Contract Value</p>
+                            </div>
+                            <div className="text-center">
+                              <p className="text-[14px] font-bold text-amber-600">{fmt(c.value - reportTotalPaid)}</p>
+                              <p className="text-[9px] text-amber-500">Remaining</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Performance Summary */}
+                        <div className="bg-amber-50 rounded-lg p-3.5 border border-amber-100">
+                          <p className="text-[10px] text-amber-700 font-semibold uppercase tracking-wider mb-1.5 flex items-center gap-1.5"><Star size={11} /> Performance Summary</p>
+                          {reportLatestScore !== null ? (
+                            <div className="flex items-center gap-3">
+                              <p className={cn("text-[20px] font-bold", reportLatestScore >= 7 ? "text-emerald-600" : reportLatestScore >= 5 ? "text-amber-600" : "text-red-600")}>{reportLatestScore.toFixed(1)}<span className="text-[12px] text-slate-400">/10</span></p>
+                              <p className="text-[10px] text-slate-500">{reportEvaluations.length} evaluation(s) on record</p>
+                              {reportLatestScore < 5 && <span className="px-1.5 py-0.5 bg-red-100 text-red-700 rounded text-[9px] font-semibold">Poor Performer</span>}
+                            </div>
+                          ) : (
+                            <p className="text-[10px] text-slate-400 italic">No evaluations recorded</p>
+                          )}
+                        </div>
+
+                        {/* Change Management Summary */}
+                        <div className="bg-slate-50 rounded-lg p-3.5 border border-slate-100">
+                          <p className="text-[10px] text-slate-600 font-semibold uppercase tracking-wider mb-1.5 flex items-center gap-1.5"><Edit2 size={11} /> Change Management Summary</p>
+                          <div className="flex items-center gap-4">
+                            <p className="text-[20px] font-bold text-slate-700">{reportChanges.length}</p>
+                            <div className="text-[10px] text-slate-500">
+                              <p>Total change requests ({reportAmendments} approved/implemented)</p>
+                              {reportChanges.length > 0 && <p className="text-slate-400 mt-0.5">Types: {[...new Set(reportChanges.flatMap(cr => cr.types))].join(", ")}</p>}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Key Dates */}
+                        <div>
+                          <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mb-2 flex items-center gap-1.5"><Calendar size={11} /> Key Dates</p>
+                          <div className="grid grid-cols-4 gap-3">
+                            {[
+                              ["Award Date", fmtDate(c.awardDate)],
+                              ["Start Date", fmtDate(c.startDate)],
+                              ["End Date", fmtDate(c.endDate)],
+                              ["Close Date", fmtDate(closeOut.closedDate || new Date().toISOString().split("T")[0])],
+                            ].map(([label, value], i) => (
+                              <div key={i} className="bg-slate-50 rounded-lg p-2 border border-slate-100 text-center">
+                                <p className="text-[9px] text-slate-400 font-medium">{label}</p>
+                                <p className="text-[11px] text-slate-800 font-semibold">{value}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="bg-slate-50 px-6 py-2 flex items-center justify-between border-t border-slate-200">
+                        <p className="text-[9px] text-slate-400">{closeOut.closureReport}</p>
+                        <button className="text-[10px] text-[#0B01D0] font-medium flex items-center gap-1"><Printer size={10} /> Print</button>
+                      </div>
+                    </div>
+                    );
+                  })()}
+
+                  {closeOut.closedDate && (
+                    <p className="text-[10px] text-slate-400 pt-2">Closed on {fmtDate(closeOut.closedDate)} by {closeOut.closedBy}</p>
+                  )}
+                </div>
+              </section>
+
+              {/* Close contract button — only visible when ALL conditions met */}
+              {c.status !== "Closed" && canClose && (
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => {
-                      const allChecked = closeOut.allDeliverablesCompleted && closeOut.procurementCompliance && closeOut.allPaymentsCompleted && closeOut.performanceFinalized && closeOut.allDocsUploaded;
-                      if (!allChecked) {
-                        alert("All checklist items must be completed before closing the contract.");
-                        return;
-                      }
                       const today = new Date().toISOString().split("T")[0];
                       updateContract(c.id, {
                         status: "Closed",
-                        closeOut: { ...closeOut, closedDate: today, closedBy: "Current User", completionCertificate: closeOut.completionCertificate || `CompletionCert_${c.contractNumber}.pdf`, closureReport: closeOut.closureReport || `ClosureReport_${c.contractNumber}.pdf` },
+                        closeOut: { ...closeOut, closedDate: today, closedBy: "Current User" },
                       });
                     }}
                     className="flex items-center gap-1.5 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[12px] font-medium"
                   >
                     <Shield size={13} /> Close Contract
                   </button>
-                  <button className="flex items-center gap-1.5 px-5 py-2.5 border border-slate-200 rounded-lg hover:bg-slate-50 text-[12px] text-slate-600 font-medium">
-                    <Upload size={13} /> Upload Certificate
-                  </button>
+                </div>
+              )}
+              {c.status !== "Closed" && !canClose && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+                  <p className="text-[11px] text-amber-700 font-medium">To close this contract, complete all 5 checklist items and generate both the Completion Certificate and Closure Report.</p>
                 </div>
               )}
             </div>
-          )}
+            );
+          })()}
 
           {/* ── DOCUMENTS ── */}
           {detailTab === "documents" && (
@@ -815,7 +1154,20 @@ export function ContractManagement() {
                 <tr key={c.id} onClick={() => { setSelectedContract(c); setDetailTab("overview"); }} className={cn("hover:bg-slate-50 cursor-pointer transition-colors", i % 2 === 1 && "bg-slate-50/50")}>
                   <td className="px-4 py-3 text-[11px] text-[#0B01D0] font-medium">{c.contractNumber}</td>
                   <td className="px-4 py-3 text-[11px] text-slate-800 font-medium max-w-[180px] truncate">{c.title}</td>
-                  <td className="px-4 py-3 text-[11px] text-slate-600">{c.party}</td>
+                  <td className="px-4 py-3 text-[11px] text-slate-600">
+                    <span className="flex items-center gap-1.5">
+                      {c.party}
+                      {(() => {
+                        const evals = c.performanceEvaluations || [];
+                        const latest = evals.length > 0 ? evals[evals.length - 1] : null;
+                        return latest && latest.overallScore < 5 ? (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-red-100 border border-red-300 text-red-700 rounded-full text-[9px] font-semibold shrink-0" title={`Latest score: ${latest.overallScore.toFixed(1)}/10`}>
+                            <AlertTriangle size={10} /> Poor Performer
+                          </span>
+                        ) : null;
+                      })()}
+                    </span>
+                  </td>
                   <td className="px-4 py-3 text-[11px] text-slate-600">{c.category}</td>
                   <td className="px-4 py-3 text-[11px] text-slate-700 font-medium">{fmt(c.value)}</td>
                   <td className="px-4 py-3 text-[11px] text-slate-600">{fmtDate(c.startDate)}</td>
@@ -1085,6 +1437,73 @@ function InvoiceModal({ contract: c, onClose }: { contract: AwardedContract; onC
           <button onClick={onClose} className="px-4 py-2 border border-slate-200 rounded-lg text-[12px] text-slate-600 font-medium hover:bg-slate-50">Cancel</button>
           <button onClick={handleSubmit} className="px-4 py-2 bg-[#0B01D0] text-white rounded-lg text-[12px] font-medium hover:bg-[#0a01b8]">Submit Invoice</button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   INLINE: Payment Processing Card (Finance Integration)
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+function PaymentProcessingCard({ invoice, contract }: { invoice: ContractInvoice; contract: AwardedContract }) {
+  const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split("T")[0]);
+  const [amountPaid, setAmountPaid] = useState(String(invoice.amount));
+  const [paymentMethod, setPaymentMethod] = useState<"Wire Transfer" | "Cheque" | "Mobile Money">("Wire Transfer");
+  const [refNumber, setRefNumber] = useState("");
+
+  const handleProcessPayment = () => {
+    if (!refNumber) return;
+    const updatedInvoices = (contract.invoices || []).map(inv => {
+      if (inv.id !== invoice.id) return inv;
+      return {
+        ...inv,
+        status: "Paid" as const,
+        datePaid: paymentDate,
+        amountPaid: parseFloat(amountPaid) || invoice.amount,
+        paymentMethod,
+        referenceNumber: refNumber,
+        paymentInfo: `${paymentMethod} — Ref: ${refNumber} — ${paymentDate}`,
+      };
+    });
+    updateContract(contract.id, { invoices: updatedInvoices });
+  };
+
+  return (
+    <div className="bg-slate-50 rounded-lg border border-slate-200 p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-[12px] font-semibold text-slate-800">{invoice.invoiceNumber}</span>
+          <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-medium", INV_COLORS[invoice.status])}>{invoice.status}</span>
+        </div>
+        <p className="text-[12px] font-semibold text-slate-700">{fmt(invoice.amount)}</p>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="text-[10px] text-slate-400 font-medium uppercase tracking-wider mb-1 block">Payment Date</label>
+          <input type="date" value={paymentDate} onChange={e => setPaymentDate(e.target.value)} className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-[11px] text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#0B01D0]/20" />
+        </div>
+        <div>
+          <label className="text-[10px] text-slate-400 font-medium uppercase tracking-wider mb-1 block">Amount Paid ($)</label>
+          <input type="number" value={amountPaid} onChange={e => setAmountPaid(e.target.value)} className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-[11px] text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#0B01D0]/20" />
+        </div>
+        <div>
+          <label className="text-[10px] text-slate-400 font-medium uppercase tracking-wider mb-1 block">Payment Method</label>
+          <div className="flex gap-1.5">
+            {(["Wire Transfer", "Cheque", "Mobile Money"] as const).map(m => (
+              <button key={m} onClick={() => setPaymentMethod(m)} className={cn("px-2 py-1 rounded text-[10px] font-medium border transition-colors", paymentMethod === m ? "bg-[#0B01D0] text-white border-[#0B01D0]" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50")}>{m}</button>
+            ))}
+          </div>
+        </div>
+        <div>
+          <label className="text-[10px] text-slate-400 font-medium uppercase tracking-wider mb-1 block">Reference Number *</label>
+          <input type="text" value={refNumber} onChange={e => setRefNumber(e.target.value)} placeholder="e.g. TXN-12345" className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-[11px] text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#0B01D0]/20" />
+        </div>
+      </div>
+      <div className="flex justify-end">
+        <button onClick={handleProcessPayment} disabled={!refNumber} className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium", refNumber ? "bg-emerald-600 text-white hover:bg-emerald-700" : "bg-slate-200 text-slate-400 cursor-not-allowed")}>
+          <CheckCircle size={12} /> Process Payment
+        </button>
       </div>
     </div>
   );

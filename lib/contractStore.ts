@@ -74,6 +74,8 @@ export interface ContractInvoice {
   submittedVia: "Vendor Portal" | "Email" | "Manual";
   reviewedBy?: string;
   approvedBy?: string;
+  paymentMethod?: "Wire Transfer" | "Cheque" | "Mobile Money";
+  referenceNumber?: string;
 }
 
 // ── NEW: Change Request ──
@@ -107,6 +109,7 @@ export interface PerformanceEvaluation {
   criteria: { name: string; score: number; maxScore: number }[];
   overallScore: number;
   comments: string;
+  vendorFlagged?: boolean;
 }
 
 // ── NEW: Contract Coordinator ──
@@ -163,6 +166,8 @@ export interface AwardedContract {
   changeRequests?: ContractChangeRequest[];
   performanceEvaluations?: PerformanceEvaluation[];
   closeOut?: ContractCloseOut;
+  budgetLine?: string;
+  fundingSource?: string;
 }
 
 type Listener = () => void;
@@ -217,6 +222,8 @@ let contracts: AwardedContract[] = [
     changeRequests: [],
     performanceEvaluations: [],
     closeOut: { allDeliverablesCompleted: false, procurementCompliance: false, allPaymentsCompleted: false, performanceFinalized: false, allDocsUploaded: false },
+    budgetLine: "BL-2024-PROG-001",
+    fundingSource: "Core Program Funding",
   },
   {
     id: "AC-2",
@@ -259,6 +266,8 @@ let contracts: AwardedContract[] = [
       { id: "pe-1", evaluationType: "Final", evaluationDate: "2025-03-10", evaluator: "Ama Darko", supervisorApproval: "James Owusu", status: "Final", criteria: [{ name: "Quality of deliverables", score: 9, maxScore: 10 }, { name: "Timeliness", score: 10, maxScore: 10 }, { name: "Cost control", score: 10, maxScore: 10 }, { name: "Compliance with terms", score: 9, maxScore: 10 }, { name: "Professionalism", score: 8, maxScore: 10 }], overallScore: 9.2, comments: "Excellent delivery, ahead of schedule." },
     ],
     closeOut: { allDeliverablesCompleted: true, procurementCompliance: true, allPaymentsCompleted: true, performanceFinalized: true, allDocsUploaded: true, completionCertificate: "CompletionCert_PrintWorks.pdf", closureReport: "ClosureReport_CNT002.pdf", closedDate: "2025-03-15", closedBy: "James Owusu" },
+    budgetLine: "BL-2024-PROG-002",
+    fundingSource: "Core Program Funding",
   },
   {
     id: "AC-3",
@@ -309,6 +318,8 @@ let contracts: AwardedContract[] = [
     ],
     performanceEvaluations: [],
     closeOut: { allDeliverablesCompleted: false, procurementCompliance: false, allPaymentsCompleted: false, performanceFinalized: false, allDocsUploaded: false },
+    budgetLine: "BL-2025-IT-010",
+    fundingSource: "Capital Expenditure Fund",
   },
   {
     id: "AC-4",
@@ -364,6 +375,8 @@ let contracts: AwardedContract[] = [
       { id: "pe-2", evaluationType: "Mid-Term", evaluationDate: "2025-05-15", evaluator: "Grace Tetteh", supervisorApproval: "James Owusu", status: "Final", criteria: [{ name: "Quality of deliverables", score: 8, maxScore: 10 }, { name: "Timeliness", score: 7, maxScore: 10 }, { name: "Cost control", score: 9, maxScore: 10 }, { name: "Compliance with terms", score: 8, maxScore: 10 }, { name: "Professionalism", score: 9, maxScore: 10 }], overallScore: 8.2, comments: "Good performance overall. Minor delays in Sprint 1." },
     ],
     closeOut: { allDeliverablesCompleted: false, procurementCompliance: false, allPaymentsCompleted: false, performanceFinalized: false, allDocsUploaded: false },
+    budgetLine: "BL-2025-ME-015",
+    fundingSource: "Donor Grant — DFID",
   },
   {
     id: "AC-5",
@@ -411,6 +424,8 @@ let contracts: AwardedContract[] = [
     changeRequests: [],
     performanceEvaluations: [],
     closeOut: { allDeliverablesCompleted: false, procurementCompliance: false, allPaymentsCompleted: false, performanceFinalized: false, allDocsUploaded: false },
+    budgetLine: "BL-2025-ADMIN-020",
+    fundingSource: "Operational Budget",
   },
 ];
 

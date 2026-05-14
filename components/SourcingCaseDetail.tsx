@@ -59,6 +59,9 @@ export interface VendorBid {
   dateReceived: string;
   bidReference?: string;
   notes?: string;
+  technicalProposal?: string;
+  financialProposal?: string;
+  proposalType?: "Combined" | "Separate";
 }
 
 export interface SourcingCase {
@@ -79,6 +82,10 @@ export interface SourcingCase {
   awardedVendor?: string;
   contractNumber?: string;
   vendorsBidding?: VendorBid[];
+  fundingSource?: string;
+  separateProposals?: boolean;
+  bidOpeningMinutes?: string;
+  bidOpeningAttendance?: string;
 }
 
 export interface ContractAwardPayload {
@@ -165,9 +172,9 @@ function getDocLabelsForStep(key: string, category: CategoryType): string[] {
     case "invitation":
       return ["Invitation Letters", "Bidder Instructions"];
     case "submission_portal":
-      return ["Submission Log", "Encryption Certificates"];
+      return ["Submission Log", "Encryption Certificates", "Technical Proposal", "Financial Proposal"];
     case "bid_opening":
-      return ["Bid Opening Minutes", "Attendance Sheet", "Bid Summary Table", "Supporting Notes"];
+      return ["Bid Opening Minutes", "Attendance Sheet", "Bid Summary Table", "Supporting Notes", "Opening Minutes", "Attendance Record", "Technical Proposal", "Financial Proposal"];
     case "evaluation":
       return category === "Services" || category === "Consultancy"
         ? ["Combined Evaluation Report", "Score Matrix", "Interview Scores", "Approval Recommendation"]
@@ -227,6 +234,13 @@ export function SourcingCaseDetail({
   const [bidNotes, setBidNotes] = useState("");
   const [bidDate, setBidDate] = useState(new Date().toISOString().split("T")[0]);
   const [bidError, setBidError] = useState("");
+
+  // Separate proposals toggle
+  const [separateProposals, setSeparateProposals] = useState(sourcingCase.separateProposals ?? false);
+
+  // Bid Opening structured docs
+  const [bidOpeningMinutes, setBidOpeningMinutes] = useState(sourcingCase.bidOpeningMinutes ?? "");
+  const [bidOpeningAttendance, setBidOpeningAttendance] = useState(sourcingCase.bidOpeningAttendance ?? "");
 
   // Other modals
   const [showAwardModal, setShowAwardModal] = useState(false);
@@ -668,6 +682,67 @@ export function SourcingCaseDetail({
                     </div>
                   )}
 
+                  {/* Separate Technical & Financial Proposals Toggle — shown on submission_portal and bid_opening */}
+                  {(selectedStep.key === "submission_portal" || selectedStep.key === "bid_opening") && (
+                    <div className="mb-4">
+                      <label className="flex items-center gap-3 px-4 py-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors">
+                        <input
+                          type="checkbox"
+                          checked={separateProposals}
+                          onChange={e => setSeparateProposals(e.target.checked)}
+                          className="accent-purple-700 w-4 h-4"
+                        />
+                        <div>
+                          <p className="text-[12px] font-medium text-slate-900" style={{ fontFamily: F }}>Separate Technical & Financial Proposals</p>
+                          <p className="text-[10px] text-slate-500" style={{ fontFamily: F }}>
+                            When enabled, vendors must submit technical and financial proposals separately.
+                          </p>
+                        </div>
+                      </label>
+
+                      {separateProposals && (
+                        <div className="grid grid-cols-2 gap-3 mt-3">
+                          <div className="border border-dashed border-blue-300 rounded-lg p-4 bg-blue-50/50">
+                            <div className="flex items-center gap-2 mb-2">
+                              <FileText size={16} className="text-blue-600" />
+                              <p className="text-[12px] font-semibold text-blue-800" style={{ fontFamily: F }}>Technical Proposals</p>
+                            </div>
+                            <p className="text-[10px] text-blue-600 mb-2" style={{ fontFamily: F }}>
+                              Methodology, team composition, qualifications, and approach.
+                            </p>
+                            {selectedStep.status === "active" && (
+                              <button
+                                onClick={() => openUploadModal(selectedStep.key, "Technical Proposal")}
+                                className="px-3 py-1.5 rounded-lg text-[11px] font-medium text-white hover:opacity-90 transition-opacity"
+                                style={{ backgroundColor: "#0B01D0", fontFamily: F }}
+                              >
+                                <span className="flex items-center gap-1"><Upload size={11} /> Upload Technical</span>
+                              </button>
+                            )}
+                          </div>
+                          <div className="border border-dashed border-green-300 rounded-lg p-4 bg-green-50/50">
+                            <div className="flex items-center gap-2 mb-2">
+                              <FileText size={16} className="text-green-600" />
+                              <p className="text-[12px] font-semibold text-green-800" style={{ fontFamily: F }}>Financial Proposals</p>
+                            </div>
+                            <p className="text-[10px] text-green-600 mb-2" style={{ fontFamily: F }}>
+                              Cost breakdown, pricing schedule, and financial terms.
+                            </p>
+                            {selectedStep.status === "active" && (
+                              <button
+                                onClick={() => openUploadModal(selectedStep.key, "Financial Proposal")}
+                                className="px-3 py-1.5 rounded-lg text-[11px] font-medium text-white hover:opacity-90 transition-opacity"
+                                style={{ backgroundColor: "#0B01D0", fontFamily: F }}
+                              >
+                                <span className="flex items-center gap-1"><Upload size={11} /> Upload Financial</span>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {/* Bids Received Table — shown on bid_opening or evaluation steps */}
                   {(selectedStep.key === "bid_opening" || selectedStep.key === "evaluation") && (sc.vendorsBidding || []).length > 0 && (
                     <div className="mb-4">
@@ -706,6 +781,71 @@ export function SourcingCaseDetail({
                             ))}
                           </tbody>
                         </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Structured Bid Opening Documents — Opening Minutes & Attendance Record */}
+                  {selectedStep.key === "bid_opening" && (
+                    <div className="mb-4">
+                      <p className="text-[12px] font-semibold text-slate-800 mb-3 flex items-center gap-1.5" style={{ fontFamily: F }}>
+                        <ClipboardList size={14} className="text-purple-600" /> Bid Opening Records
+                      </p>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className={`border rounded-lg p-4 transition-colors ${
+                          bidOpeningMinutes ? "border-green-200 bg-green-50/50" : "border-dashed border-amber-300 bg-amber-50/30"
+                        }`}>
+                          <div className="flex items-center gap-2 mb-2">
+                            <FileText size={16} className={bidOpeningMinutes ? "text-green-600" : "text-amber-600"} />
+                            <p className="text-[12px] font-medium text-slate-800" style={{ fontFamily: F }}>Opening Minutes</p>
+                          </div>
+                          <p className="text-[10px] text-slate-500 mb-2" style={{ fontFamily: F }}>
+                            Record of proceedings during bid opening session.
+                          </p>
+                          {bidOpeningMinutes ? (
+                            <div className="flex items-center gap-1.5">
+                              <CheckCircle2 size={12} className="text-green-600" />
+                              <span className="text-[10px] text-green-700" style={{ fontFamily: F }}>{bidOpeningMinutes}</span>
+                            </div>
+                          ) : selectedStep.status === "active" ? (
+                            <button
+                              onClick={() => openUploadModal(selectedStep.key, "Opening Minutes")}
+                              className="px-3 py-1.5 rounded-lg text-[11px] font-medium text-white hover:opacity-90 transition-opacity"
+                              style={{ backgroundColor: "#0B01D0", fontFamily: F }}
+                            >
+                              <span className="flex items-center gap-1"><Upload size={11} /> Upload Minutes</span>
+                            </button>
+                          ) : (
+                            <span className="text-[10px] text-slate-400" style={{ fontFamily: F }}>Required</span>
+                          )}
+                        </div>
+                        <div className={`border rounded-lg p-4 transition-colors ${
+                          bidOpeningAttendance ? "border-green-200 bg-green-50/50" : "border-dashed border-amber-300 bg-amber-50/30"
+                        }`}>
+                          <div className="flex items-center gap-2 mb-2">
+                            <Users size={16} className={bidOpeningAttendance ? "text-green-600" : "text-amber-600"} />
+                            <p className="text-[12px] font-medium text-slate-800" style={{ fontFamily: F }}>Attendance Record</p>
+                          </div>
+                          <p className="text-[10px] text-slate-500 mb-2" style={{ fontFamily: F }}>
+                            List of attendees present at bid opening session.
+                          </p>
+                          {bidOpeningAttendance ? (
+                            <div className="flex items-center gap-1.5">
+                              <CheckCircle2 size={12} className="text-green-600" />
+                              <span className="text-[10px] text-green-700" style={{ fontFamily: F }}>{bidOpeningAttendance}</span>
+                            </div>
+                          ) : selectedStep.status === "active" ? (
+                            <button
+                              onClick={() => openUploadModal(selectedStep.key, "Attendance Record")}
+                              className="px-3 py-1.5 rounded-lg text-[11px] font-medium text-white hover:opacity-90 transition-opacity"
+                              style={{ backgroundColor: "#0B01D0", fontFamily: F }}
+                            >
+                              <span className="flex items-center gap-1"><Upload size={11} /> Upload Attendance</span>
+                            </button>
+                          ) : (
+                            <span className="text-[10px] text-slate-400" style={{ fontFamily: F }}>Required</span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   )}
@@ -806,6 +946,26 @@ export function SourcingCaseDetail({
                         )}
                       </div>
                     </>
+                  )}
+
+                  {/* Evaluation Type Label */}
+                  {selectedStep.key === "evaluation" && (
+                    <div className="mb-4 px-4 py-3 rounded-lg border flex items-center gap-2" style={{ backgroundColor: "#0B01D010", borderColor: "#0B01D040" }}>
+                      <ClipboardList size={15} style={{ color: "#0B01D0" }} />
+                      <p className="text-[12px] font-medium text-slate-800" style={{ fontFamily: F }}>
+                        {sc.category === "Consultancy"
+                          ? "Upload Interview Scores"
+                          : sc.category === "Services"
+                          ? "Upload Combined Evaluation Report"
+                          : "Upload Evaluation Report"}
+                      </p>
+                      <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full font-medium" style={{
+                        backgroundColor: sc.category === "Consultancy" ? "#f0e6ff" : sc.category === "Services" ? "#e6f0ff" : "#e6ffe6",
+                        color: sc.category === "Consultancy" ? "#7c3aed" : sc.category === "Services" ? "#1d4ed8" : "#16a34a"
+                      }}>
+                        {sc.category}
+                      </span>
+                    </div>
                   )}
 
                   {/* Document Slots — clickable to upload */}

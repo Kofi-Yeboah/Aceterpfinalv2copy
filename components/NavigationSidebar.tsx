@@ -191,7 +191,7 @@ export function NavigationSidebar({ selectedItem, onSelectItem }: NavigationSide
         {
           icon: <ChartIcon />,
           label: "Reporting & Analytics",
-          submenu: ["Planning & Orders", "Sourcing & Contracts", "Vendors & KPIs"],
+          submenu: ["Planning & Orders", "Sourcing & Contracts", "Vendors & KPIs", "Contract Reports", "Donor Reports", "Combined Analysis"],
         },
       ],
     },

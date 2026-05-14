@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, Download, ChevronDown, MoreHorizontal, Eye, AlertTriangle, ChevronRight, Users } from "lucide-react";
+import { Search, Download, ChevronDown, MoreHorizontal, Eye, AlertTriangle, ChevronRight, Users, Activity, CheckCircle2, Clock, FileText } from "lucide-react";
 import { getGeneratedPRs, subscribe } from "../lib/procurementStore";
 import { pushContract } from "../lib/contractStore";
 import {
@@ -390,13 +390,14 @@ export function Sourcing({ onNavigate }: SourcingProps) {
               id: `SC-${pr.id}`,
               caseNumber: `SRC-${pr.requisitionNumber.replace("PR-", "")}`,
               sourcePR: pr.requisitionNumber,
-              description: pr.itemDescription,
+              description: pr.requisitionTitle || pr.itemDescription,
               category: cat,
               method,
               budget: pr.estimatedCost,
               requestedBy: pr.requestedBy,
               department: pr.department,
               projectName: "Youth Employment Skills Development",
+              fundingSource: pr.fundingSource || undefined,
               dateCreated: new Date().toISOString().split("T")[0],
               currentStepKey: "solicitation",
               overallStatus: "In Progress",
@@ -685,6 +686,57 @@ export function Sourcing({ onNavigate }: SourcingProps) {
         <p className="text-[11px] text-amber-800" style={{ fontFamily: F }}>
           Sourcing cases are automatically created from fully approved purchase requisitions. Procurement can alter the sourcing method at any stage before contract award.
         </p>
+      </div>
+
+      {/* Dashboard Stat Cards */}
+      <div className="px-6 py-3 bg-white border-b border-slate-200 shrink-0">
+        <div className="grid grid-cols-4 gap-4">
+          <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-200 bg-white">
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#0B01D015" }}>
+              <Activity size={18} style={{ color: "#0B01D0" }} />
+            </div>
+            <div>
+              <p className="text-[20px] font-bold text-slate-900" style={{ fontFamily: F }}>{inProgress}</p>
+              <p className="text-[11px] text-slate-500" style={{ fontFamily: F }}>Active Sourcing Cases</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-200 bg-white">
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#0B01D015" }}>
+              <CheckCircle2 size={18} style={{ color: "#0B01D0" }} />
+            </div>
+            <div>
+              <p className="text-[20px] font-bold text-slate-900" style={{ fontFamily: F }}>
+                {sourcingCases.filter(sc => sc.overallStatus === "Completed" && new Date(sc.dateCreated).getMonth() === new Date().getMonth() && new Date(sc.dateCreated).getFullYear() === new Date().getFullYear()).length}
+              </p>
+              <p className="text-[11px] text-slate-500" style={{ fontFamily: F }}>Completed This Month</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-200 bg-white">
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#0B01D015" }}>
+              <Clock size={18} style={{ color: "#0B01D0" }} />
+            </div>
+            <div>
+              <p className="text-[20px] font-bold text-slate-900" style={{ fontFamily: F }}>18 days</p>
+              <p className="text-[11px] text-slate-500" style={{ fontFamily: F }}>Avg. Processing Time</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-200 bg-white">
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#0B01D015" }}>
+              <FileText size={18} style={{ color: "#0B01D0" }} />
+            </div>
+            <div>
+              <p className="text-[20px] font-bold text-slate-900" style={{ fontFamily: F }}>
+                {sourcingCases.filter(sc => sc.overallStatus === "In Progress").reduce((acc, sc) => {
+                  const activeStep = sc.steps.find(s => s.status === "active");
+                  if (!activeStep) return acc;
+                  const requiredDocs = activeStep.key === "contract_award" ? 1 : 2;
+                  return acc + Math.max(0, requiredDocs - activeStep.documents.length);
+                }, 0)}
+              </p>
+              <p className="text-[11px] text-slate-500" style={{ fontFamily: F }}>Pending Documents</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Filters */}

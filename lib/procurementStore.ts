@@ -96,6 +96,19 @@ export interface GeneratedPR {
   requiresSeniorApproval: boolean;
   approvalHistory: PRApprovalHistoryEntry[];
   sourceType: "ESS Plan" | "Direct";
+  // Enhanced fields from business requirements
+  requisitionTitle?: string;
+  entityType?: "Individual" | "Firm";
+  fundingSource?: string;
+  deliveryTimeline?: string; // for goods
+  serviceStartDate?: string; // for services
+  serviceEndDate?: string; // for services
+  directSelectionJustification?: string;
+  shortlistedEntities?: { name: string; address: string; email: string }[];
+  attachments?: string[]; // TOR, specs, supporting docs
+  linkedPlanItemId?: string; // dropdown-selected plan item
+  daysInCurrentStage?: number;
+  currentResponsible?: string;
 }
 
 type Listener = () => void;
@@ -199,6 +212,13 @@ let generatedPRs: GeneratedPR[] = [
     requiresSeniorApproval: false,
     approvalHistory: [{ step: 1, role: "Requesting Officer", action: "Submitted", date: "2026-03-01", comments: "Submitted from ESS Procurement Plan" }],
     sourceType: "ESS Plan",
+    requisitionTitle: "Stakeholder Engagement Workshop Materials",
+    entityType: "Firm",
+    fundingSource: "TAP",
+    deliveryTimeline: "4 weeks",
+    linkedPlanItemId: "PP-2026-001",
+    daysInCurrentStage: 14,
+    currentResponsible: "Dept Head — Programs",
   },
   {
     id: "GPR-SEED-2", requisitionNumber: "PR-2026-082", requestedBy: "Kwame Boateng", department: "IT",
@@ -210,6 +230,13 @@ let generatedPRs: GeneratedPR[] = [
     requiresSeniorApproval: true,
     approvalHistory: [{ step: 1, role: "Requesting Officer", action: "Submitted", date: "2026-03-03", comments: "Submitted from ESS Procurement Plan" }],
     sourceType: "ESS Plan",
+    requisitionTitle: "Field Officer Laptops — Youth Employment Program",
+    entityType: "Firm",
+    fundingSource: "ATTP",
+    deliveryTimeline: "6 weeks",
+    linkedPlanItemId: "PP-2026-002",
+    daysInCurrentStage: 11,
+    currentResponsible: "Dept Head — IT",
   },
   {
     id: "GPR-SEED-3", requisitionNumber: "PR-2026-083", requestedBy: "Grace Owusu", department: "Programs",
@@ -224,6 +251,20 @@ let generatedPRs: GeneratedPR[] = [
       { step: 2, role: "Department Head", action: "Approved", date: "2026-02-22", comments: "Approved — critical for project reporting" },
     ],
     sourceType: "ESS Plan",
+    requisitionTitle: "M&E Framework Review Consultancy",
+    entityType: "Individual",
+    fundingSource: "Gates Foundation",
+    serviceStartDate: "2026-04-01",
+    serviceEndDate: "2026-06-30",
+    directSelectionJustification: "Specialist expertise required — limited pool of qualified M&E consultants with ACET project experience",
+    shortlistedEntities: [
+      { name: "Dr. Ama Serwaa", address: "P.O. Box 1234, Accra", email: "ama.serwaa@consultant.gh" },
+      { name: "Kofi Mensah Consulting", address: "12 Independence Ave, Accra", email: "kofi@kmconsult.gh" },
+    ],
+    attachments: ["TOR_ME_Framework_Review.pdf", "Budget_Breakdown.xlsx"],
+    linkedPlanItemId: "PP-2026-003",
+    daysInCurrentStage: 8,
+    currentResponsible: "Procurement Unit",
   },
   {
     id: "GPR-SEED-4", requisitionNumber: "PR-2026-084", requestedBy: "Yaw Mensah", department: "Operations",
@@ -239,6 +280,13 @@ let generatedPRs: GeneratedPR[] = [
       { step: 3, role: "Procurement Unit", action: "Approved", date: "2026-02-21", comments: "Aligned with annual procurement plan" },
     ],
     sourceType: "ESS Plan",
+    requisitionTitle: "Standing Desks for Operations Team",
+    entityType: "Firm",
+    fundingSource: "ATTP",
+    deliveryTimeline: "3 weeks",
+    linkedPlanItemId: "PP-2026-004",
+    daysInCurrentStage: 5,
+    currentResponsible: "Finance Team",
   },
   {
     id: "GPR-SEED-5", requisitionNumber: "PR-2026-085", requestedBy: "Abena Osei", department: "Finance",
@@ -255,6 +303,15 @@ let generatedPRs: GeneratedPR[] = [
       { step: 4, role: "Finance Team", action: "Approved", date: "2026-02-13", comments: "Budget available under IT line item" },
     ],
     sourceType: "ESS Plan",
+    requisitionTitle: "Audit Software License — Annual Renewal",
+    entityType: "Firm",
+    fundingSource: "TAP",
+    serviceStartDate: "2026-04-01",
+    serviceEndDate: "2027-03-31",
+    directSelectionJustification: "Sole distributor for TeamMate+ audit software in West Africa",
+    linkedPlanItemId: "PP-2026-005",
+    daysInCurrentStage: 3,
+    currentResponsible: "Senior Management",
   },
   {
     id: "GPR-SEED-6", requisitionNumber: "PR-2026-086", requestedBy: "Nana Yaw", department: "Programs",
@@ -271,6 +328,12 @@ let generatedPRs: GeneratedPR[] = [
       { step: 4, role: "Finance Team", action: "Approved", date: "2026-01-28", comments: "Budget confirmed" },
     ],
     sourceType: "ESS Plan",
+    requisitionTitle: "Annual Report 2025 Printing",
+    entityType: "Firm",
+    fundingSource: "TAP",
+    deliveryTimeline: "2 weeks",
+    linkedPlanItemId: "PP-2026-006",
+    currentResponsible: "Procurement Unit",
   },
   {
     id: "GPR-SEED-7", requisitionNumber: "PR-2026-087", requestedBy: "Kwaku Anane", department: "Programs",
@@ -285,6 +348,12 @@ let generatedPRs: GeneratedPR[] = [
       { step: 2, role: "Department Head", action: "Rejected", date: "2026-02-06", comments: "Use existing fleet vehicles instead" },
     ],
     sourceType: "ESS Plan",
+    requisitionTitle: "Vehicle Rental — Community Outreach",
+    entityType: "Firm",
+    fundingSource: "ATTP",
+    serviceStartDate: "2026-03-01",
+    serviceEndDate: "2026-03-15",
+    linkedPlanItemId: "PP-2026-007",
   },
 ];
 let nextPRNumber = 100;
@@ -304,6 +373,17 @@ export function createRequisitionFromPlan(opts: {
   targetDate: string;
   requestedBy: string;
   department: string;
+  // Enhanced optional fields
+  requisitionTitle?: string;
+  entityType?: "Individual" | "Firm";
+  fundingSource?: string;
+  deliveryTimeline?: string;
+  serviceStartDate?: string;
+  serviceEndDate?: string;
+  directSelectionJustification?: string;
+  shortlistedEntities?: { name: string; address: string; email: string }[];
+  attachments?: string[];
+  linkedPlanItemId?: string;
 }) {
   nextPRNumber++;
   const today = new Date().toISOString().split("T")[0];
@@ -342,6 +422,19 @@ export function createRequisitionFromPlan(opts: {
     requiresSeniorApproval: opts.estimatedCost > 10000,
     approvalHistory: [{ step: 1, role: "Requesting Officer", action: "Submitted" as const, date: today, comments: "Purchase requisition submitted from ESS Procurement Plan" }],
     sourceType: "ESS Plan",
+    // Enhanced fields
+    requisitionTitle: opts.requisitionTitle,
+    entityType: opts.entityType,
+    fundingSource: opts.fundingSource,
+    deliveryTimeline: opts.deliveryTimeline,
+    serviceStartDate: opts.serviceStartDate,
+    serviceEndDate: opts.serviceEndDate,
+    directSelectionJustification: opts.directSelectionJustification,
+    shortlistedEntities: opts.shortlistedEntities,
+    attachments: opts.attachments,
+    linkedPlanItemId: opts.linkedPlanItemId,
+    daysInCurrentStage: 0,
+    currentResponsible: opts.requestedBy,
   };
 
   generatedPRs = [...generatedPRs, newPR];
@@ -612,4 +705,196 @@ export function getPOByNumber(poNumber: string): GeneratedPO | undefined {
 
 export function getNextPONumber(): string {
   return `PO-2026-${String(nextPONumber + 1).padStart(3, "0")}`;
+}
+
+// ─── Procurement Plan Management ────────────────────────────────────────────
+
+export interface PlanItemChange {
+  id: string;
+  date: string;
+  field: string;
+  oldValue: string;
+  newValue: string;
+  changedBy: string;
+  approvedBy?: string;
+}
+
+export interface ProcurementPlanItem {
+  id: string;
+  ppItemId: string; // auto-generated e.g. PP-2026-001
+  activityDescription: string;
+  category: "Goods" | "Services" | "Works" | "Consultancy";
+  estimatedValue: number;
+  fundingSource: string;
+  procurementMethod: string;
+  initiationDate: string;
+  awardDate: string;
+  completionDate: string;
+  responsiblePerson: string;
+  department: string;
+  status: "Not Started" | "In Progress" | "Under Evaluation" | "Awarded" | "Contracted" | "Completed" | "Delayed";
+  linkedBudgetLine?: string;
+  linkedWorkPlan?: string;
+  approvalStatus: "Draft" | "Pending Review" | "Approved" | "Rejected";
+  version: number;
+  changeHistory: PlanItemChange[];
+  createdDate: string;
+  lastModified: string;
+}
+
+let nextPlanItemSeq = 9; // seed uses 1–8
+
+let procurementPlanItems: ProcurementPlanItem[] = [
+  {
+    id: "ppi-1", ppItemId: "PP-2026-001",
+    activityDescription: "Training Materials — Stakeholder Engagement Workshops (Youth Employment)",
+    category: "Goods", estimatedValue: 4500, fundingSource: "TAP",
+    procurementMethod: "Competitive Bidding", initiationDate: "2026-02-15", awardDate: "2026-04-01", completionDate: "2026-05-15",
+    responsiblePerson: "Ama Darko", department: "Programs",
+    status: "In Progress", linkedBudgetLine: "BL-PROG-001", linkedWorkPlan: "WP-YE-2026",
+    approvalStatus: "Approved", version: 1, changeHistory: [], createdDate: "2026-01-10", lastModified: "2026-02-15",
+  },
+  {
+    id: "ppi-2", ppItemId: "PP-2026-002",
+    activityDescription: "Laptops for Field Officers — Youth Employment Skills Development",
+    category: "Goods", estimatedValue: 24000, fundingSource: "ATTP",
+    procurementMethod: "Competitive Bidding", initiationDate: "2026-02-20", awardDate: "2026-04-15", completionDate: "2026-06-01",
+    responsiblePerson: "Kwame Boateng", department: "IT",
+    status: "In Progress", linkedBudgetLine: "BL-IT-003", linkedWorkPlan: "WP-YE-2026",
+    approvalStatus: "Approved", version: 1, changeHistory: [], createdDate: "2026-01-10", lastModified: "2026-02-20",
+  },
+  {
+    id: "ppi-3", ppItemId: "PP-2026-003",
+    activityDescription: "M&E Framework Review Consultancy — Youth Employment Program",
+    category: "Consultancy", estimatedValue: 15000, fundingSource: "Gates Foundation",
+    procurementMethod: "Single Source", initiationDate: "2026-02-01", awardDate: "2026-03-15", completionDate: "2026-06-30",
+    responsiblePerson: "Grace Owusu", department: "Programs",
+    status: "Under Evaluation", linkedBudgetLine: "BL-PROG-004", linkedWorkPlan: "WP-YE-2026",
+    approvalStatus: "Approved", version: 2,
+    changeHistory: [
+      { id: "ch-1", date: "2026-02-10", field: "estimatedValue", oldValue: "12000", newValue: "15000", changedBy: "Grace Owusu", approvedBy: "Director Programs" },
+    ],
+    createdDate: "2026-01-10", lastModified: "2026-02-10",
+  },
+  {
+    id: "ppi-4", ppItemId: "PP-2026-004",
+    activityDescription: "Office Furniture — Standing Desks for Operations",
+    category: "Goods", estimatedValue: 8500, fundingSource: "ATTP",
+    procurementMethod: "Competitive Bidding", initiationDate: "2026-02-10", awardDate: "2026-03-20", completionDate: "2026-04-15",
+    responsiblePerson: "Yaw Mensah", department: "Operations",
+    status: "Awarded", linkedBudgetLine: "BL-OPS-002",
+    approvalStatus: "Approved", version: 1, changeHistory: [], createdDate: "2026-01-10", lastModified: "2026-03-20",
+  },
+  {
+    id: "ppi-5", ppItemId: "PP-2026-005",
+    activityDescription: "Audit Software License Renewal (TeamMate+)",
+    category: "Services", estimatedValue: 12000, fundingSource: "TAP",
+    procurementMethod: "Direct Purchase", initiationDate: "2026-01-15", awardDate: "2026-03-01", completionDate: "2026-03-31",
+    responsiblePerson: "Abena Osei", department: "Finance",
+    status: "Contracted", linkedBudgetLine: "BL-FIN-001", linkedWorkPlan: "WP-ADMIN-2026",
+    approvalStatus: "Approved", version: 1, changeHistory: [], createdDate: "2026-01-05", lastModified: "2026-03-01",
+  },
+  {
+    id: "ppi-6", ppItemId: "PP-2026-006",
+    activityDescription: "Printing Services — Annual Report 2025",
+    category: "Services", estimatedValue: 3200, fundingSource: "TAP",
+    procurementMethod: "Request for Quotation", initiationDate: "2026-01-10", awardDate: "2026-02-15", completionDate: "2026-03-15",
+    responsiblePerson: "Nana Yaw", department: "Programs",
+    status: "Completed", linkedBudgetLine: "BL-PROG-005",
+    approvalStatus: "Approved", version: 1, changeHistory: [], createdDate: "2026-01-05", lastModified: "2026-03-15",
+  },
+  {
+    id: "ppi-7", ppItemId: "PP-2026-007",
+    activityDescription: "Vehicle Rental — Community Outreach Campaign (Digital Literacy)",
+    category: "Services", estimatedValue: 6000, fundingSource: "ATTP",
+    procurementMethod: "Request for Quotation", initiationDate: "2026-02-01", awardDate: "2026-02-28", completionDate: "2026-03-31",
+    responsiblePerson: "Kwaku Anane", department: "Programs",
+    status: "Not Started", linkedBudgetLine: "BL-PROG-006", linkedWorkPlan: "WP-DL-2026",
+    approvalStatus: "Approved", version: 1, changeHistory: [], createdDate: "2026-01-10", lastModified: "2026-01-10",
+  },
+  {
+    id: "ppi-8", ppItemId: "PP-2026-008",
+    activityDescription: "Chromebooks for Digital Literacy Computer Labs",
+    category: "Goods", estimatedValue: 14000, fundingSource: "Gates Foundation",
+    procurementMethod: "Competitive Bidding", initiationDate: "2026-01-20", awardDate: "2026-03-10", completionDate: "2026-04-30",
+    responsiblePerson: "Kwame Boateng", department: "IT",
+    status: "Awarded", linkedBudgetLine: "BL-IT-005", linkedWorkPlan: "WP-DL-2026",
+    approvalStatus: "Approved", version: 1, changeHistory: [], createdDate: "2026-01-05", lastModified: "2026-03-10",
+  },
+];
+
+export function getProcurementPlanItems(): ProcurementPlanItem[] {
+  return procurementPlanItems;
+}
+
+export function addProcurementPlanItem(
+  item: Omit<ProcurementPlanItem, "id" | "ppItemId" | "version" | "changeHistory" | "createdDate" | "lastModified">
+): ProcurementPlanItem {
+  const today = new Date().toISOString().split("T")[0];
+  const ppItemId = `PP-2026-${String(nextPlanItemSeq).padStart(3, "0")}`;
+  nextPlanItemSeq++;
+
+  const newItem: ProcurementPlanItem = {
+    ...item,
+    id: `ppi-${Date.now()}`,
+    ppItemId,
+    version: 1,
+    changeHistory: [],
+    createdDate: today,
+    lastModified: today,
+  };
+
+  procurementPlanItems = [...procurementPlanItems, newItem];
+  notifyListeners();
+  return newItem;
+}
+
+export function updateProcurementPlanItem(
+  id: string,
+  updates: Partial<Omit<ProcurementPlanItem, "id" | "ppItemId" | "changeHistory" | "createdDate">>,
+  changedBy: string
+): ProcurementPlanItem | undefined {
+  const today = new Date().toISOString().split("T")[0];
+  let updated: ProcurementPlanItem | undefined;
+
+  procurementPlanItems = procurementPlanItems.map((item) => {
+    if (item.id !== id) return item;
+
+    const changes: PlanItemChange[] = [];
+    for (const [key, newVal] of Object.entries(updates)) {
+      if (key === "version" || key === "lastModified") continue;
+      const oldVal = String((item as unknown as Record<string, unknown>)[key] ?? "");
+      const newValStr = String(newVal);
+      if (oldVal !== newValStr) {
+        changes.push({
+          id: `ch-${Date.now()}-${key}`,
+          date: today,
+          field: key,
+          oldValue: oldVal,
+          newValue: newValStr,
+          changedBy,
+        });
+      }
+    }
+
+    updated = {
+      ...item,
+      ...updates,
+      version: item.version + 1,
+      changeHistory: [...item.changeHistory, ...changes],
+      lastModified: today,
+    };
+    return updated;
+  });
+
+  if (updated) notifyListeners();
+  return updated;
+}
+
+export function approvePlanItem(id: string, approvedBy: string): ProcurementPlanItem | undefined {
+  return updateProcurementPlanItem(id, { approvalStatus: "Approved" }, approvedBy);
+}
+
+export function getApprovedPlanItems(): ProcurementPlanItem[] {
+  return procurementPlanItems.filter((item) => item.approvalStatus === "Approved");
 }

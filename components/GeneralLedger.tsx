@@ -37,8 +37,11 @@ const ACCOUNT_OPTIONS = [
   { code: "5500", name: "Travel & Transport", category: "Expense" },
 ];
 
+const ACCOUNT_TYPES = ["Asset", "Liability", "Equity", "Revenue", "Expense"];
+
 const emptyForm = {
   date: "",
+  accountType: "",
   accountCode: "",
   description: "",
   entryType: "debit" as "debit" | "credit",
@@ -83,6 +86,7 @@ export function GeneralLedger() {
     const rawAmount = (isDebit ? entry.debit : entry.credit).replace(/[$,]/g, "");
     setFormData({
       date: "",
+      accountType: entry.category,
       accountCode: entry.accountCode,
       description: entry.description,
       entryType: isDebit ? "debit" : "credit",
@@ -136,10 +140,18 @@ export function GeneralLedger() {
           )}
 
           <div>
+            <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1.5 block">Account Type <span className="text-red-500">*</span></label>
+            <select value={formData.accountType} onChange={(e) => setFormData({ ...formData, accountType: e.target.value, accountCode: "" })} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+              <option value="">Select account type</option>
+              {ACCOUNT_TYPES.map((t) => (<option key={t} value={t}>{t}</option>))}
+            </select>
+          </div>
+
+          <div>
             <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1.5 block">Account <span className="text-red-500">*</span></label>
-            <select value={formData.accountCode} onChange={(e) => setFormData({ ...formData, accountCode: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
-              <option value="">Select account</option>
-              {ACCOUNT_OPTIONS.map((a) => (<option key={a.code} value={a.code}>{a.code} - {a.name}</option>))}
+            <select value={formData.accountCode} onChange={(e) => setFormData({ ...formData, accountCode: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" disabled={!formData.accountType}>
+              <option value="">{formData.accountType ? "Select account" : "Select account type first"}</option>
+              {ACCOUNT_OPTIONS.filter((a) => a.category === formData.accountType).map((a) => (<option key={a.code} value={a.code}>{a.code} - {a.name}</option>))}
             </select>
           </div>
 
