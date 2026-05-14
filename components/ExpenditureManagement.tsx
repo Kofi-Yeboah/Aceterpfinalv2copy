@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, Download, ChevronDown, Plus, Calendar, MoreHorizontal } from "lucide-react";
+import { Search, Download, ChevronDown, Plus, Calendar, MoreHorizontal, X } from "lucide-react";
 
 interface Expenditure {
   id: number;
@@ -14,7 +14,7 @@ interface Expenditure {
   paymentStatus: "Paid" | "Unpaid" | "Partial";
 }
 
-const expenditureData: Expenditure[] = [
+const initialExpenditureData: Expenditure[] = [
   { id: 1, referenceNo: "EXP-2024-001", date: "Dec 01, 2024", vendor: "Office Supplies Co.", category: "Office Expenses", description: "Monthly office supplies", amount: "$12,450", budget: "Operations", status: "Approved", paymentStatus: "Paid" },
   { id: 2, referenceNo: "EXP-2024-002", date: "Nov 28, 2024", vendor: "Tech Solutions Ltd", category: "IT & Software", description: "Software licenses renewal", amount: "$25,000", budget: "IT", status: "Approved", paymentStatus: "Paid" },
   { id: 3, referenceNo: "EXP-2024-003", date: "Nov 25, 2024", vendor: "Healthcare Plus", category: "Employee Benefits", description: "Health insurance premiums", amount: "$45,800", budget: "HR", status: "Approved", paymentStatus: "Paid" },
@@ -31,6 +31,56 @@ export function ExpenditureManagement() {
   const [selectedStatus, setSelectedStatus] = useState("All Statuses");
   const [selectedPaymentStatus, setSelectedPaymentStatus] = useState("All Payment Statuses");
   const [dateRange, setDateRange] = useState("Last 30 Days");
+  const [expenditureData, setExpenditureData] = useState<Expenditure[]>(initialExpenditureData);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [formData, setFormData] = useState({
+    referenceNo: "",
+    date: "",
+    vendor: "",
+    category: "",
+    description: "",
+    amount: "",
+    budget: "",
+  });
+
+  const generateReferenceNo = () => {
+    const nextId = expenditureData.length + 1;
+    return `EXP-2024-${String(nextId).padStart(3, "0")}`;
+  };
+
+  const handleOpenModal = () => {
+    setFormData({
+      referenceNo: generateReferenceNo(),
+      date: "",
+      vendor: "",
+      category: "",
+      description: "",
+      amount: "",
+      budget: "",
+    });
+    setShowAddModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowAddModal(false);
+  };
+
+  const handleSubmit = () => {
+    const newExpenditure: Expenditure = {
+      id: expenditureData.length + 1,
+      referenceNo: formData.referenceNo,
+      date: new Date(formData.date).toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }),
+      vendor: formData.vendor,
+      category: formData.category,
+      description: formData.description,
+      amount: `$${Number(formData.amount).toLocaleString()}`,
+      budget: formData.budget,
+      status: "Pending",
+      paymentStatus: "Unpaid",
+    };
+    setExpenditureData([newExpenditure, ...expenditureData]);
+    setShowAddModal(false);
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -113,9 +163,10 @@ export function ExpenditureManagement() {
               <Download className="w-4 h-4" />
               Export
             </button>
-            <button 
+            <button
               className="px-4 py-2 rounded-lg text-sm text-white hover:opacity-90 transition-opacity flex items-center gap-2"
               style={{ backgroundColor: "#0B01D0" }}
+              onClick={handleOpenModal}
             >
               <Plus className="w-4 h-4" />
               New Expenditure
@@ -181,6 +232,136 @@ export function ExpenditureManagement() {
           </tbody>
         </table>
       </div>
+
+      {/* Add Expenditure Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={handleCloseModal}>
+          <div className="bg-white rounded-2xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 shrink-0">
+              <div>
+                <h3 className="text-[16px] text-slate-900">New Expenditure</h3>
+                <p className="text-[11px] text-slate-400 font-mono mt-0.5">{formData.referenceNo}</p>
+              </div>
+              <button onClick={handleCloseModal} className="p-1 hover:bg-slate-100 rounded-lg transition-colors">
+                <X size={18} className="text-slate-400" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-5">
+              {/* Vendor */}
+              <div>
+                <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1.5 block">Vendor</label>
+                <input
+                  type="text"
+                  value={formData.vendor}
+                  onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
+                  placeholder="Enter vendor name"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
+
+              {/* Category + Budget */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1.5 block">Category</label>
+                  <select
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  >
+                    <option value="">Select category</option>
+                    <option value="Office Expenses">Office Expenses</option>
+                    <option value="IT & Software">IT & Software</option>
+                    <option value="Employee Benefits">Employee Benefits</option>
+                    <option value="Rent & Utilities">Rent & Utilities</option>
+                    <option value="Marketing">Marketing</option>
+                    <option value="Training">Training</option>
+                    <option value="Travel">Travel</option>
+                    <option value="Equipment">Equipment</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1.5 block">Budget</label>
+                  <select
+                    value={formData.budget}
+                    onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  >
+                    <option value="">Select budget</option>
+                    <option value="Operations">Operations</option>
+                    <option value="IT">IT</option>
+                    <option value="HR">HR</option>
+                    <option value="Marketing">Marketing</option>
+                    <option value="Events">Events</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="border-t border-slate-100" />
+
+              {/* Description */}
+              <div>
+                <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1.5 block">Description</label>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Enter description"
+                  rows={3}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
+                />
+              </div>
+
+              <div className="border-t border-slate-100" />
+
+              {/* Amount + Date */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1.5 block">Amount</label>
+                  <input
+                    type="number"
+                    value={formData.amount}
+                    onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                    placeholder="Enter amount"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1.5 block">Date</label>
+                  <input
+                    type="date"
+                    value={formData.date}
+                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                </div>
+              </div>
+
+              {/* Info box */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <p className="text-[11px] text-blue-700">Expenditures will be submitted for approval. Once approved, they will be processed for payment against the selected budget.</p>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-end gap-3 shrink-0">
+              <button
+                onClick={handleCloseModal}
+                className="px-4 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-700 hover:bg-slate-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSubmit}
+                className="px-5 py-2 rounded-lg text-[13px] text-white hover:bg-purple-800 transition-colors bg-purple-700"
+              >
+                Add Expenditure
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

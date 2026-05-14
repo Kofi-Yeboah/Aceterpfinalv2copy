@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, Download, ChevronDown, Plus, MoreHorizontal } from "lucide-react";
+import { Search, Download, ChevronDown, Plus, MoreHorizontal, X } from "lucide-react";
 
 interface BankAccount {
   id: number;
@@ -12,7 +12,7 @@ interface BankAccount {
   status: "Active" | "Inactive" | "Frozen";
 }
 
-const bankAccounts: BankAccount[] = [
+const initialBankAccounts: BankAccount[] = [
   { id: 1, bankName: "First National Bank", accountNumber: "****4523", accountType: "Business Checking", currency: "USD", balance: "$485,230", lastTransaction: "Dec 01, 2024", status: "Active" },
   { id: 2, bankName: "Global Commerce Bank", accountNumber: "****7891", accountType: "Savings", currency: "USD", balance: "$250,000", lastTransaction: "Nov 28, 2024", status: "Active" },
   { id: 3, bankName: "International Trust Bank", accountNumber: "****3456", accountType: "Business Checking", currency: "EUR", balance: "€125,450", lastTransaction: "Nov 30, 2024", status: "Active" },
@@ -29,6 +29,36 @@ export function BankingManagement() {
   const [selectedAccountType, setSelectedAccountType] = useState("All Account Types");
   const [selectedCurrency, setSelectedCurrency] = useState("All Currencies");
   const [selectedStatus, setSelectedStatus] = useState("All Statuses");
+  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>(initialBankAccounts);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [formData, setFormData] = useState({
+    bankName: "",
+    accountNumber: "",
+    accountType: "Business Checking",
+    currency: "USD",
+    balance: "",
+  });
+
+  const handleAddAccount = () => {
+    const currencySymbols: Record<string, string> = { USD: "$", EUR: "€", GBP: "£", GHS: "₵" };
+    const symbol = currencySymbols[formData.currency] || "$";
+    const formatted = `${symbol}${Number(formData.balance).toLocaleString()}`;
+    const today = new Date();
+    const lastTransaction = today.toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }).replace(/(\w+) (\d+), (\d+)/, "$1 $2, $3");
+    const newAccount: BankAccount = {
+      id: Date.now(),
+      bankName: formData.bankName,
+      accountNumber: `****${formData.accountNumber.slice(-4)}`,
+      accountType: formData.accountType,
+      currency: formData.currency,
+      balance: formatted,
+      lastTransaction,
+      status: "Active",
+    };
+    setBankAccounts((prev) => [newAccount, ...prev]);
+    setFormData({ bankName: "", accountNumber: "", accountType: "Business Checking", currency: "USD", balance: "" });
+    setShowAddModal(false);
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -101,9 +131,10 @@ export function BankingManagement() {
               <Download className="w-4 h-4" />
               Export
             </button>
-            <button 
+            <button
               className="px-4 py-2 rounded-lg text-sm text-white hover:opacity-90 transition-opacity flex items-center gap-2"
               style={{ backgroundColor: "#0B01D0" }}
+              onClick={() => setShowAddModal(true)}
             >
               <Plus className="w-4 h-4" />
               Add Account
@@ -163,6 +194,101 @@ export function BankingManagement() {
           </tbody>
         </table>
       </div>
+
+      {/* Add Account Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowAddModal(false)}>
+          <div className="bg-white rounded-2xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 shrink-0">
+              <div>
+                <h3 className="text-[16px] text-slate-900">Add Bank Account</h3>
+                <p className="text-[11px] text-slate-400 font-mono mt-0.5">Register a new bank account</p>
+              </div>
+              <button onClick={() => setShowAddModal(false)} className="p-1 hover:bg-slate-100 rounded-lg transition-colors">
+                <X size={18} className="text-slate-400" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-5">
+              <div>
+                <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1.5 block">Bank Name</label>
+                <input
+                  type="text"
+                  value={formData.bankName}
+                  onChange={(e) => setFormData({ ...formData, bankName: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter bank name"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1.5 block">Account Number</label>
+                <input
+                  type="text"
+                  value={formData.accountNumber}
+                  onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter account number"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1.5 block">Account Type</label>
+                  <select
+                    value={formData.accountType}
+                    onChange={(e) => setFormData({ ...formData, accountType: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option>Business Checking</option>
+                    <option>Savings</option>
+                    <option>Money Market</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1.5 block">Currency</label>
+                  <select
+                    value={formData.currency}
+                    onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option>USD</option>
+                    <option>EUR</option>
+                    <option>GBP</option>
+                    <option>GHS</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1.5 block">Opening Balance</label>
+                <input
+                  type="number"
+                  value={formData.balance}
+                  onChange={(e) => setFormData({ ...formData, balance: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-end gap-3 shrink-0">
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="px-4 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-700 hover:bg-slate-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddAccount}
+                className="px-5 py-2 rounded-lg text-[13px] text-white hover:bg-purple-800 transition-colors bg-purple-700"
+              >
+                Add Account
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

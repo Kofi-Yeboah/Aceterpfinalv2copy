@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, Download, ChevronDown, Plus, Calendar } from "lucide-react";
+import { Search, Download, ChevronDown, Plus, Calendar, X } from "lucide-react";
 
 interface Budget {
   id: number;
@@ -13,7 +13,7 @@ interface Budget {
   status: "On Track" | "Over Budget" | "Under Budget";
 }
 
-const budgetData: Budget[] = [
+const initialBudgetData: Budget[] = [
   { id: 1, department: "HR", category: "Salaries & Wages", budgetYear: "2024", allocated: "$1,200,000", spent: "$995,000", remaining: "$205,000", percentage: 83, status: "On Track" },
   { id: 2, department: "IT", category: "Software & Licenses", budgetYear: "2024", allocated: "$150,000", spent: "$125,000", remaining: "$25,000", percentage: 83, status: "On Track" },
   { id: 3, department: "Operations", category: "Rent & Utilities", budgetYear: "2024", allocated: "$220,000", spent: "$203,500", remaining: "$16,500", percentage: 93, status: "On Track" },
@@ -30,6 +30,14 @@ export function OperationalBudgets() {
   const [selectedCategory, setSelectedCategory] = useState("All Categories");
   const [selectedYear, setSelectedYear] = useState("2024");
   const [selectedStatus, setSelectedStatus] = useState("All Statuses");
+  const [budgetData, setBudgetData] = useState<Budget[]>(initialBudgetData);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [formData, setFormData] = useState({
+    department: "HR",
+    category: "",
+    budgetYear: "2024",
+    allocated: "",
+  });
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -103,7 +111,10 @@ export function OperationalBudgets() {
               <Download className="w-4 h-4" />
               <span>Export</span>
             </button>
-            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition-colors flex items-center gap-2">
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition-colors flex items-center gap-2"
+            >
               <Plus className="w-4 h-4" />
               <span>Add Budget Line</span>
             </button>
@@ -169,6 +180,115 @@ export function OperationalBudgets() {
           </tbody>
         </table>
       </div>
+
+      {/* Add Budget Line Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowAddModal(false)}>
+          <div className="bg-white rounded-2xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 shrink-0">
+              <div>
+                <h3 className="text-[16px] text-slate-900">New Budget Line</h3>
+                <p className="text-[11px] text-slate-400 font-mono mt-0.5">Add a new budget allocation</p>
+              </div>
+              <button onClick={() => setShowAddModal(false)} className="p-1 hover:bg-slate-100 rounded-lg transition-colors">
+                <X size={18} className="text-slate-400" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-5">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1.5 block">Department</label>
+                  <select
+                    value={formData.department}
+                    onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="HR">HR</option>
+                    <option value="IT">IT</option>
+                    <option value="Operations">Operations</option>
+                    <option value="Marketing">Marketing</option>
+                    <option value="Finance">Finance</option>
+                    <option value="Programs">Programs</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1.5 block">Category</label>
+                  <input
+                    type="text"
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    placeholder="e.g. Salaries & Wages"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1.5 block">Budget Year</label>
+                  <select
+                    value={formData.budgetYear}
+                    onChange={(e) => setFormData({ ...formData, budgetYear: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="2024">2024</option>
+                    <option value="2025">2025</option>
+                    <option value="2026">2026</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1.5 block">Allocated Amount</label>
+                  <input
+                    type="number"
+                    value={formData.allocated}
+                    onChange={(e) => setFormData({ ...formData, allocated: e.target.value })}
+                    placeholder="e.g. 100000"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-end gap-3 shrink-0">
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="px-4 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-700 hover:bg-slate-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  const allocatedNum = Number(formData.allocated);
+                  const formatted = `$${allocatedNum.toLocaleString()}`;
+                  const newEntry: Budget = {
+                    id: Date.now(),
+                    department: formData.department,
+                    category: formData.category,
+                    budgetYear: formData.budgetYear,
+                    allocated: formatted,
+                    spent: "$0",
+                    remaining: formatted,
+                    percentage: 0,
+                    status: "Under Budget",
+                  };
+                  setBudgetData([newEntry, ...budgetData]);
+                  setFormData({ department: "HR", category: "", budgetYear: "2024", allocated: "" });
+                  setShowAddModal(false);
+                }}
+                className="px-5 py-2 rounded-lg text-[13px] text-white hover:bg-purple-800 transition-colors bg-purple-700"
+              >
+                Add Budget Line
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

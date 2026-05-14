@@ -121,7 +121,6 @@ export function NavigationSidebar({ selectedItem, onSelectItem }: NavigationSide
         { icon: <MoneyIcon />, label: "Accounts" },
         { icon: <MoneyBagIcon />, label: "Banking Management" },
         { icon: <DocumentsIcon />, label: "Summary" },
-        { icon: <PenIcon />, label: "Journal Entries" },
         { icon: <AssetManagementIcon />, label: "Asset Management" },
         { icon: <DepreciationIcon />, label: "Depreciation Mgmt" },
         {

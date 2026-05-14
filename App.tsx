@@ -82,7 +82,6 @@ import { CashManagement } from "./components/CashManagement";
 import { Accounts } from "./components/Accounts";
 import { BankingManagement } from "./components/BankingManagement";
 import { PayrollSummary } from "./components/PayrollSummary";
-import { JournalEntries } from "./components/JournalEntries";
 import { PaymentApprovals } from "./components/PaymentApprovals";
 import { BudgetApprovals } from "./components/BudgetApprovals";
 import { FinancePRApproval } from "./pages/FinancePRApproval";
@@ -365,8 +364,6 @@ export default function App() {
         return <BankingManagement />;
       case "FINANCE-Summary":
         return <PayrollSummary />;
-      case "FINANCE-Journal Entries":
-        return <JournalEntries />;
       case "FINANCE-Approvals-Payment Approvals":
         return <PaymentApprovals />;
       case "FINANCE-Approvals-Budget Approvals":

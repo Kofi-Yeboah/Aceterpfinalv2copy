@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, Download, ChevronDown, Plus, Calendar, MoreHorizontal } from "lucide-react";
+import { Search, Download, ChevronDown, Plus, Calendar, MoreHorizontal, X } from "lucide-react";
 
 interface CashTransaction {
   id: number;
@@ -13,7 +13,7 @@ interface CashTransaction {
   paymentMethod: string;
 }
 
-const cashData: CashTransaction[] = [
+const initialCashData: CashTransaction[] = [
   { id: 1, date: "Dec 01, 2024", transactionType: "Payment", referenceNo: "PAY-2024-001", description: "Office supplies purchase", category: "Operations", amount: "$12,450", balance: "$785,550", paymentMethod: "Bank Transfer" },
   { id: 2, date: "Nov 30, 2024", transactionType: "Receipt", referenceNo: "REC-2024-045", description: "Grant disbursement", category: "Funding", amount: "$250,000", balance: "$798,000", paymentMethod: "Wire Transfer" },
   { id: 3, date: "Nov 28, 2024", transactionType: "Payment", referenceNo: "PAY-2024-002", description: "Software licenses", category: "IT", amount: "$25,000", balance: "$548,000", paymentMethod: "Credit Card" },
@@ -30,6 +30,42 @@ export function CashManagement() {
   const [selectedCategory, setSelectedCategory] = useState("All Categories");
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("All Methods");
   const [dateRange, setDateRange] = useState("Last 30 Days");
+  const [cashData, setCashData] = useState<CashTransaction[]>(initialCashData);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [formData, setFormData] = useState({
+    date: "",
+    transactionType: "Receipt" as "Receipt" | "Payment",
+    referenceNo: "",
+    description: "",
+    category: "Operations",
+    amount: "",
+    paymentMethod: "Bank Transfer",
+  });
+
+  const handleAddTransaction = () => {
+    const newTransaction: CashTransaction = {
+      id: cashData.length > 0 ? Math.max(...cashData.map((t) => t.id)) + 1 : 1,
+      date: formData.date,
+      transactionType: formData.transactionType,
+      referenceNo: formData.referenceNo,
+      description: formData.description,
+      category: formData.category,
+      amount: `$${formData.amount}`,
+      balance: "$0",
+      paymentMethod: formData.paymentMethod,
+    };
+    setCashData([newTransaction, ...cashData]);
+    setShowAddModal(false);
+    setFormData({
+      date: "",
+      transactionType: "Receipt",
+      referenceNo: "",
+      description: "",
+      category: "Operations",
+      amount: "",
+      paymentMethod: "Bank Transfer",
+    });
+  };
 
   return (
     <div className="h-full flex flex-col bg-slate-50 overflow-hidden">
@@ -94,9 +130,10 @@ export function CashManagement() {
               <Download className="w-4 h-4" />
               Export
             </button>
-            <button 
+            <button
               className="px-4 py-2 rounded-lg text-sm text-white hover:opacity-90 transition-opacity flex items-center gap-2"
               style={{ backgroundColor: "#0B01D0" }}
+              onClick={() => setShowAddModal(true)}
             >
               <Plus className="w-4 h-4" />
               New Transaction
@@ -166,6 +203,129 @@ export function CashManagement() {
           </tbody>
         </table>
       </div>
+
+      {/* New Transaction Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowAddModal(false)}>
+          <div className="bg-white rounded-2xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 shrink-0">
+              <div>
+                <h3 className="text-[16px] text-slate-900">New Transaction</h3>
+                <p className="text-[11px] text-slate-400 font-mono mt-0.5">TXN-2024-{String(cashData.length + 1).padStart(3, "0")}</p>
+              </div>
+              <button onClick={() => setShowAddModal(false)} className="p-1 hover:bg-slate-100 rounded-lg transition-colors">
+                <X size={18} className="text-slate-400" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-5">
+              {/* Date + Transaction Type */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1.5 block">Date</label>
+                  <input
+                    type="date"
+                    value={formData.date}
+                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1.5 block">Transaction Type</label>
+                  <select
+                    value={formData.transactionType}
+                    onChange={(e) => setFormData({ ...formData, transactionType: e.target.value as "Receipt" | "Payment" })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  >
+                    <option value="Receipt">Receipt</option>
+                    <option value="Payment">Payment</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Reference No */}
+              <div>
+                <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1.5 block">Reference No</label>
+                <input
+                  type="text"
+                  value={formData.referenceNo}
+                  onChange={(e) => setFormData({ ...formData, referenceNo: e.target.value })}
+                  placeholder="e.g. PAY-2024-007"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1.5 block">Description</label>
+                <textarea
+                  rows={3}
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Transaction description"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
+                />
+              </div>
+
+              <div className="border-t border-slate-100" />
+
+              {/* Category + Payment Method */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1.5 block">Category</label>
+                  <select
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  >
+                    <option value="Operations">Operations</option>
+                    <option value="Funding">Funding</option>
+                    <option value="IT">IT</option>
+                    <option value="Benefits">Benefits</option>
+                    <option value="Revenue">Revenue</option>
+                    <option value="Marketing">Marketing</option>
+                    <option value="Training">Training</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1.5 block">Payment Method</label>
+                  <select
+                    value={formData.paymentMethod}
+                    onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  >
+                    <option value="Bank Transfer">Bank Transfer</option>
+                    <option value="Wire Transfer">Wire Transfer</option>
+                    <option value="Credit Card">Credit Card</option>
+                    <option value="Check">Check</option>
+                    <option value="Cash">Cash</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Amount */}
+              <div>
+                <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1.5 block">Amount</label>
+                <input
+                  type="number"
+                  value={formData.amount}
+                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                  placeholder="0.00"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-end gap-3 shrink-0">
+              <button onClick={() => setShowAddModal(false)} className="px-4 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-700 hover:bg-slate-50 transition-colors">Cancel</button>
+              <button onClick={handleAddTransaction} className="px-5 py-2 rounded-lg text-[13px] text-white hover:bg-purple-800 transition-colors bg-purple-700">Add Transaction</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
