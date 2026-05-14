@@ -174,6 +174,8 @@ export default function App() {
     return <Login onLogin={handleLogin} />;
   }
 
+  const sidebarCollapsed = ["WBS-Builder", "PROCUREMENT-Plan Builder", "BUDGET-Builder", "RISK MANAGEMENT-Plan Builder", "COMMUNICATIONS-Plan Builder"].includes(selectedMenuItem);
+
   const renderContent = () => {
     switch (selectedMenuItem) {
       case "EMPLOYEE SELF-SERVICE-Home":
@@ -603,9 +605,10 @@ export default function App() {
       </div>
 
       {/* Navigation Sidebar */}
-      <NavigationSidebar 
+      <NavigationSidebar
         selectedItem={selectedMenuItem}
         onSelectItem={setSelectedMenuItem}
+        collapsed={sidebarCollapsed}
       />
 
       <NotificationTray
@@ -618,7 +621,7 @@ export default function App() {
       />
 
       {/* Main Content */}
-      <div className="absolute top-[57px] left-[288px] right-0 bottom-0 overflow-auto">
+      <div className={`absolute top-[57px] ${sidebarCollapsed ? "left-[64px]" : "left-[288px]"} right-0 bottom-0 overflow-auto transition-all duration-200`}>
         {renderContent()}
       </div>
     </div>

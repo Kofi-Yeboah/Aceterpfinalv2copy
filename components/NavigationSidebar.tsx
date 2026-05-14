@@ -14,9 +14,10 @@ interface NavSection {
 interface NavigationSidebarProps {
   selectedItem: string;
   onSelectItem: (item: string) => void;
+  collapsed?: boolean;
 }
 
-export function NavigationSidebar({ selectedItem, onSelectItem }: NavigationSidebarProps) {
+export function NavigationSidebar({ selectedItem, onSelectItem, collapsed }: NavigationSidebarProps) {
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(["PROJECT MANAGEMENT"]));
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
 
@@ -276,6 +277,23 @@ export function NavigationSidebar({ selectedItem, onSelectItem }: NavigationSide
     const menuKey = sectionTitle ? `${sectionTitle}::${item.label}` : item.label;
     const isSelected = selectedItem === itemId;
     
+    if (collapsed) {
+      return (
+        <div key={item.label} className="relative group">
+          <button
+            onClick={() => { if (!item.submenu) onSelectItem(itemId); }}
+            className={`flex items-center justify-center w-full p-2 rounded transition-colors ${isSelected ? "bg-blue-50" : "hover:bg-slate-100"}`}
+            title={item.label}
+          >
+            <span className={isSelected ? "text-blue-600" : "text-slate-700"}>{item.icon}</span>
+          </button>
+          <div className="absolute left-full top-0 ml-1 hidden group-hover:block z-50">
+            <div className="bg-slate-900 text-white text-[11px] px-2.5 py-1 rounded shadow-lg whitespace-nowrap">{item.label}</div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div key={item.label}>
         <button
@@ -334,39 +352,43 @@ export function NavigationSidebar({ selectedItem, onSelectItem }: NavigationSide
   };
 
   return (
-    <div className="absolute bg-gray-50 bottom-0 left-0 top-[57px] w-[288px] border-r border-slate-200 overflow-y-auto">
-      <div className="p-4 flex flex-col gap-4">
+    <div className={`absolute bg-gray-50 bottom-0 left-0 top-[57px] ${collapsed ? "w-[64px]" : "w-[288px]"} border-r border-slate-200 overflow-y-auto transition-all duration-200`}>
+      <div className={`${collapsed ? "p-2" : "p-4"} flex flex-col gap-4`}>
         {/* Favorites - No Header */}
         <div className="flex flex-col gap-0.5">
           {favoriteItems.map((item) => renderMenuItem(item, "FAVORITES"))}
         </div>
-        
+
         <div className="h-px bg-slate-200 my-2" />
 
         {/* Other Sections with Headers */}
         {navSections.map((section) => (
           <div key={section.title} className="flex flex-col gap-1">
             {/* Section Header - Collapsible */}
-            <button
-              onClick={() => toggleSection(section.title)}
-              className="flex items-center justify-between px-3 py-1.5 hover:bg-slate-100 rounded transition-colors"
-            >
-              <span className="text-xs font-semibold text-violet-600 tracking-wider">
-                {section.title}
-              </span>
-              {expandedSections.has(section.title) ? (
-                <svg className="w-3 h-3 text-blue-500" viewBox="0 0 12 12" fill="currentColor">
-                  <path d="M6 8L2 4h8L6 8z" />
-                </svg>
-              ) : (
-                <svg className="w-3 h-3 text-blue-500" viewBox="0 0 12 12" fill="currentColor">
-                  <path d="M4 2L8 6L4 10V2z" />
-                </svg>
-              )}
-            </button>
-            
+            {collapsed ? (
+              <div className="h-px bg-slate-200 my-1" />
+            ) : (
+              <button
+                onClick={() => toggleSection(section.title)}
+                className="flex items-center justify-between px-3 py-1.5 hover:bg-slate-100 rounded transition-colors"
+              >
+                <span className="text-xs font-semibold text-violet-600 tracking-wider">
+                  {section.title}
+                </span>
+                {expandedSections.has(section.title) ? (
+                  <svg className="w-3 h-3 text-blue-500" viewBox="0 0 12 12" fill="currentColor">
+                    <path d="M6 8L2 4h8L6 8z" />
+                  </svg>
+                ) : (
+                  <svg className="w-3 h-3 text-blue-500" viewBox="0 0 12 12" fill="currentColor">
+                    <path d="M4 2L8 6L4 10V2z" />
+                  </svg>
+                )}
+              </button>
+            )}
+
             {/* Section Items */}
-            {expandedSections.has(section.title) && (
+            {(collapsed || expandedSections.has(section.title)) && (
               <div className="flex flex-col gap-0.5">
                 {section.items.map((item) => renderMenuItem(item, section.title))}
               </div>
