@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Search, Download, Plus, Building2, Users, Landmark, CreditCard, TrendingUp, TrendingDown, ChevronDown, MoreHorizontal, ArrowLeft, ArrowUpRight, ArrowDownLeft } from "lucide-react";
+import { Search, Download, Plus, Building2, Users, Landmark, CreditCard, TrendingUp, TrendingDown, ChevronDown, MoreHorizontal, ArrowLeft, ArrowUpRight, ArrowDownLeft, X } from "lucide-react";
 
 type AccountType = "Asset" | "Liability" | "Revenue" | "Expense" | "Equity";
 type AccountSubType = "Cash" | "Bank" | "Receivable" | "Payable" | "Staff Loan" | "Petty Cash" | "Grant" | "Operating" | "Capital" | "Retained Earnings" | "Fixed Asset" | "Donor Fund";
@@ -213,8 +213,22 @@ export function Accounts() {
   const [viewItem, setViewItem] = useState<Account | null>(null);
   const [showActionMenu, setShowActionMenu] = useState<string | null>(null);
   const [txSearchQuery, setTxSearchQuery] = useState("");
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [accounts, setAccounts] = useState<Account[]>(mockAccounts);
+  const [newAccount, setNewAccount] = useState({
+    accountCode: "",
+    accountName: "",
+    type: "Asset" as AccountType,
+    subType: "Bank" as AccountSubType,
+    balance: "",
+    currency: "USD",
+    status: "Active" as "Active" | "Inactive" | "Frozen",
+    department: "",
+    linkedEmployee: "",
+    description: "",
+  });
 
-  const filtered = mockAccounts.filter((item) => {
+  const filtered = accounts.filter((item) => {
     const matchesSearch =
       item.accountCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.accountName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -226,14 +240,46 @@ export function Accounts() {
     return matchesSearch && matchesType && matchesSubType && matchesStatus;
   });
 
-  const totalAccounts = mockAccounts.length;
-  const activeCount = mockAccounts.filter(a => a.status === "Active").length;
-  const loanAccounts = mockAccounts.filter(a => a.subType === "Staff Loan").length;
-  const totalAssets = mockAccounts.filter(a => a.type === "Asset").reduce((sum, a) => sum + (a.currency === "USD" ? a.balance : 0), 0);
-  const totalLiabilities = mockAccounts.filter(a => a.type === "Liability").reduce((sum, a) => sum + a.balance, 0);
-  const outstandingLoans = mockAccounts.filter(a => a.subType === "Staff Loan" && a.status === "Active").reduce((sum, a) => sum + a.balance, 0);
+  const totalAccounts = accounts.length;
+  const activeCount = accounts.filter(a => a.status === "Active").length;
+  const loanAccounts = accounts.filter(a => a.subType === "Staff Loan").length;
+  const totalAssets = accounts.filter(a => a.type === "Asset").reduce((sum, a) => sum + (a.currency === "USD" ? a.balance : 0), 0);
+  const totalLiabilities = accounts.filter(a => a.type === "Liability").reduce((sum, a) => sum + a.balance, 0);
+  const outstandingLoans = accounts.filter(a => a.subType === "Staff Loan" && a.status === "Active").reduce((sum, a) => sum + a.balance, 0);
 
   const subTypes = ["All Sub-Types", "Cash", "Bank", "Receivable", "Payable", "Staff Loan", "Petty Cash", "Grant", "Operating", "Capital", "Retained Earnings", "Fixed Asset", "Donor Fund"];
+
+  const handleAddAccount = () => {
+    const account: Account = {
+      id: String(accounts.length + 1),
+      accountCode: newAccount.accountCode,
+      accountName: newAccount.accountName,
+      type: newAccount.type,
+      subType: newAccount.subType,
+      balance: parseFloat(newAccount.balance) || 0,
+      currency: newAccount.currency,
+      status: newAccount.status,
+      department: newAccount.department,
+      linkedEmployee: newAccount.linkedEmployee || undefined,
+      createdDate: new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }),
+      lastTransaction: "--",
+      description: newAccount.description,
+    };
+    setAccounts([account, ...accounts]);
+    setShowAddModal(false);
+    setNewAccount({
+      accountCode: "",
+      accountName: "",
+      type: "Asset",
+      subType: "Bank",
+      balance: "",
+      currency: "USD",
+      status: "Active",
+      department: "",
+      linkedEmployee: "",
+      description: "",
+    });
+  };
 
   // Memoize transactions for the viewed item
   const viewTransactions = useMemo(() => {
@@ -560,6 +606,7 @@ export function Accounts() {
               Export
             </button>
             <button
+              onClick={() => setShowAddModal(true)}
               className="px-4 py-2 rounded-lg text-sm text-white hover:opacity-90 transition-opacity flex items-center gap-2"
               style={{ backgroundColor: "#0B01D0" }}
             >
@@ -569,6 +616,183 @@ export function Accounts() {
           </div>
         </div>
       </div>
+
+      {/* Add Account Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowAddModal(false)}>
+          <div className="bg-white rounded-2xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900">Add New Account</h2>
+                <p className="text-[12px] text-slate-500 mt-0.5">Create a new account in the chart of accounts</p>
+              </div>
+              <button onClick={() => setShowAddModal(false)} className="p-2 hover:bg-slate-100 rounded-xl transition-colors">
+                <X className="w-5 h-5 text-slate-400" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-6 py-5">
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1.5 block">Account Code</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 1001-003"
+                      value={newAccount.accountCode}
+                      onChange={(e) => setNewAccount({ ...newAccount, accountCode: e.target.value })}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1.5 block">Account Name</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Project Funds Account"
+                      value={newAccount.accountName}
+                      onChange={(e) => setNewAccount({ ...newAccount, accountName: e.target.value })}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1.5 block">Account Type</label>
+                    <select
+                      value={newAccount.type}
+                      onChange={(e) => setNewAccount({ ...newAccount, type: e.target.value as AccountType })}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white"
+                    >
+                      <option value="Asset">Asset</option>
+                      <option value="Liability">Liability</option>
+                      <option value="Revenue">Revenue</option>
+                      <option value="Expense">Expense</option>
+                      <option value="Equity">Equity</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1.5 block">Sub-Type</label>
+                    <select
+                      value={newAccount.subType}
+                      onChange={(e) => setNewAccount({ ...newAccount, subType: e.target.value as AccountSubType })}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white"
+                    >
+                      <option value="Cash">Cash</option>
+                      <option value="Bank">Bank</option>
+                      <option value="Receivable">Receivable</option>
+                      <option value="Payable">Payable</option>
+                      <option value="Staff Loan">Staff Loan</option>
+                      <option value="Petty Cash">Petty Cash</option>
+                      <option value="Grant">Grant</option>
+                      <option value="Operating">Operating</option>
+                      <option value="Capital">Capital</option>
+                      <option value="Retained Earnings">Retained Earnings</option>
+                      <option value="Fixed Asset">Fixed Asset</option>
+                      <option value="Donor Fund">Donor Fund</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1.5 block">Currency</label>
+                    <select
+                      value={newAccount.currency}
+                      onChange={(e) => setNewAccount({ ...newAccount, currency: e.target.value })}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white"
+                    >
+                      <option value="USD">USD</option>
+                      <option value="GHS">GHS</option>
+                      <option value="EUR">EUR</option>
+                      <option value="GBP">GBP</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1.5 block">Opening Balance</label>
+                    <input
+                      type="number"
+                      placeholder="0.00"
+                      value={newAccount.balance}
+                      onChange={(e) => setNewAccount({ ...newAccount, balance: e.target.value })}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1.5 block">Department</label>
+                    <select
+                      value={newAccount.department}
+                      onChange={(e) => setNewAccount({ ...newAccount, department: e.target.value })}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white"
+                    >
+                      <option value="">Select Department</option>
+                      <option value="Finance">Finance</option>
+                      <option value="Operations">Operations</option>
+                      <option value="Programs">Programs</option>
+                      <option value="HR">HR</option>
+                      <option value="Procurement">Procurement</option>
+                      <option value="Engineering">Engineering</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1.5 block">Status</label>
+                    <select
+                      value={newAccount.status}
+                      onChange={(e) => setNewAccount({ ...newAccount, status: e.target.value as "Active" | "Inactive" | "Frozen" })}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white"
+                    >
+                      <option value="Active">Active</option>
+                      <option value="Inactive">Inactive</option>
+                      <option value="Frozen">Frozen</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1.5 block">Linked Employee (Optional)</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Kofi Annan"
+                    value={newAccount.linkedEmployee}
+                    onChange={(e) => setNewAccount({ ...newAccount, linkedEmployee: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1.5 block">Description</label>
+                  <textarea
+                    rows={3}
+                    placeholder="Account description..."
+                    value={newAccount.description}
+                    onChange={(e) => setNewAccount({ ...newAccount, description: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-200 bg-slate-50">
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="px-4 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-700 hover:bg-slate-100 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddAccount}
+                disabled={!newAccount.accountCode || !newAccount.accountName || !newAccount.department}
+                className="px-5 py-2 bg-purple-700 hover:bg-purple-800 text-white rounded-lg text-[13px] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Create Account
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Table */}
       <div className="flex-1 overflow-auto">
