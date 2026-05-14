@@ -9,7 +9,7 @@ import {
   subscribe,
   type ProcurementPlanItem,
   type PlanItemChange,
-} from "@/lib/procurementStore";
+} from "../lib/procurementStore";
 
 // ─── Budget-aligned procurement data (same source as BudgetTreeTable) ──────
 
@@ -546,7 +546,7 @@ function PlanItemDetail({ item, onClose }: PlanItemDetailProps) {
                     </tr>
                   </thead>
                   <tbody>
-                    {item.changeHistory.map(ch => (
+                    {item.changeHistory.map((ch: PlanItemChange) => (
                       <tr key={ch.id} className="border-t border-slate-100">
                         <td className="px-3 py-2 text-[11px] text-slate-600 whitespace-nowrap">{ch.date}</td>
                         <td className="px-3 py-2 text-[11px] text-slate-700 font-medium">{ch.field}</td>
@@ -898,7 +898,7 @@ export function ProcurementPlanView({ onBack }: ProcurementPlanViewProps) {
                       </tr>
                     </thead>
                     <tbody>
-                      {historyItem.changeHistory.map(ch => (
+                      {historyItem.changeHistory.map((ch: PlanItemChange) => (
                         <tr key={ch.id} className="border-t border-slate-100">
                           <td className="px-3 py-2 text-[11px] text-slate-600 whitespace-nowrap">{ch.date}</td>
                           <td className="px-3 py-2 text-[11px] text-slate-700 font-medium">{ch.field}</td>

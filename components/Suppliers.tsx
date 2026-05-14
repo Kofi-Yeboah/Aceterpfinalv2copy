@@ -682,7 +682,7 @@ export function Suppliers() {
                   <td className="px-4 py-3 text-[12px] text-purple-700 font-medium" style={{ fontFamily: F }}>
                     <div className="flex items-center gap-1.5">
                       {v.vendorId}
-                      {hasDocWarning(v) && <AlertTriangle size={12} className="text-amber-500" title="Expired or missing documents" />}
+                      {hasDocWarning(v) && <AlertTriangle size={12} className="text-amber-500" />}
                     </div>
                   </td>
                   <td className="px-4 py-3">
@@ -759,7 +759,7 @@ export function Suppliers() {
                   <td className="px-4 py-3 text-[12px] text-purple-700 font-medium" style={{ fontFamily: F }}>
                     <div className="flex items-center gap-1.5">
                       {v.vendorId}
-                      {hasDocWarning(v) && <AlertTriangle size={12} className="text-amber-500" title="Expired or missing documents" />}
+                      {hasDocWarning(v) && <AlertTriangle size={12} className="text-amber-500" />}
                     </div>
                   </td>
                   <td className="px-4 py-3 text-[12px] text-slate-900 font-medium" style={{ fontFamily: F }}>{v.legalName}</td>
