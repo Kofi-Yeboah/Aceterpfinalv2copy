@@ -332,17 +332,17 @@ export function LeaveRequest() {
       {/* Table */}
       <div className="flex-1 overflow-auto">
         <table className="w-full">
-          <thead className="sticky top-0 z-[5]">
-            <tr className="bg-blue-600 text-white">
-              <th className="text-left px-6 py-3 text-[12px]">Reference No.</th>
-              <th className="text-left px-6 py-3 text-[12px]">Leave Type</th>
-              <th className="text-left px-6 py-3 text-[12px]">Start Date</th>
-              <th className="text-left px-6 py-3 text-[12px]">End Date</th>
-              <th className="text-center px-6 py-3 text-[12px]">Days</th>
-              <th className="text-left px-6 py-3 text-[12px]">Reason</th>
-              <th className="text-left px-6 py-3 text-[12px]">Status</th>
-              <th className="text-left px-6 py-3 text-[12px]">Submitted On</th>
-              <th className="text-center px-6 py-3 text-[12px]">Actions</th>
+          <thead className="sticky top-0 z-[5]" style={{ backgroundColor: "#0B01D0" }}>
+            <tr>
+              <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Reference No.</th>
+              <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Leave Type</th>
+              <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Start Date</th>
+              <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">End Date</th>
+              <th className="text-center px-6 py-3 text-[12px] text-white font-semibold">Days</th>
+              <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Reason</th>
+              <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Status</th>
+              <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Submitted On</th>
+              <th className="text-center px-6 py-3 text-[12px] text-white font-semibold">Actions</th>
             </tr>
           </thead>
           <tbody>

@@ -127,14 +127,14 @@ export function OperationalBudgets() {
         <table className="w-full">
           <thead className="sticky top-0 z-10">
             <tr className="bg-[#0B01D0] text-white">
-              <th className="px-6 py-3 text-left text-[12px] font-semibold uppercase tracking-wider">Department</th>
-              <th className="px-6 py-3 text-left text-[12px] font-semibold uppercase tracking-wider">Category</th>
-              <th className="px-6 py-3 text-left text-[12px] font-semibold uppercase tracking-wider">Budget Year</th>
-              <th className="px-6 py-3 text-left text-[12px] font-semibold uppercase tracking-wider">Allocated</th>
-              <th className="px-6 py-3 text-left text-[12px] font-semibold uppercase tracking-wider">Spent</th>
-              <th className="px-6 py-3 text-left text-[12px] font-semibold uppercase tracking-wider">Remaining</th>
-              <th className="px-6 py-3 text-left text-[12px] font-semibold uppercase tracking-wider">Usage %</th>
-              <th className="px-6 py-3 text-left text-[12px] font-semibold uppercase tracking-wider">Status</th>
+              <th className="px-6 py-3 text-left text-[12px] font-semibold uppercase tracking-wider text-white">Department</th>
+              <th className="px-6 py-3 text-left text-[12px] font-semibold uppercase tracking-wider text-white">Category</th>
+              <th className="px-6 py-3 text-left text-[12px] font-semibold uppercase tracking-wider text-white">Budget Year</th>
+              <th className="px-6 py-3 text-left text-[12px] font-semibold uppercase tracking-wider text-white">Allocated</th>
+              <th className="px-6 py-3 text-left text-[12px] font-semibold uppercase tracking-wider text-white">Spent</th>
+              <th className="px-6 py-3 text-left text-[12px] font-semibold uppercase tracking-wider text-white">Remaining</th>
+              <th className="px-6 py-3 text-left text-[12px] font-semibold uppercase tracking-wider text-white">Usage %</th>
+              <th className="px-6 py-3 text-left text-[12px] font-semibold uppercase tracking-wider text-white">Status</th>
             </tr>
           </thead>
           <tbody className="bg-white">

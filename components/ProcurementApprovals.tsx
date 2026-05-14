@@ -201,8 +201,8 @@ export function ProcurementApprovals() {
         {activeTab === "pr" ? (
           /* ── PR Approvals Table (Step 3 — Procurement Unit) ── */
           <table className="w-full">
-            <thead>
-              <tr className="bg-blue-800">
+            <thead style={{ backgroundColor: "#0B01D0" }}>
+              <tr>
                 <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Requisition #</th>
                 <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Description</th>
                 <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Requested By</th>
@@ -275,8 +275,8 @@ export function ProcurementApprovals() {
         ) : (
           /* ── Sourcing Approvals Table ── */
           <table className="w-full">
-            <thead>
-              <tr className="bg-blue-800">
+            <thead style={{ backgroundColor: "#0B01D0" }}>
+              <tr>
                 <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">RFQ Number</th>
                 <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Title</th>
                 <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Source PR</th>

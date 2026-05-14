@@ -296,10 +296,10 @@ export function MyFeedback() {
                   <table className="w-full">
                     <thead className="bg-[#0B01D0] text-white">
                       <tr>
-                        <th className="px-6 py-3 text-left text-sm font-semibold">Day</th>
-                        <th className="px-6 py-3 text-left text-sm font-semibold">Date</th>
-                        <th className="px-6 py-3 text-left text-sm font-semibold">Hours</th>
-                        <th className="px-6 py-3 text-left text-sm font-semibold">Task Description</th>
+                        <th className="px-6 py-3 text-left text-sm font-semibold text-white">Day</th>
+                        <th className="px-6 py-3 text-left text-sm font-semibold text-white">Date</th>
+                        <th className="px-6 py-3 text-left text-sm font-semibold text-white">Hours</th>
+                        <th className="px-6 py-3 text-left text-sm font-semibold text-white">Task Description</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200">

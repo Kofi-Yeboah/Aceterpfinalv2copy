@@ -184,27 +184,27 @@ export function Projects() {
       {/* Table */}
       <div className="flex-1 overflow-auto bg-white">
         <table className="w-full">
-          <thead className="sticky top-0 z-10">
-            <tr className="bg-blue-800">
-              <th className="border-b border-slate-100 px-4 py-4 text-left">
+          <thead className="sticky top-0 z-10" style={{ backgroundColor: "#0B01D0" }}>
+            <tr>
+              <th className="px-4 py-4 text-left text-white text-[12px] font-semibold">
                 <p className="font-['Montserrat',sans-serif] text-white text-[12px]">Task Name</p>
               </th>
-              <th className="border-b border-slate-100 px-4 py-4 text-left w-[120px]">
+              <th className="px-4 py-4 text-left text-white text-[12px] font-semibold w-[120px]">
                 <p className="font-['Montserrat',sans-serif] text-white text-[12px]">Phase</p>
               </th>
-              <th className="border-b border-slate-100 px-4 py-4 text-left w-[287px]">
+              <th className="px-4 py-4 text-left text-white text-[12px] font-semibold w-[287px]">
                 <p className="font-['Montserrat',sans-serif] text-white text-[12px]">Associated Project</p>
               </th>
-              <th className="border-b border-slate-100 px-4 py-4 text-left w-[120px]">
+              <th className="px-4 py-4 text-left text-white text-[12px] font-semibold w-[120px]">
                 <p className="font-['Montserrat',sans-serif] text-white text-[12px]">Assigned To</p>
               </th>
-              <th className="border-b border-slate-100 px-3 py-4 text-left w-[120px]">
+              <th className="px-3 py-4 text-left text-white text-[12px] font-semibold w-[120px]">
                 <p className="font-['Montserrat',sans-serif] text-white text-[12px]">Due Date</p>
               </th>
-              <th className="border-b border-slate-100 px-4 py-4 text-left w-[117px]">
+              <th className="px-4 py-4 text-left text-white text-[12px] font-semibold w-[117px]">
                 <p className="font-['Montserrat',sans-serif] text-white text-[12px]">Status</p>
               </th>
-              <th className="border-b border-slate-100 px-4 py-4 text-center w-[73px] rounded-tr-lg">
+              <th className="px-4 py-4 text-center text-white text-[12px] font-semibold w-[73px] rounded-tr-lg">
                 <p className="font-['Montserrat',sans-serif] text-white text-[12px]">Action</p>
               </th>
             </tr>

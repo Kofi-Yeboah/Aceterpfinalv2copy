@@ -163,8 +163,8 @@ export function Invoices() {
 
           <div className="flex-1 overflow-auto bg-white">
             <table className="w-full">
-              <thead>
-                <tr className="bg-blue-800">
+              <thead style={{ backgroundColor: "#0B01D0" }}>
+                <tr>
                   <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Invoice #</th>
                   <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">PO Number</th>
                   <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Supplier</th>

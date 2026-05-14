@@ -208,16 +208,16 @@ export function ProjectBudgets() {
         <table className="w-full">
           <thead className="sticky top-0 z-10">
             <tr className="bg-[#0B01D0] text-white">
-              <th className="px-6 py-3 text-left text-[12px] font-semibold uppercase tracking-wider">Project Name</th>
-              <th className="px-6 py-3 text-left text-[12px] font-semibold uppercase tracking-wider">Project Type</th>
-              <th className="px-6 py-3 text-left text-[12px] font-semibold uppercase tracking-wider">Project Manager</th>
-              <th className="px-6 py-3 text-left text-[12px] font-semibold uppercase tracking-wider">Timeline</th>
-              <th className="px-6 py-3 text-left text-[12px] font-semibold uppercase tracking-wider">Total Budget</th>
-              <th className="px-6 py-3 text-left text-[12px] font-semibold uppercase tracking-wider">Spent</th>
-              <th className="px-6 py-3 text-left text-[12px] font-semibold uppercase tracking-wider">Remaining</th>
-              <th className="px-6 py-3 text-left text-[12px] font-semibold uppercase tracking-wider">Usage %</th>
-              <th className="px-6 py-3 text-left text-[12px] font-semibold uppercase tracking-wider">Status</th>
-              <th className="px-6 py-3 text-left text-[12px] font-semibold uppercase tracking-wider">Actions</th>
+              <th className="px-6 py-3 text-left text-[12px] font-semibold uppercase tracking-wider text-white">Project Name</th>
+              <th className="px-6 py-3 text-left text-[12px] font-semibold uppercase tracking-wider text-white">Project Type</th>
+              <th className="px-6 py-3 text-left text-[12px] font-semibold uppercase tracking-wider text-white">Project Manager</th>
+              <th className="px-6 py-3 text-left text-[12px] font-semibold uppercase tracking-wider text-white">Timeline</th>
+              <th className="px-6 py-3 text-left text-[12px] font-semibold uppercase tracking-wider text-white">Total Budget</th>
+              <th className="px-6 py-3 text-left text-[12px] font-semibold uppercase tracking-wider text-white">Spent</th>
+              <th className="px-6 py-3 text-left text-[12px] font-semibold uppercase tracking-wider text-white">Remaining</th>
+              <th className="px-6 py-3 text-left text-[12px] font-semibold uppercase tracking-wider text-white">Usage %</th>
+              <th className="px-6 py-3 text-left text-[12px] font-semibold uppercase tracking-wider text-white">Status</th>
+              <th className="px-6 py-3 text-left text-[12px] font-semibold uppercase tracking-wider text-white">Actions</th>
             </tr>
           </thead>
           <tbody className="bg-white">

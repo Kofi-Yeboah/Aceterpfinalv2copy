@@ -170,17 +170,17 @@ export function ExpenseClaim() {
       {/* Table */}
       <div className="flex-1 overflow-auto">
         <table className="w-full">
-          <thead className="sticky top-0 z-[5]">
-            <tr className="bg-blue-600 text-white">
-              <th className="text-left px-6 py-3 text-[12px]">Reference No.</th>
-              <th className="text-left px-6 py-3 text-[12px]">Category</th>
-              <th className="text-left px-6 py-3 text-[12px]">Description</th>
-              <th className="text-right px-6 py-3 text-[12px]">Amount (GHS)</th>
-              <th className="text-left px-6 py-3 text-[12px]">Receipt Date</th>
-              <th className="text-left px-6 py-3 text-[12px]">Project</th>
-              <th className="text-left px-6 py-3 text-[12px]">Status</th>
-              <th className="text-left px-6 py-3 text-[12px]">Request Date</th>
-              <th className="text-center px-6 py-3 text-[12px]">Actions</th>
+          <thead className="sticky top-0 z-[5]" style={{ backgroundColor: "#0B01D0" }}>
+            <tr>
+              <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Reference No.</th>
+              <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Category</th>
+              <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Description</th>
+              <th className="text-right px-6 py-3 text-[12px] text-white font-semibold">Amount (GHS)</th>
+              <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Receipt Date</th>
+              <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Project</th>
+              <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Status</th>
+              <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Request Date</th>
+              <th className="text-center px-6 py-3 text-[12px] text-white font-semibold">Actions</th>
             </tr>
           </thead>
           <tbody>

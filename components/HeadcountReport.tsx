@@ -276,7 +276,7 @@ export function HeadcountReport() {
               </div>
               <table className="w-full">
                 <thead>
-                  <tr className="bg-blue-800">
+                  <tr>
                     <th className="text-left px-6 py-3 text-white text-[12px] font-semibold">Location</th>
                     <th className="text-center px-6 py-3 text-white text-[12px] font-semibold">Count</th>
                     <th className="text-center px-6 py-3 text-white text-[12px] font-semibold">Percentage</th>
@@ -307,7 +307,7 @@ export function HeadcountReport() {
               </div>
               <table className="w-full">
                 <thead>
-                  <tr className="bg-blue-800">
+                  <tr>
                     <th className="text-left px-6 py-3 text-white text-[12px] font-semibold">Gender</th>
                     <th className="text-center px-6 py-3 text-white text-[12px] font-semibold">Count</th>
                     <th className="text-center px-6 py-3 text-white text-[12px] font-semibold">Percentage</th>
@@ -339,7 +339,7 @@ export function HeadcountReport() {
             </div>
             <table className="w-full">
               <thead>
-                <tr className="bg-blue-800">
+                <tr>
                   <th className="text-left px-6 py-3 text-white text-[12px] font-semibold">Department</th>
                   <th className="text-center px-6 py-3 text-white text-[12px] font-semibold">Current Count</th>
                   <th className="text-center px-6 py-3 text-white text-[12px] font-semibold">Last Month</th>

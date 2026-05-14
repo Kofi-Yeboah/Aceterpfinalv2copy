@@ -373,7 +373,7 @@ export function DataCollectionAssessment() {
         {/* Data Table */}
         <div className="flex-1 overflow-auto bg-white">
           <table className="w-full">
-            <thead className="bg-blue-800 sticky top-0 z-10">
+            <thead className="sticky top-0 z-10" style={{ backgroundColor: "#0B01D0" }}>
               <tr>
                 <th className="px-4 py-4 text-left text-white text-[12px] font-semibold border-b border-slate-100">Indicator</th>
                 <th className="px-4 py-4 text-left text-white text-[12px] font-semibold border-b border-slate-100">Project/Grant</th>

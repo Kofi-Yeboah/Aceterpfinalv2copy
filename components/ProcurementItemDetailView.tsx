@@ -774,12 +774,12 @@ export function ProcurementItemDetailView({ item, planId, planYear, planDepartme
                       <div className="mt-4 pt-4 border-t border-slate-200">
                         <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-2">Line Items</p>
                         <table className="w-full">
-                          <thead>
+                          <thead style={{ backgroundColor: "#0B01D0" }}>
                             <tr className="bg-slate-100">
-                              <th className="text-left px-3 py-1.5 text-[10px] text-slate-500 font-medium">Description</th>
-                              <th className="text-center px-3 py-1.5 text-[10px] text-slate-500 font-medium">Qty</th>
-                              <th className="text-right px-3 py-1.5 text-[10px] text-slate-500 font-medium">Unit Price</th>
-                              <th className="text-right px-3 py-1.5 text-[10px] text-slate-500 font-medium">Total</th>
+                              <th className="text-left px-3 py-1.5 text-[10px] text-white font-medium">Description</th>
+                              <th className="text-center px-3 py-1.5 text-[10px] text-white font-medium">Qty</th>
+                              <th className="text-right px-3 py-1.5 text-[10px] text-white font-medium">Unit Price</th>
+                              <th className="text-right px-3 py-1.5 text-[10px] text-white font-medium">Total</th>
                             </tr>
                           </thead>
                           <tbody>

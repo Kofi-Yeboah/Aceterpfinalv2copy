@@ -100,20 +100,19 @@ export function HRPettyCashApprovals() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto p-6">
-        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+      <div className="flex-1 overflow-auto">
           <table className="w-full">
-            <thead className="sticky top-0 z-[5]">
-              <tr className="bg-blue-600 text-white">
-                <th className="text-left px-6 py-3 text-[12px]">Request ID</th>
-                <th className="text-left px-6 py-3 text-[12px]">Employee</th>
-                <th className="text-left px-6 py-3 text-[12px]">Department</th>
-                <th className="text-left px-6 py-3 text-[12px]">Purpose</th>
-                <th className="text-left px-6 py-3 text-[12px]">Category</th>
-                <th className="text-right px-6 py-3 text-[12px]">Amount (GHS)</th>
-                <th className="text-left px-6 py-3 text-[12px]">Request Date</th>
-                <th className="text-left px-6 py-3 text-[12px]">Status</th>
-                <th className="text-center px-6 py-3 text-[12px]">Actions</th>
+            <thead className="sticky top-0 z-[5]" style={{ backgroundColor: "#0B01D0" }}>
+              <tr>
+                <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Request ID</th>
+                <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Employee</th>
+                <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Department</th>
+                <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Purpose</th>
+                <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Category</th>
+                <th className="text-right px-6 py-3 text-[12px] text-white font-semibold">Amount (GHS)</th>
+                <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Request Date</th>
+                <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Status</th>
+                <th className="text-center px-6 py-3 text-[12px] text-white font-semibold">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -147,7 +146,6 @@ export function HRPettyCashApprovals() {
               )}
             </tbody>
           </table>
-        </div>
       </div>
 
       {viewItem && (

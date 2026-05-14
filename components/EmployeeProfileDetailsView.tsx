@@ -473,11 +473,11 @@ export function EmployeeProfileDetailsView({ profile, onBack }: EmployeeProfileD
                 <table className="w-full">
                   <thead className="bg-[#0B01D0] text-white">
                     <tr>
-                      <th className="px-6 py-3 text-left text-sm font-semibold">Project Name</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold">Task Name</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold">Due Date</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold">Priority</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold">Status</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-white">Project Name</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-white">Task Name</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-white">Due Date</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-white">Priority</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-white">Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200">
@@ -788,12 +788,12 @@ export function EmployeeProfileDetailsView({ profile, onBack }: EmployeeProfileD
                   <table className="w-full">
                     <thead className="bg-[#0B01D0] text-white">
                       <tr>
-                        <th className="px-6 py-3 text-left text-sm font-semibold">Course Name</th>
-                        <th className="px-6 py-3 text-left text-sm font-semibold">Provider</th>
-                        <th className="px-6 py-3 text-left text-sm font-semibold">Start Date</th>
-                        <th className="px-6 py-3 text-left text-sm font-semibold">End Date</th>
-                        <th className="px-6 py-3 text-left text-sm font-semibold">Hours</th>
-                        <th className="px-6 py-3 text-left text-sm font-semibold">Status</th>
+                        <th className="px-6 py-3 text-left text-sm font-semibold text-white">Course Name</th>
+                        <th className="px-6 py-3 text-left text-sm font-semibold text-white">Provider</th>
+                        <th className="px-6 py-3 text-left text-sm font-semibold text-white">Start Date</th>
+                        <th className="px-6 py-3 text-left text-sm font-semibold text-white">End Date</th>
+                        <th className="px-6 py-3 text-left text-sm font-semibold text-white">Hours</th>
+                        <th className="px-6 py-3 text-left text-sm font-semibold text-white">Status</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200">
@@ -902,13 +902,13 @@ export function EmployeeProfileDetailsView({ profile, onBack }: EmployeeProfileD
                 <table className="w-full">
                   <thead className="bg-[#0B01D0] text-white">
                     <tr>
-                      <th className="px-6 py-3 text-left text-sm font-semibold">Leave Type</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold">Start Date</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold">End Date</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold">Duration</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold">Request Date</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold">Approved By</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold">Status</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-white">Leave Type</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-white">Start Date</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-white">End Date</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-white">Duration</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-white">Request Date</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-white">Approved By</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-white">Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200">

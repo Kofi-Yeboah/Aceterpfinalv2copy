@@ -1392,7 +1392,7 @@ export function ProjectDetailsView({ project, onBack, onNavigateToWBS, onNavigat
                         <div className="overflow-x-auto">
                           <table className="w-full">
                             <thead>
-                              <tr className="bg-blue-600">
+                              <tr>
                                 <th className="text-left px-4 py-2.5 text-[11px] text-white font-semibold">Deliverable</th>
                                 <th className="text-left px-4 py-2.5 text-[11px] text-white font-semibold">Due</th>
                                 <th className="text-center px-4 py-2.5 text-[11px] text-white font-semibold">Type</th>
@@ -1438,7 +1438,7 @@ export function ProjectDetailsView({ project, onBack, onNavigateToWBS, onNavigat
                         <div className="overflow-x-auto">
                           <table className="w-full">
                             <thead>
-                              <tr className="bg-blue-600">
+                              <tr>
                                 <th className="text-left px-4 py-2.5 text-[11px] text-white font-semibold">Report Type</th>
                                 <th className="text-left px-4 py-2.5 text-[11px] text-white font-semibold">Frequency</th>
                                 <th className="text-left px-4 py-2.5 text-[11px] text-white font-semibold">Recipient</th>
@@ -1475,7 +1475,7 @@ export function ProjectDetailsView({ project, onBack, onNavigateToWBS, onNavigat
                         <div className="overflow-x-auto">
                           <table className="w-full">
                             <thead>
-                              <tr className="bg-blue-600">
+                              <tr>
                                 <th className="text-left px-4 py-2.5 text-[11px] text-white font-semibold">Milestone</th>
                                 <th className="text-left px-4 py-2.5 text-[11px] text-white font-semibold">Target Date</th>
                                 <th className="text-left px-4 py-2.5 text-[11px] text-white font-semibold">Payment</th>
@@ -1750,7 +1750,7 @@ export function ProjectDetailsView({ project, onBack, onNavigateToWBS, onNavigat
                   
                   <div className="overflow-x-auto">
                     <table className="w-full">
-                      <thead className="bg-blue-800">
+                      <thead style={{ backgroundColor: "#0B01D0" }}>
                         <tr>
                           <th className="px-4 py-3 text-left text-[12px] font-semibold text-white">Task ID</th>
                           <th className="px-4 py-3 text-left text-[12px] font-semibold text-white">Task Name</th>
@@ -2252,7 +2252,7 @@ export function ProjectDetailsView({ project, onBack, onNavigateToWBS, onNavigat
                 {/* Documents Table */}
                 <div className="overflow-x-auto -mx-6">
                   <table className="w-full">
-                    <thead className="bg-blue-800">
+                    <thead style={{ backgroundColor: "#0B01D0" }}>
                       <tr>
                         <th className="px-4 py-3 text-left text-[12px] font-semibold text-white">DOCUMENT NAME</th>
                         <th className="px-4 py-3 text-left text-[12px] font-semibold text-white">FILE TYPE</th>

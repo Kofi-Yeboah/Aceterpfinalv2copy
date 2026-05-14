@@ -672,7 +672,7 @@ export function ESSProcurementPlan() {
     const isCurrentYearPlan = planId === `PROC-${currentYear}`;
     return (
       <table className="w-full">
-        <thead>
+        <thead style={{ backgroundColor: "#0B01D0" }}>
           <tr style={{ backgroundColor: "#0B01D0" }}>
             <th className="text-left px-5 py-2.5 text-white text-[11px] font-semibold">#</th>
             <th className="text-left px-5 py-2.5 text-white text-[11px] font-semibold">Item Description</th>
@@ -752,16 +752,16 @@ export function ESSProcurementPlan() {
           </div>
         </div>
         <table className="w-full">
-          <thead>
+          <thead style={{ backgroundColor: "#0B01D0" }}>
             <tr className="bg-amber-100/60">
-              <th className="text-left px-5 py-2 text-amber-800 text-[11px] font-semibold">#</th>
-              <th className="text-left px-5 py-2 text-amber-800 text-[11px] font-semibold">Item Description</th>
-              <th className="text-left px-5 py-2 text-amber-800 text-[11px] font-semibold">Category</th>
-              <th className="text-left px-5 py-2 text-amber-800 text-[11px] font-semibold">Qty</th>
-              <th className="text-right px-5 py-2 text-amber-800 text-[11px] font-semibold">Est. Cost</th>
-              <th className="text-left px-5 py-2 text-amber-800 text-[11px] font-semibold">Target Date</th>
-              <th className="text-left px-5 py-2 text-amber-800 text-[11px] font-semibold">Added</th>
-              <th className="text-center px-5 py-2 text-amber-800 text-[11px] font-semibold w-28">Actions</th>
+              <th className="text-left px-5 py-2 text-white text-[11px] font-semibold">#</th>
+              <th className="text-left px-5 py-2 text-white text-[11px] font-semibold">Item Description</th>
+              <th className="text-left px-5 py-2 text-white text-[11px] font-semibold">Category</th>
+              <th className="text-left px-5 py-2 text-white text-[11px] font-semibold">Qty</th>
+              <th className="text-right px-5 py-2 text-white text-[11px] font-semibold">Est. Cost</th>
+              <th className="text-left px-5 py-2 text-white text-[11px] font-semibold">Target Date</th>
+              <th className="text-left px-5 py-2 text-white text-[11px] font-semibold">Added</th>
+              <th className="text-center px-5 py-2 text-white text-[11px] font-semibold w-28">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -829,7 +829,7 @@ export function ESSProcurementPlan() {
           {newItems.length > 0 && (
             <div className="bg-white border border-slate-200 rounded-xl overflow-hidden mb-5">
               <table className="w-full">
-                <thead>
+                <thead style={{ backgroundColor: "#0B01D0" }}>
                   <tr style={{ backgroundColor: "#0B01D0" }}>
                     <th className="text-left px-5 py-2.5 text-white text-[11px] font-semibold">#</th>
                     <th className="text-left px-5 py-2.5 text-white text-[11px] font-semibold">Item Description</th>

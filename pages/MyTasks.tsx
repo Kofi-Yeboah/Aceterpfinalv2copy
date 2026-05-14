@@ -504,16 +504,16 @@ export function MyTasks() {
       {/* ── Table ──────────────────────────────────────────────────── */}
       <div className="flex-1 overflow-auto">
         <table className="w-full">
-          <thead className="sticky top-0 z-[5]">
-            <tr className="bg-blue-600 text-white">
-              <th className="text-left px-6 py-3 text-[12px]">Task ID</th>
-              <th className="text-left px-6 py-3 text-[12px]">Task</th>
-              <th className="text-left px-6 py-3 text-[12px]">Phase</th>
-              <th className="text-left px-6 py-3 text-[12px]">Due Date</th>
-              <th className="text-left px-6 py-3 text-[12px]">Time Allotted</th>
-              <th className="text-left px-6 py-3 text-[12px]">Priority</th>
-              <th className="text-left px-6 py-3 text-[12px]">Status</th>
-              <th className="text-center px-6 py-3 text-[12px]">Actions</th>
+          <thead className="sticky top-0 z-[5]" style={{ backgroundColor: "#0B01D0" }}>
+            <tr>
+              <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Task ID</th>
+              <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Task</th>
+              <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Phase</th>
+              <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Due Date</th>
+              <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Time Allotted</th>
+              <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Priority</th>
+              <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Status</th>
+              <th className="text-center px-6 py-3 text-[12px] text-white font-semibold">Actions</th>
             </tr>
           </thead>
           <tbody>

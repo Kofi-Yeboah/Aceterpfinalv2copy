@@ -231,7 +231,7 @@ export function NotificationCenter() {
         <div className="flex-1 overflow-auto bg-white">
           <table className="w-full">
             <thead>
-              <tr className="bg-blue-800">
+              <tr>
                 <th className="text-left px-4 py-3 text-white text-[12px] border-b border-slate-100">
                   Message
                 </th>

@@ -979,15 +979,15 @@ export function PerformanceManagementScreen() {
 
                     <div className="overflow-x-auto">
                       <table className="w-full">
-                        <thead>
+                        <thead style={{ backgroundColor: "#0B01D0" }}>
                           <tr className="bg-slate-50 border-b border-slate-100">
-                            <th className="text-left px-3 py-2 text-[11px] text-slate-500" rowSpan={2} style={{ width: "22%" }}>Objective</th>
-                            <th className="text-left px-3 py-2 text-[11px] text-slate-500" rowSpan={2} style={{ width: "18%" }}>Target</th>
-                            <th className="text-center px-3 py-2 text-[11px] text-slate-500" rowSpan={2} style={{ width: "7%" }}>Weight&nbsp;%</th>
+                            <th className="text-left px-3 py-2 text-[11px] text-white font-semibold" rowSpan={2} style={{ width: "22%" }}>Objective</th>
+                            <th className="text-left px-3 py-2 text-[11px] text-white font-semibold" rowSpan={2} style={{ width: "18%" }}>Target</th>
+                            <th className="text-center px-3 py-2 text-[11px] text-white font-semibold" rowSpan={2} style={{ width: "7%" }}>Weight&nbsp;%</th>
                             <th className={`text-center px-2 py-1.5 text-[11px] border-b border-slate-200 ${activePeriodColor}`} colSpan={3} style={{ width: "38%" }}>
                               {activePeriodLabel}
                             </th>
-                            <th className="text-center px-3 py-2 text-[11px] text-slate-500" rowSpan={2} style={{ width: "8%" }}>Final Score</th>
+                            <th className="text-center px-3 py-2 text-[11px] text-white font-semibold" rowSpan={2} style={{ width: "8%" }}>Final Score</th>
                           </tr>
                           <tr className="bg-slate-50 border-b border-slate-200">
                             <th className={`text-center px-2 py-1.5 text-[10px] ${activePeriodColor}`}>Emp. Comments</th>
@@ -1129,12 +1129,12 @@ export function PerformanceManagementScreen() {
 
               <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
                 <table className="w-full">
-                  <thead>
+                  <thead style={{ backgroundColor: "#0B01D0" }}>
                     <tr className="bg-slate-50 border-b border-slate-200">
-                      <th className="text-left px-4 py-3 text-[11px] text-slate-500 w-1/3">Core Behavior</th>
-                      <th className="text-center px-4 py-3 text-[11px] text-slate-500">Rating (1–5)</th>
-                      <th className="text-center px-4 py-3 text-[11px] text-slate-500">Weight</th>
-                      <th className="text-right px-4 py-3 text-[11px] text-slate-500">Contribution</th>
+                      <th className="text-left px-4 py-3 text-[11px] text-white font-semibold w-1/3">Core Behavior</th>
+                      <th className="text-center px-4 py-3 text-[11px] text-white font-semibold">Rating (1–5)</th>
+                      <th className="text-center px-4 py-3 text-[11px] text-white font-semibold">Weight</th>
+                      <th className="text-right px-4 py-3 text-[11px] text-white font-semibold">Contribution</th>
                     </tr>
                   </thead>
                   <tbody>

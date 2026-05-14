@@ -298,8 +298,8 @@ export function Interviews() {
           {/* Table */}
           <div className="flex-1 overflow-auto bg-white">
             <table className="w-full">
-              <thead>
-                <tr className="bg-blue-800">
+              <thead style={{ backgroundColor: "#0B01D0" }}>
+                <tr>
                   <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">
                     Candidate Name
                   </th>

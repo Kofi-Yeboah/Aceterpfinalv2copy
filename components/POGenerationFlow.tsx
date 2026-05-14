@@ -348,14 +348,14 @@ export function POGenerationFlow({
 
           {/* Line Items Table */}
           <table className="w-full mb-4 text-[9px]" style={{ fontFamily: F }}>
-            <thead>
+            <thead style={{ backgroundColor: "#0B01D0" }}>
               <tr className="bg-slate-800 text-white">
-                <th className="px-2 py-1.5 text-left">#</th>
-                <th className="px-2 py-1.5 text-left">Description</th>
-                <th className="px-2 py-1.5 text-center">Qty</th>
-                <th className="px-2 py-1.5 text-center">Unit</th>
-                <th className="px-2 py-1.5 text-right">Unit Price</th>
-                <th className="px-2 py-1.5 text-right">Total</th>
+                <th className="px-2 py-1.5 text-left text-white font-semibold text-[12px]">#</th>
+                <th className="px-2 py-1.5 text-left text-white font-semibold text-[12px]">Description</th>
+                <th className="px-2 py-1.5 text-center text-white font-semibold text-[12px]">Qty</th>
+                <th className="px-2 py-1.5 text-center text-white font-semibold text-[12px]">Unit</th>
+                <th className="px-2 py-1.5 text-right text-white font-semibold text-[12px]">Unit Price</th>
+                <th className="px-2 py-1.5 text-right text-white font-semibold text-[12px]">Total</th>
               </tr>
             </thead>
             <tbody>
@@ -782,11 +782,11 @@ export function POGenerationFlow({
                   <p className="text-[11px] font-semibold text-slate-900" style={{ fontFamily: F }}>Line Items</p>
                 </div>
                 <table className="w-full text-[10px]" style={{ fontFamily: F }}>
-                  <thead>
+                  <thead style={{ backgroundColor: "#0B01D0" }}>
                     <tr className="border-b border-slate-100">
-                      <th className="px-3 py-2 text-left text-slate-500">#</th>
-                      <th className="px-3 py-2 text-left text-slate-500">Item</th>
-                      <th className="px-3 py-2 text-right text-slate-500">Amount</th>
+                      <th className="px-3 py-2 text-left text-white font-semibold text-[12px]">#</th>
+                      <th className="px-3 py-2 text-left text-white font-semibold text-[12px]">Item</th>
+                      <th className="px-3 py-2 text-right text-white font-semibold text-[12px]">Amount</th>
                     </tr>
                   </thead>
                   <tbody>

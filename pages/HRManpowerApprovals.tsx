@@ -110,21 +110,20 @@ export function HRManpowerApprovals() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto p-6">
-        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+      <div className="flex-1 overflow-auto">
           <table className="w-full">
-            <thead className="sticky top-0 z-[5]">
-              <tr className="bg-blue-600 text-white">
-                <th className="text-left px-6 py-3 text-[12px]">Reference No.</th>
-                <th className="text-left px-6 py-3 text-[12px]">Requested By</th>
-                <th className="text-left px-6 py-3 text-[12px]">Job Title</th>
-                <th className="text-left px-6 py-3 text-[12px]">Department</th>
-                <th className="text-center px-6 py-3 text-[12px]">Positions</th>
-                <th className="text-left px-6 py-3 text-[12px]">Type</th>
-                <th className="text-left px-6 py-3 text-[12px]">Priority</th>
-                <th className="text-left px-6 py-3 text-[12px]">Needed By</th>
-                <th className="text-left px-6 py-3 text-[12px]">Status</th>
-                <th className="text-center px-6 py-3 text-[12px]">Actions</th>
+            <thead className="sticky top-0 z-[5]" style={{ backgroundColor: "#0B01D0" }}>
+              <tr>
+                <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Reference No.</th>
+                <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Requested By</th>
+                <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Job Title</th>
+                <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Department</th>
+                <th className="text-center px-6 py-3 text-[12px] text-white font-semibold">Positions</th>
+                <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Type</th>
+                <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Priority</th>
+                <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Needed By</th>
+                <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Status</th>
+                <th className="text-center px-6 py-3 text-[12px] text-white font-semibold">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -161,7 +160,6 @@ export function HRManpowerApprovals() {
               )}
             </tbody>
           </table>
-        </div>
       </div>
 
       {viewItem && (

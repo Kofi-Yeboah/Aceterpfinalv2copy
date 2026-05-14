@@ -588,9 +588,9 @@ export function UserManagement() {
       {/* Table */}
       <div className="flex-1 overflow-auto bg-white">
         <table className="w-full">
-          <thead>
+          <thead style={{ backgroundColor: "#0B01D0" }}>
             {activeUserTab === "internal" ? (
-              <tr className="bg-blue-800">
+              <tr>
                 <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">
                   Name
                 </th>
@@ -605,7 +605,7 @@ export function UserManagement() {
                 </th>
               </tr>
             ) : (
-              <tr className="bg-blue-800">
+              <tr>
                 <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">
                   Name
                 </th>

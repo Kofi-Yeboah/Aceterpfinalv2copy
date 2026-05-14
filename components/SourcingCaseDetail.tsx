@@ -677,14 +677,14 @@ export function SourcingCaseDetail({
                       </p>
                       <div className="border border-slate-200 rounded-lg overflow-hidden">
                         <table className="w-full">
-                          <thead>
+                          <thead style={{ backgroundColor: "#0B01D0" }}>
                             <tr className="bg-slate-50 border-b border-slate-200">
-                              <th className="text-left px-3 py-2 text-[10px] text-slate-500 font-medium" style={{ fontFamily: F }}>Vendor</th>
-                              <th className="text-left px-3 py-2 text-[10px] text-slate-500 font-medium" style={{ fontFamily: F }}>Date Received</th>
-                              <th className="text-left px-3 py-2 text-[10px] text-slate-500 font-medium" style={{ fontFamily: F }}>Ref #</th>
-                              <th className="text-left px-3 py-2 text-[10px] text-slate-500 font-medium" style={{ fontFamily: F }}>Notes</th>
+                              <th className="text-left px-3 py-2 text-[10px] text-white font-medium" style={{ fontFamily: F }}>Vendor</th>
+                              <th className="text-left px-3 py-2 text-[10px] text-white font-medium" style={{ fontFamily: F }}>Date Received</th>
+                              <th className="text-left px-3 py-2 text-[10px] text-white font-medium" style={{ fontFamily: F }}>Ref #</th>
+                              <th className="text-left px-3 py-2 text-[10px] text-white font-medium" style={{ fontFamily: F }}>Notes</th>
                               {sc.overallStatus !== "Completed" && (
-                                <th className="text-center px-3 py-2 text-[10px] text-slate-500 font-medium" style={{ fontFamily: F }}></th>
+                                <th className="text-center px-3 py-2 text-[10px] text-white font-medium" style={{ fontFamily: F }}></th>
                               )}
                             </tr>
                           </thead>

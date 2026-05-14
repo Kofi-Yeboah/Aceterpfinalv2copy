@@ -202,7 +202,7 @@ export function RejectedRequests() {
       {/* Table */}
       <div className="flex-1 overflow-auto">
         <table className="w-full">
-          <thead className="bg-blue-800 sticky top-0 z-10">
+          <thead className="sticky top-0 z-10" style={{ backgroundColor: "#0B01D0" }}>
             <tr>
               <th className="px-4 py-4 text-left text-[12px] font-semibold text-white border-b border-slate-100">
                 Request ID

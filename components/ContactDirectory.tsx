@@ -527,8 +527,8 @@ export function ContactDirectory() {
             <col style={{ width: "130px" }} />
             <col style={{ width: "80px" }} />
           </colgroup>
-          <thead>
-            <tr className="bg-blue-800">
+          <thead style={{ backgroundColor: "#0B01D0" }}>
+            <tr>
               <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100 whitespace-nowrap">Contact Person</th>
               <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100 whitespace-nowrap">Department</th>
               <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100 whitespace-nowrap">Donor / Organization</th>

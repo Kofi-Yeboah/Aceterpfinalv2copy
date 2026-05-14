@@ -285,7 +285,7 @@ export function TurnoverReport() {
             </div>
             <table className="w-full">
               <thead>
-                <tr className="bg-blue-800">
+                <tr>
                   <th className="text-left px-6 py-3 text-white text-[12px] font-semibold">Department</th>
                   <th className="text-center px-6 py-3 text-white text-[12px] font-semibold">Total Exits</th>
                   <th className="text-center px-6 py-3 text-white text-[12px] font-semibold">Turnover Rate</th>
@@ -346,7 +346,7 @@ export function TurnoverReport() {
             </div>
             <table className="w-full">
               <thead>
-                <tr className="bg-blue-800">
+                <tr>
                   <th className="text-left px-6 py-3 text-white text-[12px] font-semibold">Employee Name</th>
                   <th className="text-left px-6 py-3 text-white text-[12px] font-semibold">Position</th>
                   <th className="text-left px-6 py-3 text-white text-[12px] font-semibold">Department</th>

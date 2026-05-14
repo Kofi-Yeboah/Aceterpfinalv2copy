@@ -194,7 +194,7 @@ export function ChangeRequestList({ context, onCreateNew }: ChangeRequestListPro
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-blue-800">
+              <thead style={{ backgroundColor: "#0B01D0" }}>
                 <tr>
                   <th className="text-left py-2.5 px-5 text-[12px] font-semibold text-white">CR ID</th>
                   <th className="text-left py-2.5 px-5 text-[12px] font-semibold text-white">Type</th>

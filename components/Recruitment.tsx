@@ -300,17 +300,17 @@ export function Recruitment({ onNavigateToApplicationPortal }: RecruitmentProps)
           {/* Table */}
           <div className="flex-1 overflow-auto">
             <table className="w-full">
-              <thead className="sticky top-0 z-[5]">
-                <tr className="bg-blue-600 text-white">
-                  <th className="text-left px-6 py-3 text-[12px] font-semibold">Job Title</th>
-                  <th className="text-left px-6 py-3 text-[12px] font-semibold">Department</th>
-                  <th className="text-left px-6 py-3 text-[12px] font-semibold">Location</th>
-                  <th className="text-center px-6 py-3 text-[12px] font-semibold">Level / Grade</th>
-                  <th className="text-left px-6 py-3 text-[12px] font-semibold">Type</th>
-                  <th className="text-center px-6 py-3 text-[12px] font-semibold">Applicants</th>
-                  <th className="text-center px-6 py-3 text-[12px] font-semibold">Status</th>
-                  <th className="text-left px-6 py-3 text-[12px] font-semibold">Date Posted</th>
-                  <th className="text-center px-6 py-3 text-[12px] font-semibold">Action</th>
+              <thead className="sticky top-0 z-[5]" style={{ backgroundColor: "#0B01D0" }}>
+                <tr>
+                  <th className="text-left px-6 py-3 text-[12px] font-semibold text-white">Job Title</th>
+                  <th className="text-left px-6 py-3 text-[12px] font-semibold text-white">Department</th>
+                  <th className="text-left px-6 py-3 text-[12px] font-semibold text-white">Location</th>
+                  <th className="text-center px-6 py-3 text-[12px] font-semibold text-white">Level / Grade</th>
+                  <th className="text-left px-6 py-3 text-[12px] font-semibold text-white">Type</th>
+                  <th className="text-center px-6 py-3 text-[12px] font-semibold text-white">Applicants</th>
+                  <th className="text-center px-6 py-3 text-[12px] font-semibold text-white">Status</th>
+                  <th className="text-left px-6 py-3 text-[12px] font-semibold text-white">Date Posted</th>
+                  <th className="text-center px-6 py-3 text-[12px] font-semibold text-white">Action</th>
                 </tr>
               </thead>
               <tbody>

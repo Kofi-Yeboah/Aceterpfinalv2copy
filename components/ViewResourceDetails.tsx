@@ -190,12 +190,12 @@ export function ViewResourceDetails({ resource, onBack }: ViewResourceDetailsPro
           
           <div className="border border-slate-200 rounded-lg overflow-hidden">
             <table className="w-full">
-              <thead>
+              <thead style={{ backgroundColor: "#0B01D0" }}>
                 <tr className="bg-slate-50 border-b border-slate-200">
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Week</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Allocated (%)</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Available (%)</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Visual</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-white">Week</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-white">Allocated (%)</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-white">Available (%)</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-white">Visual</th>
                 </tr>
               </thead>
               <tbody>
@@ -235,14 +235,14 @@ export function ViewResourceDetails({ resource, onBack }: ViewResourceDetailsPro
           
           <div className="border border-slate-200 rounded-lg overflow-hidden">
             <table className="w-full">
-              <thead>
+              <thead style={{ backgroundColor: "#0B01D0" }}>
                 <tr className="bg-slate-50 border-b border-slate-200">
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Project</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Role</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Start Date</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">End Date</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Status</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Utilization</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-white">Project</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-white">Role</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-white">Start Date</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-white">End Date</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-white">Status</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-white">Utilization</th>
                 </tr>
               </thead>
               <tbody>

@@ -413,8 +413,8 @@ export function ViewProfile({ user, onBack }: ViewProfileProps) {
             </div>
 
             <table className="w-full">
-              <thead>
-                <tr className="bg-blue-800">
+              <thead style={{ backgroundColor: "#0B01D0" }}>
+                <tr>
                   <th className="text-left px-4 py-3 text-white text-[12px] font-semibold">Role</th>
                   <th className="text-left px-4 py-3 text-white text-[12px] font-semibold">Module</th>
                   <th className="text-left px-4 py-3 text-white text-[12px] font-semibold">Assigned Date</th>

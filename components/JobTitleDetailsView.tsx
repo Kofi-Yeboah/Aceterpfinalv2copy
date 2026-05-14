@@ -215,8 +215,8 @@ export function JobTitleDetailsView({ jobTitle, onBack }: JobTitleDetailsViewPro
                 <h2 className="font-semibold text-slate-900">Employees in this Role</h2>
               </div>
               <table className="w-full">
-                <thead>
-                  <tr className="bg-blue-800">
+                <thead style={{ backgroundColor: "#0B01D0" }}>
+                  <tr>
                     <th className="text-left px-6 py-3 text-white text-[12px] font-semibold">Name</th>
                     <th className="text-left px-6 py-3 text-white text-[12px] font-semibold">Email</th>
                     <th className="text-left px-6 py-3 text-white text-[12px] font-semibold">Join Date</th>

@@ -567,18 +567,18 @@ export function MyPersonalInformation() {
               <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
                 {trainingData.length > 0 ? (
                   <table className="w-full">
-                    <thead className="sticky top-0 z-[5]">
-                      <tr className="bg-blue-600 text-white">
-                        <th className="text-left px-6 py-3 text-[12px]">Course Name</th>
-                        <th className="text-left px-6 py-3 text-[12px]">Provider</th>
-                        <th className="text-left px-6 py-3 text-[12px]">Start Date</th>
-                        <th className="text-left px-6 py-3 text-[12px]">End Date</th>
-                        <th className="text-left px-6 py-3 text-[12px]">Hours</th>
-                        <th className="text-left px-6 py-3 text-[12px]">Status</th>
-                        <th className="text-left px-6 py-3 text-[12px]">Type</th>
-                        <th className="text-left px-6 py-3 text-[12px]">Certificate Uploaded</th>
-                        <th className="text-left px-6 py-3 text-[12px]">Attended</th>
-                        <th className="text-left px-6 py-3 text-[12px]">Actions</th>
+                    <thead className="sticky top-0 z-[5]" style={{ backgroundColor: "#0B01D0" }}>
+                      <tr>
+                        <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Course Name</th>
+                        <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Provider</th>
+                        <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Start Date</th>
+                        <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">End Date</th>
+                        <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Hours</th>
+                        <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Status</th>
+                        <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Type</th>
+                        <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Certificate Uploaded</th>
+                        <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Attended</th>
+                        <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -738,15 +738,15 @@ export function MyPersonalInformation() {
               {/* Leave History Table */}
               <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
                 <table className="w-full">
-                  <thead className="sticky top-0 z-[5]">
-                    <tr className="bg-blue-600 text-white">
-                      <th className="text-left px-6 py-3 text-[12px]">Leave Type</th>
-                      <th className="text-left px-6 py-3 text-[12px]">Start Date</th>
-                      <th className="text-left px-6 py-3 text-[12px]">End Date</th>
-                      <th className="text-left px-6 py-3 text-[12px]">Duration</th>
-                      <th className="text-left px-6 py-3 text-[12px]">Request Date</th>
-                      <th className="text-left px-6 py-3 text-[12px]">Approved By</th>
-                      <th className="text-left px-6 py-3 text-[12px]">Status</th>
+                  <thead className="sticky top-0 z-[5]" style={{ backgroundColor: "#0B01D0" }}>
+                    <tr>
+                      <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Leave Type</th>
+                      <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Start Date</th>
+                      <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">End Date</th>
+                      <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Duration</th>
+                      <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Request Date</th>
+                      <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Approved By</th>
+                      <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Status</th>
                     </tr>
                   </thead>
                   <tbody>

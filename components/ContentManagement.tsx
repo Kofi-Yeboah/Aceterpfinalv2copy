@@ -424,9 +424,9 @@ export function ContentManagement() {
       {/* Table */}
       <div className="flex-1 overflow-auto bg-white">
         <table className="w-full">
-          <thead>
+          <thead style={{ backgroundColor: "#0B01D0" }}>
             {activeTab === "Blogs" && (
-              <tr className="bg-blue-800">
+              <tr>
                 <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Title</th>
                 <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100 w-[100px]">Thumbnail</th>
                 <th className="text-center px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Status</th>
@@ -435,7 +435,7 @@ export function ContentManagement() {
               </tr>
             )}
             {activeTab === "Videos" && (
-              <tr className="bg-blue-800">
+              <tr>
                 <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Title</th>
                 <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100 w-[100px]">Thumbnail</th>
                 <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Link</th>
@@ -445,7 +445,7 @@ export function ContentManagement() {
               </tr>
             )}
             {activeTab === "Announcements" && (
-              <tr className="bg-blue-800">
+              <tr>
                 <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Subject</th>
                 <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100 w-[100px]">Thumbnail</th>
                 <th className="text-center px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Status</th>

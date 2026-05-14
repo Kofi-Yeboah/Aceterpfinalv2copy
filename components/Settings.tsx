@@ -332,8 +332,8 @@ export function Settings() {
                     {/* Rates Table */}
                     <div className="rounded-xl border border-slate-200 overflow-hidden">
                       <table className="w-full">
-                        <thead>
-                          <tr className="bg-blue-600">
+                        <thead style={{ backgroundColor: "#0B01D0" }}>
+                          <tr>
                             <th className="text-left px-4 py-2.5 text-[12px] text-white">Currency</th>
                             <th className="text-left px-4 py-2.5 text-[12px] text-white">Rate (1 Foreign = ? GHS)</th>
                             <th className="text-center px-4 py-2.5 text-[12px] text-white">Trend</th>
