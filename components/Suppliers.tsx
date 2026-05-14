@@ -386,7 +386,7 @@ function ratingStars(score: number) {
   return `${score}/10`;
 }
 
-const F = "Montserrat, sans-serif";
+const F = "'Montserrat Variable', sans-serif";
 
 /* ══════════════════════════════════════════════════════════════════════════════
    COMPONENT

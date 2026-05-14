@@ -20,7 +20,7 @@ import { POGenerationFlow } from "./POGenerationFlow";
    HELPERS
    ══════════════════════════════════════════════════════════════════════════════ */
 
-const F = "Montserrat, sans-serif";
+const F = "'Montserrat Variable', sans-serif";
 
 const formatCurrency = (n: number) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0 }).format(n);

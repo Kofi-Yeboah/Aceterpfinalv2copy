@@ -416,23 +416,17 @@ export default function App() {
         return <PurchasePlanApproval />;
       case "PROCUREMENT-Approvals-Senior Management Approval":
         return <SeniorMgmtApproval />;
-      case "PROCUREMENT-Reporting & Analytics-Planning & Orders":
-      case "PROCUREMENT-Reporting & Analytics-Planning & Requisitions":
-      case "PROCUREMENT-Reporting & Analytics-Purchase Order Reports":
+      case "PROCUREMENT-Planning & Orders Report":
         return <ProcurementReportingAnalytics initialTab="planning" />;
-      case "PROCUREMENT-Reporting & Analytics-Sourcing & Contracts":
-      case "PROCUREMENT-Reporting & Analytics-RFQ Reports":
+      case "PROCUREMENT-Sourcing & Contracts Report":
         return <ProcurementReportingAnalytics initialTab="sourcing" />;
-      case "PROCUREMENT-Reporting & Analytics-Vendors & KPIs":
-      case "PROCUREMENT-Reporting & Analytics-Vendor Reports":
-      case "PROCUREMENT-Reporting & Analytics-Vendor & Donor Analytics":
-      case "PROCUREMENT-Reporting & Analytics-KPI Dashboard":
+      case "PROCUREMENT-Vendors & KPIs Report":
         return <ProcurementReportingAnalytics initialTab="vendors" />;
-      case "PROCUREMENT-Reporting & Analytics-Contract Reports":
+      case "PROCUREMENT-Contract Reports":
         return <ProcurementReportingAnalytics initialTab="contracts" />;
-      case "PROCUREMENT-Reporting & Analytics-Donor Reports":
+      case "PROCUREMENT-Donor Reports":
         return <ProcurementReportingAnalytics initialTab="donors" />;
-      case "PROCUREMENT-Reporting & Analytics-Combined Analysis":
+      case "PROCUREMENT-Combined Analysis Report":
         return <ProcurementReportingAnalytics initialTab="combined" />;
       case "PAYROLL MANAGEMENT-Dashboard":
         return <PayrollManagementDashboard />;

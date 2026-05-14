@@ -96,7 +96,7 @@ interface SupplierDetailsViewProps {
    HELPERS
    ══════════════════════════════════════════════════════════════════════════════ */
 
-const F = "Montserrat, sans-serif";
+const F = "'Montserrat Variable', sans-serif";
 
 function isRichData(s: any): s is SupplierDetailData {
   return "vendorId" in s && "performance" in s;

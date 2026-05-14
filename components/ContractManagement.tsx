@@ -7,9 +7,11 @@ import {
 } from "lucide-react";
 import { cn } from "../lib/utils";
 import {
-  getContracts, subscribe, updateContract, updateContractStatus,
+  getContracts, subscribe, updateContract, updateContractStatus, registerContract, generateContractNumber,
+  addAuditLog, addDeliverableToContract,
   type AwardedContract, type ContractDeliverable, type ContractInvoice,
   type ContractChangeRequest, type PerformanceEvaluation, type ContractCloseOut,
+  type ContractCoordinator, type ContractMilestone, type AuditLogEntry,
 } from "../lib/contractStore";
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -25,7 +27,7 @@ const fmtDate = (s?: string) => {
 };
 
 type TabKey = "all" | "active" | "variation" | "suspended" | "closed";
-type DetailTab = "overview" | "deliverables" | "invoices" | "changes" | "performance" | "closeout" | "documents";
+type DetailTab = "overview" | "deliverables" | "invoices" | "changes" | "performance" | "closeout" | "documents" | "audit";
 
 const STATUS_COLORS: Record<string, string> = {
   Active: "bg-emerald-100 text-emerald-700",
@@ -81,6 +83,8 @@ export function ContractManagement() {
   const [showChangeModal, setShowChangeModal] = useState(false);
   const [showEvalModal, setShowEvalModal] = useState(false);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
+  const [showDeliverableModal, setShowDeliverableModal] = useState(false);
 
   useEffect(() => {
     const unsub = subscribe(() => {
@@ -123,6 +127,14 @@ export function ContractManagement() {
   const pendingDeliverables = contracts.reduce((s, c) => s + (c.deliverables?.filter(d => d.status === "Pending" || d.status === "Submitted" || d.status === "Under Review").length || 0), 0);
   const overdueInvoices = contracts.reduce((s, c) => s + (c.invoices?.filter(i => i.status !== "Paid" && i.status !== "Queried").length || 0), 0);
   const pendingChanges = contracts.reduce((s, c) => s + (c.changeRequests?.filter(cr => cr.status === "Pending Approval" || cr.status === "Draft").length || 0), 0);
+  const expiringContracts = contracts.filter(c => {
+    if (c.status === "Closed" || c.status === "Terminated") return false;
+    const daysLeft = Math.round((new Date(c.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+    return daysLeft >= 0 && daysLeft <= 60;
+  });
+  const pendingProcurement = contracts.reduce((s, c) => s + (c.invoices?.filter(i => i.status === "CC Reviewed").length || 0), 0);
+  const pendingFinance = contracts.reduce((s, c) => s + (c.invoices?.filter(i => i.status === "Supervisor Approved").length || 0), 0);
+  const pendingCC = contracts.reduce((s, c) => s + (c.invoices?.filter(i => i.status === "Submitted").length || 0) + (c.deliverables?.filter(d => d.status === "Pending").length || 0), 0);
 
   /* ═══ DETAIL VIEW ═══════════════════════════════════════════════════════════ */
   if (selectedContract) {
@@ -146,6 +158,7 @@ export function ContractManagement() {
       { key: "performance", label: "Performance" },
       { key: "closeout", label: "Close-Out" },
       { key: "documents", label: "Documents" },
+      { key: "audit", label: "Audit Trail", badge: (c.auditLog || []).length },
     ];
 
     return (
@@ -319,12 +332,79 @@ export function ContractManagement() {
                   </div>
                 </section>
               )}
+
+              {/* Delivery Schedule (Goods) */}
+              {c.deliverySchedule && c.deliverySchedule.length > 0 && (
+                <section className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                  <div className="px-5 py-3 bg-blue-50 border-b border-slate-200 flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-md bg-blue-100 flex items-center justify-center"><Package size={13} className="text-blue-600" /></div>
+                    <h2 className="text-[13px] font-semibold text-slate-800">Delivery Schedule</h2>
+                  </div>
+                  <div className="p-5">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-slate-200">
+                          {["Item", "Quantity", "Expected Date"].map(h => (
+                            <th key={h} className="text-left px-3 py-2 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {c.deliverySchedule.map((d, i) => (
+                          <tr key={i} className="border-b border-slate-100">
+                            <td className="px-3 py-2 text-[11px] text-slate-700">{d.item}</td>
+                            <td className="px-3 py-2 text-[11px] text-slate-600">{d.quantity}</td>
+                            <td className="px-3 py-2 text-[11px] text-slate-600">{fmtDate(d.expectedDate)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              )}
+
+              {/* Payment Schedule */}
+              {c.paymentSchedule && c.paymentSchedule.length > 0 && (
+                <section className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                  <div className="px-5 py-3 bg-emerald-50 border-b border-slate-200 flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-md bg-emerald-100 flex items-center justify-center"><DollarSign size={13} className="text-emerald-600" /></div>
+                    <h2 className="text-[13px] font-semibold text-slate-800">Payment Schedule</h2>
+                  </div>
+                  <div className="p-5">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-slate-200">
+                          {["Description", "Amount", "Due Date", "Linked To"].map(h => (
+                            <th key={h} className="text-left px-3 py-2 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {c.paymentSchedule.map((p, i) => (
+                          <tr key={i} className="border-b border-slate-100">
+                            <td className="px-3 py-2 text-[11px] text-slate-700">{p.description}</td>
+                            <td className="px-3 py-2 text-[11px] text-emerald-700 font-medium">{fmt(p.amount)}</td>
+                            <td className="px-3 py-2 text-[11px] text-slate-600">{fmtDate(p.dueDate)}</td>
+                            <td className="px-3 py-2 text-[11px] text-slate-500">{p.linkedTo}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              )}
             </div>
           )}
 
           {/* ── DELIVERABLES ── */}
           {detailTab === "deliverables" && (
             <div className="flex-1 overflow-auto">
+              <div className="px-6 py-3 bg-white border-b border-slate-200 flex items-center justify-between">
+                <p className="text-[12px] text-slate-500">{deliverables.length} deliverable(s) — {deliverables.filter(d => d.status === "Accepted").length} accepted</p>
+                <button onClick={() => setShowDeliverableModal(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0B01D0] text-white rounded-lg text-[11px] font-medium hover:bg-[#0a01b8]">
+                  <Plus size={12} /> Upload Deliverable
+                </button>
+              </div>
               <table className="w-full">
                 <thead style={{ backgroundColor: "#0B01D0" }}>
                   <tr>
@@ -1052,12 +1132,60 @@ export function ContractManagement() {
               )}
             </div>
           )}
+
+          {/* ── AUDIT TRAIL ── */}
+          {detailTab === "audit" && (() => {
+            const logs = c.auditLog || [];
+            return (
+              <div className="flex-1 overflow-auto">
+                <div className="px-6 py-3 bg-white border-b border-slate-200">
+                  <p className="text-[12px] text-slate-500">{logs.length} action(s) recorded</p>
+                </div>
+                {logs.length > 0 ? (
+                  <table className="w-full">
+                    <thead style={{ backgroundColor: "#0B01D0" }}>
+                      <tr>
+                        {["Date", "Action", "Performed By", "Details"].map(h => (
+                          <th key={h} className="px-4 py-3 text-left text-[11px] font-semibold text-white">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {[...logs].reverse().map((entry, i) => (
+                        <tr key={entry.id} className={cn("hover:bg-slate-50 transition-colors", i % 2 === 1 && "bg-slate-50/50")}>
+                          <td className="px-4 py-3 text-[11px] text-slate-600 whitespace-nowrap">{fmtDate(entry.date)}</td>
+                          <td className="px-4 py-3">
+                            <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium",
+                              entry.action.includes("Created") ? "bg-blue-100 text-blue-700" :
+                              entry.action.includes("Payment") ? "bg-emerald-100 text-emerald-700" :
+                              entry.action.includes("Submitted") ? "bg-amber-100 text-amber-700" :
+                              entry.action.includes("Accepted") || entry.action.includes("Approved") ? "bg-emerald-100 text-emerald-700" :
+                              entry.action.includes("Rejected") || entry.action.includes("Flagged") ? "bg-red-100 text-red-700" :
+                              "bg-slate-100 text-slate-600"
+                            )}>{entry.action}</span>
+                          </td>
+                          <td className="px-4 py-3 text-[11px] text-slate-700 font-medium">{entry.performedBy}</td>
+                          <td className="px-4 py-3 text-[11px] text-slate-600 max-w-[300px]">{entry.details}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-16">
+                    <ClipboardList size={24} className="text-slate-300 mb-2" />
+                    <p className="text-[13px] text-slate-400">No audit log entries yet</p>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
 
         {/* ── MODALS ── */}
         {showChangeModal && <ChangeRequestModal contract={c} onClose={() => setShowChangeModal(false)} />}
         {showEvalModal && <EvaluationModal contract={c} onClose={() => setShowEvalModal(false)} />}
         {showInvoiceModal && <InvoiceModal contract={c} onClose={() => setShowInvoiceModal(false)} />}
+        {showDeliverableModal && <DeliverableUploadModal contract={c} onClose={() => setShowDeliverableModal(false)} />}
       </div>
     );
   }
@@ -1095,6 +1223,48 @@ export function ContractManagement() {
             </div>
           ))}
         </div>
+
+        {/* Alerts Row */}
+        {(expiringContracts.length > 0 || pendingCC > 0 || pendingProcurement > 0 || pendingFinance > 0) && (
+          <div className="mt-3 grid grid-cols-4 gap-3">
+            {expiringContracts.length > 0 && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-2.5 flex items-start gap-2">
+                <AlertTriangle size={13} className="text-red-500 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-[10px] font-semibold text-red-700">Contract Expiry</p>
+                  <p className="text-[10px] text-red-600">{expiringContracts.length} contract(s) expiring within 60 days</p>
+                </div>
+              </div>
+            )}
+            {pendingCC > 0 && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-2.5 flex items-start gap-2">
+                <Users size={13} className="text-blue-500 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-[10px] font-semibold text-blue-700">Coordinator Actions</p>
+                  <p className="text-[10px] text-blue-600">{pendingCC} item(s) pending CC review</p>
+                </div>
+              </div>
+            )}
+            {pendingProcurement > 0 && (
+              <div className="bg-purple-50 border border-purple-200 rounded-lg p-2.5 flex items-start gap-2">
+                <Shield size={13} className="text-purple-500 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-[10px] font-semibold text-purple-700">Procurement Actions</p>
+                  <p className="text-[10px] text-purple-600">{pendingProcurement} invoice(s) awaiting procurement review</p>
+                </div>
+              </div>
+            )}
+            {pendingFinance > 0 && (
+              <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-2.5 flex items-start gap-2">
+                <DollarSign size={13} className="text-emerald-500 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-[10px] font-semibold text-emerald-700">Finance Actions</p>
+                  <p className="text-[10px] text-emerald-600">{pendingFinance} invoice(s) ready for payment</p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Tabs + Search */}
@@ -1116,6 +1286,9 @@ export function ContractManagement() {
             ))}
           </div>
           <div className="flex items-center gap-2">
+            <button onClick={() => setShowRegisterModal(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0B01D0] text-white rounded-lg text-[11px] font-medium hover:bg-[#0901A0] transition-colors">
+              <Plus size={13} /> Register Contract
+            </button>
             <div className="flex items-center gap-2 px-3 py-1.5 border border-slate-200 rounded-lg bg-white w-48">
               <Search size={13} className="text-slate-400" />
               <input type="text" placeholder="Search contracts..." value={search} onChange={e => setSearch(e.target.value)} className="flex-1 bg-transparent outline-none text-[11px] text-slate-700 placeholder:text-slate-400" />
@@ -1189,6 +1362,449 @@ export function ContractManagement() {
           </div>
         )}
       </div>
+
+      {showRegisterModal && <ContractRegistrationModal onClose={() => setShowRegisterModal(false)} />}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   MODAL: Deliverable Upload (CC)
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+function DeliverableUploadModal({ contract: c, onClose }: { contract: AwardedContract; onClose: () => void }) {
+  const milestones = c.milestones || [];
+  const [milestoneRef, setMilestoneRef] = useState(milestones[0]?.id || "");
+  const [description, setDescription] = useState("");
+  const [dueDate, setDueDate] = useState("");
+  const [actualDate, setActualDate] = useState(new Date().toISOString().split("T")[0]);
+  const [status, setStatus] = useState<ContractDeliverable["status"]>("Submitted");
+  const [docNames, setDocNames] = useState("");
+  const [deliverableComments, setDeliverableComments] = useState("");
+  const [amount, setAmount] = useState("");
+
+  const handleSubmit = () => {
+    if (!description) return;
+    addDeliverableToContract(c.id, {
+      milestoneRef,
+      description,
+      dueDate,
+      actualDate: actualDate || undefined,
+      status,
+      documents: docNames ? docNames.split(",").map(d => d.trim()).filter(Boolean) : [],
+      comments: deliverableComments,
+      amount: parseFloat(amount) || undefined,
+    });
+    addAuditLog(c.id, "Deliverable Submitted", "Contract Coordinator", `Deliverable uploaded: ${description}`);
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
+        <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+          <h2 className="text-[16px] font-semibold text-slate-900">Upload Deliverable</h2>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600"><X size={18} /></button>
+        </div>
+        <div className="p-6 space-y-4">
+          {milestones.length > 0 && (
+            <div>
+              <label className="text-[11px] text-slate-500 font-medium uppercase tracking-wider mb-2 block">Link to Milestone</label>
+              <select value={milestoneRef} onChange={e => setMilestoneRef(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[12px] text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#0B01D0]/20">
+                <option value="">— None —</option>
+                {milestones.map(ms => <option key={ms.id} value={ms.id}>{ms.label} ({fmtDate(ms.date)})</option>)}
+              </select>
+            </div>
+          )}
+          <div>
+            <label className="text-[11px] text-slate-500 font-medium uppercase tracking-wider mb-2 block">Description *</label>
+            <input type="text" value={description} onChange={e => setDescription(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[12px] text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0B01D0]/20" placeholder="Deliverable description" />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-[11px] text-slate-500 font-medium uppercase tracking-wider mb-2 block">Due Date</label>
+              <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[12px] text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0B01D0]/20" />
+            </div>
+            <div>
+              <label className="text-[11px] text-slate-500 font-medium uppercase tracking-wider mb-2 block">Actual Submission Date</label>
+              <input type="date" value={actualDate} onChange={e => setActualDate(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[12px] text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0B01D0]/20" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-[11px] text-slate-500 font-medium uppercase tracking-wider mb-2 block">Status</label>
+              <select value={status} onChange={e => setStatus(e.target.value as ContractDeliverable["status"])} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[12px] text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#0B01D0]/20">
+                {["Submitted", "Under Review", "Accepted", "Rejected", "Pending"].map(s => <option key={s}>{s}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-[11px] text-slate-500 font-medium uppercase tracking-wider mb-2 block">Payment Amount ($)</label>
+              <input type="number" value={amount} onChange={e => setAmount(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[12px] text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0B01D0]/20" placeholder="0" />
+            </div>
+          </div>
+          <div>
+            <label className="text-[11px] text-slate-500 font-medium uppercase tracking-wider mb-2 block">Document Names (comma-separated)</label>
+            <input type="text" value={docNames} onChange={e => setDocNames(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[12px] text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0B01D0]/20" placeholder="e.g. Report_v1.pdf, InspectionNote.pdf" />
+          </div>
+          <div>
+            <label className="text-[11px] text-slate-500 font-medium uppercase tracking-wider mb-2 block">Comments</label>
+            <textarea value={deliverableComments} onChange={e => setDeliverableComments(e.target.value)} rows={2} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[12px] text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0B01D0]/20" placeholder="Notes about this deliverable..." />
+          </div>
+        </div>
+        <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-end gap-3">
+          <button onClick={onClose} className="px-4 py-2 border border-slate-200 rounded-lg text-[12px] text-slate-600 font-medium hover:bg-slate-50">Cancel</button>
+          <button onClick={handleSubmit} disabled={!description} className={cn("px-4 py-2 rounded-lg text-[12px] font-medium text-white", description ? "bg-[#0B01D0] hover:bg-[#0a01b8]" : "bg-slate-300 cursor-not-allowed")}>Upload Deliverable</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   MODAL: Contract Registration
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+const REG_CATEGORIES = ["Goods", "Services", "Works", "Consultancy"] as const;
+const REG_METHODS = ["Open Competition", "Limited Competition", "Request for Quotation", "Direct Selection"] as const;
+const REG_DEPARTMENTS = ["Programs", "Finance", "Admin", "IT", "HR", "M&E", "Communications", "Executive"] as const;
+const REG_FUNDING = ["Core Program Funding", "Donor Grant — DFID", "Capital Expenditure Fund", "TAP", "ATTP", "Gates Foundation", "World Bank"] as const;
+const F = "'Montserrat Variable', sans-serif";
+const labelCls = "block text-[11px] font-medium text-slate-600 mb-1";
+const inputCls = "w-full px-3 py-2 border border-slate-200 rounded-lg text-[12px] text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#0B01D0] focus:border-[#0B01D0]";
+
+function ContractRegistrationModal({ onClose }: { onClose: () => void }) {
+  const [step, setStep] = useState(1);
+  const totalSteps = 5;
+
+  // Step 1: Basic info
+  const [title, setTitle] = useState("");
+  const [party, setParty] = useState("");
+  const [category, setCategory] = useState<string>("Goods");
+  const [method, setMethod] = useState<string>("Open Competition");
+  const [sourcePR, setSourcePR] = useState("");
+  const [contractNumber, setContractNumber] = useState("");
+  const [department, setDepartment] = useState("Programs");
+  const [owner, setOwner] = useState("");
+  const [fundingSource, setFundingSource] = useState("");
+  const [budgetLine, setBudgetLine] = useState("");
+  const [comments, setComments] = useState("");
+
+  // Step 2: Contract type, value, dates
+  const [contractType, setContractType] = useState<"Lump Sum" | "Time Based">("Lump Sum");
+  const [value, setValue] = useState("");
+  const [maxAmount, setMaxAmount] = useState("");
+  const [paymentFrequency, setPaymentFrequency] = useState<"Daily" | "Weekly" | "Monthly" | "Quarterly" | "Milestone-Based">("Milestone-Based");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [renewalDate, setRenewalDate] = useState("");
+
+  // Step 3: Coordinators (up to 3)
+  const [coordinators, setCoordinators] = useState<{ name: string; role: string; email: string }[]>([{ name: "", role: "", email: "" }]);
+
+  // Step 4: Milestones/Delivery + Payment Schedule
+  const [milestones, setMilestones] = useState<{ label: string; date: string }[]>([{ label: "", date: "" }]);
+  const [deliverySchedule, setDeliverySchedule] = useState<{ item: string; quantity: string; expectedDate: string }[]>([{ item: "", quantity: "", expectedDate: "" }]);
+  const [paymentSchedule, setPaymentSchedule] = useState<{ description: string; amount: string; dueDate: string; linkedTo: string }[]>([{ description: "", amount: "", dueDate: "", linkedTo: "" }]);
+
+  // Step 5: Documents (simulated)
+  const [docLabels, setDocLabels] = useState<string[]>(["Signed Contract"]);
+
+  // Auto-generate contract number when PR changes
+  const handlePRChange = (v: string) => {
+    setSourcePR(v);
+    if (v.trim()) setContractNumber(generateContractNumber(v));
+  };
+
+  const addCoordinator = () => { if (coordinators.length < 3) setCoordinators([...coordinators, { name: "", role: "", email: "" }]); };
+  const removeCoordinator = (i: number) => setCoordinators(coordinators.filter((_, idx) => idx !== i));
+  const updateCoordinator = (i: number, field: string, val: string) => setCoordinators(coordinators.map((c, idx) => idx === i ? { ...c, [field]: val } : c));
+
+  const addMilestone = () => setMilestones([...milestones, { label: "", date: "" }]);
+  const removeMilestone = (i: number) => setMilestones(milestones.filter((_, idx) => idx !== i));
+  const updateMilestone = (i: number, field: string, val: string) => setMilestones(milestones.map((m, idx) => idx === i ? { ...m, [field]: val } : m));
+
+  const addDelivery = () => setDeliverySchedule([...deliverySchedule, { item: "", quantity: "", expectedDate: "" }]);
+  const removeDelivery = (i: number) => setDeliverySchedule(deliverySchedule.filter((_, idx) => idx !== i));
+  const updateDelivery = (i: number, field: string, val: string) => setDeliverySchedule(deliverySchedule.map((d, idx) => idx === i ? { ...d, [field]: val } : d));
+
+  const addPayment = () => setPaymentSchedule([...paymentSchedule, { description: "", amount: "", dueDate: "", linkedTo: "" }]);
+  const removePayment = (i: number) => setPaymentSchedule(paymentSchedule.filter((_, idx) => idx !== i));
+  const updatePayment = (i: number, field: string, val: string) => setPaymentSchedule(paymentSchedule.map((p, idx) => idx === i ? { ...p, [field]: val } : p));
+
+  const canNext = () => {
+    if (step === 1) return title && party && sourcePR && owner;
+    if (step === 2) return value && startDate && endDate;
+    if (step === 3) return coordinators.some(c => c.name && c.email);
+    if (step === 4) return category === "Goods" ? deliverySchedule.some(d => d.item) : milestones.some(m => m.label && m.date);
+    return true;
+  };
+
+  const handleSubmit = () => {
+    const coordsClean: ContractCoordinator[] = coordinators.filter(c => c.name && c.email).map((c, i) => ({ id: `cc-reg-${Date.now()}-${i}`, ...c }));
+    const msClean: ContractMilestone[] = milestones.filter(m => m.label && m.date).map((m, i) => ({ id: `ms-reg-${Date.now()}-${i}`, ...m, completed: false }));
+    const delSched = category === "Goods" ? deliverySchedule.filter(d => d.item) : undefined;
+    const paySched = paymentSchedule.filter(p => p.description && p.amount).map(p => ({ ...p, amount: parseFloat(p.amount) || 0 }));
+
+    registerContract({
+      title,
+      party,
+      sourcePR,
+      category,
+      method,
+      value: parseFloat(value) || 0,
+      startDate,
+      endDate,
+      renewalDate: renewalDate || undefined,
+      department,
+      owner,
+      comments,
+      contractType,
+      paymentFrequency,
+      maxAmount: contractType === "Time Based" ? parseFloat(maxAmount) || undefined : undefined,
+      coordinators: coordsClean,
+      milestones: msClean,
+      deliverySchedule: delSched,
+      paymentSchedule: paySched.length > 0 ? paySched : undefined,
+      budgetLine: budgetLine || undefined,
+      fundingSource: fundingSource || undefined,
+    });
+    onClose();
+  };
+
+  const stepLabels = ["Contract Details", "Type & Dates", "Coordinators", category === "Goods" ? "Delivery & Payment" : "Milestones & Payment", "Documents & Review"];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" style={{ fontFamily: F }}>
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-[720px] max-h-[90vh] flex flex-col">
+        {/* Header */}
+        <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between shrink-0">
+          <div>
+            <h2 className="text-[16px] font-bold text-slate-900">Register New Contract</h2>
+            <p className="text-[11px] text-slate-400 mt-0.5">Step {step} of {totalSteps}: {stepLabels[step - 1]}</p>
+          </div>
+          <button onClick={onClose} className="p-1.5 hover:bg-slate-100 rounded-lg"><X size={16} className="text-slate-500" /></button>
+        </div>
+
+        {/* Step indicator */}
+        <div className="px-6 pt-3 flex gap-1 shrink-0">
+          {Array.from({ length: totalSteps }).map((_, i) => (
+            <div key={i} className={cn("h-1 flex-1 rounded-full transition-colors", i < step ? "bg-[#0B01D0]" : "bg-slate-200")} />
+          ))}
+        </div>
+
+        {/* Body */}
+        <div className="px-6 py-4 flex-1 overflow-y-auto space-y-4">
+          {step === 1 && (
+            <>
+              <div><label className={labelCls}>Requisition Number (Source PR)</label><input className={inputCls} value={sourcePR} onChange={e => handlePRChange(e.target.value)} placeholder="e.g. PR-2025-021" /></div>
+              <div className="flex items-center gap-2">
+                <div className="flex-1"><label className={labelCls}>Contract Number (Auto-generated)</label><input className={cn(inputCls, "bg-slate-50")} value={contractNumber} readOnly /></div>
+              </div>
+              <div><label className={labelCls}>Contract Title</label><input className={inputCls} value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Consultant Fees — Survey Design" /></div>
+              <div><label className={labelCls}>Vendor / Consultant Name</label><input className={inputCls} value={party} onChange={e => setParty(e.target.value)} /></div>
+              <div className="grid grid-cols-2 gap-4">
+                <div><label className={labelCls}>Category</label><select className={inputCls} value={category} onChange={e => setCategory(e.target.value)}>{REG_CATEGORIES.map(c => <option key={c}>{c}</option>)}</select></div>
+                <div><label className={labelCls}>Procurement Method</label><select className={inputCls} value={method} onChange={e => setMethod(e.target.value)}>{REG_METHODS.map(m => <option key={m}>{m}</option>)}</select></div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div><label className={labelCls}>Department</label><select className={inputCls} value={department} onChange={e => setDepartment(e.target.value)}>{REG_DEPARTMENTS.map(d => <option key={d}>{d}</option>)}</select></div>
+                <div><label className={labelCls}>Contract Owner</label><input className={inputCls} value={owner} onChange={e => setOwner(e.target.value)} placeholder="Person responsible" /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div><label className={labelCls}>Funding Source</label><select className={inputCls} value={fundingSource} onChange={e => setFundingSource(e.target.value)}><option value="">Select...</option>{REG_FUNDING.map(f => <option key={f}>{f}</option>)}</select></div>
+                <div><label className={labelCls}>Budget Line</label><input className={inputCls} value={budgetLine} onChange={e => setBudgetLine(e.target.value)} placeholder="e.g. BL-2025-PROG-001" /></div>
+              </div>
+              <div><label className={labelCls}>Notes / Comments</label><textarea className={cn(inputCls, "h-16 resize-none")} value={comments} onChange={e => setComments(e.target.value)} /></div>
+            </>
+          )}
+
+          {step === 2 && (
+            <>
+              <div>
+                <label className={labelCls}>Contract Type</label>
+                <div className="flex gap-3 mt-1">
+                  {(["Lump Sum", "Time Based"] as const).map(t => (
+                    <button key={t} onClick={() => setContractType(t)} className={cn("flex-1 px-4 py-3 rounded-lg border-2 text-[12px] font-medium transition-all", contractType === t ? "border-[#0B01D0] bg-[#0B01D0]/5 text-[#0B01D0]" : "border-slate-200 text-slate-500 hover:border-slate-300")}>
+                      <div className="font-semibold">{t}</div>
+                      <div className="text-[10px] mt-0.5 font-normal">{t === "Lump Sum" ? "Fixed price, paid on deliverables/milestones" : "Daily, weekly, or monthly rate up to max amount"}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div><label className={labelCls}>Contract Value (USD)</label><input type="number" className={inputCls} value={value} onChange={e => setValue(e.target.value)} placeholder="0.00" /></div>
+                {contractType === "Time Based" && (
+                  <div><label className={labelCls}>Maximum Amount (USD)</label><input type="number" className={inputCls} value={maxAmount} onChange={e => setMaxAmount(e.target.value)} placeholder="Cap amount" /></div>
+                )}
+              </div>
+
+              <div>
+                <label className={labelCls}>Payment Frequency</label>
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {(contractType === "Time Based"
+                    ? ["Daily", "Weekly", "Monthly", "Quarterly"] as const
+                    : ["Milestone-Based", "Monthly", "Quarterly"] as const
+                  ).map(f => (
+                    <button key={f} onClick={() => setPaymentFrequency(f as typeof paymentFrequency)} className={cn("px-3 py-1.5 rounded-lg border text-[11px] font-medium transition-colors", paymentFrequency === f ? "border-[#0B01D0] bg-[#0B01D0]/5 text-[#0B01D0]" : "border-slate-200 text-slate-500 hover:border-slate-300")}>{f}</button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div><label className={labelCls}>Start Date</label><input type="date" className={inputCls} value={startDate} onChange={e => setStartDate(e.target.value)} /></div>
+                <div><label className={labelCls}>End Date</label><input type="date" className={inputCls} value={endDate} onChange={e => setEndDate(e.target.value)} /></div>
+                <div><label className={labelCls}>Renewal Date (optional)</label><input type="date" className={inputCls} value={renewalDate} onChange={e => setRenewalDate(e.target.value)} /></div>
+              </div>
+            </>
+          )}
+
+          {step === 3 && (
+            <>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-[13px] font-semibold text-slate-800">Contract Coordinators</p>
+                  <p className="text-[10px] text-slate-400">Assign up to 3 coordinators who will receive notifications on this contract</p>
+                </div>
+                {coordinators.length < 3 && (
+                  <button onClick={addCoordinator} className="flex items-center gap-1 text-[11px] text-[#0B01D0] font-medium hover:underline"><Plus size={12} /> Add</button>
+                )}
+              </div>
+              {coordinators.map((c, i) => (
+                <div key={i} className="p-3 border border-slate-200 rounded-lg bg-slate-50/50 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[11px] font-semibold text-slate-600">Coordinator {i + 1}</p>
+                    {coordinators.length > 1 && <button onClick={() => removeCoordinator(i)} className="text-red-400 hover:text-red-600"><X size={14} /></button>}
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div><label className={labelCls}>Full Name</label><input className={inputCls} value={c.name} onChange={e => updateCoordinator(i, "name", e.target.value)} /></div>
+                    <div><label className={labelCls}>Role</label><input className={inputCls} value={c.role} onChange={e => updateCoordinator(i, "role", e.target.value)} placeholder="e.g. Lead Coordinator" /></div>
+                    <div><label className={labelCls}>Email</label><input type="email" className={inputCls} value={c.email} onChange={e => updateCoordinator(i, "email", e.target.value)} /></div>
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
+
+          {step === 4 && (
+            <>
+              {category === "Goods" ? (
+                <>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-[13px] font-semibold text-slate-800">Delivery Schedule</p>
+                      <p className="text-[10px] text-slate-400">Define items, quantities, and expected delivery dates</p>
+                    </div>
+                    <button onClick={addDelivery} className="flex items-center gap-1 text-[11px] text-[#0B01D0] font-medium hover:underline"><Plus size={12} /> Add Item</button>
+                  </div>
+                  {deliverySchedule.map((d, i) => (
+                    <div key={i} className="flex items-end gap-3">
+                      <div className="flex-1"><label className={labelCls}>Item Description</label><input className={inputCls} value={d.item} onChange={e => updateDelivery(i, "item", e.target.value)} /></div>
+                      <div className="w-24"><label className={labelCls}>Quantity</label><input className={inputCls} value={d.quantity} onChange={e => updateDelivery(i, "quantity", e.target.value)} /></div>
+                      <div className="w-36"><label className={labelCls}>Expected Date</label><input type="date" className={inputCls} value={d.expectedDate} onChange={e => updateDelivery(i, "expectedDate", e.target.value)} /></div>
+                      {deliverySchedule.length > 1 && <button onClick={() => removeDelivery(i)} className="p-2 text-red-400 hover:text-red-600 mb-0.5"><X size={14} /></button>}
+                    </div>
+                  ))}
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-[13px] font-semibold text-slate-800">{contractType === "Lump Sum" ? "Project Milestones / Deliverables" : "Timeline-Based Deliverables"}</p>
+                      <p className="text-[10px] text-slate-400">{contractType === "Lump Sum" ? "Define deliverables tied to payment milestones" : `Payments made ${paymentFrequency.toLowerCase()} up to ${maxAmount ? fmt(parseFloat(maxAmount)) : "max amount"}`}</p>
+                    </div>
+                    <button onClick={addMilestone} className="flex items-center gap-1 text-[11px] text-[#0B01D0] font-medium hover:underline"><Plus size={12} /> Add</button>
+                  </div>
+                  {milestones.map((m, i) => (
+                    <div key={i} className="flex items-end gap-3">
+                      <div className="flex-1"><label className={labelCls}>Milestone / Deliverable</label><input className={inputCls} value={m.label} onChange={e => updateMilestone(i, "label", e.target.value)} placeholder="e.g. Inception Report" /></div>
+                      <div className="w-36"><label className={labelCls}>Due Date</label><input type="date" className={inputCls} value={m.date} onChange={e => updateMilestone(i, "date", e.target.value)} /></div>
+                      {milestones.length > 1 && <button onClick={() => removeMilestone(i)} className="p-2 text-red-400 hover:text-red-600 mb-0.5"><X size={14} /></button>}
+                    </div>
+                  ))}
+                </>
+              )}
+
+              <div className="border-t border-slate-200 pt-4 mt-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <p className="text-[13px] font-semibold text-slate-800">Payment Schedule</p>
+                    <p className="text-[10px] text-slate-400">Tie payments to deliverables or timelines</p>
+                  </div>
+                  <button onClick={addPayment} className="flex items-center gap-1 text-[11px] text-[#0B01D0] font-medium hover:underline"><Plus size={12} /> Add</button>
+                </div>
+                {paymentSchedule.map((p, i) => (
+                  <div key={i} className="flex items-end gap-3 mb-2">
+                    <div className="flex-1"><label className={labelCls}>Description</label><input className={inputCls} value={p.description} onChange={e => updatePayment(i, "description", e.target.value)} placeholder="e.g. Upon Inception Report" /></div>
+                    <div className="w-28"><label className={labelCls}>Amount (USD)</label><input type="number" className={inputCls} value={p.amount} onChange={e => updatePayment(i, "amount", e.target.value)} /></div>
+                    <div className="w-36"><label className={labelCls}>Due Date</label><input type="date" className={inputCls} value={p.dueDate} onChange={e => updatePayment(i, "dueDate", e.target.value)} /></div>
+                    <div className="w-36"><label className={labelCls}>Linked To</label><input className={inputCls} value={p.linkedTo} onChange={e => updatePayment(i, "linkedTo", e.target.value)} placeholder="Milestone / Item" /></div>
+                    {paymentSchedule.length > 1 && <button onClick={() => removePayment(i)} className="p-2 text-red-400 hover:text-red-600 mb-0.5"><X size={14} /></button>}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {step === 5 && (
+            <>
+              <p className="text-[13px] font-semibold text-slate-800">Documents to Upload</p>
+              <p className="text-[10px] text-slate-400 -mt-2">The following documents should be prepared and uploaded. You can add more after registration.</p>
+
+              <div className="space-y-2">
+                {docLabels.map((lbl, i) => (
+                  <div key={i} className="flex items-center gap-3 p-3 border border-slate-200 rounded-lg bg-slate-50/50">
+                    <Upload size={14} className="text-slate-400" />
+                    <span className="text-[12px] text-slate-700 flex-1">{lbl}</span>
+                    <span className="text-[10px] text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">Pending Upload</span>
+                  </div>
+                ))}
+                <button onClick={() => { const lbl = prompt("Document label:"); if (lbl) setDocLabels([...docLabels, lbl]); }} className="flex items-center gap-1.5 text-[11px] text-[#0B01D0] font-medium hover:underline"><Plus size={12} /> Add Document Slot</button>
+              </div>
+
+              <div className="border-t border-slate-200 pt-4 mt-4">
+                <p className="text-[13px] font-semibold text-slate-800 mb-3">Review Summary</p>
+                <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-[11px]">
+                  {[
+                    ["Contract Number", contractNumber],
+                    ["Contract Title", title],
+                    ["Vendor / Consultant", party],
+                    ["Category", category],
+                    ["Contract Type", contractType],
+                    ["Value", value ? fmt(parseFloat(value)) : "—"],
+                    ["Payment Frequency", paymentFrequency],
+                    ["Start Date", startDate ? fmtDate(startDate) : "—"],
+                    ["End Date", endDate ? fmtDate(endDate) : "—"],
+                    ["Renewal Date", renewalDate ? fmtDate(renewalDate) : "N/A"],
+                    ["Department", department],
+                    ["Owner", owner],
+                    ["Coordinators", coordinators.filter(c => c.name).map(c => c.name).join(", ") || "—"],
+                    ["Funding Source", fundingSource || "—"],
+                  ].map(([k, v]) => (
+                    <div key={k} className="flex justify-between py-1.5 border-b border-slate-100">
+                      <span className="text-slate-500">{k}</span>
+                      <span className="text-slate-800 font-medium text-right max-w-[200px] truncate">{v}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-3 border-t border-slate-200 flex items-center justify-between shrink-0">
+          <button onClick={() => step > 1 ? setStep(step - 1) : onClose()} className="px-4 py-2 text-[12px] font-medium text-slate-600 hover:text-slate-900">{step > 1 ? "Back" : "Cancel"}</button>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-slate-400">{step}/{totalSteps}</span>
+            {step < totalSteps ? (
+              <button disabled={!canNext()} onClick={() => setStep(step + 1)} className={cn("px-5 py-2 rounded-lg text-[12px] font-medium text-white transition-colors", canNext() ? "bg-[#0B01D0] hover:bg-[#0901A0]" : "bg-slate-300 cursor-not-allowed")}>Next</button>
+            ) : (
+              <button onClick={handleSubmit} className="px-5 py-2 rounded-lg text-[12px] font-medium text-white bg-[#0B01D0] hover:bg-[#0901A0]">Register Contract</button>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -1227,6 +1843,7 @@ function ChangeRequestModal({ contract: c, onClose }: { contract: AwardedContrac
       requestedDate: new Date().toISOString().split("T")[0],
     };
     updateContract(c.id, { changeRequests: [...existing, newCR], status: "Under Variation" });
+    addAuditLog(c.id, "Change Request Submitted", "Current User", `Amendment #${newCR.changeNumber}: ${types.join(", ")} — ${reason}`);
     onClose();
   };
 
@@ -1287,31 +1904,57 @@ function ChangeRequestModal({ contract: c, onClose }: { contract: AwardedContrac
 
 function EvaluationModal({ contract: c, onClose }: { contract: AwardedContract; onClose: () => void }) {
   const [evalType, setEvalType] = useState<"Mid-Term" | "Final">("Final");
-  const defaultCriteria = [
+  const [criteria, setCriteria] = useState([
     { name: "Quality of deliverables", score: 5, maxScore: 10 },
     { name: "Timeliness", score: 5, maxScore: 10 },
     { name: "Cost control", score: 5, maxScore: 10 },
     { name: "Compliance with terms", score: 5, maxScore: 10 },
     { name: "Professionalism and responsiveness", score: 5, maxScore: 10 },
-  ];
-  const [criteria, setCriteria] = useState(defaultCriteria);
+  ]);
   const [comments, setComments] = useState("");
+  const [evaluator, setEvaluator] = useState("");
+  const [supervisor, setSupervisor] = useState("");
+  const [newCriterionName, setNewCriterionName] = useState("");
+  const [editingIdx, setEditingIdx] = useState<number | null>(null);
+  const [editName, setEditName] = useState("");
 
-  const overall = criteria.reduce((s, cr) => s + cr.score, 0) / criteria.length;
+  const overall = criteria.length > 0 ? criteria.reduce((s, cr) => s + cr.score, 0) / criteria.length : 0;
+
+  const addCriterion = () => {
+    if (!newCriterionName.trim()) return;
+    setCriteria([...criteria, { name: newCriterionName.trim(), score: 5, maxScore: 10 }]);
+    setNewCriterionName("");
+  };
+
+  const removeCriterion = (idx: number) => setCriteria(criteria.filter((_, i) => i !== idx));
+
+  const startEdit = (idx: number) => { setEditingIdx(idx); setEditName(criteria[idx].name); };
+  const saveEdit = () => {
+    if (editingIdx !== null && editName.trim()) {
+      const updated = [...criteria];
+      updated[editingIdx] = { ...updated[editingIdx], name: editName.trim() };
+      setCriteria(updated);
+    }
+    setEditingIdx(null);
+    setEditName("");
+  };
 
   const handleSubmit = () => {
+    if (!evaluator) return;
     const existing = c.performanceEvaluations || [];
     const newEval: PerformanceEvaluation = {
       id: `pe-${Date.now()}`,
       evaluationType: evalType,
       evaluationDate: new Date().toISOString().split("T")[0],
-      evaluator: "Current User",
-      status: "CC Approved",
+      evaluator,
+      supervisorApproval: supervisor || undefined,
+      status: supervisor ? "Supervisor Approved" : "CC Approved",
       criteria,
       overallScore: parseFloat(overall.toFixed(1)),
       comments,
     };
     updateContract(c.id, { performanceEvaluations: [...existing, newEval] });
+    addAuditLog(c.id, "Performance Evaluation", evaluator, `${evalType} evaluation submitted — Score: ${overall.toFixed(1)}/10`);
     onClose();
   };
 
@@ -1331,12 +1974,33 @@ function EvaluationModal({ contract: c, onClose }: { contract: AwardedContract; 
               ))}
             </div>
           </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-[11px] text-slate-500 font-medium uppercase tracking-wider mb-2 block">Evaluator (CC) *</label>
+              <input type="text" value={evaluator} onChange={e => setEvaluator(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[12px] text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0B01D0]/20" placeholder="Contract Coordinator name" />
+            </div>
+            <div>
+              <label className="text-[11px] text-slate-500 font-medium uppercase tracking-wider mb-2 block">Supervisor Approval</label>
+              <input type="text" value={supervisor} onChange={e => setSupervisor(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[12px] text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0B01D0]/20" placeholder="Supervisor name" />
+            </div>
+          </div>
           <div>
-            <label className="text-[11px] text-slate-500 font-medium uppercase tracking-wider mb-3 block">Criteria (1–10 Likert Scale)</label>
-            <div className="space-y-3">
+            <div className="flex items-center justify-between mb-3">
+              <label className="text-[11px] text-slate-500 font-medium uppercase tracking-wider">Criteria (1–10 Likert Scale)</label>
+            </div>
+            <div className="space-y-2.5">
               {criteria.map((cr, idx) => (
-                <div key={idx} className="flex items-center gap-3">
-                  <span className="text-[11px] text-slate-600 w-[200px] shrink-0">{cr.name}</span>
+                <div key={idx} className="flex items-center gap-2">
+                  {editingIdx === idx ? (
+                    <div className="flex items-center gap-1.5 w-[200px] shrink-0">
+                      <input value={editName} onChange={e => setEditName(e.target.value)} onBlur={saveEdit} onKeyDown={e => e.key === "Enter" && saveEdit()} autoFocus className="flex-1 px-2 py-1 border border-[#0B01D0] rounded text-[11px] text-slate-700 focus:outline-none" />
+                    </div>
+                  ) : (
+                    <span className="text-[11px] text-slate-600 w-[200px] shrink-0 flex items-center gap-1 group cursor-pointer" onClick={() => startEdit(idx)}>
+                      {cr.name}
+                      <Edit2 size={9} className="text-slate-300 opacity-0 group-hover:opacity-100" />
+                    </span>
+                  )}
                   <input
                     type="range" min={1} max={10} value={cr.score}
                     onChange={e => {
@@ -1347,8 +2011,15 @@ function EvaluationModal({ contract: c, onClose }: { contract: AwardedContract; 
                     className="flex-1 h-2 accent-[#0B01D0]"
                   />
                   <span className="text-[12px] font-semibold text-slate-800 w-8 text-right">{cr.score}</span>
+                  {criteria.length > 1 && (
+                    <button onClick={() => removeCriterion(idx)} className="text-slate-300 hover:text-red-500 transition-colors"><X size={12} /></button>
+                  )}
                 </div>
               ))}
+            </div>
+            <div className="flex items-center gap-2 mt-3">
+              <input value={newCriterionName} onChange={e => setNewCriterionName(e.target.value)} onKeyDown={e => e.key === "Enter" && addCriterion()} className="flex-1 px-3 py-1.5 border border-slate-200 rounded-lg text-[11px] text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#0B01D0]" placeholder="Add new criterion..." />
+              <button onClick={addCriterion} className="flex items-center gap-1 px-2.5 py-1.5 text-[10px] text-[#0B01D0] font-medium hover:bg-[#0B01D0]/5 rounded-lg"><Plus size={11} /> Add</button>
             </div>
           </div>
           <div className="bg-slate-50 rounded-lg p-3 border border-slate-100 text-center">
@@ -1356,6 +2027,11 @@ function EvaluationModal({ contract: c, onClose }: { contract: AwardedContract; 
             <p className={cn("text-[24px] font-semibold", overall >= 7 ? "text-emerald-600" : overall >= 5 ? "text-amber-600" : "text-red-600")}>{overall.toFixed(1)}<span className="text-[12px] text-slate-400">/10</span></p>
             {overall < 5 && <p className="text-[10px] text-red-500 mt-1">Poor performer — will be flagged</p>}
           </div>
+          {!supervisor && (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+              <p className="text-[10px] text-amber-700">Minimum two approvals required: CC evaluator and supervisor. Add supervisor name for full approval.</p>
+            </div>
+          )}
           <div>
             <label className="text-[11px] text-slate-500 font-medium uppercase tracking-wider mb-2 block">Comments</label>
             <textarea value={comments} onChange={e => setComments(e.target.value)} rows={3} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[12px] text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0B01D0]/20" placeholder="Additional comments..." />
@@ -1363,7 +2039,7 @@ function EvaluationModal({ contract: c, onClose }: { contract: AwardedContract; 
         </div>
         <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-end gap-3">
           <button onClick={onClose} className="px-4 py-2 border border-slate-200 rounded-lg text-[12px] text-slate-600 font-medium hover:bg-slate-50">Cancel</button>
-          <button onClick={handleSubmit} className="px-4 py-2 bg-[#0B01D0] text-white rounded-lg text-[12px] font-medium hover:bg-[#0a01b8]">Submit Evaluation</button>
+          <button onClick={handleSubmit} disabled={!evaluator} className={cn("px-4 py-2 rounded-lg text-[12px] font-medium text-white", evaluator ? "bg-[#0B01D0] hover:bg-[#0a01b8]" : "bg-slate-300 cursor-not-allowed")}>Submit Evaluation</button>
         </div>
       </div>
     </div>
@@ -1394,6 +2070,7 @@ function InvoiceModal({ contract: c, onClose }: { contract: AwardedContract; onC
       submittedVia: via,
     };
     updateContract(c.id, { invoices: [...existing, newInv] });
+    addAuditLog(c.id, "Invoice Submitted", c.party, `${invoiceNum} for ${fmt(parseFloat(amount))} submitted via ${via}`);
     onClose();
   };
 
@@ -1467,6 +2144,7 @@ function PaymentProcessingCard({ invoice, contract }: { invoice: ContractInvoice
       };
     });
     updateContract(contract.id, { invoices: updatedInvoices });
+    addAuditLog(contract.id, "Payment Processed", "Finance", `${invoice.invoiceNumber} paid — ${fmt(parseFloat(amountPaid) || invoice.amount)} via ${paymentMethod}, Ref: ${refNumber}`);
   };
 
   return (

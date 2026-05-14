@@ -120,6 +120,15 @@ export interface ContractCoordinator {
   email: string;
 }
 
+// ── Audit Trail ──
+export interface AuditLogEntry {
+  id: string;
+  date: string;
+  action: string;
+  performedBy: string;
+  details: string;
+}
+
 // ── NEW: Close-Out state ──
 export interface ContractCloseOut {
   allDeliverablesCompleted: boolean;
@@ -168,6 +177,10 @@ export interface AwardedContract {
   closeOut?: ContractCloseOut;
   budgetLine?: string;
   fundingSource?: string;
+  renewalDate?: string;
+  deliverySchedule?: { item: string; quantity: string; expectedDate: string }[];
+  paymentSchedule?: { description: string; amount: number; dueDate: string; linkedTo: string }[];
+  auditLog?: AuditLogEntry[];
 }
 
 type Listener = () => void;
@@ -224,6 +237,19 @@ let contracts: AwardedContract[] = [
     closeOut: { allDeliverablesCompleted: false, procurementCompliance: false, allPaymentsCompleted: false, performanceFinalized: false, allDocsUploaded: false },
     budgetLine: "BL-2024-PROG-001",
     fundingSource: "Core Program Funding",
+    auditLog: [
+      { id: "al-1", date: "2024-12-18", action: "Contract Created", performedBy: "Procurement Unit", details: "Contract CNT-2024-001 registered from sourcing case SRC-2024-001" },
+      { id: "al-2", date: "2024-12-18", action: "Coordinator Assigned", performedBy: "Ama Darko", details: "Ama Darko assigned as Lead Coordinator" },
+      { id: "al-3", date: "2024-12-18", action: "Document Uploaded", performedBy: "Ama Darko", details: "Signed contract uploaded: Contract_SurveyDesign_Signed.pdf" },
+      { id: "al-4", date: "2025-01-14", action: "Deliverable Submitted", performedBy: "Dr. Kwesi Appiah", details: "Inception Report & Work Plan submitted" },
+      { id: "al-5", date: "2025-01-15", action: "Deliverable Accepted", performedBy: "Ama Darko", details: "Inception Report approved with minor edits" },
+      { id: "al-6", date: "2025-01-16", action: "Invoice Submitted", performedBy: "Dr. Kwesi Appiah", details: "INV-KA-001 for $2,000 submitted via Email" },
+      { id: "al-7", date: "2025-02-01", action: "Payment Processed", performedBy: "Finance", details: "INV-KA-001 paid via wire transfer — $2,000" },
+      { id: "al-8", date: "2025-03-02", action: "Deliverable Submitted", performedBy: "Dr. Kwesi Appiah", details: "Draft Survey Instrument & Methodology submitted" },
+      { id: "al-9", date: "2025-03-03", action: "Deliverable Accepted", performedBy: "Ama Darko", details: "Draft Survey accepted after revision" },
+      { id: "al-10", date: "2025-03-05", action: "Invoice Submitted", performedBy: "Dr. Kwesi Appiah", details: "INV-KA-002 for $3,000 submitted via Email" },
+      { id: "al-11", date: "2025-03-20", action: "Payment Processed", performedBy: "Finance", details: "INV-KA-002 paid via wire transfer — $3,000" },
+    ],
   },
   {
     id: "AC-2",
@@ -503,6 +529,94 @@ export function pushContract(opts: {
   return newContract;
 }
 
+export function generateContractNumber(requisitionNumber: string): string {
+  const year = new Date().getFullYear();
+  if (requisitionNumber) {
+    const digits = requisitionNumber.replace(/\D/g, "").slice(-3) || String(nextContractSeq).padStart(3, "0");
+    return `CNT-${year}-${digits}`;
+  }
+  nextContractSeq++;
+  return `CNT-${year}-${String(nextContractSeq).padStart(3, "0")}`;
+}
+
+export function registerContract(data: {
+  title: string;
+  party: string;
+  sourcePR: string;
+  category: string;
+  method: string;
+  value: number;
+  startDate: string;
+  endDate: string;
+  renewalDate?: string;
+  department: string;
+  owner: string;
+  comments: string;
+  contractType: "Lump Sum" | "Time Based";
+  paymentFrequency: "Daily" | "Weekly" | "Monthly" | "Quarterly" | "Milestone-Based";
+  maxAmount?: number;
+  coordinators: ContractCoordinator[];
+  milestones: ContractMilestone[];
+  deliverySchedule?: { item: string; quantity: string; expectedDate: string }[];
+  paymentSchedule?: { description: string; amount: number; dueDate: string; linkedTo: string }[];
+  budgetLine?: string;
+  fundingSource?: string;
+}): AwardedContract {
+  const contractNumber = generateContractNumber(data.sourcePR);
+  const typeMap: Record<string, string> = { Consultancy: "Consultant", Services: "Service", Goods: "Vendor", Works: "Works" };
+  const today = new Date().toISOString().split("T")[0];
+
+  const newContract: AwardedContract = {
+    id: `AC-${Date.now()}-${++nextContractSeq}`,
+    contractNumber,
+    title: data.title,
+    type: typeMap[data.category] || "Vendor",
+    party: data.party,
+    sourcePR: data.sourcePR,
+    sourceSourcingCase: "",
+    category: data.category,
+    method: data.method,
+    value: data.value,
+    startDate: data.startDate,
+    endDate: data.endDate,
+    renewalDate: data.renewalDate,
+    status: "Active",
+    department: data.department,
+    owner: data.owner,
+    awardDate: today,
+    comments: data.comments,
+    contractType: data.contractType,
+    paymentFrequency: data.paymentFrequency,
+    maxAmount: data.maxAmount,
+    coordinators: data.coordinators,
+    documents: [],
+    amendments: [],
+    milestones: data.milestones,
+    deliverables: data.milestones.map((ms, i) => ({
+      id: `del-reg-${Date.now()}-${i}`,
+      milestoneRef: ms.id,
+      description: ms.label,
+      dueDate: ms.date,
+      status: "Pending" as const,
+      documents: [],
+      comments: "",
+    })),
+    invoices: [],
+    changeRequests: [],
+    performanceEvaluations: [],
+    closeOut: { allDeliverablesCompleted: false, procurementCompliance: false, allPaymentsCompleted: false, performanceFinalized: false, allDocsUploaded: false },
+    deliverySchedule: data.deliverySchedule,
+    paymentSchedule: data.paymentSchedule,
+    budgetLine: data.budgetLine,
+    fundingSource: data.fundingSource,
+  };
+
+  contracts = [...contracts, newContract];
+  _lastAwardedContractNumber = newContract.contractNumber;
+  notify();
+  return newContract;
+}
+
 // ── Attach a document to an existing contract ──
 export function addDocumentToContract(contractId: string, doc: { label: string; name: string; uploadedBy: string; type: string; size: string }) {
   const today = new Date().toISOString().split("T")[0];
@@ -574,6 +688,26 @@ export function updateContract(contractId: string, updates: Partial<AwardedContr
   contracts = contracts.map(c => {
     if (c.id !== contractId) return c;
     return { ...c, ...updates };
+  });
+  notify();
+}
+
+// ── Add audit log entry ──
+export function addAuditLog(contractId: string, action: string, performedBy: string, details: string) {
+  contracts = contracts.map(c => {
+    if (c.id !== contractId) return c;
+    const log: AuditLogEntry = { id: `al-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, date: new Date().toISOString().split("T")[0], action, performedBy, details };
+    return { ...c, auditLog: [...(c.auditLog || []), log] };
+  });
+  notify();
+}
+
+// ── Add a deliverable to an existing contract (CC upload) ──
+export function addDeliverableToContract(contractId: string, deliverable: Omit<ContractDeliverable, "id">) {
+  contracts = contracts.map(c => {
+    if (c.id !== contractId) return c;
+    const newDel: ContractDeliverable = { ...deliverable, id: `del-${Date.now()}` };
+    return { ...c, deliverables: [...(c.deliverables || []), newDel] };
   });
   notify();
 }

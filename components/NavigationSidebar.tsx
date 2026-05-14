@@ -188,11 +188,12 @@ export function NavigationSidebar({ selectedItem, onSelectItem }: NavigationSide
           label: "Approvals",
           submenu: ["Purchase Requisitions", "Purchase Plan Approvals", "Senior Management Approval"],
         },
-        {
-          icon: <ChartIcon />,
-          label: "Reporting & Analytics",
-          submenu: ["Planning & Orders", "Sourcing & Contracts", "Vendors & KPIs", "Contract Reports", "Donor Reports", "Combined Analysis"],
-        },
+        { icon: <ChartIcon />, label: "Planning & Orders Report" },
+        { icon: <ChartIcon />, label: "Sourcing & Contracts Report" },
+        { icon: <ChartIcon />, label: "Vendors & KPIs Report" },
+        { icon: <ChartIcon />, label: "Contract Reports" },
+        { icon: <ChartIcon />, label: "Donor Reports" },
+        { icon: <ChartIcon />, label: "Combined Analysis Report" },
       ],
     },
     {
