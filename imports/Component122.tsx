@@ -17,7 +17,7 @@ function Frame8() {
     <div className="bg-white relative shrink-0 w-full">
       <div className="flex flex-row items-center justify-center overflow-clip rounded-[inherit] size-full">
         <div className="box-border content-stretch flex gap-[7.959px] items-center justify-center px-[31.042px] py-[14.327px] relative w-full">
-          <p className="font-['Montserrat:SemiBold',sans-serif] font-semibold leading-none relative shrink-0 text-[14.327px] text-nowrap text-slate-600 whitespace-pre">Send In-App Notifications</p>
+          <p className="font-semibold leading-none relative shrink-0 text-[14.327px] text-nowrap text-slate-600 whitespace-pre">Send In-App Notifications</p>
           <Cancel />
         </div>
       </div>
@@ -30,7 +30,7 @@ function TabItem() {
   return (
     <div className="box-border content-stretch flex gap-[6.368px] items-center justify-center px-[12.735px] py-[3.98px] relative shrink-0" data-name="Tab item">
       <div aria-hidden="true" className="absolute border-0 border-[#d0d5dd] border-solid inset-0 pointer-events-none" />
-      <p className="font-['Montserrat:Regular',sans-serif] font-normal leading-[14.327px] relative shrink-0 text-[11.143px] text-center text-slate-500 tracking-[-0.1114px] w-[71.635px]">SMS</p>
+      <p className="font-normal leading-[14.327px] relative shrink-0 text-[11.143px] text-center text-slate-500 tracking-[-0.1114px] w-[71.635px]">SMS</p>
     </div>
   );
 }
@@ -39,7 +39,7 @@ function TabItem1() {
   return (
     <div className="box-border content-stretch flex gap-[6.368px] items-center justify-center px-[12.735px] py-[3.98px] relative shrink-0 w-[97.106px]" data-name="Tab item">
       <div aria-hidden="true" className="absolute border-0 border-[#d0d5dd] border-solid inset-0 pointer-events-none" />
-      <p className="font-['Montserrat:Regular',sans-serif] font-normal leading-[14.327px] relative shrink-0 text-[11.143px] text-center text-nowrap text-slate-500 tracking-[-0.1114px] whitespace-pre">Email</p>
+      <p className="font-normal leading-[14.327px] relative shrink-0 text-[11.143px] text-center text-nowrap text-slate-500 tracking-[-0.1114px] whitespace-pre">Email</p>
     </div>
   );
 }
@@ -48,7 +48,7 @@ function TabItem2() {
   return (
     <div className="bg-purple-700 box-border content-stretch flex gap-[6.368px] items-center justify-center px-[27.077px] py-[5.572px] relative rounded-[6.368px] shrink-0" data-name="Tab item">
       <div aria-hidden="true" className="absolute border-[0.796px] border-slate-100 border-solid inset-0 pointer-events-none rounded-[6.368px] shadow-[0px_1.592px_6.368px_0px_rgba(100,116,139,0.1)]" />
-      <div className="flex flex-col font-['Montserrat:SemiBold',sans-serif] font-semibold justify-center leading-[0] relative shrink-0 text-[11.143px] text-center text-nowrap text-white tracking-[-0.1114px]">
+      <div className="flex flex-col font-semibold justify-center leading-[0] relative shrink-0 text-[11.143px] text-center text-nowrap text-white tracking-[-0.1114px]">
         <p className="leading-[14.327px] whitespace-pre">In-App</p>
       </div>
     </div>
@@ -68,7 +68,7 @@ function Frame14() {
 function Frame1() {
   return (
     <div className="content-stretch flex items-start justify-between relative shrink-0 w-[446.527px]">
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[11.143px] text-nowrap text-slate-600 tracking-[-0.2229px] whitespace-pre">Subject</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[11.143px] text-nowrap text-slate-600 tracking-[-0.2229px] whitespace-pre">Subject</p>
     </div>
   );
 }
@@ -79,7 +79,7 @@ function Frame() {
       <div aria-hidden="true" className="absolute border-[0.796px] border-slate-200 border-solid inset-0 pointer-events-none rounded-[6.395px]" />
       <div className="flex flex-row items-center size-full">
         <div className="box-border content-stretch flex items-center justify-between px-[9.551px] py-[5.572px] relative w-full">
-          <p className="font-['Montserrat:Regular',sans-serif] font-normal leading-[17.511px] relative shrink-0 text-[12.735px] text-nowrap text-slate-700 tracking-[-0.1274px] whitespace-pre">Women’s Fellowship Deadline</p>
+          <p className="font-normal leading-[17.511px] relative shrink-0 text-[12.735px] text-nowrap text-slate-700 tracking-[-0.1274px] whitespace-pre">Women’s Fellowship Deadline</p>
         </div>
       </div>
     </div>
@@ -114,7 +114,7 @@ function Frame10() {
 function Frame3() {
   return (
     <div className="content-stretch flex items-start justify-between relative shrink-0 w-[446.527px]">
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[11.143px] text-nowrap text-slate-600 tracking-[-0.2229px] whitespace-pre">Message</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[11.143px] text-nowrap text-slate-600 tracking-[-0.2229px] whitespace-pre">Message</p>
     </div>
   );
 }
@@ -125,7 +125,7 @@ function Frame7() {
       <div aria-hidden="true" className="absolute border-[0.796px] border-slate-200 border-solid inset-0 pointer-events-none rounded-[6.395px]" />
       <div className="flex flex-row items-center size-full">
         <div className="box-border content-stretch flex items-center justify-between px-[9.551px] py-[5.572px] relative w-full">
-          <p className="basis-0 font-['Montserrat:Regular',sans-serif] font-normal grow h-[69.247px] leading-[19.103px] min-h-px min-w-px relative shrink-0 text-[12.735px] text-slate-400">Type message here</p>
+          <p className="basis-0 font-normal grow h-[69.247px] leading-[19.103px] min-h-px min-w-px relative shrink-0 text-[12.735px] text-slate-400">Type message here</p>
         </div>
       </div>
     </div>
@@ -144,7 +144,7 @@ function InputField1() {
 function Frame4() {
   return (
     <div className="content-stretch flex items-start justify-between relative shrink-0 w-[446.527px]">
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[11.143px] text-nowrap text-slate-600 tracking-[-0.2229px] whitespace-pre">Add Files</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[11.143px] text-nowrap text-slate-600 tracking-[-0.2229px] whitespace-pre">Add Files</p>
     </div>
   );
 }
@@ -169,7 +169,7 @@ function AttachFile() {
 function Frame6() {
   return (
     <div className="content-stretch flex gap-[3.98px] items-center relative shrink-0 w-full">
-      <p className="font-['Montserrat:Regular',sans-serif] font-normal leading-[17.511px] relative shrink-0 text-[11.143px] text-nowrap text-white tracking-[-0.1114px] whitespace-pre">Select File</p>
+      <p className="font-normal leading-[17.511px] relative shrink-0 text-[11.143px] text-nowrap text-white tracking-[-0.1114px] whitespace-pre">Select File</p>
       <AttachFile />
     </div>
   );
@@ -196,7 +196,7 @@ function InputField2() {
 function Frame5() {
   return (
     <div className="content-stretch flex items-start justify-between relative shrink-0 w-full">
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[12.562px] text-nowrap text-slate-600 tracking-[-0.2512px] whitespace-pre">Recipients</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[12.562px] text-nowrap text-slate-600 tracking-[-0.2512px] whitespace-pre">Recipients</p>
     </div>
   );
 }
@@ -207,7 +207,7 @@ function Frame2() {
       <div aria-hidden="true" className="absolute border-[0.897px] border-slate-200 border-solid inset-0 pointer-events-none rounded-[7.209px]" />
       <div className="flex flex-row items-center size-full">
         <div className="box-border content-stretch flex items-center justify-between px-[10.154px] py-[6.281px] relative w-full">
-          <p className="font-['Montserrat:Regular',sans-serif] font-normal leading-[19.74px] relative shrink-0 text-[14.356px] text-nowrap text-slate-700 tracking-[-0.1436px] whitespace-pre">All Members</p>
+          <p className="font-normal leading-[19.74px] relative shrink-0 text-[14.356px] text-nowrap text-slate-700 tracking-[-0.1436px] whitespace-pre">All Members</p>
         </div>
       </div>
     </div>

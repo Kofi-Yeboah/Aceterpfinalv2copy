@@ -123,17 +123,17 @@ export function TaskCompletionApproval() {
 
   if (selectedRequest) {
     return (
-      <div className="flex flex-col h-full bg-slate-50" style={{ fontFamily: "Montserrat, sans-serif" }}>
+      <div className="flex flex-col h-full bg-slate-50">
         {/* Header */}
         <div className="px-6 py-4 bg-white border-b border-slate-200 flex items-center gap-4 shrink-0">
           <button onClick={() => setSelectedRequest(null)} className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors">
             <ArrowLeft className="w-5 h-5 text-slate-600" />
           </button>
           <div className="flex-1">
-            <h1 className="text-[16px] font-semibold text-slate-900" style={{ fontFamily: "Montserrat, sans-serif" }}>
+            <h1 className="text-[16px] font-semibold text-slate-900">
               Task Completion Details — {selectedRequest.requestId}
             </h1>
-            <p className="text-[12px] text-slate-500 mt-0.5" style={{ fontFamily: "Montserrat, sans-serif" }}>
+            <p className="text-[12px] text-slate-500 mt-0.5">
               {selectedRequest.taskName}
             </p>
           </div>
@@ -157,67 +157,67 @@ export function TaskCompletionApproval() {
             <div className="bg-white rounded-xl border border-slate-200 p-4">
               <div className="flex items-center gap-2 mb-2">
                 <CheckCircle className="w-4 h-4 text-green-600" />
-                <span className="text-[11px] text-slate-500" style={{ fontFamily: "Montserrat, sans-serif" }}>Completion</span>
+                <span className="text-[11px] text-slate-500">Completion</span>
               </div>
-              <p className="text-[20px] font-semibold text-green-600" style={{ fontFamily: "Montserrat, sans-serif" }}>
+              <p className="text-[20px] font-semibold text-green-600">
                 {selectedRequest.completionPercentage}%
               </p>
             </div>
             <div className="bg-white rounded-xl border border-slate-200 p-4">
               <div className="flex items-center gap-2 mb-2">
                 <CheckCircle className="w-4 h-4 text-blue-600" />
-                <span className="text-[11px] text-slate-500" style={{ fontFamily: "Montserrat, sans-serif" }}>Deliverables</span>
+                <span className="text-[11px] text-slate-500">Deliverables</span>
               </div>
-              <p className="text-[20px] font-semibold text-slate-900" style={{ fontFamily: "Montserrat, sans-serif" }}>
+              <p className="text-[20px] font-semibold text-slate-900">
                 {selectedRequest.deliverables.length}
               </p>
-              <p className="text-[11px] text-slate-400 mt-1" style={{ fontFamily: "Montserrat, sans-serif" }}>items submitted</p>
+              <p className="text-[11px] text-slate-400 mt-1">items submitted</p>
             </div>
           </div>
 
           {/* Task Details */}
           <div className="bg-white rounded-xl border border-slate-200 p-6 mb-6">
-            <h3 className="text-[14px] font-semibold text-slate-900 mb-4" style={{ fontFamily: "Montserrat, sans-serif" }}>Task Information</h3>
+            <h3 className="text-[14px] font-semibold text-slate-900 mb-4">Task Information</h3>
             <div className="grid grid-cols-2 gap-x-8 gap-y-4">
               <div>
-                <p className="text-[11px] text-slate-500 mb-1" style={{ fontFamily: "Montserrat, sans-serif" }}>Task Name</p>
-                <p className="text-[13px] text-slate-900" style={{ fontFamily: "Montserrat, sans-serif" }}>{selectedRequest.taskName}</p>
+                <p className="text-[11px] text-slate-500 mb-1">Task Name</p>
+                <p className="text-[13px] text-slate-900">{selectedRequest.taskName}</p>
               </div>
               <div>
-                <p className="text-[11px] text-slate-500 mb-1" style={{ fontFamily: "Montserrat, sans-serif" }}>Project</p>
-                <p className="text-[13px] text-slate-900" style={{ fontFamily: "Montserrat, sans-serif" }}>{selectedRequest.project}</p>
+                <p className="text-[11px] text-slate-500 mb-1">Project</p>
+                <p className="text-[13px] text-slate-900">{selectedRequest.project}</p>
               </div>
               <div>
-                <p className="text-[11px] text-slate-500 mb-1" style={{ fontFamily: "Montserrat, sans-serif" }}>Phase</p>
-                <p className="text-[13px] text-slate-900" style={{ fontFamily: "Montserrat, sans-serif" }}>{selectedRequest.phase}</p>
+                <p className="text-[11px] text-slate-500 mb-1">Phase</p>
+                <p className="text-[13px] text-slate-900">{selectedRequest.phase}</p>
               </div>
               <div>
-                <p className="text-[11px] text-slate-500 mb-1" style={{ fontFamily: "Montserrat, sans-serif" }}>Assignee</p>
-                <p className="text-[13px] text-slate-900" style={{ fontFamily: "Montserrat, sans-serif" }}>{selectedRequest.assignee}</p>
+                <p className="text-[11px] text-slate-500 mb-1">Assignee</p>
+                <p className="text-[13px] text-slate-900">{selectedRequest.assignee}</p>
               </div>
               <div>
-                <p className="text-[11px] text-slate-500 mb-1" style={{ fontFamily: "Montserrat, sans-serif" }}>Department</p>
-                <p className="text-[13px] text-slate-900" style={{ fontFamily: "Montserrat, sans-serif" }}>{selectedRequest.department}</p>
+                <p className="text-[11px] text-slate-500 mb-1">Department</p>
+                <p className="text-[13px] text-slate-900">{selectedRequest.department}</p>
               </div>
               <div>
-                <p className="text-[11px] text-slate-500 mb-1" style={{ fontFamily: "Montserrat, sans-serif" }}>Completion Date</p>
-                <p className="text-[13px] text-slate-900" style={{ fontFamily: "Montserrat, sans-serif" }}>{selectedRequest.completionDate}</p>
+                <p className="text-[11px] text-slate-500 mb-1">Completion Date</p>
+                <p className="text-[13px] text-slate-900">{selectedRequest.completionDate}</p>
               </div>
               <div>
-                <p className="text-[11px] text-slate-500 mb-1" style={{ fontFamily: "Montserrat, sans-serif" }}>Submitted Date</p>
-                <p className="text-[13px] text-slate-900" style={{ fontFamily: "Montserrat, sans-serif" }}>{selectedRequest.submittedDate}</p>
+                <p className="text-[11px] text-slate-500 mb-1">Submitted Date</p>
+                <p className="text-[13px] text-slate-900">{selectedRequest.submittedDate}</p>
               </div>
             </div>
           </div>
 
           {/* Deliverables */}
           <div className="bg-white rounded-xl border border-slate-200 p-6 mb-6">
-            <h3 className="text-[14px] font-semibold text-slate-900 mb-4" style={{ fontFamily: "Montserrat, sans-serif" }}>Deliverables</h3>
+            <h3 className="text-[14px] font-semibold text-slate-900 mb-4">Deliverables</h3>
             <div className="space-y-2">
               {selectedRequest.deliverables.map((d, i) => (
                 <div key={i} className="flex items-center gap-3 px-3 py-2 bg-slate-50 rounded-lg">
                   <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
-                  <span className="text-[13px] text-slate-700" style={{ fontFamily: "Montserrat, sans-serif" }}>{d}</span>
+                  <span className="text-[13px] text-slate-700">{d}</span>
                 </div>
               ))}
             </div>
@@ -225,8 +225,8 @@ export function TaskCompletionApproval() {
 
           {/* Notes */}
           <div className="bg-white rounded-xl border border-slate-200 p-6 mb-6">
-            <h3 className="text-[14px] font-semibold text-slate-900 mb-3" style={{ fontFamily: "Montserrat, sans-serif" }}>Completion Notes</h3>
-            <p className="text-[13px] text-slate-600 leading-relaxed" style={{ fontFamily: "Montserrat, sans-serif" }}>{selectedRequest.notes}</p>
+            <h3 className="text-[14px] font-semibold text-slate-900 mb-3">Completion Notes</h3>
+            <p className="text-[13px] text-slate-600 leading-relaxed">{selectedRequest.notes}</p>
           </div>
 
           {/* Action Buttons */}
@@ -235,14 +235,14 @@ export function TaskCompletionApproval() {
               <button
                 onClick={() => handleApprove(selectedRequest.id)}
                 className="px-6 py-2.5 rounded-lg text-[13px] font-medium text-white bg-green-600 hover:bg-green-700 transition-colors flex items-center gap-2"
-                style={{ fontFamily: "Montserrat, sans-serif" }}
+               
               >
                 <Check className="w-4 h-4" /> Approve
               </button>
               <button
                 onClick={() => handleReject(selectedRequest.id)}
                 className="px-6 py-2.5 rounded-lg text-[13px] font-medium text-white bg-red-600 hover:bg-red-700 transition-colors flex items-center gap-2"
-                style={{ fontFamily: "Montserrat, sans-serif" }}
+               
               >
                 <XIcon className="w-4 h-4" /> Reject
               </button>
@@ -254,21 +254,21 @@ export function TaskCompletionApproval() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-slate-50" style={{ fontFamily: "Montserrat, sans-serif" }}>
+    <div className="flex flex-col h-full bg-slate-50">
       {/* Header */}
       <div className="px-6 py-4 bg-white border-b border-slate-200 shrink-0">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-[18px] font-semibold text-slate-900" style={{ fontFamily: "Montserrat, sans-serif" }}>
+            <h1 className="text-[18px] font-semibold text-slate-900">
               Task Completion Approval
             </h1>
-            <p className="text-[12px] text-slate-500 mt-1" style={{ fontFamily: "Montserrat, sans-serif" }}>
+            <p className="text-[12px] text-slate-500 mt-1">
               Review and approve completed tasks submitted by team members
             </p>
           </div>
           <button
             className="px-4 py-2 rounded-lg text-[12px] font-medium text-white flex items-center gap-2 hover:opacity-90 transition-opacity"
-            style={{ backgroundColor: "#0B01D0", fontFamily: "Montserrat, sans-serif" }}
+            style={{ backgroundColor: "#0B01D0" }}
           >
             <Download className="w-4 h-4" /> Export
           </button>
@@ -287,7 +287,7 @@ export function TaskCompletionApproval() {
                   ? "bg-purple-700 text-white shadow-sm"
                   : "text-slate-500 hover:text-slate-700"
               }`}
-              style={{ fontFamily: "Montserrat, sans-serif" }}
+             
             >
               {tab}
               <span
@@ -312,7 +312,7 @@ export function TaskCompletionApproval() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-9 pr-4 py-2 text-[12px] border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-            style={{ fontFamily: "Montserrat, sans-serif" }}
+           
           />
         </div>
       </div>
@@ -322,20 +322,20 @@ export function TaskCompletionApproval() {
           <table className="w-full">
             <thead style={{ backgroundColor: "#0B01D0" }} className="sticky top-0 z-[5]">
               <tr>
-                <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100" style={{ fontFamily: "Montserrat, sans-serif" }}>Request ID</th>
-                <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100" style={{ fontFamily: "Montserrat, sans-serif" }}>Task Name</th>
-                <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100" style={{ fontFamily: "Montserrat, sans-serif" }}>Project</th>
-                <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100" style={{ fontFamily: "Montserrat, sans-serif" }}>Assignee</th>
-                <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100" style={{ fontFamily: "Montserrat, sans-serif" }}>Hours</th>
-                <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100" style={{ fontFamily: "Montserrat, sans-serif" }}>Submitted</th>
-                <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100" style={{ fontFamily: "Montserrat, sans-serif" }}>Status</th>
-                <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100" style={{ fontFamily: "Montserrat, sans-serif" }}>Actions</th>
+                <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Request ID</th>
+                <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Task Name</th>
+                <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Project</th>
+                <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Assignee</th>
+                <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Hours</th>
+                <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Submitted</th>
+                <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Status</th>
+                <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredRequests.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-12 text-[13px] text-slate-400" style={{ fontFamily: "Montserrat, sans-serif" }}>
+                  <td colSpan={8} className="text-center py-12 text-[13px] text-slate-400">
                     No task completion requests found.
                   </td>
                 </tr>
@@ -347,30 +347,30 @@ export function TaskCompletionApproval() {
                       index % 2 === 0 ? "bg-white" : "bg-slate-50/50"
                     }`}
                   >
-                    <td className="px-4 py-3 text-[12px] text-purple-700 font-medium" style={{ fontFamily: "Montserrat, sans-serif" }}>
+                    <td className="px-4 py-3 text-[12px] text-purple-700 font-medium">
                       {request.requestId}
                     </td>
-                    <td className="px-4 py-3 text-[12px] text-slate-900" style={{ fontFamily: "Montserrat, sans-serif" }}>
+                    <td className="px-4 py-3 text-[12px] text-slate-900">
                       {request.taskName}
                     </td>
-                    <td className="px-4 py-3 text-[12px] text-slate-600" style={{ fontFamily: "Montserrat, sans-serif" }}>
+                    <td className="px-4 py-3 text-[12px] text-slate-600">
                       {request.project}
                     </td>
                     <td className="px-4 py-3">
                       <div>
-                        <p className="text-[12px] text-slate-900" style={{ fontFamily: "Montserrat, sans-serif" }}>{request.assignee}</p>
-                        <p className="text-[11px] text-slate-400" style={{ fontFamily: "Montserrat, sans-serif" }}>{request.department}</p>
+                        <p className="text-[12px] text-slate-900">{request.assignee}</p>
+                        <p className="text-[11px] text-slate-400">{request.department}</p>
                       </div>
                     </td>
                     <td className="px-4 py-3">
                       <div>
-                        <p className="text-[12px] text-slate-900" style={{ fontFamily: "Montserrat, sans-serif" }}>{request.hoursSpent}h</p>
-                        <p className="text-[11px] text-slate-400" style={{ fontFamily: "Montserrat, sans-serif" }}>
+                        <p className="text-[12px] text-slate-900">{request.hoursSpent}h</p>
+                        <p className="text-[11px] text-slate-400">
                           est. {request.estimatedHours}h
                         </p>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-[12px] text-slate-600" style={{ fontFamily: "Montserrat, sans-serif" }}>
+                    <td className="px-4 py-3 text-[12px] text-slate-600">
                       {request.submittedDate}
                     </td>
                     <td className="px-4 py-3">
@@ -382,7 +382,7 @@ export function TaskCompletionApproval() {
                             ? "bg-green-100 text-green-700"
                             : "bg-red-100 text-red-700"
                         }`}
-                        style={{ fontFamily: "Montserrat, sans-serif" }}
+                       
                       >
                         {request.status}
                       </span>

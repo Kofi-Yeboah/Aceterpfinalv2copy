@@ -60,7 +60,7 @@ export function Login({ onLogin }: LoginProps) {
             <img alt="ACET Logo" className="absolute inset-0 max-w-none object-contain pointer-events-none size-full" src={imgImage36} />
           </div>
           <div className="content-stretch flex flex-col gap-[6px] items-center leading-[24px] relative shrink-0 text-center">
-            <p className="font-['Montserrat:SemiBold',sans-serif] font-semibold relative shrink-0 text-[18px] text-slate-900 tracking-[-0.36px] w-[352px]">
+            <p className="font-semibold relative shrink-0 text-[18px] text-slate-900 tracking-[-0.36px] w-[352px]">
               {step === "choose" ? (
                 <>
                   <span>Welcome to </span>
@@ -73,7 +73,7 @@ export function Login({ onLogin }: LoginProps) {
                 </>
               )}
             </p>
-            <p className="font-['Montserrat:Regular',sans-serif] font-normal relative shrink-0 text-[14px] text-slate-500 tracking-[-0.28px] w-[352px]">
+            <p className="font-normal relative shrink-0 text-[14px] text-slate-500 tracking-[-0.28px] w-[352px]">
               {step === "choose" ? "Choose your account type to get started" : "Welcome back! Please sign in to continue"}
             </p>
           </div>
@@ -91,7 +91,7 @@ export function Login({ onLogin }: LoginProps) {
                   <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center transition-transform duration-200 group-hover:scale-110">
                     <UserIcon size={26} className="text-blue-600" />
                   </div>
-                  <p className="font-['Montserrat:SemiBold',sans-serif] font-semibold text-[14px] text-slate-800">Employee</p>
+                  <p className="font-semibold text-[14px] text-slate-800">Employee</p>
                 </button>
                 <button
                   onClick={() => handleSelectType("guest")}
@@ -100,7 +100,7 @@ export function Login({ onLogin }: LoginProps) {
                   <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-100 to-amber-200 flex items-center justify-center transition-transform duration-200 group-hover:scale-110">
                     <Building2 size={26} className="text-amber-600" />
                   </div>
-                  <p className="font-['Montserrat:SemiBold',sans-serif] font-semibold text-[14px] text-slate-800">Guest</p>
+                  <p className="font-semibold text-[14px] text-slate-800">Guest</p>
                 </button>
               </div>
             </div>
@@ -114,7 +114,7 @@ export function Login({ onLogin }: LoginProps) {
               className="flex items-center gap-2 text-slate-600 hover:text-slate-900 self-start w-full"
             >
               <ArrowLeft size={16} />
-              <span className="font-['Montserrat:Regular',sans-serif] text-[13px]">Back</span>
+              <span className="text-[13px]">Back</span>
             </button>
 
             {/* Tab Switcher */}
@@ -129,7 +129,7 @@ export function Login({ onLogin }: LoginProps) {
                   >
                     <div className="flex flex-row items-center justify-center size-full">
                       <div className="box-border content-stretch flex gap-[8px] items-center justify-center px-[16px] py-[5px] relative w-full">
-                        <p className={`font-['Montserrat:${loginMethod === "email" ? "Medium" : "Regular"}',sans-serif] leading-[18px] relative shrink-0 text-[14px] text-nowrap tracking-[-0.14px] whitespace-pre ${
+                        <p className={`leading-[18px] relative shrink-0 text-[14px] text-nowrap tracking-[-0.14px] whitespace-pre ${
                           loginMethod === "email" ? "font-medium text-slate-900" : "font-normal text-slate-500"
                         }`}>
                           Email
@@ -146,7 +146,7 @@ export function Login({ onLogin }: LoginProps) {
                   >
                     <div className="flex flex-row items-center justify-center size-full">
                       <div className="box-border content-stretch flex gap-[8px] items-center justify-center px-[16px] py-[5px] relative w-full">
-                        <p className={`font-['Montserrat:${loginMethod === "phone" ? "Medium" : "Regular"}',sans-serif] leading-[18px] relative shrink-0 text-[14px] text-nowrap tracking-[-0.14px] whitespace-pre ${
+                        <p className={`leading-[18px] relative shrink-0 text-[14px] text-nowrap tracking-[-0.14px] whitespace-pre ${
                           loginMethod === "phone" ? "font-medium text-slate-900" : "font-normal text-slate-500"
                         }`}>
                           Phone Number
@@ -162,7 +162,7 @@ export function Login({ onLogin }: LoginProps) {
               {/* Email/Phone Input */}
               {loginMethod === "email" ? (
                 <div className="content-stretch flex flex-col gap-[8px] items-start relative shrink-0 w-full">
-                  <p className="font-['Montserrat:Regular',sans-serif] font-normal leading-[normal] relative shrink-0 text-[12px] text-nowrap text-slate-600 tracking-[-0.24px] whitespace-pre">
+                  <p className="font-normal leading-[normal] relative shrink-0 text-[12px] text-nowrap text-slate-600 tracking-[-0.24px] whitespace-pre">
                     Email address
                   </p>
                   <div className="bg-slate-50 h-[38px] relative rounded-[8px] shrink-0 w-full border border-slate-200">
@@ -171,13 +171,13 @@ export function Login({ onLogin }: LoginProps) {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="Enter your email address"
-                      className="w-full h-full px-[12px] py-[7px] bg-transparent outline-none font-['Montserrat:Regular',sans-serif] font-normal text-[15px] text-slate-900 placeholder:text-slate-400"
+                      className="w-full h-full px-[12px] py-[7px] bg-transparent outline-none font-normal text-[15px] text-slate-900 placeholder:text-slate-400"
                     />
                   </div>
                 </div>
               ) : (
                 <div className="content-stretch flex flex-col gap-[8px] items-start relative shrink-0 w-full">
-                  <p className="font-['Montserrat:Regular',sans-serif] font-normal leading-[normal] relative shrink-0 text-[12px] text-nowrap text-slate-600 whitespace-pre">
+                  <p className="font-normal leading-[normal] relative shrink-0 text-[12px] text-nowrap text-slate-600 whitespace-pre">
                     Phone Number
                   </p>
                   <div className="bg-slate-50 h-[38px] relative rounded-[8px] shrink-0 w-full border border-slate-200">
@@ -190,7 +190,7 @@ export function Login({ onLogin }: LoginProps) {
                           <path clipRule="evenodd" d="M0 0H7V7.5H0V0Z" fill="#1A47B8" fillRule="evenodd" />
                           <path clipRule="evenodd" d="M1.15625 1.15625L1.65625 2.15625L0.65625 2.65625L1.65625 3.15625L1.15625 4.15625L1.65625 3.15625L2.65625 3.65625L2.15625 2.65625L3.15625 2.15625L2.15625 1.65625L2.65625 0.65625L2.15625 1.65625L1.15625 1.15625ZM4.15625 3.15625L4.65625 4.15625L3.65625 4.65625L4.65625 5.15625L4.15625 6.15625L4.65625 5.15625L5.65625 5.65625L5.15625 4.65625L6.15625 4.15625L5.15625 3.65625L5.65625 2.65625L5.15625 3.65625L4.15625 3.15625ZM1.65625 5.15625L1.15625 4.15625L0.65625 5.15625L1.65625 5.65625L0.65625 6.15625L1.65625 6.65625L1.15625 7.65625L1.65625 6.65625L2.65625 7.15625L1.65625 6.65625L2.65625 5.65625L1.65625 5.15625Z" fill="white" fillRule="evenodd" />
                         </svg>
-                        <span className="font-['Montserrat:Regular',sans-serif] font-normal text-[14px] text-slate-900">+233</span>
+                        <span className="font-normal text-[14px] text-slate-900">+233</span>
                       </div>
                       <div className="h-[17px] w-0 border-l border-slate-300" />
                       <input
@@ -198,7 +198,7 @@ export function Login({ onLogin }: LoginProps) {
                         value={phoneNumber}
                         onChange={(e) => setPhoneNumber(e.target.value)}
                         placeholder=""
-                        className="flex-1 bg-transparent outline-none font-['Montserrat:Regular',sans-serif] font-normal text-[14px] text-slate-900 placeholder:text-slate-400"
+                        className="flex-1 bg-transparent outline-none font-normal text-[14px] text-slate-900 placeholder:text-slate-400"
                       />
                     </div>
                   </div>
@@ -207,7 +207,7 @@ export function Login({ onLogin }: LoginProps) {
 
               {/* Password Input */}
               <div className="content-stretch flex flex-col gap-[8px] items-start relative shrink-0 w-full">
-                <p className="font-['Montserrat:Regular',sans-serif] font-normal leading-[normal] relative shrink-0 text-[12px] text-nowrap text-slate-600 tracking-[-0.24px] whitespace-pre">
+                <p className="font-normal leading-[normal] relative shrink-0 text-[12px] text-nowrap text-slate-600 tracking-[-0.24px] whitespace-pre">
                   Password
                 </p>
                 <div className="bg-slate-50 h-[38px] relative rounded-[8px] shrink-0 w-full border border-slate-200">
@@ -217,7 +217,7 @@ export function Login({ onLogin }: LoginProps) {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Enter your password"
-                      className="flex-1 bg-transparent outline-none font-['Montserrat:Regular',sans-serif] font-normal text-[14px] text-slate-900 placeholder:text-slate-400"
+                      className="flex-1 bg-transparent outline-none font-normal text-[14px] text-slate-900 placeholder:text-slate-400"
                     />
                     <button
                       type="button"
@@ -233,7 +233,7 @@ export function Login({ onLogin }: LoginProps) {
                   </div>
                 </div>
                 <button type="button" className="content-stretch flex gap-[10px] items-center relative shrink-0 w-full">
-                  <p className="font-['Montserrat:Regular',sans-serif] font-normal leading-[22px] relative shrink-0 text-[14px] text-nowrap text-purple-700 tracking-[-0.14px] whitespace-pre">
+                  <p className="font-normal leading-[22px] relative shrink-0 text-[14px] text-nowrap text-purple-700 tracking-[-0.14px] whitespace-pre">
                     Forgot Password?
                   </p>
                 </button>
@@ -249,7 +249,7 @@ export function Login({ onLogin }: LoginProps) {
               >
                 <div className="flex flex-row items-center justify-center size-full">
                   <div className="box-border content-stretch flex gap-[8px] h-[40px] items-center justify-center px-[16px] py-[11px] relative w-full">
-                    <p className="basis-0 font-['Montserrat:SemiBold',sans-serif] font-semibold grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-center text-white">
+                    <p className="basis-0 font-semibold grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-center text-white">
                       Sign in
                     </p>
                   </div>

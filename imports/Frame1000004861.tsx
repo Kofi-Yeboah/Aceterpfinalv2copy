@@ -18,7 +18,7 @@ function BoldArrowsAltArrowDown() {
 function Frame() {
   return (
     <div className="content-stretch flex items-center justify-between relative shrink-0 w-full">
-      <p className="font-['Montserrat:SemiBold',sans-serif] font-semibold leading-[normal] relative shrink-0 text-[12px] text-nowrap text-purple-700 uppercase whitespace-pre">PROCUREMENT</p>
+      <p className="font-semibold leading-[normal] relative shrink-0 text-[12px] text-nowrap text-purple-700 uppercase whitespace-pre">PROCUREMENT</p>
       <div className="flex items-center justify-center relative shrink-0">
         <div className="flex-none rotate-[180deg]">
           <BoldArrowsAltArrowDown />
@@ -44,7 +44,7 @@ function Frame1() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <MageDashboard />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Dashboard</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Dashboard</p>
     </div>
   );
 }
@@ -74,7 +74,7 @@ function Frame3() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearEssentionalUiDelivery />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Supplier Management</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Supplier Management</p>
     </div>
   );
 }
@@ -107,7 +107,7 @@ function SideNavItem1() {
 function SideNavItem2() {
   return (
     <div className="box-border content-stretch flex h-[38px] items-center justify-between px-[12px] py-[7px] relative rounded-[8px] shrink-0 w-[228px]" data-name="side nav item">
-      <p className="basis-0 font-['Montserrat:Medium',sans-serif] font-medium grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-black tracking-[-0.14px]">Suppliers</p>
+      <p className="basis-0 font-medium grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-black tracking-[-0.14px]">Suppliers</p>
     </div>
   );
 }
@@ -152,7 +152,7 @@ function Frame9() {
   return (
     <div className="content-stretch flex gap-[10px] items-center relative shrink-0">
       <LinearFilesFileCheck />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Purchase Requisition Mgnt.</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Purchase Requisition Mgnt.</p>
     </div>
   );
 }
@@ -195,7 +195,7 @@ function Frame2() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearMoneyBillList />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Sourcing</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Sourcing</p>
     </div>
   );
 }
@@ -230,7 +230,7 @@ function Frame5() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearMoneyBillList1 />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Purchase Order Mgnt</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Purchase Order Mgnt</p>
     </div>
   );
 }
@@ -267,7 +267,7 @@ function Frame6() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearFilesFileText />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Invoices</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Invoices</p>
     </div>
   );
 }
@@ -304,7 +304,7 @@ function Frame7() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearBusinessStatisticChart />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">{`Reporting & Analytics`}</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">{`Reporting & Analytics`}</p>
     </div>
   );
 }
@@ -337,7 +337,7 @@ function SideNavItem7() {
 function SideNavItem8() {
   return (
     <div className="box-border content-stretch flex h-[38px] items-center justify-between px-[12px] py-[7px] relative rounded-[8px] shrink-0 w-[228px]" data-name="side nav item">
-      <p className="basis-0 font-['Montserrat:Medium',sans-serif] font-medium grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-black">Supplier Reports</p>
+      <p className="basis-0 font-medium grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-black">Supplier Reports</p>
     </div>
   );
 }
@@ -345,7 +345,7 @@ function SideNavItem8() {
 function SideNavItem9() {
   return (
     <div className="box-border content-stretch flex h-[38px] items-center justify-between px-[12px] py-[7px] relative shrink-0 w-[228px]" data-name="side nav item">
-      <p className="basis-0 font-['Montserrat:Medium',sans-serif] font-medium grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-black">RFQ Reports</p>
+      <p className="basis-0 font-medium grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-black">RFQ Reports</p>
     </div>
   );
 }
@@ -353,7 +353,7 @@ function SideNavItem9() {
 function SideNavItem10() {
   return (
     <div className="box-border content-stretch flex h-[38px] items-center justify-between px-[12px] py-[7px] relative shrink-0 w-[228px]" data-name="side nav item">
-      <p className="basis-0 font-['Montserrat:Medium',sans-serif] font-medium grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-black">Purchase Order Reports</p>
+      <p className="basis-0 font-medium grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-black">Purchase Order Reports</p>
     </div>
   );
 }

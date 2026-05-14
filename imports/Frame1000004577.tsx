@@ -18,7 +18,7 @@ function BoldArrowsAltArrowDown() {
 function Frame1() {
   return (
     <div className="content-stretch flex items-center justify-between relative shrink-0 w-full">
-      <p className="font-['Montserrat:SemiBold',sans-serif] font-semibold leading-[normal] relative shrink-0 text-[12px] text-nowrap text-purple-700 uppercase whitespace-pre">Asset Management</p>
+      <p className="font-semibold leading-[normal] relative shrink-0 text-[12px] text-nowrap text-purple-700 uppercase whitespace-pre">Asset Management</p>
       <div className="flex items-center justify-center relative shrink-0">
         <div className="flex-none rotate-[180deg]">
           <BoldArrowsAltArrowDown />
@@ -44,7 +44,7 @@ function Frame2() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <MageDashboard />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Dashboard</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Dashboard</p>
     </div>
   );
 }
@@ -79,7 +79,7 @@ function Frame3() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearTextFormattingEraserSquare />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Asset Management</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Asset Management</p>
     </div>
   );
 }
@@ -112,7 +112,7 @@ function SideNavItem1() {
 function SideNavItem2() {
   return (
     <div className="box-border content-stretch flex h-[38px] items-center justify-between pl-[12px] pr-0 py-[7px] relative rounded-[8px] shrink-0 w-[228px]" data-name="side nav item">
-      <p className="basis-0 font-['Montserrat:Medium',sans-serif] font-medium grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-black">All Assets</p>
+      <p className="basis-0 font-medium grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-black">All Assets</p>
     </div>
   );
 }
@@ -120,7 +120,7 @@ function SideNavItem2() {
 function SideNavItem3() {
   return (
     <div className="box-border content-stretch flex h-[38px] items-center justify-between pl-[12px] pr-0 py-[7px] relative rounded-[8px] shrink-0 w-[228px]" data-name="side nav item">
-      <p className="basis-0 font-['Montserrat:Medium',sans-serif] font-medium grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-black">Categories</p>
+      <p className="basis-0 font-medium grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-black">Categories</p>
     </div>
   );
 }
@@ -169,7 +169,7 @@ function Frame4() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearMapLocationGps />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Asset Tracking</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Asset Tracking</p>
     </div>
   );
 }
@@ -202,7 +202,7 @@ function SideNavItem4() {
 function SideNavItem5() {
   return (
     <div className="box-border content-stretch flex h-[38px] items-center justify-between pl-[12px] pr-0 py-[7px] relative rounded-[8px] shrink-0 w-[228px]" data-name="side nav item">
-      <p className="basis-0 font-['Montserrat:Medium',sans-serif] font-medium grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-black">{`Check-in & Check-out`}</p>
+      <p className="basis-0 font-medium grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-black">{`Check-in & Check-out`}</p>
     </div>
   );
 }
@@ -210,7 +210,7 @@ function SideNavItem5() {
 function SideNavItem6() {
   return (
     <div className="box-border content-stretch flex h-[38px] items-center justify-between pl-[12px] pr-0 py-[7px] relative rounded-[8px] shrink-0 w-[228px]" data-name="side nav item">
-      <p className="basis-0 font-['Montserrat:Medium',sans-serif] font-medium grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-black">Transfer Records</p>
+      <p className="basis-0 font-medium grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-black">Transfer Records</p>
     </div>
   );
 }
@@ -218,7 +218,7 @@ function SideNavItem6() {
 function SideNavItem7() {
   return (
     <div className="box-border content-stretch flex h-[38px] items-center justify-between pl-[12px] pr-0 py-[7px] relative rounded-[8px] shrink-0 w-[228px]" data-name="side nav item">
-      <p className="basis-0 font-['Montserrat:Medium',sans-serif] font-medium grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-black">Disposal</p>
+      <p className="basis-0 font-medium grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-black">Disposal</p>
     </div>
   );
 }
@@ -258,7 +258,7 @@ function Frame5() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearTimeHourglass />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">{`Maintenance & Lifecycle`}</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">{`Maintenance & Lifecycle`}</p>
     </div>
   );
 }
@@ -291,7 +291,7 @@ function SideNavItem8() {
 function SideNavItem9() {
   return (
     <div className="box-border content-stretch flex h-[38px] items-center justify-between pl-[12px] pr-0 py-[7px] relative rounded-[8px] shrink-0 w-[228px]" data-name="side nav item">
-      <p className="basis-0 font-['Montserrat:Medium',sans-serif] font-medium grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-black">Maintenance Schedule</p>
+      <p className="basis-0 font-medium grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-black">Maintenance Schedule</p>
     </div>
   );
 }
@@ -299,7 +299,7 @@ function SideNavItem9() {
 function SideNavItem10() {
   return (
     <div className="box-border content-stretch flex h-[38px] items-center justify-between pl-[12px] pr-0 py-[7px] relative shrink-0 w-[228px]" data-name="side nav item">
-      <p className="basis-0 font-['Montserrat:Medium',sans-serif] font-medium grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-black">Maintenance Logs</p>
+      <p className="basis-0 font-medium grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-black">Maintenance Logs</p>
     </div>
   );
 }
@@ -307,7 +307,7 @@ function SideNavItem10() {
 function SideNavItem11() {
   return (
     <div className="box-border content-stretch flex h-[38px] items-center justify-between pl-[12px] pr-0 py-[7px] relative shrink-0 w-[228px]" data-name="side nav item">
-      <p className="basis-0 font-['Montserrat:Medium',sans-serif] font-medium grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-black">{`Warranty & Insurance Mgmt.`}</p>
+      <p className="basis-0 font-medium grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-black">{`Warranty & Insurance Mgmt.`}</p>
     </div>
   );
 }
@@ -351,7 +351,7 @@ function Frame6() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearMoneyCardSend />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Depreciation Management</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Depreciation Management</p>
     </div>
   );
 }
@@ -398,7 +398,7 @@ function Frame7() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearEssentionalUiBoxMinimalistic />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Inventory Management</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Inventory Management</p>
     </div>
   );
 }
@@ -431,7 +431,7 @@ function SideNavItem13() {
 function SideNavItem14() {
   return (
     <div className="box-border content-stretch flex h-[38px] items-center justify-between pl-[12px] pr-0 py-[7px] relative rounded-[8px] shrink-0 w-[228px]" data-name="side nav item">
-      <p className="basis-0 font-['Montserrat:Medium',sans-serif] font-medium grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-black">Inventory</p>
+      <p className="basis-0 font-medium grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-black">Inventory</p>
     </div>
   );
 }
@@ -439,7 +439,7 @@ function SideNavItem14() {
 function SideNavItem15() {
   return (
     <div className="box-border content-stretch flex h-[38px] items-center justify-between pl-[12px] pr-0 py-[7px] relative rounded-[8px] shrink-0 w-[228px]" data-name="side nav item">
-      <p className="basis-0 font-['Montserrat:Medium',sans-serif] font-medium grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-black">{`Counts & Reconciliation`}</p>
+      <p className="basis-0 font-medium grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-black">{`Counts & Reconciliation`}</p>
     </div>
   );
 }
@@ -479,7 +479,7 @@ function Frame8() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearSettingsFineTuningSettings />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Settings</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Settings</p>
     </div>
   );
 }
@@ -512,7 +512,7 @@ function SideNavItem16() {
 function SideNavItem17() {
   return (
     <div className="box-border content-stretch flex h-[38px] items-center justify-between pl-[12px] pr-0 py-[7px] relative rounded-[8px] shrink-0 w-[228px]" data-name="side nav item">
-      <p className="basis-0 font-['Montserrat:Medium',sans-serif] font-medium grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-black">Location Management</p>
+      <p className="basis-0 font-medium grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-black">Location Management</p>
     </div>
   );
 }
@@ -520,7 +520,7 @@ function SideNavItem17() {
 function SideNavItem18() {
   return (
     <div className="box-border content-stretch flex h-[38px] items-center justify-between pl-[12px] pr-0 py-[7px] relative rounded-[8px] shrink-0 w-[228px]" data-name="side nav item">
-      <p className="basis-0 font-['Montserrat:Medium',sans-serif] font-medium grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-black">Custodian Information</p>
+      <p className="basis-0 font-medium grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-black">Custodian Information</p>
     </div>
   );
 }
@@ -528,7 +528,7 @@ function SideNavItem18() {
 function SideNavItem19() {
   return (
     <div className="box-border content-stretch flex h-[38px] items-center justify-between pl-[12px] pr-0 py-[7px] relative shrink-0 w-[228px]" data-name="side nav item">
-      <p className="basis-0 font-['Montserrat:Medium',sans-serif] font-medium grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-black">Currency Setup</p>
+      <p className="basis-0 font-medium grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-black">Currency Setup</p>
     </div>
   );
 }
@@ -576,7 +576,7 @@ function Frame9() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearBusinessStatisticChart />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">{`Reporting & Analytics`}</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">{`Reporting & Analytics`}</p>
     </div>
   );
 }
@@ -609,7 +609,7 @@ function SideNavItem20() {
 function SideNavItem21() {
   return (
     <div className="box-border content-stretch flex h-[38px] items-center justify-between px-[12px] py-[7px] relative shrink-0 w-[228px]" data-name="side nav item">
-      <p className="basis-0 font-['Montserrat:Medium',sans-serif] font-medium grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-black">Disposal Report</p>
+      <p className="basis-0 font-medium grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-black">Disposal Report</p>
     </div>
   );
 }
@@ -617,7 +617,7 @@ function SideNavItem21() {
 function SideNavItem22() {
   return (
     <div className="box-border content-stretch flex h-[38px] items-center justify-between px-[12px] py-[7px] relative rounded-[8px] shrink-0 w-[228px]" data-name="side nav item">
-      <p className="basis-0 font-['Montserrat:Medium',sans-serif] font-medium grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-black">Archived Assets</p>
+      <p className="basis-0 font-medium grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-black">Archived Assets</p>
     </div>
   );
 }

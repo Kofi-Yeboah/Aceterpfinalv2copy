@@ -39,7 +39,7 @@ function Frame177() {
   return (
     <div className="content-stretch flex flex-col gap-[10px] items-start relative shrink-0">
       <Frame23 />
-      <p className="font-['Montserrat:Regular',sans-serif] font-normal leading-[22px] relative shrink-0 text-[14px] text-nowrap text-slate-600 tracking-[-0.14px] whitespace-pre">Total Number of Employees</p>
+      <p className="font-normal leading-[22px] relative shrink-0 text-[14px] text-nowrap text-slate-600 tracking-[-0.14px] whitespace-pre">Total Number of Employees</p>
     </div>
   );
 }
@@ -48,7 +48,7 @@ function Frame93() {
   return (
     <div className="basis-0 content-stretch flex flex-col gap-[16px] grow items-start min-h-px min-w-px relative shrink-0">
       <Frame177 />
-      <p className="font-['Montserrat:SemiBold',sans-serif] font-semibold leading-[28px] relative shrink-0 text-[22px] text-nowrap text-slate-900 tracking-[-0.44px] whitespace-pre">Ghc 2,000,000</p>
+      <p className="font-semibold leading-[28px] relative shrink-0 text-[22px] text-nowrap text-slate-900 tracking-[-0.44px] whitespace-pre">Ghc 2,000,000</p>
     </div>
   );
 }
@@ -79,7 +79,7 @@ function Frame178() {
   return (
     <div className="content-stretch flex flex-col gap-[10px] items-start relative shrink-0">
       <Frame24 />
-      <p className="font-['Montserrat:Regular',sans-serif] font-normal leading-[22px] relative shrink-0 text-[14px] text-nowrap text-slate-600 tracking-[-0.14px] whitespace-pre">Pending Evaluations</p>
+      <p className="font-normal leading-[22px] relative shrink-0 text-[14px] text-nowrap text-slate-600 tracking-[-0.14px] whitespace-pre">Pending Evaluations</p>
     </div>
   );
 }
@@ -88,7 +88,7 @@ function Frame94() {
   return (
     <div className="basis-0 content-stretch flex flex-col gap-[16px] grow items-start min-h-px min-w-px relative shrink-0">
       <Frame178 />
-      <p className="font-['Montserrat:SemiBold',sans-serif] font-semibold leading-[28px] relative shrink-0 text-[22px] text-nowrap text-slate-900 tracking-[-0.44px] whitespace-pre">Ghc 1,800,000</p>
+      <p className="font-semibold leading-[28px] relative shrink-0 text-[22px] text-nowrap text-slate-900 tracking-[-0.44px] whitespace-pre">Ghc 1,800,000</p>
     </div>
   );
 }
@@ -122,7 +122,7 @@ function Frame179() {
   return (
     <div className="content-stretch flex flex-col gap-[10px] items-start relative shrink-0">
       <Frame25 />
-      <p className="font-['Montserrat:Regular',sans-serif] font-normal leading-[22px] relative shrink-0 text-[14px] text-nowrap text-slate-600 tracking-[-0.14px] whitespace-pre">Active Projects</p>
+      <p className="font-normal leading-[22px] relative shrink-0 text-[14px] text-nowrap text-slate-600 tracking-[-0.14px] whitespace-pre">Active Projects</p>
     </div>
   );
 }
@@ -131,7 +131,7 @@ function Frame98() {
   return (
     <div className="basis-0 content-stretch flex flex-col gap-[16px] grow items-start min-h-px min-w-px relative shrink-0">
       <Frame179 />
-      <p className="font-['Montserrat:SemiBold',sans-serif] font-semibold leading-[28px] relative shrink-0 text-[22px] text-nowrap text-slate-900 tracking-[-0.44px] whitespace-pre">Ghc 200,000</p>
+      <p className="font-semibold leading-[28px] relative shrink-0 text-[22px] text-nowrap text-slate-900 tracking-[-0.44px] whitespace-pre">Ghc 200,000</p>
     </div>
   );
 }
@@ -176,7 +176,7 @@ function Frame183() {
 function Frame153() {
   return (
     <div className="content-stretch flex flex-col gap-[3.793px] items-start relative shrink-0">
-      <p className="capitalize font-['Montserrat:SemiBold',sans-serif] font-semibold leading-[17.071px] relative shrink-0 text-[#030047] text-[16px] text-nowrap whitespace-pre">Gender Distribution</p>
+      <p className="capitalize font-semibold leading-[17.071px] relative shrink-0 text-[#030047] text-[16px] text-nowrap whitespace-pre">Gender Distribution</p>
     </div>
   );
 }
@@ -229,8 +229,8 @@ function Group() {
 function Frame83() {
   return (
     <div className="content-stretch flex flex-col gap-[9.484px] items-start relative shrink-0 text-nowrap whitespace-pre">
-      <p className="font-['Montserrat:Regular',sans-serif] font-normal leading-[17.071px] relative shrink-0 text-[15.174px] text-slate-600">Female</p>
-      <p className="font-['Montserrat:Bold',sans-serif] font-bold leading-[normal] relative shrink-0 text-[18.967px] text-slate-900">163</p>
+      <p className="font-normal leading-[17.071px] relative shrink-0 text-[15.174px] text-slate-600">Female</p>
+      <p className="font-bold leading-[normal] relative shrink-0 text-[18.967px] text-slate-900">163</p>
     </div>
   );
 }
@@ -247,8 +247,8 @@ function Frame85() {
 function Frame89() {
   return (
     <div className="content-stretch flex flex-col gap-[9.484px] items-start relative shrink-0 text-nowrap whitespace-pre">
-      <p className="font-['Montserrat:Regular',sans-serif] font-normal leading-[17.071px] relative shrink-0 text-[15.174px] text-slate-600">Male</p>
-      <p className="font-['Montserrat:Bold',sans-serif] font-bold leading-[normal] relative shrink-0 text-[18.967px] text-slate-900">102</p>
+      <p className="font-normal leading-[17.071px] relative shrink-0 text-[15.174px] text-slate-600">Male</p>
+      <p className="font-bold leading-[normal] relative shrink-0 text-[18.967px] text-slate-900">102</p>
     </div>
   );
 }
@@ -301,7 +301,7 @@ function Frame175() {
 function Frame155() {
   return (
     <div className="content-stretch flex flex-col gap-[3.793px] items-start relative shrink-0">
-      <p className="capitalize font-['Montserrat:SemiBold',sans-serif] font-semibold leading-[17.071px] relative shrink-0 text-[#030047] text-[16px] text-nowrap whitespace-pre">Donor Segmentation</p>
+      <p className="capitalize font-semibold leading-[17.071px] relative shrink-0 text-[#030047] text-[16px] text-nowrap whitespace-pre">Donor Segmentation</p>
     </div>
   );
 }
@@ -349,8 +349,8 @@ function Frame161() {
 function Frame100() {
   return (
     <div className="content-stretch flex flex-col gap-[9.484px] items-start relative shrink-0 text-nowrap whitespace-pre">
-      <p className="font-['Montserrat:Regular',sans-serif] font-normal leading-[17.071px] relative shrink-0 text-[15.174px] text-slate-600">Government</p>
-      <p className="font-['Montserrat:Bold',sans-serif] font-bold leading-[normal] relative shrink-0 text-[18.967px] text-slate-900">190</p>
+      <p className="font-normal leading-[17.071px] relative shrink-0 text-[15.174px] text-slate-600">Government</p>
+      <p className="font-bold leading-[normal] relative shrink-0 text-[18.967px] text-slate-900">190</p>
     </div>
   );
 }
@@ -367,8 +367,8 @@ function Frame86() {
 function Frame101() {
   return (
     <div className="content-stretch flex flex-col gap-[9.484px] items-start relative shrink-0 text-nowrap whitespace-pre">
-      <p className="font-['Montserrat:Regular',sans-serif] font-normal leading-[17.071px] relative shrink-0 text-[15.174px] text-slate-600">Foundations</p>
-      <p className="font-['Montserrat:Bold',sans-serif] font-bold leading-[normal] relative shrink-0 text-[18.967px] text-slate-900">200</p>
+      <p className="font-normal leading-[17.071px] relative shrink-0 text-[15.174px] text-slate-600">Foundations</p>
+      <p className="font-bold leading-[normal] relative shrink-0 text-[18.967px] text-slate-900">200</p>
     </div>
   );
 }
@@ -385,8 +385,8 @@ function Frame102() {
 function Frame103() {
   return (
     <div className="content-stretch flex flex-col gap-[9.484px] items-start relative shrink-0 text-nowrap whitespace-pre">
-      <p className="font-['Montserrat:Regular',sans-serif] font-normal leading-[17.071px] relative shrink-0 text-[15.174px] text-slate-600">Bilateral</p>
-      <p className="font-['Montserrat:Bold',sans-serif] font-bold leading-[normal] relative shrink-0 text-[18.967px] text-slate-900">190</p>
+      <p className="font-normal leading-[17.071px] relative shrink-0 text-[15.174px] text-slate-600">Bilateral</p>
+      <p className="font-bold leading-[normal] relative shrink-0 text-[18.967px] text-slate-900">190</p>
     </div>
   );
 }
@@ -403,8 +403,8 @@ function Frame113() {
 function Frame114() {
   return (
     <div className="content-stretch flex flex-col gap-[9.484px] items-start relative shrink-0 text-nowrap whitespace-pre">
-      <p className="font-['Montserrat:Regular',sans-serif] font-normal leading-[17.071px] relative shrink-0 text-[15.174px] text-slate-600">Private Sector</p>
-      <p className="font-['Montserrat:Bold',sans-serif] font-bold leading-[normal] relative shrink-0 text-[18.967px] text-slate-900">750</p>
+      <p className="font-normal leading-[17.071px] relative shrink-0 text-[15.174px] text-slate-600">Private Sector</p>
+      <p className="font-bold leading-[normal] relative shrink-0 text-[18.967px] text-slate-900">750</p>
     </div>
   );
 }
@@ -421,8 +421,8 @@ function Frame115() {
 function Frame116() {
   return (
     <div className="content-stretch flex flex-col gap-[9.484px] items-start relative shrink-0 text-nowrap whitespace-pre">
-      <p className="font-['Montserrat:Regular',sans-serif] font-normal leading-[17.071px] relative shrink-0 text-[15.174px] text-slate-600">Multilateral</p>
-      <p className="font-['Montserrat:Bold',sans-serif] font-bold leading-[normal] relative shrink-0 text-[18.967px] text-slate-900">202</p>
+      <p className="font-normal leading-[17.071px] relative shrink-0 text-[15.174px] text-slate-600">Multilateral</p>
+      <p className="font-bold leading-[normal] relative shrink-0 text-[18.967px] text-slate-900">202</p>
     </div>
   );
 }
@@ -487,7 +487,7 @@ function Frame182() {
 function Frame157() {
   return (
     <div className="content-stretch flex flex-col gap-[4px] items-start relative shrink-0">
-      <p className="capitalize font-['Montserrat:SemiBold',sans-serif] font-semibold leading-[17.071px] relative shrink-0 text-[#030047] text-[16px] text-nowrap whitespace-pre">Grant Utilization: % Spent vs. Budget for Active Grants</p>
+      <p className="capitalize font-semibold leading-[17.071px] relative shrink-0 text-[#030047] text-[16px] text-nowrap whitespace-pre">Grant Utilization: % Spent vs. Budget for Active Grants</p>
     </div>
   );
 }
@@ -530,13 +530,13 @@ function Frame96() {
 function Frame107() {
   return (
     <div className="content-stretch flex gap-[12px] h-[42px] items-center relative shrink-0 w-full">
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[17.071px] relative shrink-0 text-[16px] text-nowrap text-slate-600 whitespace-pre">Grant E</p>
+      <p className="font-medium leading-[17.071px] relative shrink-0 text-[16px] text-nowrap text-slate-600 whitespace-pre">Grant E</p>
       <div className="basis-0 flex grow h-[34px] items-center justify-center min-h-px min-w-px relative shrink-0" style={{ "--transform-inner-width": "916.859375", "--transform-inner-height": "911" } as React.CSSProperties}>
         <div className="flex-none rotate-[90deg] w-full">
           <Frame96 />
         </div>
       </div>
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[18px] relative shrink-0 text-[16px] text-right text-slate-800 w-[68px]">86.4%</p>
+      <p className="font-medium leading-[18px] relative shrink-0 text-[16px] text-right text-slate-800 w-[68px]">86.4%</p>
     </div>
   );
 }
@@ -556,13 +556,13 @@ function Frame97() {
 function Frame106() {
   return (
     <div className="content-stretch flex gap-[12px] h-[43px] items-center relative shrink-0 w-full">
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[17.071px] relative shrink-0 text-[16px] text-nowrap text-slate-600 whitespace-pre">Grant D</p>
+      <p className="font-medium leading-[17.071px] relative shrink-0 text-[16px] text-nowrap text-slate-600 whitespace-pre">Grant D</p>
       <div className="basis-0 flex grow h-[35px] items-center justify-center min-h-px min-w-px relative shrink-0" style={{ "--transform-inner-width": "915.96875", "--transform-inner-height": "909" } as React.CSSProperties}>
         <div className="flex-none rotate-[90deg] w-full">
           <Frame97 />
         </div>
       </div>
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[18px] relative shrink-0 text-[16px] text-right text-slate-800 w-[68px]">66.7%</p>
+      <p className="font-medium leading-[18px] relative shrink-0 text-[16px] text-right text-slate-800 w-[68px]">66.7%</p>
     </div>
   );
 }
@@ -582,13 +582,13 @@ function Frame123() {
 function Frame108() {
   return (
     <div className="content-stretch flex gap-[12px] h-[42px] items-center relative shrink-0 w-full">
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[17.071px] relative shrink-0 text-[16px] text-nowrap text-slate-600 whitespace-pre">Grant C</p>
+      <p className="font-medium leading-[17.071px] relative shrink-0 text-[16px] text-nowrap text-slate-600 whitespace-pre">Grant C</p>
       <div className="basis-0 flex grow h-[34px] items-center justify-center min-h-px min-w-px relative shrink-0" style={{ "--transform-inner-width": "915.96875", "--transform-inner-height": "910" } as React.CSSProperties}>
         <div className="flex-none rotate-[90deg] w-full">
           <Frame123 />
         </div>
       </div>
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[18px] relative shrink-0 text-[16px] text-right text-slate-800 w-[68px]">66.7%</p>
+      <p className="font-medium leading-[18px] relative shrink-0 text-[16px] text-right text-slate-800 w-[68px]">66.7%</p>
     </div>
   );
 }
@@ -608,13 +608,13 @@ function Frame124() {
 function Frame105() {
   return (
     <div className="content-stretch flex gap-[12px] h-[43px] items-center relative shrink-0 w-full">
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[17.071px] relative shrink-0 text-[16px] text-nowrap text-slate-600 whitespace-pre">Grant B</p>
+      <p className="font-medium leading-[17.071px] relative shrink-0 text-[16px] text-nowrap text-slate-600 whitespace-pre">Grant B</p>
       <div className="basis-0 flex grow h-[36px] items-center justify-center min-h-px min-w-px relative shrink-0" style={{ "--transform-inner-width": "916.859375", "--transform-inner-height": "910" } as React.CSSProperties}>
         <div className="flex-none rotate-[90deg] w-full">
           <Frame124 />
         </div>
       </div>
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[18px] relative shrink-0 text-[16px] text-right text-slate-800 w-[68px]">80.0%</p>
+      <p className="font-medium leading-[18px] relative shrink-0 text-[16px] text-right text-slate-800 w-[68px]">80.0%</p>
     </div>
   );
 }
@@ -634,13 +634,13 @@ function Frame125() {
 function Frame104() {
   return (
     <div className="content-stretch flex gap-[12px] h-[43px] items-center relative shrink-0 w-full">
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[17.071px] relative shrink-0 text-[16px] text-nowrap text-slate-600 whitespace-pre">Grant A</p>
+      <p className="font-medium leading-[17.071px] relative shrink-0 text-[16px] text-nowrap text-slate-600 whitespace-pre">Grant A</p>
       <div className="basis-0 flex grow h-[35px] items-center justify-center min-h-px min-w-px relative shrink-0" style={{ "--transform-inner-width": "917.75", "--transform-inner-height": "910" } as React.CSSProperties}>
         <div className="flex-none rotate-[90deg] w-full">
           <Frame125 />
         </div>
       </div>
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[18px] relative shrink-0 text-[16px] text-right text-slate-800 w-[68px]">75.0%</p>
+      <p className="font-medium leading-[18px] relative shrink-0 text-[16px] text-right text-slate-800 w-[68px]">75.0%</p>
     </div>
   );
 }
@@ -674,7 +674,7 @@ function Frame112() {
 function Frame162() {
   return (
     <div className="content-stretch flex flex-col gap-[11.38px] items-start relative shrink-0 w-full">
-      <p className="capitalize font-['Montserrat:SemiBold',sans-serif] font-semibold leading-[17.071px] relative shrink-0 text-[#030047] text-[16px] text-nowrap whitespace-pre">Cash Flow</p>
+      <p className="capitalize font-semibold leading-[17.071px] relative shrink-0 text-[#030047] text-[16px] text-nowrap whitespace-pre">Cash Flow</p>
       <div className="h-0 relative shrink-0 w-full">
         <div className="absolute bottom-0 left-0 right-0 top-[-0.95px]">
           <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 1067 1">
@@ -688,7 +688,7 @@ function Frame162() {
 
 function Frame172() {
   return (
-    <div className="content-stretch flex flex-col font-['Montserrat:Medium',sans-serif] font-medium h-[222.867px] items-end justify-between leading-[17.071px] relative shrink-0 text-[14px] text-nowrap text-slate-600 whitespace-pre">
+    <div className="content-stretch flex flex-col font-medium h-[222.867px] items-end justify-between leading-[17.071px] relative shrink-0 text-[14px] text-nowrap text-slate-600 whitespace-pre">
       <p className="relative shrink-0">GHS 4,000,000</p>
       <p className="relative shrink-0">GHS 3,000,000</p>
       <p className="relative shrink-0">GHS 2,000,000</p>
@@ -718,7 +718,7 @@ function Frame90() {
   return (
     <div className="basis-0 content-stretch flex flex-col gap-[9.484px] grow h-full items-center min-h-px min-w-px relative shrink-0">
       <Frame127 />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[17.071px] relative shrink-0 text-[15.174px] text-center text-nowrap text-slate-600 whitespace-pre">Jan</p>
+      <p className="font-medium leading-[17.071px] relative shrink-0 text-[15.174px] text-center text-nowrap text-slate-600 whitespace-pre">Jan</p>
     </div>
   );
 }
@@ -735,7 +735,7 @@ function Frame91() {
   return (
     <div className="basis-0 content-stretch flex flex-col gap-[9.484px] grow h-full items-center min-h-px min-w-px relative shrink-0">
       <Frame128 />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[17.071px] relative shrink-0 text-[15.174px] text-center text-nowrap text-slate-600 whitespace-pre">Feb</p>
+      <p className="font-medium leading-[17.071px] relative shrink-0 text-[15.174px] text-center text-nowrap text-slate-600 whitespace-pre">Feb</p>
     </div>
   );
 }
@@ -752,7 +752,7 @@ function Frame92() {
   return (
     <div className="basis-0 content-stretch flex flex-col gap-[9.484px] grow h-full items-center min-h-px min-w-px relative shrink-0">
       <Frame129 />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[17.071px] relative shrink-0 text-[15.174px] text-center text-nowrap text-slate-600 whitespace-pre">Mar</p>
+      <p className="font-medium leading-[17.071px] relative shrink-0 text-[15.174px] text-center text-nowrap text-slate-600 whitespace-pre">Mar</p>
     </div>
   );
 }
@@ -769,7 +769,7 @@ function Frame131() {
   return (
     <div className="basis-0 content-stretch flex flex-col gap-[9.484px] grow h-full items-center min-h-px min-w-px relative shrink-0">
       <Frame130 />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[17.071px] relative shrink-0 text-[15.174px] text-center text-nowrap text-slate-600 whitespace-pre">Apr</p>
+      <p className="font-medium leading-[17.071px] relative shrink-0 text-[15.174px] text-center text-nowrap text-slate-600 whitespace-pre">Apr</p>
     </div>
   );
 }
@@ -786,7 +786,7 @@ function Frame133() {
   return (
     <div className="basis-0 content-stretch flex flex-col gap-[9.484px] grow h-full items-center min-h-px min-w-px relative shrink-0">
       <Frame132 />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[17.071px] relative shrink-0 text-[15.174px] text-center text-nowrap text-slate-600 whitespace-pre">May</p>
+      <p className="font-medium leading-[17.071px] relative shrink-0 text-[15.174px] text-center text-nowrap text-slate-600 whitespace-pre">May</p>
     </div>
   );
 }
@@ -811,7 +811,7 @@ function Frame109() {
   return (
     <div className="basis-0 content-stretch flex flex-col gap-[9.484px] grow h-full items-center min-h-px min-w-px relative shrink-0">
       <Frame134 />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[17.071px] relative shrink-0 text-[15.174px] text-center text-nowrap text-slate-600 whitespace-pre">Jun</p>
+      <p className="font-medium leading-[17.071px] relative shrink-0 text-[15.174px] text-center text-nowrap text-slate-600 whitespace-pre">Jun</p>
     </div>
   );
 }
@@ -836,7 +836,7 @@ function Frame111() {
   return (
     <div className="basis-0 content-stretch flex flex-col gap-[9.484px] grow h-full items-center min-h-px min-w-px relative shrink-0">
       <Frame135 />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[17.071px] relative shrink-0 text-[15.174px] text-center text-nowrap text-slate-600 whitespace-pre">Jul</p>
+      <p className="font-medium leading-[17.071px] relative shrink-0 text-[15.174px] text-center text-nowrap text-slate-600 whitespace-pre">Jul</p>
     </div>
   );
 }
@@ -861,7 +861,7 @@ function Frame110() {
   return (
     <div className="basis-0 content-stretch flex flex-col gap-[9.484px] grow h-full items-center min-h-px min-w-px relative shrink-0">
       <Frame136 />
-      <p className="font-['Montserrat:SemiBold',sans-serif] font-semibold leading-[17.071px] relative shrink-0 text-[#0b01d0] text-[15.174px] text-center text-nowrap whitespace-pre">Aug</p>
+      <p className="font-semibold leading-[17.071px] relative shrink-0 text-[#0b01d0] text-[15.174px] text-center text-nowrap whitespace-pre">Aug</p>
     </div>
   );
 }
@@ -890,7 +890,7 @@ function Frame139() {
   return (
     <div className="basis-0 content-stretch flex flex-col gap-[9.484px] grow h-full items-center min-h-px min-w-px relative shrink-0">
       <Frame138 />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[17.071px] relative shrink-0 text-[15.174px] text-center text-nowrap text-slate-600 whitespace-pre">Sep</p>
+      <p className="font-medium leading-[17.071px] relative shrink-0 text-[15.174px] text-center text-nowrap text-slate-600 whitespace-pre">Sep</p>
     </div>
   );
 }
@@ -919,7 +919,7 @@ function Frame142() {
   return (
     <div className="basis-0 content-stretch flex flex-col gap-[9.484px] grow h-full items-center min-h-px min-w-px relative shrink-0">
       <Frame141 />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[17.071px] relative shrink-0 text-[15.174px] text-center text-nowrap text-slate-600 whitespace-pre">Oct</p>
+      <p className="font-medium leading-[17.071px] relative shrink-0 text-[15.174px] text-center text-nowrap text-slate-600 whitespace-pre">Oct</p>
     </div>
   );
 }
@@ -948,7 +948,7 @@ function Frame95() {
   return (
     <div className="basis-0 content-stretch flex flex-col gap-[9.484px] grow h-full items-center min-h-px min-w-px relative shrink-0">
       <Frame144 />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[17.071px] relative shrink-0 text-[15.174px] text-center text-nowrap text-slate-600 whitespace-pre">Nov</p>
+      <p className="font-medium leading-[17.071px] relative shrink-0 text-[15.174px] text-center text-nowrap text-slate-600 whitespace-pre">Nov</p>
     </div>
   );
 }
@@ -977,7 +977,7 @@ function Frame147() {
   return (
     <div className="basis-0 content-stretch flex flex-col gap-[9.484px] grow h-full items-center min-h-px min-w-px relative shrink-0">
       <Frame146 />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[17.071px] relative shrink-0 text-[15.174px] text-center text-nowrap text-slate-600 whitespace-pre">Dec</p>
+      <p className="font-medium leading-[17.071px] relative shrink-0 text-[15.174px] text-center text-nowrap text-slate-600 whitespace-pre">Dec</p>
     </div>
   );
 }
@@ -1129,7 +1129,7 @@ function Frame() {
 function BreadcrumbContainer() {
   return (
     <div className="absolute content-stretch flex items-center justify-between left-[312px] min-w-[1104px] top-[78px] w-[1104px]" data-name="Breadcrumb Container">
-      <p className="font-['Montserrat:SemiBold',sans-serif] font-semibold leading-[28px] relative shrink-0 text-[22px] text-nowrap text-slate-900 tracking-[-0.44px] whitespace-pre">Dashboard</p>
+      <p className="font-semibold leading-[28px] relative shrink-0 text-[22px] text-nowrap text-slate-900 tracking-[-0.44px] whitespace-pre">Dashboard</p>
       <Frame />
     </div>
   );
@@ -1151,7 +1151,7 @@ function Frame14() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <MageDashboard />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-blue-500 text-nowrap whitespace-pre">Dashboard</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-blue-500 text-nowrap whitespace-pre">Dashboard</p>
     </div>
   );
 }
@@ -1181,7 +1181,7 @@ function Frame16() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearUsersUser />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">User management</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">User management</p>
     </div>
   );
 }
@@ -1223,7 +1223,7 @@ function Frame17() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearMoneySafe />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Document Vault</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Document Vault</p>
     </div>
   );
 }
@@ -1266,7 +1266,7 @@ function Frame18() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearMessagesConversationPlain />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Notification Center</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Notification Center</p>
     </div>
   );
 }
@@ -1316,7 +1316,7 @@ function BoldArrowsAltArrowDown() {
 function Frame4() {
   return (
     <div className="content-stretch flex items-center justify-between relative shrink-0 w-full">
-      <p className="font-['Montserrat:SemiBold',sans-serif] font-semibold leading-[normal] relative shrink-0 text-[12px] text-nowrap text-purple-700 uppercase whitespace-pre">EMPLOYEE SELF-SERVICE</p>
+      <p className="font-semibold leading-[normal] relative shrink-0 text-[12px] text-nowrap text-purple-700 uppercase whitespace-pre">EMPLOYEE SELF-SERVICE</p>
       <div className="flex items-center justify-center relative shrink-0">
         <div className="flex-none rotate-[180deg]">
           <BoldArrowsAltArrowDown />
@@ -1348,7 +1348,7 @@ function Frame19() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearEssentionalUiHome />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Home</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Home</p>
     </div>
   );
 }
@@ -1384,7 +1384,7 @@ function Frame20() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearUsersUserCircle />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">My Personal Information</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">My Personal Information</p>
     </div>
   );
 }
@@ -1419,7 +1419,7 @@ function Frame21() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearMoneyBillList />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Check My Payslip</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Check My Payslip</p>
     </div>
   );
 }
@@ -1451,7 +1451,7 @@ function Frame22() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LineDuotoneUsersUserCheck />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">My Requests</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">My Requests</p>
     </div>
   );
 }
@@ -1517,7 +1517,7 @@ function Frame26() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearNotesDocumentAdd />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">My Feedback</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">My Feedback</p>
     </div>
   );
 }
@@ -1546,7 +1546,7 @@ function Frame27() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearArrowsActionUndoLeftRound />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">My Refunds</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">My Refunds</p>
     </div>
   );
 }
@@ -1576,7 +1576,7 @@ function Frame28() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearMoneyVerifiedCheck />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Approvals</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Approvals</p>
     </div>
   );
 }
@@ -1663,7 +1663,7 @@ function BoldArrowsAltArrowDown1() {
 function Frame5() {
   return (
     <div className="content-stretch flex items-center justify-between relative shrink-0 w-full">
-      <p className="font-['Montserrat:SemiBold',sans-serif] font-semibold leading-[normal] relative shrink-0 text-[12px] text-nowrap text-purple-700 uppercase whitespace-pre">HR Management</p>
+      <p className="font-semibold leading-[normal] relative shrink-0 text-[12px] text-nowrap text-purple-700 uppercase whitespace-pre">HR Management</p>
       <div className="flex items-center justify-center relative shrink-0">
         <div className="flex-none rotate-[180deg]">
           <BoldArrowsAltArrowDown1 />
@@ -1689,7 +1689,7 @@ function Frame29() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <MageDashboard1 />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Dashboard</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Dashboard</p>
     </div>
   );
 }
@@ -1719,7 +1719,7 @@ function Frame30() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearMessagesConversationPen />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Application portal</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Application portal</p>
     </div>
   );
 }
@@ -1763,7 +1763,7 @@ function Frame31() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearUsersUserCircle1 />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap tracking-[-0.42px] whitespace-pre">{`Recruitment & Onboarding`}</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap tracking-[-0.42px] whitespace-pre">{`Recruitment & Onboarding`}</p>
     </div>
   );
 }
@@ -1828,7 +1828,7 @@ function Frame32() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LineDuotoneUsersUserCheck1 />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Request Management</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Request Management</p>
     </div>
   );
 }
@@ -1892,7 +1892,7 @@ function Frame33() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearSchoolSquareAcademicCap />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Training</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Training</p>
     </div>
   );
 }
@@ -1929,7 +1929,7 @@ function Frame34() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearBusinessStatisticChartSquare />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Performance Management</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Performance Management</p>
     </div>
   );
 }
@@ -1966,7 +1966,7 @@ function Frame35() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearBusinessStatisticChart />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">{`Reporting & Analytics`}</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">{`Reporting & Analytics`}</p>
     </div>
   );
 }
@@ -2045,7 +2045,7 @@ function BoldArrowsAltArrowDown2() {
 function Frame6() {
   return (
     <div className="content-stretch flex items-center justify-between relative shrink-0 w-full">
-      <p className="font-['Montserrat:SemiBold',sans-serif] font-semibold leading-[normal] relative shrink-0 text-[12px] text-nowrap text-purple-700 uppercase whitespace-pre">PAYROLL Management</p>
+      <p className="font-semibold leading-[normal] relative shrink-0 text-[12px] text-nowrap text-purple-700 uppercase whitespace-pre">PAYROLL Management</p>
       <div className="flex items-center justify-center relative shrink-0">
         <div className="flex-none rotate-[180deg]">
           <BoldArrowsAltArrowDown2 />
@@ -2071,7 +2071,7 @@ function Frame36() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <MageDashboard2 />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Dashboard</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Dashboard</p>
     </div>
   );
 }
@@ -2106,7 +2106,7 @@ function Frame15() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearMoneyBillList1 />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Payroll</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Payroll</p>
     </div>
   );
 }
@@ -2143,7 +2143,7 @@ function Frame37() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearMoneyCardSend />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Allowances</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Allowances</p>
     </div>
   );
 }
@@ -2180,7 +2180,7 @@ function Frame38() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearMoneyCardRecive />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Deductions</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Deductions</p>
     </div>
   );
 }
@@ -2216,7 +2216,7 @@ function Frame39() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <OutlineMoneyWallet />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Advance</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Advance</p>
     </div>
   );
 }
@@ -2257,7 +2257,7 @@ function Frame40() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearBusinessStatisticChart1 />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">{`Reporting & Analytics`}</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">{`Reporting & Analytics`}</p>
     </div>
   );
 }
@@ -2335,7 +2335,7 @@ function BoldArrowsAltArrowDown3() {
 function Frame7() {
   return (
     <div className="content-stretch flex items-center justify-between relative shrink-0 w-full">
-      <p className="font-['Montserrat:SemiBold',sans-serif] font-semibold leading-[normal] relative shrink-0 text-[12px] text-nowrap text-purple-700 uppercase whitespace-pre">FINANCIAL MANAGEMENT</p>
+      <p className="font-semibold leading-[normal] relative shrink-0 text-[12px] text-nowrap text-purple-700 uppercase whitespace-pre">FINANCIAL MANAGEMENT</p>
       <div className="flex items-center justify-center relative shrink-0">
         <div className="flex-none rotate-[180deg]">
           <BoldArrowsAltArrowDown3 />
@@ -2361,7 +2361,7 @@ function Frame41() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <MageDashboard3 />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Dashboard</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Dashboard</p>
     </div>
   );
 }
@@ -2393,7 +2393,7 @@ function Frame42() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearSchoolDocument />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">General Ledger</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">General Ledger</p>
     </div>
   );
 }
@@ -2428,7 +2428,7 @@ function Frame43() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearMoneyBillList2 />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Expenditure Management</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Expenditure Management</p>
     </div>
   );
 }
@@ -2463,7 +2463,7 @@ function Frame44() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <OutlineMoneyWalletMoney />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Budgeting</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Budgeting</p>
     </div>
   );
 }
@@ -2496,7 +2496,7 @@ function Frame45() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearMoneyBanknote />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Funds Management</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Funds Management</p>
     </div>
   );
 }
@@ -2537,7 +2537,7 @@ function Frame46() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearMoneyWadOfMoney />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Cash Management</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Cash Management</p>
     </div>
   );
 }
@@ -2573,7 +2573,7 @@ function Frame47() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearMoneyMoneyBag />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Banking Management</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Banking Management</p>
     </div>
   );
 }
@@ -2614,7 +2614,7 @@ function Frame48() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearNotesDocumentsMinimalistic />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Summary</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Summary</p>
     </div>
   );
 }
@@ -2644,7 +2644,7 @@ function Frame49() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearMessagesConversationPen1 />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Journal Entries</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Journal Entries</p>
     </div>
   );
 }
@@ -2674,7 +2674,7 @@ function Frame50() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearMoneyVerifiedCheck1 />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Approvals</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Approvals</p>
     </div>
   );
 }
@@ -2744,7 +2744,7 @@ function Frame51() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearBusinessStatisticChart2 />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">{`Reporting & Analytics`}</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">{`Reporting & Analytics`}</p>
     </div>
   );
 }
@@ -2827,7 +2827,7 @@ function BoldArrowsAltArrowDown4() {
 function Frame8() {
   return (
     <div className="content-stretch flex items-center justify-between relative shrink-0 w-full">
-      <p className="font-['Montserrat:SemiBold',sans-serif] font-semibold leading-[normal] relative shrink-0 text-[12px] text-nowrap text-purple-700 uppercase whitespace-pre">Asset Management</p>
+      <p className="font-semibold leading-[normal] relative shrink-0 text-[12px] text-nowrap text-purple-700 uppercase whitespace-pre">Asset Management</p>
       <div className="flex items-center justify-center relative shrink-0">
         <div className="flex-none rotate-[180deg]">
           <BoldArrowsAltArrowDown4 />
@@ -2853,7 +2853,7 @@ function Frame52() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <MageDashboard4 />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Dashboard</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Dashboard</p>
     </div>
   );
 }
@@ -2888,7 +2888,7 @@ function Frame53() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearTextFormattingEraserSquare />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Asset Management</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Asset Management</p>
     </div>
   );
 }
@@ -2960,7 +2960,7 @@ function Frame54() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearMapLocationGps />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Asset Tracking</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Asset Tracking</p>
     </div>
   );
 }
@@ -3022,7 +3022,7 @@ function Frame55() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearTimeHourglass />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">{`Maintenance & Lifecycle`}</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">{`Maintenance & Lifecycle`}</p>
     </div>
   );
 }
@@ -3088,7 +3088,7 @@ function Frame56() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearMoneyCardSend1 />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Depreciation Management</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Depreciation Management</p>
     </div>
   );
 }
@@ -3135,7 +3135,7 @@ function Frame57() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearEssentionalUiBoxMinimalistic />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Inventory Management</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Inventory Management</p>
     </div>
   );
 }
@@ -3198,7 +3198,7 @@ function Frame58() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearSettingsFineTuningSettings />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Settings</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Settings</p>
     </div>
   );
 }
@@ -3268,7 +3268,7 @@ function Frame59() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearBusinessStatisticChart3 />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">{`Reporting & Analytics`}</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">{`Reporting & Analytics`}</p>
     </div>
   );
 }
@@ -3403,7 +3403,7 @@ function BoldArrowsAltArrowDown5() {
 function Frame9() {
   return (
     <div className="content-stretch flex items-center justify-between relative shrink-0 w-full">
-      <p className="font-['Montserrat:SemiBold',sans-serif] font-semibold leading-[normal] relative shrink-0 text-[12px] text-nowrap text-purple-700 uppercase whitespace-pre">PROCUREMENT</p>
+      <p className="font-semibold leading-[normal] relative shrink-0 text-[12px] text-nowrap text-purple-700 uppercase whitespace-pre">PROCUREMENT</p>
       <div className="flex items-center justify-center relative shrink-0">
         <div className="flex-none rotate-[180deg]">
           <BoldArrowsAltArrowDown5 />
@@ -3429,7 +3429,7 @@ function Frame60() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <MageDashboard5 />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Dashboard</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Dashboard</p>
     </div>
   );
 }
@@ -3459,7 +3459,7 @@ function Frame61() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearEssentionalUiDelivery />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Supplier Management</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Supplier Management</p>
     </div>
   );
 }
@@ -3528,7 +3528,7 @@ function Frame189() {
   return (
     <div className="content-stretch flex gap-[10px] items-center relative shrink-0">
       <LinearFilesFileCheck />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Purchase Requisition Mgnt.</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Purchase Requisition Mgnt.</p>
     </div>
   );
 }
@@ -3571,7 +3571,7 @@ function Frame63() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearMoneyBillList3 />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Sourcing</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Sourcing</p>
     </div>
   );
 }
@@ -3606,7 +3606,7 @@ function Frame64() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearMoneyBillList4 />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Purchase Order Mgnt</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Purchase Order Mgnt</p>
     </div>
   );
 }
@@ -3643,7 +3643,7 @@ function Frame65() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearFilesFileText />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Invoices</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Invoices</p>
     </div>
   );
 }
@@ -3680,7 +3680,7 @@ function Frame66() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearBusinessStatisticChart4 />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">{`Reporting & Analytics`}</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">{`Reporting & Analytics`}</p>
     </div>
   );
 }
@@ -3759,7 +3759,7 @@ function BoldArrowsAltArrowDown6() {
 function Frame10() {
   return (
     <div className="content-stretch flex items-center justify-between relative shrink-0 w-full">
-      <p className="font-['Montserrat:SemiBold',sans-serif] font-semibold leading-[normal] relative shrink-0 text-[12px] text-nowrap text-purple-700 uppercase whitespace-pre">PROject management</p>
+      <p className="font-semibold leading-[normal] relative shrink-0 text-[12px] text-nowrap text-purple-700 uppercase whitespace-pre">PROject management</p>
       <div className="flex items-center justify-center relative shrink-0">
         <div className="flex-none rotate-[180deg]">
           <BoldArrowsAltArrowDown6 />
@@ -3785,7 +3785,7 @@ function Frame67() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <MageDashboard6 />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Dashboard</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Dashboard</p>
     </div>
   );
 }
@@ -3815,7 +3815,7 @@ function Frame68() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearMapLocationRouting />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">{`Project Planning & Tracking`}</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">{`Project Planning & Tracking`}</p>
     </div>
   );
 }
@@ -3853,7 +3853,7 @@ function Frame69() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearDesignToolsRulerPen />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Task Management</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Task Management</p>
     </div>
   );
 }
@@ -3890,7 +3890,7 @@ function Frame70() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <OutlineUsersUserCircle />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">{`Resource & Capacity Mgnt.`}</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">{`Resource & Capacity Mgnt.`}</p>
     </div>
   );
 }
@@ -3927,7 +3927,7 @@ function Frame71() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearBusinessStatisticChart5 />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">{`Reporting & Analytics`}</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">{`Reporting & Analytics`}</p>
     </div>
   );
 }
@@ -4012,7 +4012,7 @@ function BoldArrowsAltArrowDown7() {
 function Frame11() {
   return (
     <div className="content-stretch flex items-center justify-between relative shrink-0 w-full">
-      <p className="font-['Montserrat:SemiBold',sans-serif] font-semibold leading-[normal] relative shrink-0 text-[12px] text-nowrap text-purple-700 uppercase whitespace-pre">{`MONITORING & EVALUATION`}</p>
+      <p className="font-semibold leading-[normal] relative shrink-0 text-[12px] text-nowrap text-purple-700 uppercase whitespace-pre">{`MONITORING & EVALUATION`}</p>
       <div className="flex items-center justify-center relative shrink-0">
         <div className="flex-none rotate-[180deg]">
           <BoldArrowsAltArrowDown7 />
@@ -4038,7 +4038,7 @@ function Frame72() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <MageDashboard7 />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Dashboard</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Dashboard</p>
     </div>
   );
 }
@@ -4069,7 +4069,7 @@ function Frame73() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearDesignToolsLayers />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">MEL Frameworks</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">MEL Frameworks</p>
     </div>
   );
 }
@@ -4099,7 +4099,7 @@ function Frame74() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearBusinessStatisticPieChart />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">{`Indicators & Metrics`}</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">{`Indicators & Metrics`}</p>
     </div>
   );
 }
@@ -4132,7 +4132,7 @@ function Frame75() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearEssentionalUiDatabase />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Data Collection Pipelines</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Data Collection Pipelines</p>
     </div>
   );
 }
@@ -4169,7 +4169,7 @@ function Frame76() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearBusinessStatisticChart6 />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">{`Reporting & Analytics`}</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">{`Reporting & Analytics`}</p>
     </div>
   );
 }
@@ -4254,7 +4254,7 @@ function BoldArrowsAltArrowDown8() {
 function Frame12() {
   return (
     <div className="content-stretch flex items-center justify-between relative shrink-0 w-full">
-      <p className="font-['Montserrat:SemiBold',sans-serif] font-semibold leading-[normal] relative shrink-0 text-[12px] text-nowrap text-purple-700 uppercase whitespace-pre">{`CRM & ADVOCACY`}</p>
+      <p className="font-semibold leading-[normal] relative shrink-0 text-[12px] text-nowrap text-purple-700 uppercase whitespace-pre">{`CRM & ADVOCACY`}</p>
       <div className="flex items-center justify-center relative shrink-0">
         <div className="flex-none rotate-[180deg]">
           <BoldArrowsAltArrowDown8 />
@@ -4280,7 +4280,7 @@ function Frame77() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <MageDashboard8 />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Dashboard</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Dashboard</p>
     </div>
   );
 }
@@ -4316,7 +4316,7 @@ function Frame78() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearHandsHandHeart />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Donors</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Donors</p>
     </div>
   );
 }
@@ -4352,7 +4352,7 @@ function Frame79() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearUsersUserCircle2 />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Stakeholders</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Stakeholders</p>
     </div>
   );
 }
@@ -4381,7 +4381,7 @@ function Frame80() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <OutlineLikeHeartAngle />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Grant Tracking</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Grant Tracking</p>
     </div>
   );
 }
@@ -4411,7 +4411,7 @@ function Frame81() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearVideoAudioSoundVolumeSmall />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Advocacy Tracking</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">Advocacy Tracking</p>
     </div>
   );
 }
@@ -4448,7 +4448,7 @@ function Frame82() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearBusinessStatisticChart7 />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">{`Reporting & Analytics`}</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap whitespace-pre">{`Reporting & Analytics`}</p>
     </div>
   );
 }

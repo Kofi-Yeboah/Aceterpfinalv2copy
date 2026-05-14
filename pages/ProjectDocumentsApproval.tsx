@@ -193,7 +193,7 @@ function VersionHistoryModal({
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4" style={{ fontFamily: "Montserrat, sans-serif" }}>
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4">
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
           <div className="flex items-center gap-2">
             <History className="w-5 h-5 text-purple-700" />
@@ -249,7 +249,7 @@ function FlagModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4" style={{ fontFamily: "Montserrat, sans-serif" }}>
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4">
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
           <div className="flex items-center gap-2">
             <Flag className="w-5 h-5 text-red-600" />
@@ -268,7 +268,7 @@ function FlagModal({
             onChange={(e) => setReason(e.target.value)}
             placeholder="Enter your reasons for flagging this document..."
             className="w-full h-28 px-3 py-2 text-[12px] border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
-            style={{ fontFamily: "Montserrat, sans-serif" }}
+           
           />
         </div>
         <div className="px-6 py-3 border-t border-slate-200 flex justify-end gap-2">
@@ -308,7 +308,7 @@ function PlanPreviewModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl mx-4 max-h-[90vh] flex flex-col" style={{ fontFamily: "Montserrat, sans-serif" }}>
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl mx-4 max-h-[90vh] flex flex-col">
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 shrink-0">
           <div className="flex items-center gap-2">
             <FileText className="w-5 h-5 text-purple-700" />
@@ -422,8 +422,8 @@ function DocumentCard({
             <FileText className="w-5 h-5 text-purple-700" />
           </div>
           <div>
-            <h4 className="text-[13px] font-semibold text-slate-900" style={{ fontFamily: "Montserrat, sans-serif" }}>{doc.title}</h4>
-            <p className="text-[11px] text-slate-500" style={{ fontFamily: "Montserrat, sans-serif" }}>v{doc.version} • {doc.submittedBy}</p>
+            <h4 className="text-[13px] font-semibold text-slate-900">{doc.title}</h4>
+            <p className="text-[11px] text-slate-500">v{doc.version} • {doc.submittedBy}</p>
           </div>
         </div>
         <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium ${config.badge}`}>
@@ -432,7 +432,7 @@ function DocumentCard({
         </span>
       </div>
 
-      <div className="flex items-center gap-4 mb-3 text-[11px] text-slate-500" style={{ fontFamily: "Montserrat, sans-serif" }}>
+      <div className="flex items-center gap-4 mb-3 text-[11px] text-slate-500">
         <span className="flex items-center gap-1">
           <Clock className="w-3 h-3" />
           Submitted: {doc.submittedDate}
@@ -447,7 +447,7 @@ function DocumentCard({
         <div className="mb-3 px-3 py-2 rounded-lg bg-red-100/60 border border-red-200">
           <div className="flex items-start gap-2">
             <AlertTriangle className="w-3.5 h-3.5 text-red-600 mt-0.5 shrink-0" />
-            <p className="text-[11px] text-red-700" style={{ fontFamily: "Montserrat, sans-serif" }}>{doc.flagReason}</p>
+            <p className="text-[11px] text-red-700">{doc.flagReason}</p>
           </div>
         </div>
       )}
@@ -458,7 +458,7 @@ function DocumentCard({
         <button
           onClick={onViewHistory}
           className="inline-flex items-center gap-1.5 px-3 py-[6px] rounded-lg border border-slate-200 bg-white text-[11px] text-slate-700 hover:bg-slate-50 transition-colors"
-          style={{ fontFamily: "Montserrat, sans-serif" }}
+         
         >
           <History className="w-3.5 h-3.5" />
           Version History
@@ -466,7 +466,7 @@ function DocumentCard({
         <button
           onClick={onViewPlan}
           className="inline-flex items-center gap-1.5 px-3 py-[6px] rounded-lg border border-blue-200 bg-blue-50 text-[11px] text-blue-700 hover:bg-blue-100 transition-colors"
-          style={{ fontFamily: "Montserrat, sans-serif" }}
+         
         >
           <Eye className="w-3.5 h-3.5" />
           View Plan
@@ -475,7 +475,7 @@ function DocumentCard({
           <button
             onClick={onApprove}
             className="inline-flex items-center gap-1.5 px-3 py-[6px] rounded-lg border border-green-200 bg-green-50 text-[11px] text-green-700 hover:bg-green-100 transition-colors"
-            style={{ fontFamily: "Montserrat, sans-serif" }}
+           
           >
             <CheckCircle className="w-3.5 h-3.5" />
             Approve
@@ -485,7 +485,7 @@ function DocumentCard({
           <button
             onClick={onFlag}
             className="inline-flex items-center gap-1.5 px-3 py-[6px] rounded-lg border border-red-200 bg-red-50 text-[11px] text-red-700 hover:bg-red-100 transition-colors"
-            style={{ fontFamily: "Montserrat, sans-serif" }}
+           
           >
             <Flag className="w-3.5 h-3.5" />
             Flag
@@ -582,17 +582,17 @@ export function ProjectDocumentsApproval() {
     const pendingCount = selectedProject.documents.filter((d) => d.status === "Pending").length;
 
     return (
-      <div className="flex flex-col h-full bg-slate-50" style={{ fontFamily: "Montserrat, sans-serif" }}>
+      <div className="flex flex-col h-full bg-slate-50">
         {/* Header */}
         <div className="px-6 py-4 bg-white border-b border-slate-200 flex items-center gap-4 shrink-0">
           <button onClick={() => setSelectedProject(null)} className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors">
             <ArrowLeft className="w-5 h-5 text-slate-600" />
           </button>
           <div className="flex-1">
-            <h1 className="text-[16px] font-semibold text-slate-900" style={{ fontFamily: "Montserrat, sans-serif" }}>
+            <h1 className="text-[16px] font-semibold text-slate-900">
               {selectedProject.projectName}
             </h1>
-            <p className="text-[12px] text-slate-500 mt-0.5" style={{ fontFamily: "Montserrat, sans-serif" }}>
+            <p className="text-[12px] text-slate-500 mt-0.5">
               {selectedProject.projectManager} • {selectedProject.program} • {selectedProject.stage}
             </p>
           </div>
@@ -605,23 +605,23 @@ export function ProjectDocumentsApproval() {
         <div className="px-6 py-3 bg-white border-b border-slate-200 flex items-center gap-6 shrink-0">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-amber-400" />
-            <span className="text-[12px] text-slate-600" style={{ fontFamily: "Montserrat, sans-serif" }}>
+            <span className="text-[12px] text-slate-600">
               Pending: <span className="font-semibold text-slate-900">{pendingCount}</span>
             </span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-green-500" />
-            <span className="text-[12px] text-slate-600" style={{ fontFamily: "Montserrat, sans-serif" }}>
+            <span className="text-[12px] text-slate-600">
               Approved: <span className="font-semibold text-slate-900">{approvedCount}</span>
             </span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-red-500" />
-            <span className="text-[12px] text-slate-600" style={{ fontFamily: "Montserrat, sans-serif" }}>
+            <span className="text-[12px] text-slate-600">
               Flagged: <span className="font-semibold text-slate-900">{flaggedCount}</span>
             </span>
           </div>
-          <div className="ml-auto text-[12px] text-slate-500" style={{ fontFamily: "Montserrat, sans-serif" }}>
+          <div className="ml-auto text-[12px] text-slate-500">
             Submitted: {selectedProject.submittedDate}
           </div>
         </div>
@@ -659,15 +659,15 @@ export function ProjectDocumentsApproval() {
   // ─── Table View ───────────────────────────────────────────────────────────
 
   return (
-    <div className="flex flex-col h-full bg-slate-50" style={{ fontFamily: "Montserrat, sans-serif" }}>
+    <div className="flex flex-col h-full bg-slate-50">
       {/* Header */}
       <div className="px-6 py-4 bg-white border-b border-slate-200 shrink-0">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-[18px] font-semibold text-slate-900" style={{ fontFamily: "Montserrat, sans-serif" }}>
+            <h1 className="text-[18px] font-semibold text-slate-900">
               Project Documents Approval
             </h1>
-            <p className="text-[12px] text-slate-500 mt-1" style={{ fontFamily: "Montserrat, sans-serif" }}>
+            <p className="text-[12px] text-slate-500 mt-1">
               Review and approve project planning documents submitted for approval
             </p>
           </div>
@@ -686,7 +686,7 @@ export function ProjectDocumentsApproval() {
                   ? "bg-purple-700 text-white shadow-sm"
                   : "text-slate-500 hover:text-slate-700"
               }`}
-              style={{ fontFamily: "Montserrat, sans-serif" }}
+             
             >
               {tab}
               <span
@@ -711,7 +711,7 @@ export function ProjectDocumentsApproval() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-9 pr-4 py-2 text-[12px] border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-            style={{ fontFamily: "Montserrat, sans-serif" }}
+           
           />
         </div>
       </div>
@@ -721,21 +721,21 @@ export function ProjectDocumentsApproval() {
         <table className="w-full">
           <thead style={{ backgroundColor: "#0B01D0" }} className="sticky top-0 z-[5]">
             <tr>
-              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: "Montserrat, sans-serif" }}>ID</th>
-              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: "Montserrat, sans-serif" }}>Project Name</th>
-              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: "Montserrat, sans-serif" }}>Project Manager</th>
-              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: "Montserrat, sans-serif" }}>Stage</th>
-              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: "Montserrat, sans-serif" }}>Submitted</th>
-              <th className="text-center px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: "Montserrat, sans-serif" }}>Documents</th>
-              <th className="text-center px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: "Montserrat, sans-serif" }}>Progress</th>
-              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: "Montserrat, sans-serif" }}>Status</th>
-              <th className="text-center px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: "Montserrat, sans-serif" }}>Actions</th>
+              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold">ID</th>
+              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold">Project Name</th>
+              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold">Project Manager</th>
+              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold">Stage</th>
+              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold">Submitted</th>
+              <th className="text-center px-4 py-3 text-white text-[12px] font-semibold">Documents</th>
+              <th className="text-center px-4 py-3 text-white text-[12px] font-semibold">Progress</th>
+              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold">Status</th>
+              <th className="text-center px-4 py-3 text-white text-[12px] font-semibold">Actions</th>
             </tr>
           </thead>
           <tbody>
             {filteredProjects.length === 0 ? (
               <tr>
-                <td colSpan={9} className="text-center py-12 text-[13px] text-slate-400" style={{ fontFamily: "Montserrat, sans-serif" }}>
+                <td colSpan={9} className="text-center py-12 text-[13px] text-slate-400">
                   No project submissions found.
                 </td>
               </tr>
@@ -748,22 +748,22 @@ export function ProjectDocumentsApproval() {
                   }`}
                   onClick={() => setSelectedProject(project)}
                 >
-                  <td className="px-4 py-3 text-[12px] text-purple-700 font-medium" style={{ fontFamily: "Montserrat, sans-serif" }}>
+                  <td className="px-4 py-3 text-[12px] text-purple-700 font-medium">
                     {project.id}
                   </td>
-                  <td className="px-4 py-3 text-[12px] text-slate-900 font-medium" style={{ fontFamily: "Montserrat, sans-serif" }}>
+                  <td className="px-4 py-3 text-[12px] text-slate-900 font-medium">
                     {project.projectName}
                   </td>
-                  <td className="px-4 py-3 text-[12px] text-slate-600" style={{ fontFamily: "Montserrat, sans-serif" }}>
+                  <td className="px-4 py-3 text-[12px] text-slate-600">
                     {project.projectManager}
                   </td>
-                  <td className="px-4 py-3 text-[12px] text-slate-600" style={{ fontFamily: "Montserrat, sans-serif" }}>
+                  <td className="px-4 py-3 text-[12px] text-slate-600">
                     {project.stage}
                   </td>
-                  <td className="px-4 py-3 text-[12px] text-slate-600" style={{ fontFamily: "Montserrat, sans-serif" }}>
+                  <td className="px-4 py-3 text-[12px] text-slate-600">
                     {project.submittedDate}
                   </td>
-                  <td className="px-4 py-3 text-center text-[12px] text-slate-900 font-medium" style={{ fontFamily: "Montserrat, sans-serif" }}>
+                  <td className="px-4 py-3 text-center text-[12px] text-slate-900 font-medium">
                     {project.totalDocuments}
                   </td>
                   <td className="px-4 py-3">
@@ -774,13 +774,13 @@ export function ProjectDocumentsApproval() {
                           style={{ width: `${(project.approvedCount / project.totalDocuments) * 100}%` }}
                         />
                       </div>
-                      <span className="text-[11px] text-slate-500" style={{ fontFamily: "Montserrat, sans-serif" }}>
+                      <span className="text-[11px] text-slate-500">
                         {project.approvedCount}/{project.totalDocuments}
                       </span>
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`px-2.5 py-1 rounded-full text-[11px] font-medium ${statusBadge(project.status)}`} style={{ fontFamily: "Montserrat, sans-serif" }}>
+                    <span className={`px-2.5 py-1 rounded-full text-[11px] font-medium ${statusBadge(project.status)}`}>
                       {project.status}
                     </span>
                   </td>

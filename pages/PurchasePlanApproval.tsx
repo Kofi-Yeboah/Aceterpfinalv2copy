@@ -152,7 +152,7 @@ function FlagModal({ planName, onClose, onSubmit }: { planName: string; onClose:
   const [reason, setReason] = useState("");
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4" style={{ fontFamily: "Montserrat, sans-serif" }}>
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4">
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
           <div className="flex items-center gap-2">
             <Flag className="w-5 h-5 text-red-600" />
@@ -171,7 +171,7 @@ function FlagModal({ planName, onClose, onSubmit }: { planName: string; onClose:
             onChange={(e) => setReason(e.target.value)}
             placeholder="Enter reasons for flagging this purchase plan..."
             className="w-full h-28 px-3 py-2 text-[12px] border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
-            style={{ fontFamily: "Montserrat, sans-serif" }}
+           
           />
         </div>
         <div className="px-6 py-3 border-t border-slate-200 flex justify-end gap-2">
@@ -266,7 +266,7 @@ export function PurchasePlanApproval() {
 
   if (selectedPlan) {
     return (
-      <div className="flex flex-col h-full bg-slate-50" style={{ fontFamily: "Montserrat, sans-serif" }}>
+      <div className="flex flex-col h-full bg-slate-50">
         {/* Header */}
         <div className="px-6 py-4 bg-white border-b border-slate-200 flex items-center gap-4 shrink-0">
           <button onClick={() => setSelectedPlan(null)} className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors">
@@ -331,29 +331,29 @@ export function PurchasePlanApproval() {
             <table className="w-full">
               <thead style={{ backgroundColor: "#0B01D0" }} className="sticky top-0 z-[5]">
                 <tr>
-                  <th className="text-left px-4 py-3 text-white text-[11px] font-semibold" style={{ fontFamily: "Montserrat, sans-serif" }}>Item</th>
-                  <th className="text-left px-4 py-3 text-white text-[11px] font-semibold" style={{ fontFamily: "Montserrat, sans-serif" }}>Category</th>
-                  <th className="text-center px-4 py-3 text-white text-[11px] font-semibold" style={{ fontFamily: "Montserrat, sans-serif" }}>Qty</th>
-                  <th className="text-right px-4 py-3 text-white text-[11px] font-semibold" style={{ fontFamily: "Montserrat, sans-serif" }}>Unit Price</th>
-                  <th className="text-right px-4 py-3 text-white text-[11px] font-semibold" style={{ fontFamily: "Montserrat, sans-serif" }}>Total Cost</th>
-                  <th className="text-left px-4 py-3 text-white text-[11px] font-semibold" style={{ fontFamily: "Montserrat, sans-serif" }}>Vendor</th>
-                  <th className="text-left px-4 py-3 text-white text-[11px] font-semibold" style={{ fontFamily: "Montserrat, sans-serif" }}>Expected Delivery</th>
-                  <th className="text-center px-4 py-3 text-white text-[11px] font-semibold" style={{ fontFamily: "Montserrat, sans-serif" }}>Priority</th>
+                  <th className="text-left px-4 py-3 text-white text-[11px] font-semibold">Item</th>
+                  <th className="text-left px-4 py-3 text-white text-[11px] font-semibold">Category</th>
+                  <th className="text-center px-4 py-3 text-white text-[11px] font-semibold">Qty</th>
+                  <th className="text-right px-4 py-3 text-white text-[11px] font-semibold">Unit Price</th>
+                  <th className="text-right px-4 py-3 text-white text-[11px] font-semibold">Total Cost</th>
+                  <th className="text-left px-4 py-3 text-white text-[11px] font-semibold">Vendor</th>
+                  <th className="text-left px-4 py-3 text-white text-[11px] font-semibold">Expected Delivery</th>
+                  <th className="text-center px-4 py-3 text-white text-[11px] font-semibold">Priority</th>
                 </tr>
               </thead>
               <tbody>
                 {selectedPlan.items.map((item, idx) => (
                   <tr key={item.id} className={idx % 2 === 0 ? "bg-white" : "bg-slate-50/50"}>
                     <td className="px-4 py-3">
-                      <div className="text-[12px] text-slate-900 font-medium" style={{ fontFamily: "Montserrat, sans-serif" }}>{item.itemName}</div>
-                      <div className="text-[10px] text-slate-500 mt-0.5" style={{ fontFamily: "Montserrat, sans-serif" }}>{item.justification}</div>
+                      <div className="text-[12px] text-slate-900 font-medium">{item.itemName}</div>
+                      <div className="text-[10px] text-slate-500 mt-0.5">{item.justification}</div>
                     </td>
-                    <td className="px-4 py-3 text-[11px] text-slate-600" style={{ fontFamily: "Montserrat, sans-serif" }}>{item.category}</td>
-                    <td className="px-4 py-3 text-center text-[11px] text-slate-900 font-medium" style={{ fontFamily: "Montserrat, sans-serif" }}>{item.quantity}</td>
-                    <td className="px-4 py-3 text-right text-[11px] text-slate-900" style={{ fontFamily: "Montserrat, sans-serif" }}>{formatCurrency(item.unitPrice)}</td>
-                    <td className="px-4 py-3 text-right text-[11px] text-slate-900 font-medium" style={{ fontFamily: "Montserrat, sans-serif" }}>{formatCurrency(item.totalCost)}</td>
-                    <td className="px-4 py-3 text-[11px] text-slate-600" style={{ fontFamily: "Montserrat, sans-serif" }}>{item.vendor}</td>
-                    <td className="px-4 py-3 text-[11px] text-slate-600" style={{ fontFamily: "Montserrat, sans-serif" }}>{item.expectedDelivery}</td>
+                    <td className="px-4 py-3 text-[11px] text-slate-600">{item.category}</td>
+                    <td className="px-4 py-3 text-center text-[11px] text-slate-900 font-medium">{item.quantity}</td>
+                    <td className="px-4 py-3 text-right text-[11px] text-slate-900">{formatCurrency(item.unitPrice)}</td>
+                    <td className="px-4 py-3 text-right text-[11px] text-slate-900 font-medium">{formatCurrency(item.totalCost)}</td>
+                    <td className="px-4 py-3 text-[11px] text-slate-600">{item.vendor}</td>
+                    <td className="px-4 py-3 text-[11px] text-slate-600">{item.expectedDelivery}</td>
                     <td className="px-4 py-3 text-center"><span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${priorityStyle(item.priority)}`}>{item.priority}</span></td>
                   </tr>
                 ))}
@@ -364,8 +364,8 @@ export function PurchasePlanApproval() {
 
         {selectedPlan.items.length > 0 && (
           <div className="px-6 py-3 bg-white border-t border-slate-200 flex items-center justify-between shrink-0">
-            <span className="text-[12px] text-slate-500" style={{ fontFamily: "Montserrat, sans-serif" }}>{selectedPlan.items.length} items in this plan</span>
-            <span className="text-[13px] font-semibold text-slate-900" style={{ fontFamily: "Montserrat, sans-serif" }}>Total: {formatCurrency(selectedPlan.totalBudget)}</span>
+            <span className="text-[12px] text-slate-500">{selectedPlan.items.length} items in this plan</span>
+            <span className="text-[13px] font-semibold text-slate-900">Total: {formatCurrency(selectedPlan.totalBudget)}</span>
           </div>
         )}
 
@@ -383,7 +383,7 @@ export function PurchasePlanApproval() {
   // ─── Table View ─────────────────────────────────────────────────────────
 
   return (
-    <div className="flex flex-col h-full bg-slate-50" style={{ fontFamily: "Montserrat, sans-serif" }}>
+    <div className="flex flex-col h-full bg-slate-50">
       {/* Header */}
       <div className="px-6 py-4 bg-white border-b border-slate-200 shrink-0">
         <h1 className="text-[18px] font-semibold text-slate-900">Purchase Plan Approvals</h1>
@@ -400,7 +400,7 @@ export function PurchasePlanApproval() {
               className={`px-4 py-1.5 rounded-lg text-[12px] transition-colors min-w-[100px] flex items-center justify-center gap-1.5 ${
                 activeTab === tab ? "bg-purple-700 text-white shadow-sm" : "text-slate-500 hover:text-slate-700"
               }`}
-              style={{ fontFamily: "Montserrat, sans-serif" }}
+             
             >
               {tab}
               <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${activeTab === tab ? "bg-white/20 text-white" : "bg-slate-200/80 text-slate-500"}`}>
@@ -423,7 +423,7 @@ export function PurchasePlanApproval() {
                   ? "bg-purple-100 text-purple-700 border border-purple-300"
                   : "bg-slate-50 text-slate-500 border border-slate-200 hover:text-slate-700 hover:border-slate-300"
               }`}
-              style={{ fontFamily: "Montserrat, sans-serif" }}
+             
             >
               {dept === "All Departments" ? "All Depts" : dept}
               <span className={`px-1 py-0 rounded text-[9px] ${selectedDepartment === dept ? "bg-purple-200/60 text-purple-700" : "bg-slate-200/80 text-slate-400"}`}>
@@ -440,7 +440,7 @@ export function PurchasePlanApproval() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-9 pr-4 py-2 text-[12px] border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-            style={{ fontFamily: "Montserrat, sans-serif" }}
+           
           />
         </div>
       </div>
@@ -450,16 +450,16 @@ export function PurchasePlanApproval() {
         <table className="w-full">
           <thead style={{ backgroundColor: "#0B01D0" }} className="sticky top-0 z-[5]">
             <tr>
-              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: "Montserrat, sans-serif" }}>ID</th>
-              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: "Montserrat, sans-serif" }}>Plan Name</th>
-              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: "Montserrat, sans-serif" }}>Department</th>
-              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: "Montserrat, sans-serif" }}>Fiscal Year</th>
-              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: "Montserrat, sans-serif" }}>Prepared By</th>
-              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: "Montserrat, sans-serif" }}>Submitted</th>
-              <th className="text-center px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: "Montserrat, sans-serif" }}>Items</th>
-              <th className="text-right px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: "Montserrat, sans-serif" }}>Total Budget</th>
-              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: "Montserrat, sans-serif" }}>Status</th>
-              <th className="text-center px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: "Montserrat, sans-serif" }}>Actions</th>
+              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold">ID</th>
+              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold">Plan Name</th>
+              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold">Department</th>
+              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold">Fiscal Year</th>
+              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold">Prepared By</th>
+              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold">Submitted</th>
+              <th className="text-center px-4 py-3 text-white text-[12px] font-semibold">Items</th>
+              <th className="text-right px-4 py-3 text-white text-[12px] font-semibold">Total Budget</th>
+              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold">Status</th>
+              <th className="text-center px-4 py-3 text-white text-[12px] font-semibold">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -472,16 +472,16 @@ export function PurchasePlanApproval() {
                   className={`border-b border-slate-100 hover:bg-slate-50 transition-colors cursor-pointer ${index % 2 === 0 ? "bg-white" : "bg-slate-50/50"}`}
                   onClick={() => setSelectedPlan(sub)}
                 >
-                  <td className="px-4 py-3 text-[12px] text-purple-700 font-medium" style={{ fontFamily: "Montserrat, sans-serif" }}>{sub.id}</td>
-                  <td className="px-4 py-3 text-[12px] text-slate-900 font-medium" style={{ fontFamily: "Montserrat, sans-serif" }}>{sub.planName}</td>
+                  <td className="px-4 py-3 text-[12px] text-purple-700 font-medium">{sub.id}</td>
+                  <td className="px-4 py-3 text-[12px] text-slate-900 font-medium">{sub.planName}</td>
                   <td className="px-4 py-3">
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-purple-100 text-purple-700">{sub.department}</span>
                   </td>
-                  <td className="px-4 py-3 text-[12px] text-slate-600" style={{ fontFamily: "Montserrat, sans-serif" }}>{sub.fiscalYear}</td>
-                  <td className="px-4 py-3 text-[12px] text-slate-600" style={{ fontFamily: "Montserrat, sans-serif" }}>{sub.preparedBy}</td>
-                  <td className="px-4 py-3 text-[12px] text-slate-600" style={{ fontFamily: "Montserrat, sans-serif" }}>{sub.submittedDate}</td>
-                  <td className="px-4 py-3 text-center text-[12px] text-slate-900 font-medium" style={{ fontFamily: "Montserrat, sans-serif" }}>{sub.totalItems}</td>
-                  <td className="px-4 py-3 text-right text-[12px] text-slate-900 font-medium" style={{ fontFamily: "Montserrat, sans-serif" }}>{formatCurrency(sub.totalBudget)}</td>
+                  <td className="px-4 py-3 text-[12px] text-slate-600">{sub.fiscalYear}</td>
+                  <td className="px-4 py-3 text-[12px] text-slate-600">{sub.preparedBy}</td>
+                  <td className="px-4 py-3 text-[12px] text-slate-600">{sub.submittedDate}</td>
+                  <td className="px-4 py-3 text-center text-[12px] text-slate-900 font-medium">{sub.totalItems}</td>
+                  <td className="px-4 py-3 text-right text-[12px] text-slate-900 font-medium">{formatCurrency(sub.totalBudget)}</td>
                   <td className="px-4 py-3">
                     <span className={`px-2.5 py-1 rounded-full text-[11px] font-medium ${statusBadge(sub.approvalStatus)}`}>{sub.approvalStatus}</span>
                   </td>

@@ -57,7 +57,7 @@ export function SendMessageModal({ isOpen, onClose }: SendMessageModalProps) {
           <div className="bg-white relative shrink-0 w-full">
             <div className="flex flex-row items-center justify-center overflow-clip rounded-[inherit] size-full">
               <div className="box-border content-stretch flex gap-[7.959px] items-center justify-center px-[31.042px] py-[14.327px] relative w-full">
-                <p className="font-['Montserrat:SemiBold',sans-serif] font-semibold leading-none relative shrink-0 text-[14.327px] text-nowrap text-slate-600 whitespace-pre">
+                <p className="font-semibold leading-none relative shrink-0 text-[14.327px] text-nowrap text-slate-600 whitespace-pre">
                   {getTitle()}
                 </p>
                 <button
@@ -90,7 +90,7 @@ export function SendMessageModal({ isOpen, onClose }: SendMessageModalProps) {
                 {activeTab === "sms" && (
                   <div aria-hidden="true" className="absolute border-[0.796px] border-slate-100 border-solid inset-0 pointer-events-none rounded-[6.368px] shadow-[0px_1.592px_6.368px_0px_rgba(100,116,139,0.1)]" />
                 )}
-                <p className={`font-['Montserrat:${activeTab === "sms" ? "SemiBold" : "Regular"}',sans-serif] ${
+                <p className={`${
                   activeTab === "sms" ? "font-semibold" : "font-normal"
                 } leading-[14.327px] relative shrink-0 text-[11.143px] text-center ${
                   activeTab === "sms" ? "text-white" : "text-slate-500"
@@ -110,7 +110,7 @@ export function SendMessageModal({ isOpen, onClose }: SendMessageModalProps) {
                 {activeTab === "email" && (
                   <div aria-hidden="true" className="absolute border-[0.796px] border-slate-100 border-solid inset-0 pointer-events-none rounded-[6.368px] shadow-[0px_1.592px_6.368px_0px_rgba(100,116,139,0.1)]" />
                 )}
-                <p className={`font-['Montserrat:${activeTab === "email" ? "SemiBold" : "Regular"}',sans-serif] ${
+                <p className={`${
                   activeTab === "email" ? "font-semibold" : "font-normal"
                 } leading-[14.327px] relative shrink-0 text-[11.143px] text-center text-nowrap ${
                   activeTab === "email" ? "text-white" : "text-slate-500"
@@ -130,7 +130,7 @@ export function SendMessageModal({ isOpen, onClose }: SendMessageModalProps) {
                 {activeTab === "in-app" && (
                   <div aria-hidden="true" className="absolute border-[0.796px] border-slate-100 border-solid inset-0 pointer-events-none rounded-[6.368px] shadow-[0px_1.592px_6.368px_0px_rgba(100,116,139,0.1)]" />
                 )}
-                <div className={`flex flex-col font-['Montserrat:${activeTab === "in-app" ? "SemiBold" : "Regular"}',sans-serif] ${
+                <div className={`flex flex-col ${
                   activeTab === "in-app" ? "font-semibold" : "font-normal"
                 } justify-center leading-[0] relative shrink-0 text-[11.143px] text-center text-nowrap ${
                   activeTab === "in-app" ? "text-white" : "text-slate-500"
@@ -147,7 +147,7 @@ export function SendMessageModal({ isOpen, onClose }: SendMessageModalProps) {
                   {/* Subject Field */}
                   <div className="content-stretch flex flex-col gap-[9.551px] items-start relative shrink-0 w-full">
                     <div className="content-stretch flex items-start justify-between relative shrink-0 w-[446.527px]">
-                      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[11.143px] text-nowrap text-slate-600 tracking-[-0.2229px] whitespace-pre">
+                      <p className="font-medium leading-[normal] relative shrink-0 text-[11.143px] text-nowrap text-slate-600 tracking-[-0.2229px] whitespace-pre">
                         Subject
                       </p>
                     </div>
@@ -160,7 +160,7 @@ export function SendMessageModal({ isOpen, onClose }: SendMessageModalProps) {
                             value={subject}
                             onChange={(e) => setSubject(e.target.value)}
                             placeholder="Women's Fellowship Deadline"
-                            className="font-['Montserrat:Regular',sans-serif] font-normal leading-[17.511px] relative shrink-0 text-[12.735px] text-slate-700 tracking-[-0.1274px] bg-transparent border-none outline-none w-full"
+                            className="font-normal leading-[17.511px] relative shrink-0 text-[12.735px] text-slate-700 tracking-[-0.1274px] bg-transparent border-none outline-none w-full"
                           />
                         </div>
                       </div>
@@ -172,7 +172,7 @@ export function SendMessageModal({ isOpen, onClose }: SendMessageModalProps) {
               {/* Message Field */}
               <div className="content-stretch flex flex-col gap-[9.551px] items-start relative shrink-0 w-full">
                 <div className="content-stretch flex items-start justify-between relative shrink-0 w-[446.527px]">
-                  <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[11.143px] text-nowrap text-slate-600 tracking-[-0.2229px] whitespace-pre">
+                  <p className="font-medium leading-[normal] relative shrink-0 text-[11.143px] text-nowrap text-slate-600 tracking-[-0.2229px] whitespace-pre">
                     Message
                   </p>
                 </div>
@@ -184,7 +184,7 @@ export function SendMessageModal({ isOpen, onClose }: SendMessageModalProps) {
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
                         placeholder="type message here"
-                        className="basis-0 font-['Montserrat:Regular',sans-serif] font-normal grow h-[69.247px] leading-[19.103px] min-h-px min-w-px relative shrink-0 text-[12.735px] text-slate-700 placeholder:text-slate-400 bg-transparent border-none outline-none resize-none w-full"
+                        className="basis-0 font-normal grow h-[69.247px] leading-[19.103px] min-h-px min-w-px relative shrink-0 text-[12.735px] text-slate-700 placeholder:text-slate-400 bg-transparent border-none outline-none resize-none w-full"
                       />
                     </div>
                   </div>
@@ -195,14 +195,14 @@ export function SendMessageModal({ isOpen, onClose }: SendMessageModalProps) {
               {activeTab === "email" && (
                 <div className="content-stretch flex flex-col gap-[9.551px] items-start relative shrink-0 w-full">
                   <div className="content-stretch flex items-start justify-between relative shrink-0 w-[446.527px]">
-                    <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[11.143px] text-nowrap text-slate-600 tracking-[-0.2229px] whitespace-pre">
+                    <p className="font-medium leading-[normal] relative shrink-0 text-[11.143px] text-nowrap text-slate-600 tracking-[-0.2229px] whitespace-pre">
                       Add Files
                     </p>
                   </div>
                   <button className="bg-blue-600 box-border content-stretch flex flex-col gap-[7.959px] items-center justify-center px-[6.368px] py-[3.98px] relative rounded-[6.368px] shrink-0">
                     <div aria-hidden="true" className="absolute border-[0.796px] border-blue-500 border-solid inset-0 pointer-events-none rounded-[6.368px]" />
                     <div className="content-stretch flex gap-[3.98px] items-center relative shrink-0 w-full">
-                      <p className="font-['Montserrat:Regular',sans-serif] font-normal leading-[17.511px] relative shrink-0 text-[11.143px] text-nowrap text-white tracking-[-0.1114px] whitespace-pre">
+                      <p className="font-normal leading-[17.511px] relative shrink-0 text-[11.143px] text-nowrap text-white tracking-[-0.1114px] whitespace-pre">
                         Select File
                       </p>
                       <div className="relative shrink-0 size-[15.919px]">
@@ -225,7 +225,7 @@ export function SendMessageModal({ isOpen, onClose }: SendMessageModalProps) {
               {/* Recipients Field */}
               <div className="content-stretch flex flex-col gap-[9.111px] items-start relative shrink-0 w-[446.527px]">
                 <div className="content-stretch flex items-start justify-between relative shrink-0 w-full">
-                  <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[12.562px] text-nowrap text-slate-600 tracking-[-0.2512px] whitespace-pre">
+                  <p className="font-medium leading-[normal] relative shrink-0 text-[12.562px] text-nowrap text-slate-600 tracking-[-0.2512px] whitespace-pre">
                     Recipients
                   </p>
                 </div>
@@ -240,7 +240,7 @@ export function SendMessageModal({ isOpen, onClose }: SendMessageModalProps) {
                           setSelectedDepartments([]);
                           setSelectedStaff([]);
                         }}
-                        className="font-['Montserrat:Regular',sans-serif] font-normal leading-[19.74px] relative shrink-0 text-[14.356px] text-slate-700 tracking-[-0.1436px] bg-transparent border-none outline-none w-full cursor-pointer"
+                        className="font-normal leading-[19.74px] relative shrink-0 text-[14.356px] text-slate-700 tracking-[-0.1436px] bg-transparent border-none outline-none w-full cursor-pointer"
                       >
                         <option value="All Staff">All Staff</option>
                         <option value="Departments">Departments</option>
@@ -255,7 +255,7 @@ export function SendMessageModal({ isOpen, onClose }: SendMessageModalProps) {
               {recipientType === "Departments" && (
                 <div className="content-stretch flex flex-col gap-[10.767px] items-start relative shrink-0 w-full">
                   <div className="content-stretch flex items-start justify-between relative shrink-0 w-[503.357px]">
-                    <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[12.562px] text-nowrap text-slate-600 tracking-[-0.2512px] whitespace-pre">
+                    <p className="font-medium leading-[normal] relative shrink-0 text-[12.562px] text-nowrap text-slate-600 tracking-[-0.2512px] whitespace-pre">
                       Select Departments
                     </p>
                   </div>
@@ -266,7 +266,7 @@ export function SendMessageModal({ isOpen, onClose }: SendMessageModalProps) {
                         <div className="box-border content-stretch flex items-center justify-between px-[10.767px] py-[6.281px] relative w-full">
                           <div className="content-stretch flex gap-[12.562px] items-center flex-wrap">
                             {selectedDepartments.length === 0 ? (
-                              <p className="font-['Montserrat:Regular',sans-serif] font-normal leading-[19.74px] text-[14.356px] text-slate-400 tracking-[-0.1436px]">
+                              <p className="font-normal leading-[19.74px] text-[14.356px] text-slate-400 tracking-[-0.1436px]">
                                 Select departments...
                               </p>
                             ) : (
@@ -274,7 +274,7 @@ export function SendMessageModal({ isOpen, onClose }: SendMessageModalProps) {
                                 <div key={dept} className="bg-white box-border content-stretch flex flex-col gap-[8.973px] items-start px-[7.178px] py-[6.281px] relative rounded-[7.178px] shrink-0">
                                   <div aria-hidden="true" className="absolute border-[0.897px] border-slate-200 border-solid inset-0 pointer-events-none rounded-[7.178px]" />
                                   <div className="content-stretch flex gap-[14.356px] items-center relative shrink-0 w-full">
-                                    <p className="font-['Montserrat:Regular',sans-serif] font-normal leading-[19.74px] relative shrink-0 text-[14.356px] text-nowrap text-slate-700 tracking-[-0.1436px] whitespace-pre">
+                                    <p className="font-normal leading-[19.74px] relative shrink-0 text-[14.356px] text-nowrap text-slate-700 tracking-[-0.1436px] whitespace-pre">
                                       {dept}
                                     </p>
                                     <button
@@ -325,7 +325,7 @@ export function SendMessageModal({ isOpen, onClose }: SendMessageModalProps) {
                               onChange={() => {}}
                               className="w-4 h-4"
                             />
-                            <span className="font-['Montserrat:Regular',sans-serif] text-[14.356px] text-slate-700">
+                            <span className="text-[14.356px] text-slate-700">
                               {dept}
                             </span>
                           </div>
@@ -340,7 +340,7 @@ export function SendMessageModal({ isOpen, onClose }: SendMessageModalProps) {
               {recipientType === "Individual Staff" && (
                 <div className="content-stretch flex flex-col gap-[10.767px] items-start relative shrink-0 w-full">
                   <div className="content-stretch flex items-start justify-between relative shrink-0 w-[503.357px]">
-                    <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[12.562px] text-nowrap text-slate-600 tracking-[-0.2512px] whitespace-pre">
+                    <p className="font-medium leading-[normal] relative shrink-0 text-[12.562px] text-nowrap text-slate-600 tracking-[-0.2512px] whitespace-pre">
                       Select Staff
                     </p>
                   </div>
@@ -351,7 +351,7 @@ export function SendMessageModal({ isOpen, onClose }: SendMessageModalProps) {
                         <div className="box-border content-stretch flex items-center justify-between px-[10.767px] py-[6.281px] relative w-full">
                           <div className="content-stretch flex gap-[12.562px] items-center flex-wrap">
                             {selectedStaff.length === 0 ? (
-                              <p className="font-['Montserrat:Regular',sans-serif] font-normal leading-[19.74px] text-[14.356px] text-slate-400 tracking-[-0.1436px]">
+                              <p className="font-normal leading-[19.74px] text-[14.356px] text-slate-400 tracking-[-0.1436px]">
                                 Select staff...
                               </p>
                             ) : (
@@ -359,7 +359,7 @@ export function SendMessageModal({ isOpen, onClose }: SendMessageModalProps) {
                                 <div key={person} className="bg-white box-border content-stretch flex flex-col gap-[8.973px] items-start px-[7.178px] py-[6.281px] relative rounded-[7.178px] shrink-0">
                                   <div aria-hidden="true" className="absolute border-[0.897px] border-slate-200 border-solid inset-0 pointer-events-none rounded-[7.178px]" />
                                   <div className="content-stretch flex gap-[14.356px] items-center relative shrink-0 w-full">
-                                    <p className="font-['Montserrat:Regular',sans-serif] font-normal leading-[19.74px] relative shrink-0 text-[14.356px] text-nowrap text-slate-700 tracking-[-0.1436px] whitespace-pre">
+                                    <p className="font-normal leading-[19.74px] relative shrink-0 text-[14.356px] text-nowrap text-slate-700 tracking-[-0.1436px] whitespace-pre">
                                       {person}
                                     </p>
                                     <button
@@ -410,7 +410,7 @@ export function SendMessageModal({ isOpen, onClose }: SendMessageModalProps) {
                               onChange={() => {}}
                               className="w-4 h-4"
                             />
-                            <span className="font-['Montserrat:Regular',sans-serif] text-[14.356px] text-slate-700">
+                            <span className="text-[14.356px] text-slate-700">
                               {person}
                             </span>
                           </div>

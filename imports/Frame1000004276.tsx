@@ -35,7 +35,7 @@ function Btn() {
     <div className="[grid-area:1_/_1] bg-white box-border content-stretch flex gap-[8px] h-[38px] items-center justify-center ml-[120px] mt-[114px] px-[16px] py-[11px] relative rounded-[8px]" data-name="Btn">
       <div aria-hidden="true" className="absolute border border-slate-200 border-solid inset-[-1px] pointer-events-none rounded-[9px] shadow-[0px_2px_2px_0px_rgba(0,0,0,0.04)]" />
       <OutlineMessagesConversationPen />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-nowrap text-slate-700 whitespace-pre">Upload</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-nowrap text-slate-700 whitespace-pre">Upload</p>
     </div>
   );
 }
@@ -57,7 +57,7 @@ function Group() {
 function Frame5() {
   return (
     <div className="content-stretch flex items-start justify-between relative shrink-0 w-full">
-      <p className="font-['Montserrat:Regular',sans-serif] font-normal leading-[normal] relative shrink-0 text-[12px] text-nowrap text-slate-700 tracking-[-0.24px] whitespace-pre">First name</p>
+      <p className="font-normal leading-[normal] relative shrink-0 text-[12px] text-nowrap text-slate-700 tracking-[-0.24px] whitespace-pre">First name</p>
     </div>
   );
 }
@@ -91,7 +91,7 @@ function InputField() {
 function Frame6() {
   return (
     <div className="content-stretch flex items-start justify-between relative shrink-0 w-full">
-      <p className="font-['Montserrat:Regular',sans-serif] font-normal leading-[normal] relative shrink-0 text-[12px] text-nowrap text-slate-700 tracking-[-0.24px] whitespace-pre">Last name</p>
+      <p className="font-normal leading-[normal] relative shrink-0 text-[12px] text-nowrap text-slate-700 tracking-[-0.24px] whitespace-pre">Last name</p>
     </div>
   );
 }
@@ -134,7 +134,7 @@ function Frame16() {
 function Frame7() {
   return (
     <div className="content-stretch flex items-start justify-between relative shrink-0 w-full">
-      <p className="font-['Montserrat:Regular',sans-serif] font-normal leading-[normal] relative shrink-0 text-[12px] text-nowrap text-slate-700 tracking-[-0.24px] whitespace-pre">Email address</p>
+      <p className="font-normal leading-[normal] relative shrink-0 text-[12px] text-nowrap text-slate-700 tracking-[-0.24px] whitespace-pre">Email address</p>
     </div>
   );
 }
@@ -159,7 +159,7 @@ function Frame2() {
 function HintText() {
   return (
     <div className="box-border content-stretch flex gap-[10px] h-[16px] items-center justify-center px-0 py-[3px] relative shrink-0" data-name="Hint text">
-      <p className="font-['Montserrat:Regular',sans-serif] font-normal leading-[normal] relative shrink-0 text-[12px] text-nowrap text-slate-500 tracking-[-0.24px] whitespace-pre">A temporal passsword would be sent to this email address</p>
+      <p className="font-normal leading-[normal] relative shrink-0 text-[12px] text-nowrap text-slate-500 tracking-[-0.24px] whitespace-pre">A temporal passsword would be sent to this email address</p>
     </div>
   );
 }
@@ -177,7 +177,7 @@ function InputField2() {
 function Frame8() {
   return (
     <div className="content-stretch flex items-start justify-between relative shrink-0 w-full">
-      <p className="font-['Montserrat:Regular',sans-serif] font-normal leading-[normal] relative shrink-0 text-[12px] text-nowrap text-slate-700 tracking-[-0.24px] whitespace-pre">Phone number</p>
+      <p className="font-normal leading-[normal] relative shrink-0 text-[12px] text-nowrap text-slate-700 tracking-[-0.24px] whitespace-pre">Phone number</p>
     </div>
   );
 }
@@ -197,7 +197,7 @@ function LinearArrowsAltArrowDown() {
 function Frame19() {
   return (
     <div className="content-stretch flex gap-[4px] items-center relative shrink-0">
-      <p className="font-['Montserrat:Regular',sans-serif] font-normal leading-[normal] relative shrink-0 text-[14px] text-nowrap text-slate-900 whitespace-pre">+233</p>
+      <p className="font-normal leading-[normal] relative shrink-0 text-[14px] text-nowrap text-slate-900 whitespace-pre">+233</p>
       <LinearArrowsAltArrowDown />
     </div>
   );
@@ -207,7 +207,7 @@ function Frame13() {
   return (
     <div className="content-stretch flex gap-[16px] items-center relative shrink-0">
       <Frame19 />
-      <p className="font-['Montserrat:Regular',sans-serif] font-normal leading-[normal] relative shrink-0 text-[14px] text-nowrap text-slate-400 whitespace-pre">{`Phone number `}</p>
+      <p className="font-normal leading-[normal] relative shrink-0 text-[14px] text-nowrap text-slate-400 whitespace-pre">{`Phone number `}</p>
     </div>
   );
 }
@@ -245,7 +245,7 @@ function Frame21() {
 function Frame9() {
   return (
     <div className="content-stretch flex items-start justify-between relative shrink-0 w-full">
-      <p className="font-['Montserrat:Regular',sans-serif] font-normal leading-[normal] relative shrink-0 text-[12px] text-nowrap text-slate-700 tracking-[-0.24px] whitespace-pre">Roles</p>
+      <p className="font-normal leading-[normal] relative shrink-0 text-[12px] text-nowrap text-slate-700 tracking-[-0.24px] whitespace-pre">Roles</p>
     </div>
   );
 }
@@ -253,7 +253,7 @@ function Frame9() {
 function Frame15() {
   return (
     <div className="content-stretch flex gap-[16px] items-center relative shrink-0">
-      <p className="font-['Montserrat:Regular',sans-serif] font-normal leading-[normal] relative shrink-0 text-[14px] text-nowrap text-slate-400 whitespace-pre">Select an option</p>
+      <p className="font-normal leading-[normal] relative shrink-0 text-[14px] text-nowrap text-slate-400 whitespace-pre">Select an option</p>
     </div>
   );
 }
@@ -304,7 +304,7 @@ function Frame22() {
 function Frame10() {
   return (
     <div className="content-stretch flex items-start justify-between relative shrink-0 w-full">
-      <p className="font-['Montserrat:Regular',sans-serif] font-normal leading-[normal] relative shrink-0 text-[12px] text-nowrap text-slate-700 tracking-[-0.24px] whitespace-pre">Status</p>
+      <p className="font-normal leading-[normal] relative shrink-0 text-[12px] text-nowrap text-slate-700 tracking-[-0.24px] whitespace-pre">Status</p>
     </div>
   );
 }
@@ -312,7 +312,7 @@ function Frame10() {
 function Frame17() {
   return (
     <div className="content-stretch flex gap-[16px] items-center relative shrink-0">
-      <p className="font-['Montserrat:Regular',sans-serif] font-normal leading-[normal] relative shrink-0 text-[14px] text-nowrap text-slate-400 whitespace-pre">Active</p>
+      <p className="font-normal leading-[normal] relative shrink-0 text-[14px] text-nowrap text-slate-400 whitespace-pre">Active</p>
     </div>
   );
 }

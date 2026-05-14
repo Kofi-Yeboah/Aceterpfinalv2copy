@@ -23,7 +23,7 @@ function Frame() {
   return (
     <div className="basis-0 content-stretch flex gap-[10px] grow items-center min-h-px min-w-px relative shrink-0">
       <LinearUsersUserCircle />
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap tracking-[-0.42px] whitespace-pre">{`Recruitment & Onboarding`}</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[14px] text-black text-nowrap tracking-[-0.42px] whitespace-pre">{`Recruitment & Onboarding`}</p>
     </div>
   );
 }
@@ -56,7 +56,7 @@ function SideNavItem() {
 function SideNavItem1() {
   return (
     <div className="box-border content-stretch flex h-[38px] items-center justify-between px-[12px] py-[7px] relative rounded-[8px] shrink-0 w-[228px]" data-name="side nav item">
-      <p className="basis-0 font-['Montserrat:Medium',sans-serif] font-medium grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-black">Recruitment</p>
+      <p className="basis-0 font-medium grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-black">Recruitment</p>
     </div>
   );
 }
@@ -64,7 +64,7 @@ function SideNavItem1() {
 function SideNavItem2() {
   return (
     <div className="box-border content-stretch flex h-[38px] items-center justify-between px-[12px] py-[7px] relative rounded-[8px] shrink-0 w-[228px]" data-name="side nav item">
-      <p className="basis-0 font-['Montserrat:Medium',sans-serif] font-medium grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-black">Interviews</p>
+      <p className="basis-0 font-medium grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-black">Interviews</p>
     </div>
   );
 }
@@ -72,7 +72,7 @@ function SideNavItem2() {
 function SideNavItem3() {
   return (
     <div className="box-border content-stretch flex h-[38px] items-center justify-between px-[12px] py-[7px] relative rounded-[8px] shrink-0 w-[228px]" data-name="side nav item">
-      <p className="basis-0 font-['Montserrat:Medium',sans-serif] font-medium grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-black">Employee Profiles</p>
+      <p className="basis-0 font-medium grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-black">Employee Profiles</p>
     </div>
   );
 }
@@ -80,7 +80,7 @@ function SideNavItem3() {
 function SideNavItem4() {
   return (
     <div className="box-border content-stretch flex h-[38px] items-center justify-between px-[12px] py-[7px] relative rounded-[8px] shrink-0 w-[228px]" data-name="side nav item">
-      <p className="basis-0 font-['Montserrat:Medium',sans-serif] font-medium grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-black">Job Titles</p>
+      <p className="basis-0 font-medium grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-black">Job Titles</p>
     </div>
   );
 }
@@ -88,7 +88,7 @@ function SideNavItem4() {
 function SideNavItem5() {
   return (
     <div className="box-border content-stretch flex h-[38px] items-center justify-between px-[12px] py-[7px] relative rounded-[8px] shrink-0 w-[228px]" data-name="side nav item">
-      <p className="basis-0 font-['Montserrat:Medium',sans-serif] font-medium grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-black">Contracts</p>
+      <p className="basis-0 font-medium grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-black">Contracts</p>
     </div>
   );
 }

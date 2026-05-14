@@ -41,14 +41,14 @@ export function EmployeeHome() {
       <div className="max-w-[1104px] mx-auto px-6 py-8">
         {/* Welcome Header */}
         <div className="mb-9">
-          <p className="font-['Montserrat:SemiBold',sans-serif] font-semibold leading-[28px] text-[22px] text-slate-900 tracking-[-0.44px]">
+          <p className="font-semibold leading-[28px] text-[22px] text-slate-900 tracking-[-0.44px]">
             Welcome, Akwesi
           </p>
         </div>
 
         {/* Quick Actions */}
         <div className="mb-11">
-          <p className="font-['Montserrat:SemiBold',sans-serif] font-semibold leading-[28px] text-[16px] text-slate-600 mb-3">
+          <p className="font-semibold leading-[28px] text-[16px] text-slate-600 mb-3">
             Quick Actions
           </p>
           <div className="grid grid-cols-3 gap-4">
@@ -58,10 +58,10 @@ export function EmployeeHome() {
                 <CalendarOff size={20} className="text-purple-700" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-['Montserrat:SemiBold',sans-serif] font-semibold text-[14px] text-slate-900">
+                <p className="font-semibold text-[14px] text-slate-900">
                   Request Leave
                 </p>
-                <p className="font-['Montserrat:Regular',sans-serif] font-normal text-[11px] text-slate-500 mt-0.5">
+                <p className="font-normal text-[11px] text-slate-500 mt-0.5">
                   Submit a leave application
                 </p>
               </div>
@@ -74,10 +74,10 @@ export function EmployeeHome() {
                 <Plane size={20} className="text-blue-700" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-['Montserrat:SemiBold',sans-serif] font-semibold text-[14px] text-slate-900">
+                <p className="font-semibold text-[14px] text-slate-900">
                   Travel Request
                 </p>
-                <p className="font-['Montserrat:Regular',sans-serif] font-normal text-[11px] text-slate-500 mt-0.5">
+                <p className="font-normal text-[11px] text-slate-500 mt-0.5">
                   Plan official travel
                 </p>
               </div>
@@ -90,10 +90,10 @@ export function EmployeeHome() {
                 <ReceiptText size={20} className="text-emerald-700" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-['Montserrat:SemiBold',sans-serif] font-semibold text-[14px] text-slate-900">
+                <p className="font-semibold text-[14px] text-slate-900">
                   Request Refund
                 </p>
-                <p className="font-['Montserrat:Regular',sans-serif] font-normal text-[11px] text-slate-500 mt-0.5">
+                <p className="font-normal text-[11px] text-slate-500 mt-0.5">
                   Claim expense reimbursement
                 </p>
               </div>
@@ -108,7 +108,7 @@ export function EmployeeHome() {
           <div className="flex-1 space-y-11">
             {/* Blogs Section */}
             <div>
-              <p className="font-['Montserrat:SemiBold',sans-serif] font-semibold leading-[28px] text-[16px] text-slate-600 mb-3">
+              <p className="font-semibold leading-[28px] text-[16px] text-slate-600 mb-3">
                 Blogs for you
               </p>
               <div className="grid grid-cols-3 gap-[14px]">
@@ -119,7 +119,7 @@ export function EmployeeHome() {
                       <img alt="" className="absolute h-full left-[-15.11%] max-w-none top-0 w-[130.22%]" src={imgImage19} />
                     </div>
                     <div className="px-[7px]">
-                      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[18px] text-[12px] text-slate-700 line-clamp-3 mb-[10px]">
+                      <p className="font-medium leading-[18px] text-[12px] text-slate-700 line-clamp-3 mb-[10px]">
                         The Ghana Export Promotion Authority (GEPA) in collaboration with the Hungary Export Promotion Agency (HEPA) successfully organized a business...
                       </p>
                       <div className="flex gap-[6px] items-center">
@@ -135,7 +135,7 @@ export function EmployeeHome() {
                             </div>
                           </div>
                         </div>
-                        <p className="font-['Montserrat:Medium',sans-serif] font-medium text-[10px] text-slate-400 tracking-[-0.2px]">
+                        <p className="font-medium text-[10px] text-slate-400 tracking-[-0.2px]">
                           August 2, 2025
                         </p>
                       </div>
@@ -150,7 +150,7 @@ export function EmployeeHome() {
                       <img alt="" className="w-full h-full object-contain rounded-[7px]" src={imgImage23} />
                     </div>
                     <div className="px-[7px]">
-                      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[18px] text-[12px] text-slate-700 line-clamp-3 mb-[10px]">
+                      <p className="font-medium leading-[18px] text-[12px] text-slate-700 line-clamp-3 mb-[10px]">
                         ACET Doubles Down on SME Growth Push for 2025
                       </p>
                       <div className="flex gap-[6px] items-center">
@@ -166,7 +166,7 @@ export function EmployeeHome() {
                             </div>
                           </div>
                         </div>
-                        <p className="font-['Montserrat:Medium',sans-serif] font-medium text-[10px] text-slate-400 tracking-[-0.2px]">
+                        <p className="font-medium text-[10px] text-slate-400 tracking-[-0.2px]">
                           August 19, 2025
                         </p>
                       </div>
@@ -181,7 +181,7 @@ export function EmployeeHome() {
                       <img alt="" className="absolute h-[197.69%] left-[-0.56%] max-w-none top-[-37.91%] w-[102.05%]" src={imgImage20} />
                     </div>
                     <div className="px-[7px]">
-                      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[18px] text-[12px] text-slate-700 line-clamp-3 mb-[10px]">
+                      <p className="font-medium leading-[18px] text-[12px] text-slate-700 line-clamp-3 mb-[10px]">
                         ACET CEO criticises Africa's disjointed response to global tariff crisis
                       </p>
                       <div className="flex gap-[6px] items-center">
@@ -197,7 +197,7 @@ export function EmployeeHome() {
                             </div>
                           </div>
                         </div>
-                        <p className="font-['Montserrat:Medium',sans-serif] font-medium text-[10px] text-slate-400 tracking-[-0.2px]">
+                        <p className="font-medium text-[10px] text-slate-400 tracking-[-0.2px]">
                           June 12, 2025
                         </p>
                       </div>
@@ -209,7 +209,7 @@ export function EmployeeHome() {
 
             {/* Trending News Section */}
             <div>
-              <p className="font-['Montserrat:SemiBold',sans-serif] font-semibold leading-[28px] text-[16px] text-slate-600 mb-3">
+              <p className="font-semibold leading-[28px] text-[16px] text-slate-600 mb-3">
                 Trending News
               </p>
               <div className="grid grid-cols-2 gap-4">
@@ -220,7 +220,7 @@ export function EmployeeHome() {
                       <img alt="" className="w-full h-full object-cover rounded-[7px]" src={imgImage21} />
                       <div className="absolute bg-[rgba(0,0,0,0.3)] inset-0 rounded-[7px]" />
                       <div className="absolute left-[24.52px] top-[20px]">
-                        <p className="font-['Montserrat:Medium',sans-serif] font-medium h-[18px] leading-[16px] text-[11px] text-white tracking-[-0.22px] w-[329px] truncate">
+                        <p className="font-medium h-[18px] leading-[16px] text-[11px] text-white tracking-[-0.22px] w-[329px] truncate">
                           Cedi Gains Must Drive Industrial Growth – ACET CEO Calls ...
                         </p>
                       </div>
@@ -232,7 +232,7 @@ export function EmployeeHome() {
                       </div>
                     </div>
                     <div className="px-[7px]">
-                      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[18px] text-[14px] text-slate-700 line-clamp-2">
+                      <p className="font-medium leading-[18px] text-[14px] text-slate-700 line-clamp-2">
                         Cedi Gains Must Drive Industrial Growth – ACET CEO Calls ...
                       </p>
                     </div>
@@ -246,7 +246,7 @@ export function EmployeeHome() {
                       <img alt="" className="w-full h-full object-cover rounded-[7px]" src={imgImage24} />
                       <div className="absolute bg-[rgba(0,0,0,0.3)] inset-0 rounded-[7px]" />
                       <div className="absolute left-[25.02px] top-[20px]">
-                        <p className="font-['Montserrat:Medium',sans-serif] font-medium h-[18px] leading-[16px] text-[11px] text-white tracking-[-0.22px] w-[330px] truncate">
+                        <p className="font-medium h-[18px] leading-[16px] text-[11px] text-white tracking-[-0.22px] w-[330px] truncate">
                           Ghana's economic growth stalled by lack of focus – ACET
                         </p>
                       </div>
@@ -258,7 +258,7 @@ export function EmployeeHome() {
                       </div>
                     </div>
                     <div className="px-[7px]">
-                      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[18px] text-[14px] text-slate-700 line-clamp-2">
+                      <p className="font-medium leading-[18px] text-[14px] text-slate-700 line-clamp-2">
                         Ghana's economic growth stalled by lack of focus – ACET
                       </p>
                     </div>
@@ -272,18 +272,18 @@ export function EmployeeHome() {
           <div className="w-[282px] flex-shrink-0">
             {/* Staff on Leave Card */}
             <div className="mb-8">
-              <p className="font-['Montserrat:SemiBold',sans-serif] font-semibold leading-[28px] text-[16px] text-slate-600 mb-3">
+              <p className="font-semibold leading-[28px] text-[16px] text-slate-600 mb-3">
                 Staff on Leave
               </p>
               <div className="bg-white rounded-[12px] border border-slate-200 shadow-[0px_4px_12px_0px_rgba(0,0,0,0.03)] overflow-hidden">
                 <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Calendar size={14} className="text-purple-600" />
-                    <p className="font-['Montserrat:Medium',sans-serif] font-medium text-[12px] text-slate-500">
+                    <p className="font-medium text-[12px] text-slate-500">
                       {staffOnLeave.length} colleagues away
                     </p>
                   </div>
-                  <span className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-full bg-purple-100 text-purple-700 font-['Montserrat:SemiBold',sans-serif] font-semibold text-[11px]">
+                  <span className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-full bg-purple-100 text-purple-700 font-semibold text-[11px]">
                     {staffOnLeave.length}
                   </span>
                 </div>
@@ -297,17 +297,17 @@ export function EmployeeHome() {
                           className="w-8 h-8 rounded-full object-cover flex-shrink-0 mt-0.5"
                         />
                         <div className="flex-1 min-w-0">
-                          <p className="font-['Montserrat:SemiBold',sans-serif] font-semibold text-[12px] text-slate-900 truncate">
+                          <p className="font-semibold text-[12px] text-slate-900 truncate">
                             {person.name}
                           </p>
-                          <p className="font-['Montserrat:Regular',sans-serif] font-normal text-[10px] text-slate-500 truncate">
+                          <p className="font-normal text-[10px] text-slate-500 truncate">
                             {person.role}
                           </p>
                           <div className="flex items-center justify-between mt-1.5">
-                            <span className={`inline-block px-2 py-0.5 rounded-full text-[9px] font-['Montserrat:Medium',sans-serif] font-medium ${leaveTypeColors[person.leaveType] || "bg-slate-100 text-slate-600"}`}>
+                            <span className={`inline-block px-2 py-0.5 rounded-full text-[9px] font-medium ${leaveTypeColors[person.leaveType] || "bg-slate-100 text-slate-600"}`}>
                               {person.leaveType}
                             </span>
-                            <p className="font-['Montserrat:Regular',sans-serif] font-normal text-[10px] text-slate-400">
+                            <p className="font-normal text-[10px] text-slate-400">
                               {person.returnDate}
                             </p>
                           </div>
@@ -321,7 +321,7 @@ export function EmployeeHome() {
                     onClick={() => setShowLeaveModal(true)}
                     className="w-full px-4 py-2.5 border-t border-slate-100 flex items-center justify-center gap-1.5 hover:bg-purple-50 transition-colors group"
                   >
-                    <span className="font-['Montserrat:Medium',sans-serif] font-medium text-[11px] text-purple-700 group-hover:text-purple-800">
+                    <span className="font-medium text-[11px] text-purple-700 group-hover:text-purple-800">
                       View All ({staffOnLeave.length})
                     </span>
                     <ArrowRight size={12} className="text-purple-600 group-hover:translate-x-0.5 transition-transform" />
@@ -330,7 +330,7 @@ export function EmployeeHome() {
               </div>
             </div>
 
-            <p className="font-['Montserrat:SemiBold',sans-serif] font-semibold leading-[28px] text-[16px] text-slate-600 mb-3">
+            <p className="font-semibold leading-[28px] text-[16px] text-slate-600 mb-3">
               Announcements
             </p>
             <div className="space-y-5">
@@ -341,7 +341,7 @@ export function EmployeeHome() {
                     <img alt="" className="absolute h-full left-[-1.19%] max-w-none top-0 w-[113.7%]" src={imgImage} />
                   </div>
                   <div className="px-[7px]">
-                    <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[17px] text-[12px] text-slate-900 tracking-[-0.12px] line-clamp-3">
+                    <p className="font-medium leading-[17px] text-[12px] text-slate-900 tracking-[-0.12px] line-clamp-3">
                       You can now use MTN mobile money app to pay your bills. Download it today for 500mb free data
                     </p>
                   </div>
@@ -355,7 +355,7 @@ export function EmployeeHome() {
                     <img alt="" className="w-full h-full object-cover rounded-[7px]" src={imgImage1} />
                   </div>
                   <div className="px-[7px]">
-                    <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[15px] text-[12px] text-slate-900 tracking-[-0.24px] line-clamp-3">
+                    <p className="font-medium leading-[15px] text-[12px] text-slate-900 tracking-[-0.24px] line-clamp-3">
                       Inside MAGGI Cube: What Goes In? | MAGGI
                     </p>
                   </div>
@@ -383,10 +383,10 @@ export function EmployeeHome() {
                   <Calendar size={18} className="text-purple-700" />
                 </div>
                 <div>
-                  <h2 className="font-['Montserrat:SemiBold',sans-serif] font-semibold text-[16px] text-slate-900">
+                  <h2 className="font-semibold text-[16px] text-slate-900">
                     Staff on Leave
                   </h2>
-                  <p className="font-['Montserrat:Regular',sans-serif] font-normal text-[12px] text-slate-500">
+                  <p className="font-normal text-[12px] text-slate-500">
                     {staffOnLeave.length} colleagues currently away
                   </p>
                 </div>
@@ -411,17 +411,17 @@ export function EmployeeHome() {
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2">
-                        <p className="font-['Montserrat:SemiBold',sans-serif] font-semibold text-[13px] text-slate-900 truncate">
+                        <p className="font-semibold text-[13px] text-slate-900 truncate">
                           {person.name}
                         </p>
-                        <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-['Montserrat:Medium',sans-serif] font-medium flex-shrink-0 ${leaveTypeColors[person.leaveType] || "bg-slate-100 text-slate-600"}`}>
+                        <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-medium flex-shrink-0 ${leaveTypeColors[person.leaveType] || "bg-slate-100 text-slate-600"}`}>
                           {person.leaveType}
                         </span>
                       </div>
-                      <p className="font-['Montserrat:Regular',sans-serif] font-normal text-[11px] text-slate-500 mt-0.5">
+                      <p className="font-normal text-[11px] text-slate-500 mt-0.5">
                         {person.role}
                       </p>
-                      <p className="font-['Montserrat:Regular',sans-serif] font-normal text-[11px] text-slate-400 mt-1">
+                      <p className="font-normal text-[11px] text-slate-400 mt-1">
                         Returns {person.returnDate}
                       </p>
                     </div>

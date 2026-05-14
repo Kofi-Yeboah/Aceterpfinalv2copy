@@ -3,7 +3,7 @@ import svgPaths from "./svg-lp82c23a7g";
 function Frame() {
   return (
     <div className="content-stretch flex items-start justify-between relative shrink-0 w-full">
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[12.562px] text-nowrap text-slate-600 tracking-[-0.2512px] whitespace-pre">Recipients</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[12.562px] text-nowrap text-slate-600 tracking-[-0.2512px] whitespace-pre">Recipients</p>
     </div>
   );
 }
@@ -14,7 +14,7 @@ function Frame1() {
       <div aria-hidden="true" className="absolute border-[0.897px] border-slate-200 border-solid inset-0 pointer-events-none rounded-[7.209px]" />
       <div className="flex flex-row items-center size-full">
         <div className="box-border content-stretch flex items-center justify-between px-[12px] py-[6.281px] relative w-full">
-          <p className="font-['Montserrat:Regular',sans-serif] font-normal leading-[19.74px] relative shrink-0 text-[14.356px] text-nowrap text-slate-700 tracking-[-0.1436px] whitespace-pre">Departments</p>
+          <p className="font-normal leading-[19.74px] relative shrink-0 text-[14.356px] text-nowrap text-slate-700 tracking-[-0.1436px] whitespace-pre">Departments</p>
         </div>
       </div>
     </div>
@@ -33,7 +33,7 @@ function InputField() {
 function Frame2() {
   return (
     <div className="content-stretch flex items-start justify-between relative shrink-0 w-[503.357px]">
-      <p className="font-['Montserrat:Medium',sans-serif] font-medium leading-[normal] relative shrink-0 text-[12.562px] text-nowrap text-slate-600 tracking-[-0.2512px] whitespace-pre">Select Departments</p>
+      <p className="font-medium leading-[normal] relative shrink-0 text-[12.562px] text-nowrap text-slate-600 tracking-[-0.2512px] whitespace-pre">Select Departments</p>
     </div>
   );
 }
@@ -53,7 +53,7 @@ function Cancel() {
 function Frame4() {
   return (
     <div className="content-stretch flex gap-[14.356px] items-center relative shrink-0 w-full">
-      <p className="font-['Montserrat:Regular',sans-serif] font-normal leading-[19.74px] relative shrink-0 text-[14.356px] text-nowrap text-slate-700 tracking-[-0.1436px] whitespace-pre">IT</p>
+      <p className="font-normal leading-[19.74px] relative shrink-0 text-[14.356px] text-nowrap text-slate-700 tracking-[-0.1436px] whitespace-pre">IT</p>
       <Cancel />
     </div>
   );
@@ -83,7 +83,7 @@ function Cancel1() {
 function Frame5() {
   return (
     <div className="content-stretch flex gap-[14.356px] items-center relative shrink-0 w-full">
-      <p className="font-['Montserrat:Regular',sans-serif] font-normal leading-[19.74px] relative shrink-0 text-[14.356px] text-nowrap text-slate-700 tracking-[-0.1436px] whitespace-pre">Finance</p>
+      <p className="font-normal leading-[19.74px] relative shrink-0 text-[14.356px] text-nowrap text-slate-700 tracking-[-0.1436px] whitespace-pre">Finance</p>
       <Cancel1 />
     </div>
   );

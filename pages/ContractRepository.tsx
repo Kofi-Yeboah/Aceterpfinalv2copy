@@ -18,7 +18,6 @@ import { getSignature, subscribe as subscribeSignature, getCurrentUserId, canUse
    TYPES & CONSTANTS
    ══════════════════════════════════════════════════════════════════════════════ */
 
-const F = "Montserrat, sans-serif";
 
 type ContractStatus = "Active" | "Expiring Soon" | "Expired" | "Pending" | "Terminated" | "Renewed";
 
@@ -437,7 +436,7 @@ export function ContractRepository() {
     ];
 
     return (
-      <div className="h-full flex flex-col bg-slate-50 overflow-hidden" style={{ fontFamily: F }}>
+      <div className="h-full flex flex-col bg-slate-50 overflow-hidden">
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-200 bg-white shrink-0">
           <div className="flex items-center gap-4">
@@ -447,7 +446,7 @@ export function ContractRepository() {
             </button>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2.5 flex-wrap">
-                <h1 className="text-[16px] font-semibold text-slate-900 truncate" style={{ fontFamily: F }}>{c.contractNumber}</h1>
+                <h1 className="text-[16px] font-semibold text-slate-900 truncate">{c.contractNumber}</h1>
                 <span className={cn("text-[11px] font-medium px-2.5 py-0.5 rounded", getStatusColor(c.status))}>{c.status}</span>
                 <span className={cn("text-[11px] font-medium px-2 py-0.5 rounded", getTypeBadge(c.type))}>{c.type}</span>
                 {isProcurement && (
@@ -456,7 +455,7 @@ export function ContractRepository() {
                   </span>
                 )}
               </div>
-              <p className="text-[12px] text-slate-500 mt-0.5 truncate" style={{ fontFamily: F }}>
+              <p className="text-[12px] text-slate-500 mt-0.5 truncate">
                 {c.title} &middot; {c.party}
               </p>
             </div>
@@ -466,17 +465,17 @@ export function ContractRepository() {
                 <>
                   <button onClick={() => setShowUploadModal(true)}
                     className="px-3 py-2 rounded-lg text-[12px] font-medium text-white flex items-center gap-1.5 hover:opacity-90"
-                    style={{ backgroundColor: "#0B01D0", fontFamily: F }}>
+                    style={{ backgroundColor: "#0B01D0" }}>
                     <Upload size={13} /> Upload Document
                   </button>
                   <button onClick={() => setShowAmendModal(true)}
                     className="px-3 py-2 rounded-lg text-[12px] font-medium border border-purple-300 bg-purple-50 text-purple-700 flex items-center gap-1.5 hover:bg-purple-100"
-                    style={{ fontFamily: F }}>
+                   >
                     <Edit3 size={13} /> Amend
                   </button>
                   <button onClick={() => { setNewStatus(c.status as ContractStatus); setShowStatusModal(true); }}
                     className="px-3 py-2 rounded-lg text-[12px] font-medium border border-slate-200 text-slate-700 flex items-center gap-1.5 hover:bg-slate-50"
-                    style={{ fontFamily: F }}>
+                   >
                     <Shield size={13} /> Status
                   </button>
                 </>
@@ -491,7 +490,7 @@ export function ContractRepository() {
                 <button key={t.key} onClick={() => setDetailTab(t.key)}
                   className={`px-4 py-1.5 rounded-lg text-[12px] transition-colors ${
                     detailTab === t.key ? "bg-purple-700 text-white shadow-sm" : "text-slate-500 hover:text-slate-700"
-                  }`} style={{ fontFamily: F }}>
+                  }`}>
                   {t.label}
                 </button>
               ))}
@@ -509,48 +508,48 @@ export function ContractRepository() {
                 <div className="bg-white rounded-xl border border-slate-200 p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center"><DollarSign size={15} className="text-green-600" /></div>
-                    <p className="text-[11px] text-slate-500" style={{ fontFamily: F }}>Contract Value</p>
+                    <p className="text-[11px] text-slate-500">Contract Value</p>
                   </div>
-                  <p className="text-[18px] font-semibold text-slate-900" style={{ fontFamily: F }}>{c.value > 0 ? formatCurrency(c.value) : "N/A"}</p>
+                  <p className="text-[18px] font-semibold text-slate-900">{c.value > 0 ? formatCurrency(c.value) : "N/A"}</p>
                 </div>
                 <div className="bg-white rounded-xl border border-slate-200 p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center"><Calendar size={15} className="text-blue-600" /></div>
-                    <p className="text-[11px] text-slate-500" style={{ fontFamily: F }}>Days Remaining</p>
+                    <p className="text-[11px] text-slate-500">Days Remaining</p>
                   </div>
-                  <p className={`text-[18px] font-semibold ${daysLeft < 30 ? "text-red-600" : daysLeft < 90 ? "text-amber-600" : "text-slate-900"}`} style={{ fontFamily: F }}>
+                  <p className={`text-[18px] font-semibold ${daysLeft < 30 ? "text-red-600" : daysLeft < 90 ? "text-amber-600" : "text-slate-900"}`}>
                     {daysLeft > 0 ? daysLeft : "Expired"}
                   </p>
                 </div>
                 <div className="bg-white rounded-xl border border-slate-200 p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center"><Paperclip size={15} className="text-purple-600" /></div>
-                    <p className="text-[11px] text-slate-500" style={{ fontFamily: F }}>Documents</p>
+                    <p className="text-[11px] text-slate-500">Documents</p>
                   </div>
-                  <p className="text-[18px] font-semibold text-slate-900" style={{ fontFamily: F }}>{totalDocs}</p>
+                  <p className="text-[18px] font-semibold text-slate-900">{totalDocs}</p>
                 </div>
                 <div className="bg-white rounded-xl border border-slate-200 p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center"><Edit3 size={15} className="text-amber-600" /></div>
-                    <p className="text-[11px] text-slate-500" style={{ fontFamily: F }}>Amendments</p>
+                    <p className="text-[11px] text-slate-500">Amendments</p>
                   </div>
-                  <p className="text-[18px] font-semibold text-slate-900" style={{ fontFamily: F }}>{c.amendments?.length || 0}</p>
+                  <p className="text-[18px] font-semibold text-slate-900">{c.amendments?.length || 0}</p>
                 </div>
               </div>
 
               {/* Contract Progress Bar */}
               <div className="bg-white rounded-xl border border-slate-200 p-5">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-[13px] font-semibold text-slate-900" style={{ fontFamily: F }}>Contract Progress</h3>
-                  <span className="text-[11px] text-slate-500" style={{ fontFamily: F }}>{progress}% elapsed</span>
+                  <h3 className="text-[13px] font-semibold text-slate-900">Contract Progress</h3>
+                  <span className="text-[11px] text-slate-500">{progress}% elapsed</span>
                 </div>
                 <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
                   <div className={`h-full rounded-full transition-all ${progress >= 90 ? "bg-red-500" : progress >= 75 ? "bg-amber-500" : "bg-green-500"}`}
                     style={{ width: `${progress}%` }} />
                 </div>
                 <div className="flex items-center justify-between mt-2">
-                  <span className="text-[10px] text-slate-400" style={{ fontFamily: F }}>{formatDate(c.startDate)}</span>
-                  <span className="text-[10px] text-slate-400" style={{ fontFamily: F }}>{formatDate(c.endDate)}</span>
+                  <span className="text-[10px] text-slate-400">{formatDate(c.startDate)}</span>
+                  <span className="text-[10px] text-slate-400">{formatDate(c.endDate)}</span>
                 </div>
               </div>
 
@@ -558,7 +557,7 @@ export function ContractRepository() {
               <div className="grid grid-cols-2 gap-5">
                 {/* Contract Details */}
                 <div className="bg-white rounded-xl border border-slate-200 p-5">
-                  <h3 className="text-[13px] font-semibold text-slate-900 mb-4 flex items-center gap-2" style={{ fontFamily: F }}>
+                  <h3 className="text-[13px] font-semibold text-slate-900 mb-4 flex items-center gap-2">
                     <FileText size={14} className="text-purple-700" /> Contract Details
                   </h3>
                   <div className="space-y-3">
@@ -573,27 +572,27 @@ export function ContractRepository() {
                       ["Value", c.value > 0 ? formatCurrency(c.value) : "N/A"],
                     ].map(([label, val]) => (
                       <div key={label} className="flex items-start justify-between">
-                        <span className="text-[11px] text-slate-500 shrink-0 w-32" style={{ fontFamily: F }}>{label}</span>
-                        <span className="text-[12px] text-slate-900 text-right" style={{ fontFamily: F }}>{val}</span>
+                        <span className="text-[11px] text-slate-500 shrink-0 w-32">{label}</span>
+                        <span className="text-[12px] text-slate-900 text-right">{val}</span>
                       </div>
                     ))}
                     {c.paymentTerms && (
                       <div className="flex items-start justify-between">
-                        <span className="text-[11px] text-slate-500 shrink-0 w-32" style={{ fontFamily: F }}>Payment Terms</span>
-                        <span className="text-[12px] text-slate-900 text-right" style={{ fontFamily: F }}>{c.paymentTerms}</span>
+                        <span className="text-[11px] text-slate-500 shrink-0 w-32">Payment Terms</span>
+                        <span className="text-[12px] text-slate-900 text-right">{c.paymentTerms}</span>
                       </div>
                     )}
                     {c.deliveryTerms && (
                       <div className="flex items-start justify-between">
-                        <span className="text-[11px] text-slate-500 shrink-0 w-32" style={{ fontFamily: F }}>Delivery Terms</span>
-                        <span className="text-[12px] text-slate-900 text-right" style={{ fontFamily: F }}>{c.deliveryTerms}</span>
+                        <span className="text-[11px] text-slate-500 shrink-0 w-32">Delivery Terms</span>
+                        <span className="text-[12px] text-slate-900 text-right">{c.deliveryTerms}</span>
                       </div>
                     )}
                   </div>
                   {c.description && (
                     <div className="mt-4 pt-3 border-t border-slate-100">
-                      <p className="text-[11px] text-slate-500 mb-1" style={{ fontFamily: F }}>Description</p>
-                      <p className="text-[12px] text-slate-700" style={{ fontFamily: F }}>{c.description}</p>
+                      <p className="text-[11px] text-slate-500 mb-1">Description</p>
+                      <p className="text-[12px] text-slate-700">{c.description}</p>
                     </div>
                   )}
                 </div>
@@ -601,18 +600,18 @@ export function ContractRepository() {
                 {/* Party / Vendor + Sourcing Trail */}
                 <div className="space-y-5">
                   <div className="bg-white rounded-xl border border-slate-200 p-5">
-                    <h3 className="text-[13px] font-semibold text-slate-900 mb-4 flex items-center gap-2" style={{ fontFamily: F }}>
+                    <h3 className="text-[13px] font-semibold text-slate-900 mb-4 flex items-center gap-2">
                       <Building2 size={14} className="text-purple-700" /> Counterparty
                     </h3>
                     <div className="space-y-3">
                       <div className="flex items-start justify-between">
-                        <span className="text-[11px] text-slate-500 w-32" style={{ fontFamily: F }}>Name</span>
-                        <span className="text-[12px] text-slate-900 font-medium text-right" style={{ fontFamily: F }}>{c.party}</span>
+                        <span className="text-[11px] text-slate-500 w-32">Name</span>
+                        <span className="text-[12px] text-slate-900 font-medium text-right">{c.party}</span>
                       </div>
                       {c.category && (
                         <div className="flex items-start justify-between">
-                          <span className="text-[11px] text-slate-500 w-32" style={{ fontFamily: F }}>Category</span>
-                          <span className="text-[12px] text-slate-900 text-right" style={{ fontFamily: F }}>{c.category}</span>
+                          <span className="text-[11px] text-slate-500 w-32">Category</span>
+                          <span className="text-[12px] text-slate-900 text-right">{c.category}</span>
                         </div>
                       )}
                     </div>
@@ -620,7 +619,7 @@ export function ContractRepository() {
 
                   {isProcurement && (
                     <div className="bg-indigo-50 rounded-xl border border-indigo-200 p-5">
-                      <h3 className="text-[13px] font-semibold text-indigo-900 mb-4 flex items-center gap-2" style={{ fontFamily: F }}>
+                      <h3 className="text-[13px] font-semibold text-indigo-900 mb-4 flex items-center gap-2">
                         <Link2 size={14} className="text-indigo-600" /> Procurement Traceability
                       </h3>
                       <div className="space-y-3">
@@ -631,15 +630,15 @@ export function ContractRepository() {
                           ["Award Date", c.awardDate ? formatDate(c.awardDate) : "—"],
                         ].map(([label, val]) => (
                           <div key={label} className="flex items-start justify-between">
-                            <span className="text-[11px] text-indigo-500 w-32" style={{ fontFamily: F }}>{label}</span>
-                            <span className="text-[12px] text-indigo-900 font-medium text-right" style={{ fontFamily: F }}>{val}</span>
+                            <span className="text-[11px] text-indigo-500 w-32">{label}</span>
+                            <span className="text-[12px] text-indigo-900 font-medium text-right">{val}</span>
                           </div>
                         ))}
                       </div>
                       {c.comments && (
                         <div className="mt-3 pt-3 border-t border-indigo-200">
-                          <p className="text-[11px] text-indigo-500 mb-1" style={{ fontFamily: F }}>Award Comments</p>
-                          <p className="text-[12px] text-indigo-800" style={{ fontFamily: F }}>{c.comments}</p>
+                          <p className="text-[11px] text-indigo-500 mb-1">Award Comments</p>
+                          <p className="text-[12px] text-indigo-800">{c.comments}</p>
                         </div>
                       )}
                       {/* Visual trail */}
@@ -652,8 +651,8 @@ export function ContractRepository() {
                           <div key={i} className="flex items-center gap-0">
                             <div className="text-center">
                               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-semibold ${i === 2 ? "bg-indigo-600 text-white" : "bg-indigo-200 text-indigo-700"}`}>{i + 1}</div>
-                              <p className="text-[9px] text-indigo-700 mt-1 font-medium" style={{ fontFamily: F }}>{step.label}</p>
-                              <p className="text-[8px] text-indigo-400" style={{ fontFamily: F }}>{step.sub}</p>
+                              <p className="text-[9px] text-indigo-700 mt-1 font-medium">{step.label}</p>
+                              <p className="text-[8px] text-indigo-400">{step.sub}</p>
                             </div>
                             {i < 2 && <div className="w-8 h-0.5 bg-indigo-300 mx-1 mt-[-16px]" />}
                           </div>
@@ -666,14 +665,14 @@ export function ContractRepository() {
 
               {/* Digital Signature */}
               <div className="bg-white rounded-xl border border-slate-200 p-5">
-                <h3 className="text-[13px] font-semibold text-slate-900 mb-4 flex items-center gap-2" style={{ fontFamily: F }}>
+                <h3 className="text-[13px] font-semibold text-slate-900 mb-4 flex items-center gap-2">
                   <PenLine size={14} className="text-purple-700" /> Digital Signature
                 </h3>
                 {signedContracts[c.contractNumber] && signatureData ? (
                   <div className="space-y-3">
                     <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50 border border-emerald-200 rounded-lg">
                       <CheckCircle2 size={14} className="text-emerald-600" />
-                      <span className="text-[12px] text-emerald-700" style={{ fontFamily: F }}>
+                      <span className="text-[12px] text-emerald-700">
                         Signed by {signatureData.employeeName} on {signedContracts[c.contractNumber]}
                       </span>
                     </div>
@@ -685,7 +684,7 @@ export function ContractRepository() {
                   <button
                     onClick={() => setShowSignModal(true)}
                     className="flex items-center gap-2 px-4 py-2.5 text-white rounded-lg text-[12px] font-medium hover:opacity-90 transition-colors"
-                    style={{ backgroundColor: "#0B01D0", fontFamily: F }}
+                    style={{ backgroundColor: "#0B01D0" }}
                   >
                     <PenLine size={14} />
                     Apply My Signature
@@ -694,8 +693,8 @@ export function ContractRepository() {
                   <div className="flex items-start gap-3 px-4 py-3 bg-amber-50 border border-amber-200 rounded-lg">
                     <AlertCircle size={14} className="text-amber-600 mt-0.5 shrink-0" />
                     <div>
-                      <p className="text-[12px] text-amber-800" style={{ fontFamily: F }}>No signature uploaded</p>
-                      <p className="text-[11px] text-amber-600 mt-0.5" style={{ fontFamily: F }}>
+                      <p className="text-[12px] text-amber-800">No signature uploaded</p>
+                      <p className="text-[11px] text-amber-600 mt-0.5">
                         Go to My Personal Information &rarr; My Signature tab to upload your signature.
                       </p>
                     </div>
@@ -712,7 +711,7 @@ export function ContractRepository() {
                 <div className="flex justify-end">
                   <button onClick={() => setShowUploadModal(true)}
                     className="px-3.5 py-2 rounded-lg text-[12px] font-medium text-white flex items-center gap-1.5 hover:opacity-90"
-                    style={{ backgroundColor: "#0B01D0", fontFamily: F }}>
+                    style={{ backgroundColor: "#0B01D0" }}>
                     <Upload size={13} /> Upload Document
                   </button>
                 </div>
@@ -721,13 +720,13 @@ export function ContractRepository() {
               {c.documents.length === 0 ? (
                 <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
                   <Paperclip size={32} className="text-slate-300 mx-auto mb-3" />
-                  <p className="text-[13px] text-slate-500" style={{ fontFamily: F }}>No documents attached.</p>
-                  {c.storeId && <p className="text-[11px] text-slate-400 mt-1" style={{ fontFamily: F }}>Click "Upload Document" to attach files.</p>}
+                  <p className="text-[13px] text-slate-500">No documents attached.</p>
+                  {c.storeId && <p className="text-[11px] text-slate-400 mt-1">Click "Upload Document" to attach files.</p>}
                 </div>
               ) : (
                 <div className="bg-white rounded-xl border border-slate-200">
                   <div className="px-5 py-3 border-b border-slate-100">
-                    <h3 className="text-[13px] font-semibold text-slate-900" style={{ fontFamily: F }}>
+                    <h3 className="text-[13px] font-semibold text-slate-900">
                       All Documents ({c.documents.length} groups, {totalDocs} versions)
                     </h3>
                   </div>
@@ -741,8 +740,8 @@ export function ContractRepository() {
                               <FileText size={16} className="text-purple-600" />
                             </div>
                             <div>
-                              <p className="text-[12px] font-medium text-slate-900" style={{ fontFamily: F }}>{dg.label}</p>
-                              <p className="text-[10px] text-slate-400 mt-0.5" style={{ fontFamily: F }}>
+                              <p className="text-[12px] font-medium text-slate-900">{dg.label}</p>
+                              <p className="text-[10px] text-slate-400 mt-0.5">
                                 {current.name} &middot; v{current.version} &middot; {current.size} &middot; {current.uploadedBy} &middot; {formatDate(current.date)}
                               </p>
                             </div>
@@ -751,7 +750,7 @@ export function ContractRepository() {
                             {dg.versions.length > 1 && (
                               <button onClick={() => setVersionHistoryDoc(dg)}
                                 className="px-2.5 py-1 rounded text-[10px] text-purple-600 bg-purple-50 hover:bg-purple-100 flex items-center gap-1 transition-colors"
-                                style={{ fontFamily: F }}>
+                               >
                                 <History size={10} /> {dg.versions.length} versions
                               </button>
                             )}
@@ -773,7 +772,7 @@ export function ContractRepository() {
                 <div className="flex justify-end">
                   <button onClick={() => setShowAmendModal(true)}
                     className="px-3.5 py-2 rounded-lg text-[12px] font-medium border border-purple-300 bg-purple-50 text-purple-700 flex items-center gap-1.5 hover:bg-purple-100"
-                    style={{ fontFamily: F }}>
+                   >
                     <Plus size={13} /> New Amendment
                   </button>
                 </div>
@@ -782,7 +781,7 @@ export function ContractRepository() {
               {(!c.amendments || c.amendments.length === 0) ? (
                 <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
                   <Edit3 size={32} className="text-slate-300 mx-auto mb-3" />
-                  <p className="text-[13px] text-slate-500" style={{ fontFamily: F }}>No amendments recorded.</p>
+                  <p className="text-[13px] text-slate-500">No amendments recorded.</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -790,7 +789,7 @@ export function ContractRepository() {
                     <div key={amd.id} className="bg-white rounded-xl border border-slate-200 p-5">
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
-                          <span className="text-[12px] font-semibold text-slate-900" style={{ fontFamily: F }}>{amd.amendmentNumber}</span>
+                          <span className="text-[12px] font-semibold text-slate-900">{amd.amendmentNumber}</span>
                           <span className={cn("text-[10px] font-medium px-2 py-0.5 rounded",
                             amd.type === "Extension" ? "bg-blue-50 text-blue-700" :
                             amd.type === "Value Change" ? "bg-green-50 text-green-700" :
@@ -799,17 +798,17 @@ export function ContractRepository() {
                             "bg-amber-50 text-amber-700"
                           )}>{amd.type}</span>
                         </div>
-                        <span className="text-[11px] text-slate-400" style={{ fontFamily: F }}>{formatDate(amd.date)}</span>
+                        <span className="text-[11px] text-slate-400">{formatDate(amd.date)}</span>
                       </div>
-                      <p className="text-[12px] text-slate-700 mb-2" style={{ fontFamily: F }}>{amd.description}</p>
+                      <p className="text-[12px] text-slate-700 mb-2">{amd.description}</p>
                       {(amd.oldValue || amd.newValue) && (
                         <div className="flex items-center gap-3 text-[11px]">
-                          {amd.oldValue && <span className="text-red-500 line-through" style={{ fontFamily: F }}>{amd.oldValue}</span>}
+                          {amd.oldValue && <span className="text-red-500 line-through">{amd.oldValue}</span>}
                           {amd.oldValue && amd.newValue && <ChevronRight size={12} className="text-slate-400" />}
-                          {amd.newValue && <span className="text-green-600 font-medium" style={{ fontFamily: F }}>{amd.newValue}</span>}
+                          {amd.newValue && <span className="text-green-600 font-medium">{amd.newValue}</span>}
                         </div>
                       )}
-                      <p className="text-[10px] text-slate-400 mt-2" style={{ fontFamily: F }}>Approved by {amd.approvedBy}</p>
+                      <p className="text-[10px] text-slate-400 mt-2">Approved by {amd.approvedBy}</p>
                     </div>
                   ))}
                 </div>
@@ -820,7 +819,7 @@ export function ContractRepository() {
           {/* ── TIMELINE TAB ── */}
           {detailTab === "timeline" && (
             <div className="bg-white rounded-xl border border-slate-200 p-5">
-              <h3 className="text-[13px] font-semibold text-slate-900 mb-5" style={{ fontFamily: F }}>Contract Lifecycle</h3>
+              <h3 className="text-[13px] font-semibold text-slate-900 mb-5">Contract Lifecycle</h3>
               <div className="relative pl-6 space-y-6">
                 <div className="absolute left-[11px] top-2 bottom-2 w-px bg-slate-200" />
                 {/* Award / Creation */}
@@ -854,7 +853,7 @@ export function ContractRepository() {
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-[500px] overflow-hidden">
               <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-                <h3 className="text-[15px] font-semibold text-slate-900" style={{ fontFamily: F }}>Upload Document</h3>
+                <h3 className="text-[15px] font-semibold text-slate-900">Upload Document</h3>
                 <button onClick={() => { setShowUploadModal(false); setUploadFile(null); setUploadError(""); setUploadSuccess(false); }}
                   className="p-1.5 hover:bg-slate-100 rounded-lg"><X size={16} className="text-slate-500" /></button>
               </div>
@@ -862,16 +861,16 @@ export function ContractRepository() {
                 {uploadSuccess ? (
                   <div className="flex flex-col items-center py-6">
                     <CheckCircle2 size={36} className="text-green-600 mb-3" />
-                    <p className="text-[14px] font-semibold text-green-800" style={{ fontFamily: F }}>Uploaded Successfully</p>
+                    <p className="text-[14px] font-semibold text-green-800">Uploaded Successfully</p>
                   </div>
                 ) : (
                   <>
                     <div className="mb-4">
-                      <label className="text-[12px] font-medium text-slate-700 mb-1.5 block" style={{ fontFamily: F }}>Document Label *</label>
+                      <label className="text-[12px] font-medium text-slate-700 mb-1.5 block">Document Label *</label>
                       <input type="text" value={uploadLabel} onChange={e => setUploadLabel(e.target.value)}
                         placeholder="e.g. Signed Contract, Amendment, Invoice..."
                         className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-[12px] text-slate-900 outline-none focus:border-purple-400"
-                        style={{ fontFamily: F }} />
+                        />
                     </div>
                     <div className="border-2 border-dashed rounded-xl p-6 text-center bg-slate-50"
                       onDragOver={e => e.preventDefault()}
@@ -879,31 +878,31 @@ export function ContractRepository() {
                       {uploadFile ? (
                         <div className="flex items-center gap-3 justify-center">
                           <FileText size={18} className="text-green-600" />
-                          <span className="text-[12px] text-slate-900" style={{ fontFamily: F }}>{uploadFile.name}</span>
+                          <span className="text-[12px] text-slate-900">{uploadFile.name}</span>
                           <button onClick={() => setUploadFile(null)} className="p-1 hover:bg-red-50 rounded"><Trash2 size={14} className="text-red-400" /></button>
                         </div>
                       ) : (
                         <>
                           <Upload size={24} className="text-slate-400 mx-auto mb-2" />
-                          <p className="text-[12px] text-slate-600" style={{ fontFamily: F }}>Drag & drop or click Browse</p>
+                          <p className="text-[12px] text-slate-600">Drag & drop or click Browse</p>
                           <input ref={fileInputRef} type="file" className="hidden" onChange={e => { if (e.target.files?.[0]) setUploadFile(e.target.files[0]); }} />
                           <button onClick={() => fileInputRef.current?.click()}
                             className="mt-2 px-4 py-2 text-[12px] font-medium text-white rounded-lg hover:opacity-90"
-                            style={{ backgroundColor: "#0B01D0", fontFamily: F }}>Browse Files</button>
+                            style={{ backgroundColor: "#0B01D0" }}>Browse Files</button>
                         </>
                       )}
                     </div>
-                    {uploadError && <p className="mt-2 text-[11px] text-red-600 flex items-center gap-1" style={{ fontFamily: F }}><AlertTriangle size={11} /> {uploadError}</p>}
+                    {uploadError && <p className="mt-2 text-[11px] text-red-600 flex items-center gap-1"><AlertTriangle size={11} /> {uploadError}</p>}
                   </>
                 )}
               </div>
               {!uploadSuccess && (
                 <div className="px-6 py-4 border-t border-slate-200 flex justify-end gap-3">
                   <button onClick={() => { setShowUploadModal(false); setUploadFile(null); setUploadError(""); }}
-                    className="px-4 py-2 border border-slate-200 rounded-lg text-[12px] text-slate-600 hover:bg-slate-50" style={{ fontFamily: F }}>Cancel</button>
+                    className="px-4 py-2 border border-slate-200 rounded-lg text-[12px] text-slate-600 hover:bg-slate-50">Cancel</button>
                   <button onClick={handleUploadConfirm} disabled={!uploadFile || !uploadLabel}
                     className="px-5 py-2 text-[12px] font-medium text-white rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-                    style={{ backgroundColor: "#0B01D0", fontFamily: F }}>Upload</button>
+                    style={{ backgroundColor: "#0B01D0" }}>Upload</button>
                 </div>
               )}
             </div>
@@ -915,43 +914,43 @@ export function ContractRepository() {
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-[520px] overflow-hidden">
               <div className="px-6 py-4 border-b border-purple-200 bg-purple-50 flex items-center justify-between">
-                <h3 className="text-[15px] font-semibold text-slate-900" style={{ fontFamily: F }}>Record Amendment</h3>
+                <h3 className="text-[15px] font-semibold text-slate-900">Record Amendment</h3>
                 <button onClick={() => setShowAmendModal(false)} className="p-1.5 hover:bg-purple-100 rounded-lg"><X size={16} className="text-slate-500" /></button>
               </div>
               <div className="px-6 py-5 flex flex-col gap-4">
                 <div>
-                  <label className="text-[11px] text-slate-600 mb-1 block" style={{ fontFamily: F }}>Amendment Type *</label>
+                  <label className="text-[11px] text-slate-600 mb-1 block">Amendment Type *</label>
                   <select value={amendType} onChange={e => setAmendType(e.target.value as any)}
-                    className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-[12px] text-slate-900 bg-white focus:outline-none focus:border-purple-400" style={{ fontFamily: F }}>
+                    className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-[12px] text-slate-900 bg-white focus:outline-none focus:border-purple-400">
                     <option>Extension</option><option>Value Change</option><option>Scope Change</option><option>Termination</option><option>Renewal</option>
                   </select>
                 </div>
                 <div>
-                  <label className="text-[11px] text-slate-600 mb-1 block" style={{ fontFamily: F }}>Description *</label>
+                  <label className="text-[11px] text-slate-600 mb-1 block">Description *</label>
                   <textarea value={amendDesc} onChange={e => setAmendDesc(e.target.value)} rows={2}
                     className="w-full border border-slate-200 rounded-lg px-3 py-2 text-[12px] text-slate-900 outline-none resize-none focus:border-purple-400"
-                    style={{ fontFamily: F }} placeholder="Describe the amendment..." />
+                    placeholder="Describe the amendment..." />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-[11px] text-slate-600 mb-1 block" style={{ fontFamily: F }}>Previous Value</label>
+                    <label className="text-[11px] text-slate-600 mb-1 block">Previous Value</label>
                     <input type="text" value={amendOldVal} onChange={e => setAmendOldVal(e.target.value)}
                       className="w-full border border-slate-200 rounded-lg px-3 py-2 text-[12px] text-slate-900 outline-none focus:border-purple-400"
-                      style={{ fontFamily: F }} placeholder="Optional" />
+                      placeholder="Optional" />
                   </div>
                   <div>
-                    <label className="text-[11px] text-slate-600 mb-1 block" style={{ fontFamily: F }}>New Value</label>
+                    <label className="text-[11px] text-slate-600 mb-1 block">New Value</label>
                     <input type="text" value={amendNewVal} onChange={e => setAmendNewVal(e.target.value)}
                       className="w-full border border-slate-200 rounded-lg px-3 py-2 text-[12px] text-slate-900 outline-none focus:border-purple-400"
-                      style={{ fontFamily: F }} placeholder="Optional" />
+                      placeholder="Optional" />
                   </div>
                 </div>
               </div>
               <div className="px-6 py-4 border-t border-slate-200 flex justify-end gap-3">
-                <button onClick={() => setShowAmendModal(false)} className="px-4 py-2 border border-slate-200 rounded-lg text-[12px] text-slate-600 hover:bg-slate-50" style={{ fontFamily: F }}>Cancel</button>
+                <button onClick={() => setShowAmendModal(false)} className="px-4 py-2 border border-slate-200 rounded-lg text-[12px] text-slate-600 hover:bg-slate-50">Cancel</button>
                 <button onClick={handleAmendSubmit} disabled={!amendDesc.trim()}
                   className="px-5 py-2 text-[12px] font-medium text-white rounded-lg bg-purple-700 hover:bg-purple-800 disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ fontFamily: F }}>Record Amendment</button>
+                 >Record Amendment</button>
               </div>
             </div>
           </div>
@@ -962,7 +961,7 @@ export function ContractRepository() {
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-[400px] overflow-hidden">
               <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-                <h3 className="text-[15px] font-semibold text-slate-900" style={{ fontFamily: F }}>Change Status</h3>
+                <h3 className="text-[15px] font-semibold text-slate-900">Change Status</h3>
                 <button onClick={() => setShowStatusModal(false)} className="p-1.5 hover:bg-slate-100 rounded-lg"><X size={16} className="text-slate-500" /></button>
               </div>
               <div className="px-6 py-5">
@@ -978,10 +977,10 @@ export function ContractRepository() {
                 </div>
               </div>
               <div className="px-6 py-4 border-t border-slate-200 flex justify-end gap-3">
-                <button onClick={() => setShowStatusModal(false)} className="px-4 py-2 border border-slate-200 rounded-lg text-[12px] text-slate-600 hover:bg-slate-50" style={{ fontFamily: F }}>Cancel</button>
+                <button onClick={() => setShowStatusModal(false)} className="px-4 py-2 border border-slate-200 rounded-lg text-[12px] text-slate-600 hover:bg-slate-50">Cancel</button>
                 <button onClick={handleStatusChange}
                   className="px-5 py-2 text-[12px] font-medium text-white rounded-lg hover:opacity-90"
-                  style={{ backgroundColor: "#0B01D0", fontFamily: F }}>Update Status</button>
+                  style={{ backgroundColor: "#0B01D0" }}>Update Status</button>
               </div>
             </div>
           </div>
@@ -993,8 +992,8 @@ export function ContractRepository() {
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-[520px] overflow-hidden">
               <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
                 <div>
-                  <h3 className="text-[15px] font-semibold text-slate-900" style={{ fontFamily: F }}>Version History</h3>
-                  <p className="text-[11px] text-slate-500 mt-0.5" style={{ fontFamily: F }}>{versionHistoryDoc.label}</p>
+                  <h3 className="text-[15px] font-semibold text-slate-900">Version History</h3>
+                  <p className="text-[11px] text-slate-500 mt-0.5">{versionHistoryDoc.label}</p>
                 </div>
                 <button onClick={() => setVersionHistoryDoc(null)} className="p-1.5 hover:bg-slate-100 rounded-lg"><X size={16} className="text-slate-500" /></button>
               </div>
@@ -1005,10 +1004,10 @@ export function ContractRepository() {
                   }`}>
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
                       i === 0 ? "bg-green-100 text-green-600" : "bg-slate-200 text-slate-500"
-                    }`}><span className="text-[11px] font-semibold" style={{ fontFamily: F }}>v{v.version}</span></div>
+                    }`}><span className="text-[11px] font-semibold">v{v.version}</span></div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[12px] font-medium text-slate-900 truncate" style={{ fontFamily: F }}>{v.name}</p>
-                      <p className="text-[10px] text-slate-400" style={{ fontFamily: F }}>{v.uploadedBy} &middot; {formatDate(v.date)} &middot; {v.size}</p>
+                      <p className="text-[12px] font-medium text-slate-900 truncate">{v.name}</p>
+                      <p className="text-[10px] text-slate-400">{v.uploadedBy} &middot; {formatDate(v.date)} &middot; {v.size}</p>
                     </div>
                     {i === 0 && <span className="text-[9px] text-green-600 bg-green-100 px-1.5 py-0.5 rounded font-medium">Current</span>}
                     <button className="p-1 rounded hover:bg-slate-100"><Download size={13} className="text-slate-500" /></button>
@@ -1017,7 +1016,7 @@ export function ContractRepository() {
               </div>
               <div className="px-6 py-3 border-t border-slate-200 flex justify-end">
                 <button onClick={() => setVersionHistoryDoc(null)}
-                  className="px-4 py-2 text-[12px] text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50" style={{ fontFamily: F }}>Close</button>
+                  className="px-4 py-2 text-[12px] text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50">Close</button>
               </div>
             </div>
           </div>
@@ -1031,18 +1030,18 @@ export function ContractRepository() {
      ════════════════════════════════════════════════════════════════════════════ */
 
   return (
-    <div className="h-full flex flex-col bg-white overflow-hidden" style={{ fontFamily: F }}>
+    <div className="h-full flex flex-col bg-white overflow-hidden">
       {/* Header */}
       <div className="px-6 py-4 border-b border-slate-200 bg-white shrink-0">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-[18px] font-semibold text-slate-900" style={{ fontFamily: F }}>Contract Repository</h1>
-            <p className="text-[12px] text-slate-500 mt-0.5" style={{ fontFamily: F }}>
+            <h1 className="text-[18px] font-semibold text-slate-900">Contract Repository</h1>
+            <p className="text-[12px] text-slate-500 mt-0.5">
               Manage all contracts across the organization. Procurement-sourced contracts are automatically linked from the Sourcing workflow.
             </p>
           </div>
           <button className="flex items-center gap-2 px-4 py-2 text-[12px] font-medium text-white rounded-lg hover:opacity-90"
-            style={{ backgroundColor: "#0B01D0", fontFamily: F }}>
+            style={{ backgroundColor: "#0B01D0" }}>
             <Download size={14} /> Export All
           </button>
         </div>
@@ -1053,7 +1052,7 @@ export function ContractRepository() {
             <button key={t.key} onClick={() => { setActiveTab(t.key); setCurrentPage(1); }}
               className={`px-4 py-1.5 rounded-lg text-[12px] transition-colors flex items-center gap-1.5 ${
                 activeTab === t.key ? "bg-purple-700 text-white shadow-sm" : "text-slate-500 hover:text-slate-700"
-              }`} style={{ fontFamily: F }}>
+              }`}>
               {t.label}
               <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${
                 activeTab === t.key ? "bg-white/20 text-white" : "bg-slate-200/80 text-slate-500"
@@ -1070,15 +1069,15 @@ export function ContractRepository() {
           <input type="text" placeholder="Search by title, ID, party, PR..."
             value={searchQuery} onChange={e => { setSearchQuery(e.target.value); setCurrentPage(1); }}
             className="w-full pl-9 pr-4 py-2 text-[12px] border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-            style={{ fontFamily: F }} />
+            />
         </div>
         <select value={typeFilter} onChange={e => { setTypeFilter(e.target.value); setCurrentPage(1); }}
-          className="px-3 py-2 border border-slate-200 rounded-lg text-[12px] text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-purple-500" style={{ fontFamily: F }}>
+          className="px-3 py-2 border border-slate-200 rounded-lg text-[12px] text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-purple-500">
           <option>All Types</option>
           <option>Employment</option><option>Vendor</option><option>Service</option><option>NDA</option><option>Lease</option><option>Consultant</option><option>Works</option>
         </select>
         <select value={deptFilter} onChange={e => { setDeptFilter(e.target.value); setCurrentPage(1); }}
-          className="px-3 py-2 border border-slate-200 rounded-lg text-[12px] text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-purple-500" style={{ fontFamily: F }}>
+          className="px-3 py-2 border border-slate-200 rounded-lg text-[12px] text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-purple-500">
           <option>All Departments</option>
           <option>HR</option><option>IT</option><option>Admin</option><option>Legal</option><option>Projects</option><option>Procurement</option><option>Programs</option><option>Operations</option><option>Finance</option>
         </select>
@@ -1089,23 +1088,23 @@ export function ContractRepository() {
         <table className="w-full">
           <thead className="sticky top-0 z-10" style={{ backgroundColor: "#0B01D0" }}>
             <tr>
-              <th className="px-4 py-3 text-left text-[11px] text-white font-semibold" style={{ fontFamily: F }}>Contract ID</th>
-              <th className="px-4 py-3 text-left text-[11px] text-white font-semibold" style={{ fontFamily: F }}>Title</th>
-              <th className="px-4 py-3 text-left text-[11px] text-white font-semibold" style={{ fontFamily: F }}>Type</th>
-              <th className="px-4 py-3 text-left text-[11px] text-white font-semibold" style={{ fontFamily: F }}>Party/Vendor</th>
-              <th className="px-4 py-3 text-left text-[11px] text-white font-semibold" style={{ fontFamily: F }}>Start</th>
-              <th className="px-4 py-3 text-left text-[11px] text-white font-semibold" style={{ fontFamily: F }}>End</th>
-              <th className="px-4 py-3 text-right text-[11px] text-white font-semibold" style={{ fontFamily: F }}>Value</th>
-              <th className="px-4 py-3 text-center text-[11px] text-white font-semibold" style={{ fontFamily: F }}>Status</th>
-              <th className="px-4 py-3 text-left text-[11px] text-white font-semibold" style={{ fontFamily: F }}>Dept</th>
-              <th className="px-4 py-3 text-center text-[11px] text-white font-semibold" style={{ fontFamily: F }}>Docs</th>
-              <th className="px-4 py-3 text-center text-[11px] text-white font-semibold" style={{ fontFamily: F }}>Actions</th>
+              <th className="px-4 py-3 text-left text-[11px] text-white font-semibold">Contract ID</th>
+              <th className="px-4 py-3 text-left text-[11px] text-white font-semibold">Title</th>
+              <th className="px-4 py-3 text-left text-[11px] text-white font-semibold">Type</th>
+              <th className="px-4 py-3 text-left text-[11px] text-white font-semibold">Party/Vendor</th>
+              <th className="px-4 py-3 text-left text-[11px] text-white font-semibold">Start</th>
+              <th className="px-4 py-3 text-left text-[11px] text-white font-semibold">End</th>
+              <th className="px-4 py-3 text-right text-[11px] text-white font-semibold">Value</th>
+              <th className="px-4 py-3 text-center text-[11px] text-white font-semibold">Status</th>
+              <th className="px-4 py-3 text-left text-[11px] text-white font-semibold">Dept</th>
+              <th className="px-4 py-3 text-center text-[11px] text-white font-semibold">Docs</th>
+              <th className="px-4 py-3 text-center text-[11px] text-white font-semibold">Actions</th>
             </tr>
           </thead>
           <tbody>
             {currentContracts.length === 0 ? (
               <tr>
-                <td colSpan={11} className="text-center py-12 text-[13px] text-slate-400" style={{ fontFamily: F }}>
+                <td colSpan={11} className="text-center py-12 text-[13px] text-slate-400">
                   No contracts match your filters.
                 </td>
               </tr>
@@ -1115,7 +1114,7 @@ export function ContractRepository() {
                   i % 2 === 0 ? "bg-white" : "bg-slate-50/50")}
                 onClick={() => setSelectedContract(c)}>
                 <td className="px-4 py-3">
-                  <span className="text-[12px] font-semibold text-[#0B01D0]" style={{ fontFamily: F }}>{c.contractNumber}</span>
+                  <span className="text-[12px] font-semibold text-[#0B01D0]">{c.contractNumber}</span>
                   {c.sourcePR && (
                     <span className="ml-1.5 text-[9px] bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded border border-indigo-100">
                       {c.sourcePR}
@@ -1123,21 +1122,21 @@ export function ContractRepository() {
                   )}
                 </td>
                 <td className="px-4 py-3">
-                  <p className="text-[12px] text-slate-900 truncate max-w-[200px]" style={{ fontFamily: F }}>{c.title}</p>
+                  <p className="text-[12px] text-slate-900 truncate max-w-[200px]">{c.title}</p>
                 </td>
                 <td className="px-4 py-3">
                   <span className={cn("text-[10px] font-medium px-2 py-0.5 rounded", getTypeBadge(c.type))}>{c.type}</span>
                 </td>
-                <td className="px-4 py-3 text-[12px] text-slate-600" style={{ fontFamily: F }}>{c.party}</td>
-                <td className="px-4 py-3 text-[12px] text-slate-600" style={{ fontFamily: F }}>{formatDate(c.startDate)}</td>
-                <td className="px-4 py-3 text-[12px] text-slate-600" style={{ fontFamily: F }}>{formatDate(c.endDate)}</td>
-                <td className="px-4 py-3 text-right text-[12px] text-slate-900 font-medium" style={{ fontFamily: F }}>
+                <td className="px-4 py-3 text-[12px] text-slate-600">{c.party}</td>
+                <td className="px-4 py-3 text-[12px] text-slate-600">{formatDate(c.startDate)}</td>
+                <td className="px-4 py-3 text-[12px] text-slate-600">{formatDate(c.endDate)}</td>
+                <td className="px-4 py-3 text-right text-[12px] text-slate-900 font-medium">
                   {c.value > 0 ? formatCurrency(c.value) : "—"}
                 </td>
                 <td className="px-4 py-3 text-center">
                   <span className={cn("inline-block px-2.5 py-0.5 rounded text-[10px] font-medium", getStatusColor(c.status))}>{c.status}</span>
                 </td>
-                <td className="px-4 py-3 text-[12px] text-slate-600" style={{ fontFamily: F }}>{c.department}</td>
+                <td className="px-4 py-3 text-[12px] text-slate-600">{c.department}</td>
                 <td className="px-4 py-3 text-center">
                   {c.documents.length > 0 ? (
                     <span className="text-[10px] text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded flex items-center justify-center gap-0.5 w-fit mx-auto">
@@ -1158,15 +1157,15 @@ export function ContractRepository() {
                         <div className="fixed inset-0 z-10" onClick={() => setActiveDropdown(null)} />
                         <div className="absolute right-0 mt-1 w-44 bg-white border border-slate-200 rounded-lg shadow-lg z-20 overflow-hidden">
                           <button onClick={() => { setSelectedContract(c); setActiveDropdown(null); }}
-                            className="w-full text-left px-3 py-2 text-[12px] text-slate-700 hover:bg-slate-50 flex items-center gap-2" style={{ fontFamily: F }}>
+                            className="w-full text-left px-3 py-2 text-[12px] text-slate-700 hover:bg-slate-50 flex items-center gap-2">
                             <Eye size={13} /> View Details
                           </button>
                           <button onClick={() => setActiveDropdown(null)}
-                            className="w-full text-left px-3 py-2 text-[12px] text-slate-700 hover:bg-slate-50 flex items-center gap-2" style={{ fontFamily: F }}>
+                            className="w-full text-left px-3 py-2 text-[12px] text-slate-700 hover:bg-slate-50 flex items-center gap-2">
                             <Download size={13} /> Download
                           </button>
                           <button onClick={() => setActiveDropdown(null)}
-                            className="w-full text-left px-3 py-2 text-[12px] text-slate-700 hover:bg-slate-50 flex items-center gap-2" style={{ fontFamily: F }}>
+                            className="w-full text-left px-3 py-2 text-[12px] text-slate-700 hover:bg-slate-50 flex items-center gap-2">
                             <RotateCcw size={13} /> Renew
                           </button>
                         </div>
@@ -1182,7 +1181,7 @@ export function ContractRepository() {
 
       {/* Pagination */}
       <div className="px-6 py-3 border-t border-slate-200 flex items-center justify-between shrink-0">
-        <span className="text-[12px] text-slate-500" style={{ fontFamily: F }}>
+        <span className="text-[12px] text-slate-500">
           {totalResults > 0 ? `${startIndex + 1}–${endIndex}` : "0"} of {totalResults} contracts
         </span>
         <div className="flex items-center gap-2">
@@ -1217,43 +1216,43 @@ export function ContractRepository() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowSignModal(false)}>
           <div className="bg-white rounded-2xl w-full max-w-md mx-4 overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
-              <h3 className="text-[15px] font-semibold text-slate-900" style={{ fontFamily: F }}>Apply Signature</h3>
+              <h3 className="text-[15px] font-semibold text-slate-900">Apply Signature</h3>
               <button onClick={() => setShowSignModal(false)} className="p-1 hover:bg-slate-100 rounded-lg transition-colors">
                 <X size={18} className="text-slate-400" />
               </button>
             </div>
             <div className="p-6 space-y-4">
-              <p className="text-[12px] text-slate-600" style={{ fontFamily: F }}>You are about to sign this contract with your personal signature:</p>
+              <p className="text-[12px] text-slate-600">You are about to sign this contract with your personal signature:</p>
               <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-[11px] text-slate-500" style={{ fontFamily: F }}>Contract</span>
-                  <span className="text-[11px] text-slate-900 font-medium" style={{ fontFamily: F }}>{signableContract.contractNumber}</span>
+                  <span className="text-[11px] text-slate-500">Contract</span>
+                  <span className="text-[11px] text-slate-900 font-medium">{signableContract.contractNumber}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-[11px] text-slate-500" style={{ fontFamily: F }}>Title</span>
-                  <span className="text-[11px] text-slate-900" style={{ fontFamily: F }}>{signableContract.title}</span>
+                  <span className="text-[11px] text-slate-500">Title</span>
+                  <span className="text-[11px] text-slate-900">{signableContract.title}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-[11px] text-slate-500" style={{ fontFamily: F }}>Value</span>
-                  <span className="text-[11px] text-slate-900" style={{ fontFamily: F }}>{signableContract.value > 0 ? formatCurrency(signableContract.value) : "N/A"}</span>
+                  <span className="text-[11px] text-slate-500">Value</span>
+                  <span className="text-[11px] text-slate-900">{signableContract.value > 0 ? formatCurrency(signableContract.value) : "N/A"}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-[11px] text-slate-500" style={{ fontFamily: F }}>Signed By</span>
-                  <span className="text-[11px] text-slate-900" style={{ fontFamily: F }}>{signatureData.employeeName}</span>
+                  <span className="text-[11px] text-slate-500">Signed By</span>
+                  <span className="text-[11px] text-slate-900">{signatureData.employeeName}</span>
                 </div>
               </div>
               <div className="border-2 border-dashed border-slate-200 rounded-lg p-4 bg-slate-50 flex items-center justify-center">
                 <img src={signatureData.dataUrl} alt="My Signature" className="max-w-[220px] max-h-[90px] object-contain" />
               </div>
-              <p className="text-[10px] text-slate-400" style={{ fontFamily: F }}>By clicking "Confirm & Sign", you confirm this is your personal signature.</p>
+              <p className="text-[10px] text-slate-400">By clicking "Confirm & Sign", you confirm this is your personal signature.</p>
             </div>
             <div className="px-6 py-4 border-t border-slate-200 flex justify-end gap-2">
-              <button onClick={() => setShowSignModal(false)} className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-[12px] hover:bg-slate-200 transition-colors" style={{ fontFamily: F }}>
+              <button onClick={() => setShowSignModal(false)} className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-[12px] hover:bg-slate-200 transition-colors">
                 Cancel
               </button>
               <button onClick={() => handleApplySignature(signableContract.contractNumber)}
                 className="px-4 py-2 text-white rounded-lg text-[12px] hover:opacity-90 transition-colors flex items-center gap-1.5"
-                style={{ backgroundColor: "#0B01D0", fontFamily: F }}>
+                style={{ backgroundColor: "#0B01D0" }}>
                 <PenLine size={13} />
                 Confirm & Sign
               </button>
@@ -1274,10 +1273,10 @@ function TimelineItem({ date, label, desc, color }: { date: string; label: strin
       <div className={`w-[9px] h-[9px] rounded-full ${color} ring-2 ring-white shrink-0 mt-1 -ml-[10px]`} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between mb-0.5">
-          <p className="text-[12px] font-medium text-slate-900" style={{ fontFamily: "Montserrat, sans-serif" }}>{label}</p>
-          <span className="text-[10px] text-slate-400 shrink-0" style={{ fontFamily: "Montserrat, sans-serif" }}>{formatDate(date)}</span>
+          <p className="text-[12px] font-medium text-slate-900">{label}</p>
+          <span className="text-[10px] text-slate-400 shrink-0">{formatDate(date)}</span>
         </div>
-        <p className="text-[11px] text-slate-500" style={{ fontFamily: "Montserrat, sans-serif" }}>{desc}</p>
+        <p className="text-[11px] text-slate-500">{desc}</p>
       </div>
     </div>
   );

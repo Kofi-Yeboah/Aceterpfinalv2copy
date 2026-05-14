@@ -207,7 +207,7 @@ function FlagModal({ projectName, onClose, onSubmit }: { projectName: string; on
   const [reason, setReason] = useState("");
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4" style={{ fontFamily: "Montserrat, sans-serif" }}>
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4">
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
           <div className="flex items-center gap-2">
             <Flag className="w-5 h-5 text-red-600" />
@@ -226,7 +226,7 @@ function FlagModal({ projectName, onClose, onSubmit }: { projectName: string; on
             onChange={(e) => setReason(e.target.value)}
             placeholder="Enter reasons for flagging this staff allocation..."
             className="w-full h-28 px-3 py-2 text-[12px] border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
-            style={{ fontFamily: "Montserrat, sans-serif" }}
+           
           />
         </div>
         <div className="px-6 py-3 border-t border-slate-200 flex justify-end gap-2">
@@ -331,7 +331,7 @@ export function StaffAllocationApproval() {
     const inProgressTasks = selectedProject.staffMembers.flatMap((s) => s.tasks).filter((t) => t.status === "In Progress").length;
 
     return (
-      <div className="flex flex-col h-full bg-slate-50" style={{ fontFamily: "Montserrat, sans-serif" }}>
+      <div className="flex flex-col h-full bg-slate-50">
         {/* Header */}
         <div className="px-6 py-4 bg-white border-b border-slate-200 flex items-center gap-4 shrink-0">
           <button onClick={() => { setSelectedProject(null); setExpandedStaff(new Set()); }} className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors">
@@ -429,22 +429,22 @@ export function StaffAllocationApproval() {
                           <table className="w-full">
                             <thead style={{ backgroundColor: "#0B01D0" }}>
                               <tr>
-                                <th className="text-left px-4 py-2 text-white text-[11px] font-semibold" style={{ fontFamily: "Montserrat, sans-serif" }}>Task</th>
-                                <th className="text-left px-4 py-2 text-white text-[11px] font-semibold" style={{ fontFamily: "Montserrat, sans-serif" }}>Phase</th>
-                                <th className="text-left px-4 py-2 text-white text-[11px] font-semibold" style={{ fontFamily: "Montserrat, sans-serif" }}>Start</th>
-                                <th className="text-left px-4 py-2 text-white text-[11px] font-semibold" style={{ fontFamily: "Montserrat, sans-serif" }}>End</th>
-                                <th className="text-center px-4 py-2 text-white text-[11px] font-semibold" style={{ fontFamily: "Montserrat, sans-serif" }}>Hours</th>
-                                <th className="text-center px-4 py-2 text-white text-[11px] font-semibold" style={{ fontFamily: "Montserrat, sans-serif" }}>Priority</th>
+                                <th className="text-left px-4 py-2 text-white text-[11px] font-semibold">Task</th>
+                                <th className="text-left px-4 py-2 text-white text-[11px] font-semibold">Phase</th>
+                                <th className="text-left px-4 py-2 text-white text-[11px] font-semibold">Start</th>
+                                <th className="text-left px-4 py-2 text-white text-[11px] font-semibold">End</th>
+                                <th className="text-center px-4 py-2 text-white text-[11px] font-semibold">Hours</th>
+                                <th className="text-center px-4 py-2 text-white text-[11px] font-semibold">Priority</th>
                               </tr>
                             </thead>
                             <tbody>
                               {staff.tasks.map((task, idx) => (
                                 <tr key={task.id} className={idx % 2 === 0 ? "bg-white" : "bg-slate-50/50"}>
-                                  <td className="px-4 py-2 text-[11px] text-slate-900" style={{ fontFamily: "Montserrat, sans-serif" }}>{task.taskName}</td>
-                                  <td className="px-4 py-2 text-[11px] text-slate-600" style={{ fontFamily: "Montserrat, sans-serif" }}>{task.phase}</td>
-                                  <td className="px-4 py-2 text-[11px] text-slate-600" style={{ fontFamily: "Montserrat, sans-serif" }}>{task.startDate}</td>
-                                  <td className="px-4 py-2 text-[11px] text-slate-600" style={{ fontFamily: "Montserrat, sans-serif" }}>{task.endDate}</td>
-                                  <td className="px-4 py-2 text-center text-[11px] text-slate-900 font-medium" style={{ fontFamily: "Montserrat, sans-serif" }}>{task.hours}</td>
+                                  <td className="px-4 py-2 text-[11px] text-slate-900">{task.taskName}</td>
+                                  <td className="px-4 py-2 text-[11px] text-slate-600">{task.phase}</td>
+                                  <td className="px-4 py-2 text-[11px] text-slate-600">{task.startDate}</td>
+                                  <td className="px-4 py-2 text-[11px] text-slate-600">{task.endDate}</td>
+                                  <td className="px-4 py-2 text-center text-[11px] text-slate-900 font-medium">{task.hours}</td>
                                   <td className="px-4 py-2 text-center"><span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${priorityStyle(task.priority)}`}>{task.priority}</span></td>
                                 </tr>
                               ))}
@@ -474,7 +474,7 @@ export function StaffAllocationApproval() {
   // ─── Table View ─────────────────────────────────────────────────────────
 
   return (
-    <div className="flex flex-col h-full bg-slate-50" style={{ fontFamily: "Montserrat, sans-serif" }}>
+    <div className="flex flex-col h-full bg-slate-50">
       {/* Header */}
       <div className="px-6 py-4 bg-white border-b border-slate-200 shrink-0">
         <h1 className="text-[18px] font-semibold text-slate-900">Staff Allocation Approvals</h1>
@@ -491,7 +491,7 @@ export function StaffAllocationApproval() {
               className={`px-4 py-1.5 rounded-lg text-[12px] transition-colors min-w-[100px] flex items-center justify-center gap-1.5 ${
                 activeTab === tab ? "bg-purple-700 text-white shadow-sm" : "text-slate-500 hover:text-slate-700"
               }`}
-              style={{ fontFamily: "Montserrat, sans-serif" }}
+             
             >
               {tab}
               <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${activeTab === tab ? "bg-white/20 text-white" : "bg-slate-200/80 text-slate-500"}`}>
@@ -512,7 +512,7 @@ export function StaffAllocationApproval() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-9 pr-4 py-2 text-[12px] border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-            style={{ fontFamily: "Montserrat, sans-serif" }}
+           
           />
         </div>
       </div>
@@ -522,16 +522,16 @@ export function StaffAllocationApproval() {
         <table className="w-full">
           <thead style={{ backgroundColor: "#0B01D0" }} className="sticky top-0 z-[5]">
             <tr>
-              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: "Montserrat, sans-serif" }}>ID</th>
-              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: "Montserrat, sans-serif" }}>Project Name</th>
-              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: "Montserrat, sans-serif" }}>Project Manager</th>
-              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: "Montserrat, sans-serif" }}>Stage</th>
-              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: "Montserrat, sans-serif" }}>Submitted</th>
-              <th className="text-center px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: "Montserrat, sans-serif" }}>Staff</th>
-              <th className="text-center px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: "Montserrat, sans-serif" }}>Hours</th>
-              <th className="text-center px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: "Montserrat, sans-serif" }}>Avg Util.</th>
-              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: "Montserrat, sans-serif" }}>Status</th>
-              <th className="text-center px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: "Montserrat, sans-serif" }}>Actions</th>
+              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold">ID</th>
+              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold">Project Name</th>
+              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold">Project Manager</th>
+              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold">Stage</th>
+              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold">Submitted</th>
+              <th className="text-center px-4 py-3 text-white text-[12px] font-semibold">Staff</th>
+              <th className="text-center px-4 py-3 text-white text-[12px] font-semibold">Hours</th>
+              <th className="text-center px-4 py-3 text-white text-[12px] font-semibold">Avg Util.</th>
+              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold">Status</th>
+              <th className="text-center px-4 py-3 text-white text-[12px] font-semibold">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -544,19 +544,19 @@ export function StaffAllocationApproval() {
                   className={`border-b border-slate-100 hover:bg-slate-50 transition-colors cursor-pointer ${index % 2 === 0 ? "bg-white" : "bg-slate-50/50"}`}
                   onClick={() => setSelectedProject(sub)}
                 >
-                  <td className="px-4 py-3 text-[12px] text-purple-700 font-medium" style={{ fontFamily: "Montserrat, sans-serif" }}>{sub.id}</td>
-                  <td className="px-4 py-3 text-[12px] text-slate-900 font-medium" style={{ fontFamily: "Montserrat, sans-serif" }}>{sub.projectName}</td>
-                  <td className="px-4 py-3 text-[12px] text-slate-600" style={{ fontFamily: "Montserrat, sans-serif" }}>{sub.projectManager}</td>
-                  <td className="px-4 py-3 text-[12px] text-slate-600" style={{ fontFamily: "Montserrat, sans-serif" }}>{sub.stage}</td>
-                  <td className="px-4 py-3 text-[12px] text-slate-600" style={{ fontFamily: "Montserrat, sans-serif" }}>{sub.submittedDate}</td>
-                  <td className="px-4 py-3 text-center text-[12px] text-slate-900 font-medium" style={{ fontFamily: "Montserrat, sans-serif" }}>{sub.totalStaff}</td>
-                  <td className="px-4 py-3 text-center text-[12px] text-slate-900 font-medium" style={{ fontFamily: "Montserrat, sans-serif" }}>{sub.totalHoursAllocated.toLocaleString()}</td>
+                  <td className="px-4 py-3 text-[12px] text-purple-700 font-medium">{sub.id}</td>
+                  <td className="px-4 py-3 text-[12px] text-slate-900 font-medium">{sub.projectName}</td>
+                  <td className="px-4 py-3 text-[12px] text-slate-600">{sub.projectManager}</td>
+                  <td className="px-4 py-3 text-[12px] text-slate-600">{sub.stage}</td>
+                  <td className="px-4 py-3 text-[12px] text-slate-600">{sub.submittedDate}</td>
+                  <td className="px-4 py-3 text-center text-[12px] text-slate-900 font-medium">{sub.totalStaff}</td>
+                  <td className="px-4 py-3 text-center text-[12px] text-slate-900 font-medium">{sub.totalHoursAllocated.toLocaleString()}</td>
                   <td className="px-4 py-3 text-center">
                     <div className="flex items-center justify-center gap-1.5">
                       <div className="w-12 h-1.5 bg-slate-200 rounded-full overflow-hidden">
                         <div className={`h-full rounded-full ${utilizationBarColor(sub.avgUtilization)} transition-all`} style={{ width: `${sub.avgUtilization}%` }} />
                       </div>
-                      <span className="text-[11px] text-slate-600" style={{ fontFamily: "Montserrat, sans-serif" }}>{sub.avgUtilization}%</span>
+                      <span className="text-[11px] text-slate-600">{sub.avgUtilization}%</span>
                     </div>
                   </td>
                   <td className="px-4 py-3">

@@ -243,17 +243,17 @@ File Size:       ${request.certificateFileSize}
   // Detail View
   if (selectedRequest) {
     return (
-      <div className="flex flex-col h-full bg-slate-50" style={{ fontFamily: "Montserrat, sans-serif" }}>
+      <div className="flex flex-col h-full bg-slate-50">
         {/* Header */}
         <div className="px-6 py-4 bg-white border-b border-slate-200 flex items-center gap-4 shrink-0">
           <button onClick={() => setSelectedRequest(null)} className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors">
             <ArrowLeft className="w-5 h-5 text-slate-600" />
           </button>
           <div className="flex-1">
-            <h1 className="text-[16px] font-semibold text-slate-900" style={{ fontFamily: "Montserrat, sans-serif" }}>
+            <h1 className="text-[16px] font-semibold text-slate-900">
               Training Attendance Details — {selectedRequest.requestId}
             </h1>
-            <p className="text-[12px] text-slate-500 mt-0.5" style={{ fontFamily: "Montserrat, sans-serif" }}>
+            <p className="text-[12px] text-slate-500 mt-0.5">
               {selectedRequest.trainingTitle}
             </p>
           </div>
@@ -403,7 +403,7 @@ File Size:       ${request.certificateFileSize}
         {/* Reject Modal */}
         {showRejectModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-xl max-w-md w-full" style={{ fontFamily: "Montserrat, sans-serif" }}>
+            <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
               <div className="px-6 py-4 border-b border-slate-200">
                 <h3 className="text-[16px] font-semibold text-slate-900">Reject Training Attendance</h3>
                 <p className="text-[12px] text-slate-500 mt-1">Please provide a reason for rejecting this attendance submission</p>
@@ -446,14 +446,14 @@ File Size:       ${request.certificateFileSize}
 
   // Main List View
   return (
-    <div className="flex flex-col h-full bg-slate-50" style={{ fontFamily: "Montserrat, sans-serif" }}>
+    <div className="flex flex-col h-full bg-slate-50">
       {/* Header */}
       <div className="px-6 py-4 bg-white border-b border-slate-200 shrink-0">
         <div>
-          <h1 className="text-[18px] font-semibold text-slate-900" style={{ fontFamily: "Montserrat, sans-serif" }}>
+          <h1 className="text-[18px] font-semibold text-slate-900">
             Training Attendance Approval
           </h1>
-          <p className="text-[12px] text-slate-500 mt-1" style={{ fontFamily: "Montserrat, sans-serif" }}>
+          <p className="text-[12px] text-slate-500 mt-1">
             Review and approve training attendance submissions from your team members
           </p>
         </div>

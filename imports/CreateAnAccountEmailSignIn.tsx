@@ -6,11 +6,11 @@ const imgImage34 = "https://picsum.photos/seed/1445/800/600";
 function Frame8() {
   return (
     <div className="content-stretch flex flex-col gap-[6px] items-center leading-[24px] relative shrink-0 text-center">
-      <p className="font-['Montserrat:SemiBold',sans-serif] font-semibold relative shrink-0 text-[0px] text-[18px] text-slate-900 tracking-[-0.36px] w-[352px]">
+      <p className="font-semibold relative shrink-0 text-[0px] text-[18px] text-slate-900 tracking-[-0.36px] w-[352px]">
         <span>{`Sign in to `}</span>
         <span className="text-[#323584]">ACET</span>
       </p>
-      <p className="font-['Montserrat:Regular',sans-serif] font-normal relative shrink-0 text-[14px] text-slate-500 tracking-[-0.28px] w-[352px]">Welcome back! Please sign in to continue</p>
+      <p className="font-normal relative shrink-0 text-[14px] text-slate-500 tracking-[-0.28px] w-[352px]">Welcome back! Please sign in to continue</p>
     </div>
   );
 }
@@ -32,7 +32,7 @@ function TabItem() {
       <div aria-hidden="true" className="absolute border-0 border-[#d0d5dd] border-solid inset-0 pointer-events-none rounded-[8px] shadow-[0px_2px_8px_0px_rgba(100,116,139,0.1)]" />
       <div className="flex flex-row items-center justify-center size-full">
         <div className="box-border content-stretch flex gap-[8px] items-center justify-center px-[16px] py-[5px] relative w-full">
-          <div className="flex flex-col font-['Montserrat:Medium',sans-serif] font-medium justify-center leading-[0] relative shrink-0 text-[14px] text-nowrap text-slate-900 tracking-[-0.14px]">
+          <div className="flex flex-col font-medium justify-center leading-[0] relative shrink-0 text-[14px] text-nowrap text-slate-900 tracking-[-0.14px]">
             <p className="leading-[18px] whitespace-pre">Email</p>
           </div>
         </div>
@@ -47,7 +47,7 @@ function TabItem1() {
       <div aria-hidden="true" className="absolute border-0 border-[#d0d5dd] border-solid inset-0 pointer-events-none" />
       <div className="flex flex-row items-center justify-center size-full">
         <div className="box-border content-stretch flex gap-[8px] items-center justify-center px-[16px] py-[5px] relative w-full">
-          <p className="font-['Montserrat:Regular',sans-serif] font-normal leading-[18px] relative shrink-0 text-[14px] text-nowrap text-slate-500 tracking-[-0.14px] whitespace-pre">Phone Number</p>
+          <p className="font-normal leading-[18px] relative shrink-0 text-[14px] text-nowrap text-slate-500 tracking-[-0.14px] whitespace-pre">Phone Number</p>
         </div>
       </div>
     </div>
@@ -70,7 +70,7 @@ function Frame() {
 function Frame3() {
   return (
     <div className="content-stretch flex items-start justify-between relative shrink-0 w-full">
-      <p className="font-['Montserrat:Regular',sans-serif] font-normal leading-[normal] relative shrink-0 text-[12px] text-nowrap text-slate-600 tracking-[-0.24px] whitespace-pre">Email address</p>
+      <p className="font-normal leading-[normal] relative shrink-0 text-[12px] text-nowrap text-slate-600 tracking-[-0.24px] whitespace-pre">Email address</p>
     </div>
   );
 }
@@ -78,7 +78,7 @@ function Frame3() {
 function Frame5() {
   return (
     <div className="content-stretch flex gap-[16px] items-center relative shrink-0">
-      <p className="font-['Montserrat:Regular',sans-serif] font-normal leading-[normal] relative shrink-0 text-[15px] text-nowrap text-slate-400 whitespace-pre">Enter your email address</p>
+      <p className="font-normal leading-[normal] relative shrink-0 text-[15px] text-nowrap text-slate-400 whitespace-pre">Enter your email address</p>
     </div>
   );
 }
@@ -108,7 +108,7 @@ function InputField() {
 function Frame4() {
   return (
     <div className="content-stretch flex items-start justify-between relative shrink-0 w-full">
-      <p className="font-['Montserrat:Regular',sans-serif] font-normal leading-[normal] relative shrink-0 text-[12px] text-nowrap text-slate-600 tracking-[-0.24px] whitespace-pre">Password</p>
+      <p className="font-normal leading-[normal] relative shrink-0 text-[12px] text-nowrap text-slate-600 tracking-[-0.24px] whitespace-pre">Password</p>
     </div>
   );
 }
@@ -131,7 +131,7 @@ function BoldSecurityEye() {
 function Frame6() {
   return (
     <div className="basis-0 content-stretch flex grow items-center justify-between min-h-px min-w-px relative shrink-0">
-      <p className="font-['Montserrat:Regular',sans-serif] font-normal leading-[normal] relative shrink-0 text-[14px] text-nowrap text-slate-400 whitespace-pre">Enter your password</p>
+      <p className="font-normal leading-[normal] relative shrink-0 text-[14px] text-nowrap text-slate-400 whitespace-pre">Enter your password</p>
       <BoldSecurityEye />
     </div>
   );
@@ -153,7 +153,7 @@ function Frame2() {
 function HintText() {
   return (
     <div className="content-stretch flex gap-[10px] items-center relative shrink-0 w-full" data-name="Hint text">
-      <p className="font-['Montserrat:Regular',sans-serif] font-normal leading-[22px] relative shrink-0 text-[14px] text-nowrap text-purple-700 tracking-[-0.14px] whitespace-pre">Forgot Password?</p>
+      <p className="font-normal leading-[22px] relative shrink-0 text-[14px] text-nowrap text-purple-700 tracking-[-0.14px] whitespace-pre">Forgot Password?</p>
     </div>
   );
 }
@@ -173,7 +173,7 @@ function Btn() {
     <div className="bg-purple-700 h-[40px] opacity-30 relative rounded-[8px] shadow-[0px_1px_4px_0px_rgba(30,41,59,0.09)] shrink-0 w-full" data-name="Btn">
       <div className="flex flex-row items-center justify-center size-full">
         <div className="box-border content-stretch flex gap-[8px] h-[40px] items-center justify-center px-[16px] py-[11px] relative w-full">
-          <p className="basis-0 font-['Montserrat:SemiBold',sans-serif] font-semibold grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-center text-white">Sign in</p>
+          <p className="basis-0 font-semibold grow leading-[normal] min-h-px min-w-px relative shrink-0 text-[14px] text-center text-white">Sign in</p>
         </div>
       </div>
     </div>
@@ -195,8 +195,8 @@ function Frame7() {
 function Frame10() {
   return (
     <div className="absolute content-stretch flex flex-col gap-[16px] items-start justify-center left-[calc(50%+0.5px)] text-white top-1/2 translate-x-[-50%] translate-y-[-50%] w-[622px]">
-      <p className="font-['Montserrat:Bold',sans-serif] font-bold leading-[54px] relative shrink-0 text-[48px] tracking-[-0.96px] w-full">Securing Africa’s Future Takes More Than Growth, It Takes Transformation.</p>
-      <p className="font-['Montserrat:Regular',sans-serif] font-normal leading-[23px] relative shrink-0 text-[18px] w-full">Growth with DEPTH</p>
+      <p className="font-bold leading-[54px] relative shrink-0 text-[48px] tracking-[-0.96px] w-full">Securing Africa’s Future Takes More Than Growth, It Takes Transformation.</p>
+      <p className="font-normal leading-[23px] relative shrink-0 text-[18px] w-full">Growth with DEPTH</p>
     </div>
   );
 }
