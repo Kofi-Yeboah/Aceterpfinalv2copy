@@ -56,6 +56,7 @@ import {
   FolderOpen,
   Stamp,
   Eye,
+  ArrowLeftRight,
 } from "lucide-react";
 
 interface MenuItem {
@@ -171,6 +172,12 @@ export function NavigationSidebar({ selectedItem, onSelectItem, collapsed }: Nav
       items: [
         { icon: <LayoutDashboard size={iconSize} />, label: "Dashboard" },
         { icon: <BookOpen size={iconSize} />, label: "General Ledger" },
+        { icon: <FileText size={iconSize} />, label: "Journal Entries" },
+        { icon: <CalendarRange size={iconSize} />, label: "Period Management" },
+        { icon: <CircleDollarSign size={iconSize} />, label: "Multi-Currency" },
+        { icon: <Layers size={iconSize} />, label: "Control Accounts" },
+        { icon: <ArrowLeftRight size={iconSize} />, label: "Intercompany" },
+        { icon: <ShieldCheck size={iconSize} />, label: "Access Control" },
         { icon: <Receipt size={iconSize} />, label: "Payment Vouchers" },
         { icon: <TrendingDown size={iconSize} />, label: "Expenditure Management" },
         {
@@ -192,7 +199,7 @@ export function NavigationSidebar({ selectedItem, onSelectItem, collapsed }: Nav
         {
           icon: <BarChart3 size={iconSize} />,
           label: "Reporting & Analytics",
-          submenu: ["Financial Statements", "Project Reports", "Audit Tray", "Timesheet Reports"],
+          submenu: ["Financial Statements", "Project Reports", "Audit Tray", "Audit Trail", "Timesheet Reports"],
         },
       ],
     },

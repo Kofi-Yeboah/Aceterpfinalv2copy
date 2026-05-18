@@ -1,285 +1,441 @@
 import { useState } from "react";
-import { Search, Download, ChevronDown, Plus, Calendar, Pencil, X } from "lucide-react";
+import { Search, Download, ChevronDown, Plus, Filter, CheckCircle2, Clock, FileText, XCircle, Layers, BarChart3, BookOpen } from "lucide-react";
+import type { SRDJournalEntry, JournalStatus, LedgerType } from "./finance/types";
+import { mockJournalEntries, mockSRDAccounts } from "./finance/mockData";
+import { LEDGER_TYPES, JOURNAL_STATUSES } from "./finance/constants";
+import { formatCurrency, getJournalTotals } from "./finance/helpers";
+import { BatchPostingModal } from "./finance/BatchPostingModal";
 
-interface LedgerEntry {
-  id: number;
-  date: string;
-  accountCode: string;
-  accountName: string;
-  description: string;
-  debit: string;
-  credit: string;
-  balance: string;
-  category: string;
-}
-
-const initialLedgerData: LedgerEntry[] = [
-  { id: 1, date: "Dec 01, 2024", accountCode: "5100", accountName: "Salaries & Wages", description: "Monthly payroll - December", debit: "$495,000", credit: "-", balance: "$495,000", category: "Expense" },
-  { id: 2, date: "Nov 30, 2024", accountCode: "2100", accountName: "Accounts Payable", description: "Vendor payment - Office supplies", debit: "-", credit: "$12,450", balance: "$48,250", category: "Liability" },
-  { id: 3, date: "Nov 28, 2024", accountCode: "1100", accountName: "Cash", description: "Grant disbursement received", debit: "$250,000", credit: "-", balance: "$785,000", category: "Asset" },
-  { id: 4, date: "Nov 25, 2024", accountCode: "5200", accountName: "Employee Benefits", description: "Health insurance premiums", debit: "$45,800", credit: "-", balance: "$45,800", category: "Expense" },
-  { id: 5, date: "Nov 20, 2024", accountCode: "1200", accountName: "Accounts Receivable", description: "Invoice payment received", debit: "$75,000", credit: "-", balance: "$125,000", category: "Asset" },
-  { id: 6, date: "Nov 15, 2024", accountCode: "5100", accountName: "Salaries & Wages", description: "Bonus payments - Sales team", debit: "$45,000", credit: "-", balance: "$540,000", category: "Expense" },
-  { id: 7, date: "Nov 12, 2024", accountCode: "5300", accountName: "Rent Expense", description: "Office rent - November", debit: "$18,500", credit: "-", balance: "$18,500", category: "Expense" },
-  { id: 8, date: "Nov 10, 2024", accountCode: "1100", accountName: "Cash", description: "Payment to supplier", debit: "-", credit: "$32,100", balance: "$535,000", category: "Asset" },
-];
-
-const ACCOUNT_OPTIONS = [
-  { code: "1100", name: "Cash", category: "Asset" },
-  { code: "1200", name: "Accounts Receivable", category: "Asset" },
-  { code: "2100", name: "Accounts Payable", category: "Liability" },
-  { code: "3100", name: "Retained Earnings", category: "Equity" },
-  { code: "4100", name: "Grant Revenue", category: "Revenue" },
-  { code: "5100", name: "Salaries & Wages", category: "Expense" },
-  { code: "5200", name: "Employee Benefits", category: "Expense" },
-  { code: "5300", name: "Rent Expense", category: "Expense" },
-  { code: "5400", name: "Office Supplies", category: "Expense" },
-  { code: "5500", name: "Travel & Transport", category: "Expense" },
-];
-
-const ACCOUNT_TYPES = ["Asset", "Liability", "Equity", "Revenue", "Expense"];
-
-const emptyForm = {
-  date: "",
-  accountType: "",
-  accountCode: "",
-  description: "",
-  entryType: "debit" as "debit" | "credit",
-  amount: "",
+const STATUS_ICONS: Record<JournalStatus, React.ReactNode> = {
+  Draft: <FileText size={12} />,
+  Submitted: <Clock size={12} />,
+  Approved: <CheckCircle2 size={12} />,
+  Posted: <CheckCircle2 size={12} />,
+  Reversed: <XCircle size={12} />,
 };
 
 export function GeneralLedger() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All Categories");
-  const [selectedAccount, setSelectedAccount] = useState("All Accounts");
-  const [dateRange, setDateRange] = useState("Last 30 Days");
-  const [ledgerData, setLedgerData] = useState(initialLedgerData);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [editingEntry, setEditingEntry] = useState<LedgerEntry | null>(null);
-  const [formData, setFormData] = useState(emptyForm);
+  const [selectedLedger, setSelectedLedger] = useState<LedgerType | "All">("All");
+  const [selectedStatus, setSelectedStatus] = useState<JournalStatus | "All">("All");
+  const [entries, setEntries] = useState<SRDJournalEntry[]>(mockJournalEntries);
+  const [showBatchModal, setShowBatchModal] = useState(false);
+  const [selectedEntries, setSelectedEntries] = useState<Set<string>>(new Set());
+  const [detailEntry, setDetailEntry] = useState<SRDJournalEntry | null>(null);
 
-  const nextEntryRef = `GL-${new Date().getFullYear()}-${String(ledgerData.length + 1).padStart(4, "0")}`;
+  const filteredEntries = entries.filter(e => {
+    if (selectedLedger !== "All" && e.ledgerType !== selectedLedger) return false;
+    if (selectedStatus !== "All" && e.status !== selectedStatus) return false;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      return e.entryNo.toLowerCase().includes(q) || e.description.toLowerCase().includes(q);
+    }
+    return true;
+  });
 
-  const handleAdd = () => {
-    const account = ACCOUNT_OPTIONS.find((a) => a.code === formData.accountCode);
-    if (!account || !formData.date || !formData.amount) return;
-    const newEntry: LedgerEntry = {
-      id: Date.now(),
-      date: new Date(formData.date).toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }),
-      accountCode: account.code,
-      accountName: account.name,
-      description: formData.description,
-      debit: formData.entryType === "debit" ? `$${Number(formData.amount).toLocaleString()}` : "-",
-      credit: formData.entryType === "credit" ? `$${Number(formData.amount).toLocaleString()}` : "-",
-      balance: `$${Number(formData.amount).toLocaleString()}`,
-      category: account.category,
-    };
-    setLedgerData([newEntry, ...ledgerData]);
-    setFormData(emptyForm);
-    setShowAddModal(false);
+  const toggleSelect = (id: string) => {
+    const next = new Set(selectedEntries);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    setSelectedEntries(next);
   };
 
-  const handleEditOpen = (entry: LedgerEntry) => {
-    setEditingEntry(entry);
-    const isDebit = entry.debit !== "-";
-    const rawAmount = (isDebit ? entry.debit : entry.credit).replace(/[$,]/g, "");
-    setFormData({
-      date: "",
-      accountType: entry.category,
-      accountCode: entry.accountCode,
-      description: entry.description,
-      entryType: isDebit ? "debit" : "credit",
-      amount: rawAmount,
-    });
-    setShowEditModal(true);
+  const toggleSelectAll = () => {
+    if (selectedEntries.size === filteredEntries.length) {
+      setSelectedEntries(new Set());
+    } else {
+      setSelectedEntries(new Set(filteredEntries.map(e => e.id)));
+    }
   };
 
-  const handleEditSave = () => {
-    if (!editingEntry || !formData.accountCode || !formData.amount) return;
-    const account = ACCOUNT_OPTIONS.find((a) => a.code === formData.accountCode);
-    if (!account) return;
-    setLedgerData(ledgerData.map((e) =>
-      e.id === editingEntry.id
-        ? {
-            ...e,
-            accountCode: account.code,
-            accountName: account.name,
-            description: formData.description,
-            debit: formData.entryType === "debit" ? `$${Number(formData.amount).toLocaleString()}` : "-",
-            credit: formData.entryType === "credit" ? `$${Number(formData.amount).toLocaleString()}` : "-",
-            balance: `$${Number(formData.amount).toLocaleString()}`,
-            category: account.category,
-          }
-        : e
-    ));
-    setEditingEntry(null);
-    setFormData(emptyForm);
-    setShowEditModal(false);
+  const handleBatchPost = (ids: string[]) => {
+    setEntries(prev => prev.map(e => ids.includes(e.id) ? { ...e, status: "Posted" as JournalStatus, postedDate: "2026-05-17", postedBy: "System Admin" } : e));
+    setSelectedEntries(new Set());
+    setShowBatchModal(false);
   };
 
-  const renderModal = (title: string, subtitle: string, onSubmit: () => void, submitLabel: string, onClose: () => void, showDate: boolean) => (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
-      <div className="bg-white rounded-2xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 shrink-0">
-          <div>
-            <h3 className="text-[16px] text-slate-900">{title}</h3>
-            <p className="text-[11px] text-slate-400 font-mono mt-0.5">{subtitle}</p>
-          </div>
-          <button onClick={onClose} className="p-1 hover:bg-slate-100 rounded-lg transition-colors">
-            <X size={18} className="text-slate-400" />
-          </button>
-        </div>
+  const handleStatusChange = (id: string, newStatus: JournalStatus) => {
+    setEntries(prev => prev.map(e => e.id === id ? { ...e, status: newStatus } : e));
+  };
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-5">
-          {showDate && (
-            <div>
-              <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1.5 block">Date <span className="text-red-500">*</span></label>
-              <input type="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            </div>
-          )}
+  // Summary stats
+  const totalEntries = entries.length;
+  const postedCount = entries.filter(e => e.status === "Posted").length;
+  const pendingCount = entries.filter(e => e.status === "Submitted" || e.status === "Approved").length;
+  const draftCount = entries.filter(e => e.status === "Draft").length;
 
-          <div>
-            <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1.5 block">Account Type <span className="text-red-500">*</span></label>
-            <select value={formData.accountType} onChange={(e) => setFormData({ ...formData, accountType: e.target.value, accountCode: "" })} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
-              <option value="">Select account type</option>
-              {ACCOUNT_TYPES.map((t) => (<option key={t} value={t}>{t}</option>))}
-            </select>
-          </div>
-
-          <div>
-            <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1.5 block">Account <span className="text-red-500">*</span></label>
-            <select value={formData.accountCode} onChange={(e) => setFormData({ ...formData, accountCode: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" disabled={!formData.accountType}>
-              <option value="">{formData.accountType ? "Select account" : "Select account type first"}</option>
-              {ACCOUNT_OPTIONS.filter((a) => a.category === formData.accountType).map((a) => (<option key={a.code} value={a.code}>{a.code} - {a.name}</option>))}
-            </select>
-          </div>
-
-          <div>
-            <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1.5 block">Description <span className="text-red-500">*</span></label>
-            <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder="Enter transaction description" rows={3} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
-          </div>
-
-          <div className="border-t border-slate-100" />
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1.5 block">Entry Type <span className="text-red-500">*</span></label>
-              <select value={formData.entryType} onChange={(e) => setFormData({ ...formData, entryType: e.target.value as "debit" | "credit" })} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
-                <option value="debit">Debit</option>
-                <option value="credit">Credit</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1.5 block">Amount (USD) <span className="text-red-500">*</span></label>
-              <input type="number" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} placeholder="0.00" className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            </div>
-          </div>
-
-          {formData.accountCode && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-              <p className="text-[11px] text-blue-700">
-                This entry will post a <span className="font-medium">{formData.entryType}</span> of <span className="font-medium">${Number(formData.amount || 0).toLocaleString()}</span> to <span className="font-medium">{ACCOUNT_OPTIONS.find(a => a.code === formData.accountCode)?.name}</span>.
-              </p>
-            </div>
-          )}
-        </div>
-
-        <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-end gap-3 shrink-0">
-          <button onClick={onClose} className="px-4 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-700 hover:bg-slate-50 transition-colors">Cancel</button>
-          <button onClick={onSubmit} className="px-5 py-2 rounded-lg text-[13px] text-white hover:bg-purple-800 transition-colors bg-purple-700">{submitLabel}</button>
-        </div>
-      </div>
-    </div>
-  );
+  const postableEntries = filteredEntries.filter(e => e.status === "Approved" && selectedEntries.has(e.id));
 
   return (
     <div className="h-full flex flex-col bg-slate-50 overflow-hidden">
+      {/* Header */}
       <div className="px-6 py-4 border-b border-slate-200 bg-white">
-        <h1 className="text-2xl font-semibold text-slate-900">General Ledger</h1>
-      </div>
-
-      <div className="px-6 py-4 bg-white border-b border-slate-200">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex-1 min-w-[250px]">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input type="text" placeholder="Search by account, description..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            </div>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold text-slate-900">General Ledger</h1>
+            <p className="text-[12px] text-slate-500 mt-0.5">Multi-ledger posting with full lifecycle management</p>
           </div>
-          <div className="relative">
-            <button className="px-4 py-2 border border-slate-200 rounded-lg text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2 bg-white min-w-[160px] justify-between">
-              <span>{selectedCategory}</span><ChevronDown className="w-4 h-4" />
-            </button>
-          </div>
-          <div className="relative">
-            <button className="px-4 py-2 border border-slate-200 rounded-lg text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2 bg-white min-w-[160px] justify-between">
-              <span>{selectedAccount}</span><ChevronDown className="w-4 h-4" />
-            </button>
-          </div>
-          <div className="relative">
-            <button className="px-4 py-2 border border-slate-200 rounded-lg text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2 bg-white min-w-[160px] justify-between">
-              <Calendar className="w-4 h-4" /><span>{dateRange}</span><ChevronDown className="w-4 h-4" />
-            </button>
-          </div>
-          <div className="flex items-center gap-2 ml-auto">
-            <button className="px-4 py-2 border border-slate-200 rounded-lg text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2 bg-white">
-              <Download className="w-4 h-4" />Export
-            </button>
-            <button onClick={() => { setFormData(emptyForm); setShowAddModal(true); }} className="px-4 py-2 rounded-lg text-sm text-white hover:opacity-90 transition-opacity flex items-center gap-2" style={{ backgroundColor: "#0B01D0" }}>
-              <Plus className="w-4 h-4" />New Entry
+          <div className="flex items-center gap-2">
+            {postableEntries.length > 0 && (
+              <button
+                onClick={() => setShowBatchModal(true)}
+                className="px-4 py-2 rounded-lg text-[13px] text-white bg-green-600 hover:bg-green-700 flex items-center gap-2"
+              >
+                <Layers size={14} />
+                Batch Post ({postableEntries.length})
+              </button>
+            )}
+            <button className="px-4 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-700 hover:bg-slate-50 flex items-center gap-2 bg-white">
+              <Download size={14} />Export
             </button>
           </div>
         </div>
       </div>
 
+      {/* Summary Cards */}
+      <div className="px-6 py-3 bg-white border-b border-slate-200">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-lg">
+            <BookOpen size={14} className="text-slate-500" />
+            <span className="text-[11px] text-slate-500">Total</span>
+            <span className="text-[13px] font-semibold text-slate-900">{totalEntries}</span>
+          </div>
+          <div className="flex items-center gap-2 px-3 py-2 bg-green-50 rounded-lg">
+            <CheckCircle2 size={14} className="text-green-600" />
+            <span className="text-[11px] text-green-600">Posted</span>
+            <span className="text-[13px] font-semibold text-green-700">{postedCount}</span>
+          </div>
+          <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 rounded-lg">
+            <Clock size={14} className="text-amber-600" />
+            <span className="text-[11px] text-amber-600">Pending</span>
+            <span className="text-[13px] font-semibold text-amber-700">{pendingCount}</span>
+          </div>
+          <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-lg">
+            <FileText size={14} className="text-slate-500" />
+            <span className="text-[11px] text-slate-500">Draft</span>
+            <span className="text-[13px] font-semibold text-slate-700">{draftCount}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Ledger Type Tabs */}
+      <div className="px-6 py-2 bg-white border-b border-slate-200">
+        <div className="flex items-center gap-1 overflow-x-auto">
+          <button
+            onClick={() => setSelectedLedger("All")}
+            className={`px-3 py-1.5 rounded-lg text-[11px] font-medium whitespace-nowrap transition-colors ${
+              selectedLedger === "All" ? "bg-blue-100 text-blue-700" : "text-slate-600 hover:bg-slate-100"
+            }`}
+          >
+            All Ledgers
+          </button>
+          {LEDGER_TYPES.map(lt => (
+            <button
+              key={lt.value}
+              onClick={() => setSelectedLedger(lt.value as LedgerType)}
+              className={`px-3 py-1.5 rounded-lg text-[11px] font-medium whitespace-nowrap transition-colors ${
+                selectedLedger === lt.value ? "bg-blue-100 text-blue-700" : "text-slate-600 hover:bg-slate-100"
+              }`}
+            >
+              {lt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="px-6 py-3 bg-white border-b border-slate-200">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex-1 min-w-[220px]">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search entries..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-[12px] focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+          <select
+            value={selectedStatus}
+            onChange={(e) => setSelectedStatus(e.target.value as JournalStatus | "All")}
+            className="px-3 py-2 border border-slate-200 rounded-lg text-[12px] text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="All">All Statuses</option>
+            {JOURNAL_STATUSES.map(s => (
+              <option key={s.value} value={s.value}>{s.label}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Table */}
       <div className="flex-1 overflow-auto">
+        {detailEntry ? (
+          <EntryDetail entry={detailEntry} onBack={() => setDetailEntry(null)} onStatusChange={handleStatusChange} />
+        ) : (
+          <table className="w-full">
+            <thead style={{ backgroundColor: "#0B01D0" }}>
+              <tr>
+                <th className="px-3 py-3 text-center">
+                  <input
+                    type="checkbox"
+                    checked={selectedEntries.size === filteredEntries.length && filteredEntries.length > 0}
+                    onChange={toggleSelectAll}
+                    className="rounded border-white/50"
+                  />
+                </th>
+                <th className="text-left px-4 py-3 text-white text-[11px] font-semibold">Entry No.</th>
+                <th className="text-left px-4 py-3 text-white text-[11px] font-semibold">Date</th>
+                <th className="text-left px-4 py-3 text-white text-[11px] font-semibold">Description</th>
+                <th className="text-left px-4 py-3 text-white text-[11px] font-semibold">Type</th>
+                <th className="text-left px-4 py-3 text-white text-[11px] font-semibold">Ledger</th>
+                <th className="text-right px-4 py-3 text-white text-[11px] font-semibold">Total</th>
+                <th className="text-center px-4 py-3 text-white text-[11px] font-semibold">Lines</th>
+                <th className="text-center px-4 py-3 text-white text-[11px] font-semibold">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredEntries.map(entry => {
+                const { totalDebit } = getJournalTotals(entry);
+                return (
+                  <tr key={entry.id} className="border-b border-slate-100 hover:bg-slate-50 cursor-pointer" onClick={() => setDetailEntry(entry)}>
+                    <td className="px-3 py-3 text-center" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={selectedEntries.has(entry.id)}
+                        onChange={() => toggleSelect(entry.id)}
+                        className="rounded"
+                      />
+                    </td>
+                    <td className="px-4 py-3">
+                      <p className="text-[12px] font-medium text-blue-700 font-mono">{entry.entryNo}</p>
+                    </td>
+                    <td className="px-4 py-3">
+                      <p className="text-[12px] text-slate-600">{entry.date}</p>
+                    </td>
+                    <td className="px-4 py-3">
+                      <p className="text-[12px] text-slate-800 truncate max-w-[250px]">{entry.description}</p>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-[10px] px-2 py-0.5 bg-slate-100 text-slate-600 rounded font-medium">
+                        {entry.entryType}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-[10px] px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded font-medium">
+                        {entry.ledgerType}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <p className="text-[12px] font-medium text-slate-900 font-mono">{formatCurrency(totalDebit, entry.currency)}</p>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className="text-[11px] text-slate-500">{entry.lines.length}</span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <StatusBadge status={entry.status} />
+                    </td>
+                  </tr>
+                );
+              })}
+              {filteredEntries.length === 0 && (
+                <tr>
+                  <td colSpan={9} className="px-4 py-12 text-center text-[13px] text-slate-500">
+                    No entries match the current filters
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {showBatchModal && (
+        <BatchPostingModal
+          entries={entries.filter(e => selectedEntries.has(e.id) && e.status === "Approved")}
+          onPost={handleBatchPost}
+          onClose={() => setShowBatchModal(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+function StatusBadge({ status }: { status: JournalStatus }) {
+  const colors: Record<JournalStatus, string> = {
+    Draft: "bg-slate-100 text-slate-600",
+    Submitted: "bg-amber-50 text-amber-700",
+    Approved: "bg-blue-50 text-blue-700",
+    Posted: "bg-green-50 text-green-700",
+    Reversed: "bg-red-50 text-red-600",
+  };
+
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-medium ${colors[status]}`}>
+      {STATUS_ICONS[status]}
+      {status}
+    </span>
+  );
+}
+
+function EntryDetail({ entry, onBack, onStatusChange }: { entry: SRDJournalEntry; onBack: () => void; onStatusChange: (id: string, status: JournalStatus) => void }) {
+  const { totalDebit, totalCredit, isBalanced } = getJournalTotals(entry);
+
+  const transitions: Record<JournalStatus, JournalStatus[]> = {
+    Draft: ["Submitted"],
+    Submitted: ["Approved", "Draft"],
+    Approved: ["Posted", "Submitted"],
+    Posted: ["Reversed"],
+    Reversed: [],
+  };
+
+  const available = transitions[entry.status];
+
+  return (
+    <div className="p-6 space-y-5">
+      <div className="flex items-center justify-between">
+        <button onClick={onBack} className="text-[12px] text-blue-600 hover:text-blue-800">&larr; Back to list</button>
+        <div className="flex items-center gap-2">
+          {available.map(target => (
+            <button
+              key={target}
+              onClick={() => onStatusChange(entry.id, target)}
+              className="px-3 py-1.5 rounded-lg text-[11px] font-medium border border-slate-200 hover:border-blue-300 hover:bg-blue-50 text-slate-700 hover:text-blue-700"
+            >
+              Move to {target}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Entry Header */}
+      <div className="bg-white rounded-xl border border-slate-200 p-5">
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <h2 className="text-[16px] font-semibold text-slate-900">{entry.entryNo}</h2>
+            <p className="text-[12px] text-slate-500 mt-0.5">{entry.description}</p>
+          </div>
+          <StatusBadge status={entry.status} />
+        </div>
+        <div className="grid grid-cols-5 gap-4">
+          <div>
+            <p className="text-[10px] text-slate-500 uppercase tracking-wider">Date</p>
+            <p className="text-[12px] text-slate-800 mt-0.5">{entry.date}</p>
+          </div>
+          <div>
+            <p className="text-[10px] text-slate-500 uppercase tracking-wider">Entry Type</p>
+            <p className="text-[12px] text-slate-800 mt-0.5">{entry.entryType}</p>
+          </div>
+          <div>
+            <p className="text-[10px] text-slate-500 uppercase tracking-wider">Ledger</p>
+            <p className="text-[12px] text-slate-800 mt-0.5">{entry.ledgerType}</p>
+          </div>
+          <div>
+            <p className="text-[10px] text-slate-500 uppercase tracking-wider">Period</p>
+            <p className="text-[12px] text-slate-800 mt-0.5">{entry.fiscalPeriod}</p>
+          </div>
+          <div>
+            <p className="text-[10px] text-slate-500 uppercase tracking-wider">Currency</p>
+            <p className="text-[12px] text-slate-800 mt-0.5">{entry.currency}</p>
+          </div>
+        </div>
+        {entry.reference && (
+          <div className="mt-3 pt-3 border-t border-slate-100">
+            <p className="text-[10px] text-slate-500 uppercase tracking-wider">Reference</p>
+            <p className="text-[12px] text-slate-800 mt-0.5">{entry.reference}</p>
+          </div>
+        )}
+      </div>
+
+      {/* Journal Lines */}
+      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div className="px-5 py-3 border-b border-slate-200 flex items-center justify-between">
+          <h3 className="text-[13px] font-semibold text-slate-900">Journal Lines</h3>
+          <div className={`text-[11px] font-medium px-2.5 py-1 rounded-lg ${isBalanced ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>
+            {isBalanced ? "Balanced" : "UNBALANCED"}
+          </div>
+        </div>
         <table className="w-full">
-          <thead style={{ backgroundColor: "#0B01D0" }}>
+          <thead className="bg-slate-50">
             <tr>
-              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Date</th>
-              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Account Code</th>
-              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Account Name</th>
-              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Description</th>
-              <th className="text-right px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Debit</th>
-              <th className="text-right px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Credit</th>
-              <th className="text-right px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Balance</th>
-              <th className="text-center px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Category</th>
-              <th className="text-center px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Actions</th>
+              <th className="text-left px-4 py-2.5 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">#</th>
+              <th className="text-left px-4 py-2.5 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Account</th>
+              <th className="text-left px-4 py-2.5 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Description</th>
+              <th className="text-right px-4 py-2.5 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Debit</th>
+              <th className="text-right px-4 py-2.5 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Credit</th>
             </tr>
           </thead>
           <tbody>
-            {ledgerData.map((entry) => (
-              <tr key={entry.id} className="border-b border-slate-100 hover:bg-slate-50">
-                <td className="px-4 py-4"><p className="text-[12px] text-slate-900">{entry.date}</p></td>
-                <td className="px-4 py-4"><p className="text-[12px] font-medium text-slate-900 font-mono">{entry.accountCode}</p></td>
-                <td className="px-4 py-4"><p className="text-[12px] text-slate-900">{entry.accountName}</p></td>
-                <td className="px-4 py-4"><p className="text-[12px] text-slate-600">{entry.description}</p></td>
-                <td className="px-4 py-4 text-right"><p className="text-[12px] font-medium text-slate-900">{entry.debit}</p></td>
-                <td className="px-4 py-4 text-right"><p className="text-[12px] font-medium text-slate-900">{entry.credit}</p></td>
-                <td className="px-4 py-4 text-right"><p className="text-[12px] font-medium text-slate-900">{entry.balance}</p></td>
-                <td className="px-4 py-4 text-center">
-                  <span className={`inline-flex items-center px-2 py-1 rounded-xl text-[12px] ${
-                    entry.category === "Asset" ? "bg-blue-50 text-blue-700" :
-                    entry.category === "Expense" ? "bg-orange-50 text-orange-700" :
-                    entry.category === "Revenue" ? "bg-green-50 text-green-700" :
-                    entry.category === "Equity" ? "bg-indigo-50 text-indigo-700" :
-                    "bg-purple-50 text-purple-700"
-                  }`}>{entry.category}</span>
-                </td>
-                <td className="px-4 py-4 text-center">
-                  <button onClick={() => handleEditOpen(entry)} className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors" title="Edit entry">
-                    <Pencil className="w-4 h-4 text-slate-500" />
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {entry.lines.map((line, i) => {
+              const acct = mockSRDAccounts.find(a => a.id === line.accountId);
+              return (
+                <tr key={line.id} className="border-t border-slate-100">
+                  <td className="px-4 py-3 text-[11px] text-slate-400">{i + 1}</td>
+                  <td className="px-4 py-3">
+                    <p className="text-[11px] font-mono text-slate-700">{acct?.displayCode || line.accountId}</p>
+                    <p className="text-[10px] text-slate-500">{acct?.name || ""}</p>
+                  </td>
+                  <td className="px-4 py-3 text-[11px] text-slate-600">{line.description}</td>
+                  <td className="px-4 py-3 text-right text-[11px] font-mono text-slate-900">
+                    {line.debit > 0 ? formatCurrency(line.debit, entry.currency) : "-"}
+                  </td>
+                  <td className="px-4 py-3 text-right text-[11px] font-mono text-slate-900">
+                    {line.credit > 0 ? formatCurrency(line.credit, entry.currency) : "-"}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
+          <tfoot className="bg-slate-50 border-t border-slate-200">
+            <tr>
+              <td colSpan={3} className="px-4 py-2.5 text-[11px] font-semibold text-slate-700 text-right">Totals</td>
+              <td className="px-4 py-2.5 text-right text-[11px] font-mono font-semibold text-slate-900">{formatCurrency(totalDebit, entry.currency)}</td>
+              <td className="px-4 py-2.5 text-right text-[11px] font-mono font-semibold text-slate-900">{formatCurrency(totalCredit, entry.currency)}</td>
+            </tr>
+          </tfoot>
         </table>
       </div>
 
-      {showAddModal && renderModal("New Ledger Entry", nextEntryRef, handleAdd, "Submit Entry", () => { setFormData(emptyForm); setShowAddModal(false); }, true)}
-      {showEditModal && renderModal("Edit Ledger Entry", editingEntry ? `${editingEntry.accountCode} - ${editingEntry.accountName}` : "", handleEditSave, "Save Changes", () => { setEditingEntry(null); setFormData(emptyForm); setShowEditModal(false); }, false)}
+      {/* Audit Info */}
+      <div className="bg-white rounded-xl border border-slate-200 p-5">
+        <h3 className="text-[13px] font-semibold text-slate-900 mb-3">Audit Information</h3>
+        <div className="grid grid-cols-4 gap-4 text-[11px]">
+          <div>
+            <p className="text-slate-500">Created By</p>
+            <p className="text-slate-800 mt-0.5">{entry.createdBy}</p>
+          </div>
+          <div>
+            <p className="text-slate-500">Created Date</p>
+            <p className="text-slate-800 mt-0.5">{entry.date}</p>
+          </div>
+          {entry.approvedBy && (
+            <div>
+              <p className="text-slate-500">Approved By</p>
+              <p className="text-slate-800 mt-0.5">{entry.approvedBy}</p>
+            </div>
+          )}
+          {entry.postedBy && (
+            <div>
+              <p className="text-slate-500">Posted By</p>
+              <p className="text-slate-800 mt-0.5">{entry.postedBy}</p>
+            </div>
+          )}
+          {entry.postedDate && (
+            <div>
+              <p className="text-slate-500">Posted Date</p>
+              <p className="text-slate-800 mt-0.5">{entry.postedDate}</p>
+            </div>
+          )}
+          {entry.reversalOf && (
+            <div>
+              <p className="text-slate-500">Reversal Of</p>
+              <p className="text-slate-800 mt-0.5 font-mono">{entry.reversalOf}</p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

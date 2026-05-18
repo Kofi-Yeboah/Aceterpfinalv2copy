@@ -1,108 +1,192 @@
 import { useState } from "react";
-import { Search, Download, ChevronDown, Plus, Calendar, MoreHorizontal } from "lucide-react";
+import { Search, Download, Plus, ChevronDown, CheckCircle2, Clock, FileText, XCircle, RotateCcw, Copy, Eye } from "lucide-react";
+import type { SRDJournalEntry, JournalStatus, JournalEntryType, JournalLine } from "./finance/types";
+import { mockJournalEntries, mockSRDAccounts, mockRecurringTemplates } from "./finance/mockData";
+import { JOURNAL_ENTRY_TYPES, JOURNAL_STATUSES, LEDGER_TYPES } from "./finance/constants";
+import { formatCurrency, getJournalTotals, validateDoubleEntry, generateEntryNo } from "./finance/helpers";
+import { JournalEntryForm } from "./finance/JournalEntryForm";
+import { RecurringEntryTemplates } from "./finance/RecurringEntryTemplates";
 
-interface JournalEntry {
-  id: number;
-  entryNo: string;
-  date: string;
-  description: string;
-  account: string;
-  debit: string;
-  credit: string;
-  reference: string;
-  createdBy: string;
-  status: "Posted" | "Draft" | "Pending";
-}
+type SubView = "list" | "create" | "detail" | "templates";
 
-const journalData: JournalEntry[] = [
-  { id: 1, entryNo: "JE-2024-001", date: "Dec 01, 2024", description: "Payroll expense entry", account: "Salaries & Wages", debit: "$495,000", credit: "-", reference: "PAY-DEC-2024", createdBy: "John Smith", status: "Posted" },
-  { id: 2, entryNo: "JE-2024-002", date: "Nov 30, 2024", description: "Grant revenue recognition", account: "Grant Income", debit: "-", credit: "$250,000", reference: "GR-2024-45", createdBy: "Sarah Johnson", status: "Posted" },
-  { id: 3, entryNo: "JE-2024-003", date: "Nov 28, 2024", description: "Office supplies expense", account: "Office Expenses", debit: "$12,450", credit: "-", reference: "INV-2024-123", createdBy: "Mike Brown", status: "Posted" },
-  { id: 4, entryNo: "JE-2024-004", date: "Nov 25, 2024", description: "Insurance premium adjustment", account: "Prepaid Insurance", debit: "$45,800", credit: "-", reference: "INS-2024-11", createdBy: "John Smith", status: "Posted" },
-  { id: 5, entryNo: "JE-2024-005", date: "Nov 22, 2024", description: "Depreciation expense", account: "Accumulated Depreciation", debit: "-", credit: "$8,500", reference: "DEP-NOV-2024", createdBy: "Sarah Johnson", status: "Posted" },
-  { id: 6, entryNo: "JE-2024-006", date: "Nov 20, 2024", description: "Marketing expense accrual", account: "Marketing Expenses", debit: "$32,000", credit: "-", reference: "MKT-2024-45", createdBy: "Mike Brown", status: "Pending" },
-  { id: 7, entryNo: "JE-2024-007", date: "Nov 18, 2024", description: "Rent expense allocation", account: "Rent Expense", debit: "$18,500", credit: "-", reference: "RENT-NOV-2024", createdBy: "John Smith", status: "Posted" },
-  { id: 8, entryNo: "JE-2024-008", date: "Nov 15, 2024", description: "Equipment purchase entry", account: "Fixed Assets", debit: "$25,000", credit: "-", reference: "FA-2024-12", createdBy: "Sarah Johnson", status: "Draft" },
-];
+const STATUS_ICONS: Record<JournalStatus, React.ReactNode> = {
+  Draft: <FileText size={12} />,
+  Submitted: <Clock size={12} />,
+  Approved: <CheckCircle2 size={12} />,
+  Posted: <CheckCircle2 size={12} />,
+  Reversed: <XCircle size={12} />,
+};
+
+const STATUS_COLORS: Record<JournalStatus, string> = {
+  Draft: "bg-slate-100 text-slate-600",
+  Submitted: "bg-amber-50 text-amber-700",
+  Approved: "bg-blue-50 text-blue-700",
+  Posted: "bg-green-50 text-green-700",
+  Reversed: "bg-red-50 text-red-600",
+};
 
 export function JournalEntries() {
+  const [view, setView] = useState<SubView>("list");
+  const [entries, setEntries] = useState<SRDJournalEntry[]>(mockJournalEntries);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedAccount, setSelectedAccount] = useState("All Accounts");
-  const [selectedStatus, setSelectedStatus] = useState("All Statuses");
-  const [dateRange, setDateRange] = useState("Last 30 Days");
+  const [filterType, setFilterType] = useState<JournalEntryType | "All">("All");
+  const [filterStatus, setFilterStatus] = useState<JournalStatus | "All">("All");
+  const [selectedEntry, setSelectedEntry] = useState<SRDJournalEntry | null>(null);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Posted": return "bg-green-50 text-green-700";
-      case "Draft": return "bg-slate-50 text-slate-700";
-      case "Pending": return "bg-yellow-50 text-yellow-700";
-      default: return "bg-slate-50 text-slate-700";
+  const filteredEntries = entries.filter(e => {
+    if (filterType !== "All" && e.entryType !== filterType) return false;
+    if (filterStatus !== "All" && e.status !== filterStatus) return false;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      return e.entryNo.toLowerCase().includes(q) || e.description.toLowerCase().includes(q);
     }
+    return true;
+  });
+
+  const handleCreateEntry = (entry: SRDJournalEntry) => {
+    setEntries([entry, ...entries]);
+    setView("list");
   };
+
+  const handleStatusChange = (id: string, newStatus: JournalStatus) => {
+    setEntries(prev => prev.map(e => e.id === id ? {
+      ...e,
+      status: newStatus,
+      ...(newStatus === "Posted" ? { postedDate: "2026-05-17", postedBy: "System Admin" } : {}),
+      ...(newStatus === "Approved" ? { approvedBy: "CFO" } : {}),
+    } : e));
+  };
+
+  const handleReverse = (entry: SRDJournalEntry) => {
+    const reversalEntry: SRDJournalEntry = {
+      ...entry,
+      id: `je-rev-${Date.now()}`,
+      entryNo: generateEntryNo("JE"),
+      description: `Reversal of ${entry.entryNo}: ${entry.description}`,
+      status: "Draft",
+      entryType: "Reversing",
+      reversalOf: entry.entryNo,
+      lines: entry.lines.map(l => ({ ...l, id: `${l.id}-rev`, debit: l.credit, credit: l.debit })),
+      createdBy: "Current User",
+      approvedBy: undefined,
+      postedBy: undefined,
+      postedDate: undefined,
+    };
+    handleStatusChange(entry.id, "Reversed");
+    setEntries(prev => [reversalEntry, ...prev]);
+    setView("list");
+  };
+
+  const handleGenerateFromTemplate = (templateId: string) => {
+    const template = mockRecurringTemplates.find(t => t.id === templateId);
+    if (!template) return;
+    const newEntry: SRDJournalEntry = {
+      id: `je-gen-${Date.now()}`,
+      entryNo: generateEntryNo("JE"),
+      date: "2026-05-17",
+      description: template.description,
+      entryType: "Recurring",
+      ledgerType: "Primary",
+      status: "Draft",
+      currency: "GHS",
+      fiscalPeriod: "2026-P05",
+      lines: template.lines.map((l, i) => ({
+        id: `line-gen-${Date.now()}-${i}`,
+        accountId: l.accountId,
+        description: l.description,
+        debit: l.debit,
+        credit: l.credit,
+      })),
+      createdBy: "Current User",
+    };
+    setEntries(prev => [newEntry, ...prev]);
+    setView("list");
+  };
+
+  if (view === "create") {
+    return <JournalEntryForm onSave={handleCreateEntry} onCancel={() => setView("list")} />;
+  }
+
+  if (view === "templates") {
+    return <RecurringEntryTemplates onBack={() => setView("list")} onGenerate={handleGenerateFromTemplate} />;
+  }
+
+  if (view === "detail" && selectedEntry) {
+    return (
+      <JournalEntryDetail
+        entry={selectedEntry}
+        onBack={() => { setView("list"); setSelectedEntry(null); }}
+        onStatusChange={handleStatusChange}
+        onReverse={handleReverse}
+      />
+    );
+  }
 
   return (
     <div className="h-full flex flex-col bg-slate-50 overflow-hidden">
       {/* Header */}
       <div className="px-6 py-4 border-b border-slate-200 bg-white">
-        <h1 className="text-2xl font-semibold text-slate-900">Journal Entries</h1>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold text-slate-900">Journal Entries</h1>
+            <p className="text-[12px] text-slate-500 mt-0.5">Multi-line double-entry journal management with 10 entry types</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setView("templates")}
+              className="px-4 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+            >
+              <Copy size={14} />Templates
+            </button>
+            <button className="px-4 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-700 hover:bg-slate-50 flex items-center gap-2">
+              <Download size={14} />Export
+            </button>
+            <button
+              onClick={() => setView("create")}
+              className="px-4 py-2 rounded-lg text-[13px] text-white flex items-center gap-2"
+              style={{ backgroundColor: "#0B01D0" }}
+            >
+              <Plus size={14} />New Entry
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Filters */}
-      <div className="px-6 py-4 bg-white border-b border-slate-200">
+      <div className="px-6 py-3 bg-white border-b border-slate-200">
         <div className="flex flex-wrap items-center gap-3">
-          {/* Search */}
-          <div className="flex-1 min-w-[250px]">
+          <div className="flex-1 min-w-[220px]">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
                 type="text"
-                placeholder="Search by entry number, description..."
+                placeholder="Search entries..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-[12px] focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </div>
-
-          {/* Account Filter */}
-          <div className="relative">
-            <button className="px-4 py-2 border border-slate-200 rounded-lg text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2 bg-white min-w-[160px] justify-between">
-              <span>{selectedAccount}</span>
-              <ChevronDown className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* Status Filter */}
-          <div className="relative">
-            <button className="px-4 py-2 border border-slate-200 rounded-lg text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2 bg-white min-w-[160px] justify-between">
-              <span>{selectedStatus}</span>
-              <ChevronDown className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* Date Range Filter */}
-          <div className="relative">
-            <button className="px-4 py-2 border border-slate-200 rounded-lg text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2 bg-white min-w-[160px] justify-between">
-              <Calendar className="w-4 h-4" />
-              <span>{dateRange}</span>
-              <ChevronDown className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex items-center gap-2 ml-auto">
-            <button className="px-4 py-2 border border-slate-200 rounded-lg text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2 bg-white">
-              <Download className="w-4 h-4" />
-              Export
-            </button>
-            <button 
-              className="px-4 py-2 rounded-lg text-sm text-white hover:opacity-90 transition-opacity flex items-center gap-2"
-              style={{ backgroundColor: "#0B01D0" }}
-            >
-              <Plus className="w-4 h-4" />
-              New Entry
-            </button>
-          </div>
+          <select
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value as JournalEntryType | "All")}
+            className="px-3 py-2 border border-slate-200 rounded-lg text-[12px] text-slate-700 bg-white"
+          >
+            <option value="All">All Types</option>
+            {JOURNAL_ENTRY_TYPES.map(t => (
+              <option key={t.value} value={t.value}>{t.label}</option>
+            ))}
+          </select>
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value as JournalStatus | "All")}
+            className="px-3 py-2 border border-slate-200 rounded-lg text-[12px] text-slate-700 bg-white"
+          >
+            <option value="All">All Statuses</option>
+            {JOURNAL_STATUSES.map(s => (
+              <option key={s.value} value={s.value}>{s.label}</option>
+            ))}
+          </select>
         </div>
       </div>
 
@@ -111,60 +195,213 @@ export function JournalEntries() {
         <table className="w-full">
           <thead style={{ backgroundColor: "#0B01D0" }}>
             <tr>
-              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Entry No.</th>
-              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Date</th>
-              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Description</th>
-              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Account</th>
-              <th className="text-right px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Debit</th>
-              <th className="text-right px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Credit</th>
-              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Reference</th>
-              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Created By</th>
-              <th className="text-center px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Status</th>
-              <th className="text-center px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Action</th>
+              <th className="text-left px-4 py-3 text-white text-[11px] font-semibold">Entry No.</th>
+              <th className="text-left px-4 py-3 text-white text-[11px] font-semibold">Date</th>
+              <th className="text-left px-4 py-3 text-white text-[11px] font-semibold">Description</th>
+              <th className="text-left px-4 py-3 text-white text-[11px] font-semibold">Type</th>
+              <th className="text-left px-4 py-3 text-white text-[11px] font-semibold">Ledger</th>
+              <th className="text-right px-4 py-3 text-white text-[11px] font-semibold">Debit</th>
+              <th className="text-right px-4 py-3 text-white text-[11px] font-semibold">Credit</th>
+              <th className="text-center px-4 py-3 text-white text-[11px] font-semibold">Lines</th>
+              <th className="text-center px-4 py-3 text-white text-[11px] font-semibold">Status</th>
+              <th className="text-center px-4 py-3 text-white text-[11px] font-semibold">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {journalData.map((entry) => (
-              <tr key={entry.id} className="border-b border-slate-100 hover:bg-slate-50">
-                <td className="px-4 py-4">
-                  <p className="text-[12px] font-medium text-slate-900">{entry.entryNo}</p>
-                </td>
-                <td className="px-4 py-4">
-                  <p className="text-[12px] text-slate-600">{entry.date}</p>
-                </td>
-                <td className="px-4 py-4">
-                  <p className="text-[12px] text-slate-600">{entry.description}</p>
-                </td>
-                <td className="px-4 py-4">
-                  <p className="text-[12px] text-slate-900">{entry.account}</p>
-                </td>
-                <td className="px-4 py-4 text-right">
-                  <p className="text-[12px] font-medium text-slate-900">{entry.debit}</p>
-                </td>
-                <td className="px-4 py-4 text-right">
-                  <p className="text-[12px] font-medium text-slate-900">{entry.credit}</p>
-                </td>
-                <td className="px-4 py-4">
-                  <p className="text-[12px] text-slate-600">{entry.reference}</p>
-                </td>
-                <td className="px-4 py-4">
-                  <p className="text-[12px] text-slate-600">{entry.createdBy}</p>
-                </td>
-                <td className="px-4 py-4 text-center">
-                  <span className={`inline-flex items-center px-2 py-1 rounded-xl text-[12px] ${getStatusColor(entry.status)}`}>
-                    {entry.status}
-                  </span>
-                </td>
-                <td className="px-4 py-4 text-center">
-                  <button className="p-1 hover:bg-slate-100 rounded">
-                    <MoreHorizontal className="w-4 h-4 text-slate-400" />
-                  </button>
+            {filteredEntries.map(entry => {
+              const { totalDebit, totalCredit } = getJournalTotals(entry);
+              return (
+                <tr key={entry.id} className="border-b border-slate-100 hover:bg-slate-50">
+                  <td className="px-4 py-3">
+                    <p className="text-[12px] font-medium text-blue-700 font-mono">{entry.entryNo}</p>
+                  </td>
+                  <td className="px-4 py-3 text-[12px] text-slate-600">{entry.date}</td>
+                  <td className="px-4 py-3">
+                    <p className="text-[12px] text-slate-800 truncate max-w-[220px]">{entry.description}</p>
+                    {entry.reversalOf && (
+                      <p className="text-[10px] text-red-500 mt-0.5">Reversal of {entry.reversalOf}</p>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className="text-[10px] px-2 py-0.5 bg-slate-100 text-slate-600 rounded font-medium">{entry.entryType}</span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className="text-[10px] px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded font-medium">{entry.ledgerType}</span>
+                  </td>
+                  <td className="px-4 py-3 text-right text-[12px] font-mono text-slate-900">{formatCurrency(totalDebit, entry.currency)}</td>
+                  <td className="px-4 py-3 text-right text-[12px] font-mono text-slate-900">{formatCurrency(totalCredit, entry.currency)}</td>
+                  <td className="px-4 py-3 text-center text-[11px] text-slate-500">{entry.lines.length}</td>
+                  <td className="px-4 py-3 text-center">
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-medium ${STATUS_COLORS[entry.status]}`}>
+                      {STATUS_ICONS[entry.status]}
+                      {entry.status}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <button
+                      onClick={() => { setSelectedEntry(entry); setView("detail"); }}
+                      className="p-1.5 hover:bg-slate-100 rounded-lg"
+                      title="View details"
+                    >
+                      <Eye size={14} className="text-slate-500" />
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
+            {filteredEntries.length === 0 && (
+              <tr>
+                <td colSpan={10} className="px-4 py-12 text-center text-[13px] text-slate-500">
+                  No journal entries match the current filters
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>
+    </div>
+  );
+}
+
+function JournalEntryDetail({ entry, onBack, onStatusChange, onReverse }: {
+  entry: SRDJournalEntry;
+  onBack: () => void;
+  onStatusChange: (id: string, status: JournalStatus) => void;
+  onReverse: (entry: SRDJournalEntry) => void;
+}) {
+  const { totalDebit, totalCredit, isBalanced } = getJournalTotals(entry);
+
+  const transitions: Record<JournalStatus, JournalStatus[]> = {
+    Draft: ["Submitted"],
+    Submitted: ["Approved", "Draft"],
+    Approved: ["Posted", "Submitted"],
+    Posted: [],
+    Reversed: [],
+  };
+
+  const available = transitions[entry.status];
+  const canReverse = entry.status === "Posted";
+
+  return (
+    <div className="h-full flex flex-col bg-slate-50 overflow-auto">
+      <div className="px-6 py-4 border-b border-slate-200 bg-white">
+        <div className="flex items-center justify-between">
+          <button onClick={onBack} className="text-[12px] text-blue-600 hover:text-blue-800">&larr; Back to Journal Entries</button>
+          <div className="flex items-center gap-2">
+            {canReverse && (
+              <button
+                onClick={() => onReverse(entry)}
+                className="px-3 py-1.5 rounded-lg text-[11px] font-medium border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 flex items-center gap-1.5"
+              >
+                <RotateCcw size={12} />Reverse
+              </button>
+            )}
+            {available.map(target => (
+              <button
+                key={target}
+                onClick={() => onStatusChange(entry.id, target)}
+                className="px-3 py-1.5 rounded-lg text-[11px] font-medium border border-slate-200 hover:border-blue-300 hover:bg-blue-50 text-slate-700 hover:text-blue-700"
+              >
+                Move to {target}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="p-6 space-y-5">
+        {/* Entry Info Card */}
+        <div className="bg-white rounded-xl border border-slate-200 p-5">
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <h2 className="text-[16px] font-semibold text-slate-900">{entry.entryNo}</h2>
+              <p className="text-[12px] text-slate-500 mt-0.5">{entry.description}</p>
+            </div>
+            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[11px] font-medium ${STATUS_COLORS[entry.status]}`}>
+              {STATUS_ICONS[entry.status]}
+              {entry.status}
+            </span>
+          </div>
+          <div className="grid grid-cols-6 gap-4">
+            <InfoCell label="Date" value={entry.date} />
+            <InfoCell label="Entry Type" value={entry.entryType} />
+            <InfoCell label="Ledger Type" value={entry.ledgerType} />
+            <InfoCell label="Period" value={entry.fiscalPeriod || entry.periodId || "-"} />
+            <InfoCell label="Currency" value={entry.currency || "USD"} />
+            <InfoCell label="Reference" value={entry.reference || "-"} />
+          </div>
+        </div>
+
+        {/* Journal Lines Table */}
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <div className="px-5 py-3 border-b border-slate-200 flex items-center justify-between">
+            <h3 className="text-[13px] font-semibold text-slate-900">Journal Lines ({entry.lines.length})</h3>
+            <div className={`text-[11px] font-medium px-2.5 py-1 rounded-lg ${isBalanced ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+              {isBalanced ? "Balanced" : "UNBALANCED"}
+            </div>
+          </div>
+          <table className="w-full">
+            <thead className="bg-slate-50">
+              <tr>
+                <th className="text-left px-4 py-2.5 text-[10px] font-semibold text-slate-500 uppercase">#</th>
+                <th className="text-left px-4 py-2.5 text-[10px] font-semibold text-slate-500 uppercase">Account Code</th>
+                <th className="text-left px-4 py-2.5 text-[10px] font-semibold text-slate-500 uppercase">Account Name</th>
+                <th className="text-left px-4 py-2.5 text-[10px] font-semibold text-slate-500 uppercase">Description</th>
+                <th className="text-right px-4 py-2.5 text-[10px] font-semibold text-slate-500 uppercase">Debit</th>
+                <th className="text-right px-4 py-2.5 text-[10px] font-semibold text-slate-500 uppercase">Credit</th>
+              </tr>
+            </thead>
+            <tbody>
+              {entry.lines.map((line, i) => {
+                const acct = mockSRDAccounts.find(a => a.id === line.accountId);
+                return (
+                  <tr key={line.id} className="border-t border-slate-100">
+                    <td className="px-4 py-3 text-[11px] text-slate-400">{i + 1}</td>
+                    <td className="px-4 py-3 text-[11px] font-mono text-slate-700">{acct?.displayCode || line.accountId}</td>
+                    <td className="px-4 py-3 text-[11px] text-slate-700">{acct?.name || "-"}</td>
+                    <td className="px-4 py-3 text-[11px] text-slate-600">{line.description}</td>
+                    <td className="px-4 py-3 text-right text-[11px] font-mono text-slate-900">
+                      {line.debit > 0 ? formatCurrency(line.debit, entry.currency) : "-"}
+                    </td>
+                    <td className="px-4 py-3 text-right text-[11px] font-mono text-slate-900">
+                      {line.credit > 0 ? formatCurrency(line.credit, entry.currency) : "-"}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+            <tfoot className="bg-slate-50 border-t-2 border-slate-200">
+              <tr>
+                <td colSpan={4} className="px-4 py-2.5 text-right text-[11px] font-semibold text-slate-700">Totals</td>
+                <td className="px-4 py-2.5 text-right text-[11px] font-mono font-semibold text-slate-900">{formatCurrency(totalDebit, entry.currency)}</td>
+                <td className="px-4 py-2.5 text-right text-[11px] font-mono font-semibold text-slate-900">{formatCurrency(totalCredit, entry.currency)}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        {/* Audit Info */}
+        <div className="bg-white rounded-xl border border-slate-200 p-5">
+          <h3 className="text-[13px] font-semibold text-slate-900 mb-3">Audit Trail</h3>
+          <div className="grid grid-cols-4 gap-4">
+            <InfoCell label="Created By" value={entry.createdBy} />
+            <InfoCell label="Created Date" value={entry.date} />
+            {entry.approvedBy && <InfoCell label="Approved By" value={entry.approvedBy} />}
+            {entry.postedBy && <InfoCell label="Posted By" value={entry.postedBy} />}
+            {entry.postedDate && <InfoCell label="Posted Date" value={entry.postedDate} />}
+            {entry.reversalOf && <InfoCell label="Reversal Of" value={entry.reversalOf} />}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function InfoCell({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-[10px] text-slate-500 uppercase tracking-wider">{label}</p>
+      <p className="text-[12px] text-slate-800 mt-0.5">{value}</p>
     </div>
   );
 }

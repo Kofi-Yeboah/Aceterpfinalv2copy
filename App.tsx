@@ -72,6 +72,13 @@ import { RequestManagementTravel } from "./components/RequestManagementTravel";
 import { HRAdvanceApprovals } from "./pages/HRAdvanceApprovals";
 import { PayrollDashboard } from "./components/PayrollDashboard";
 import { GeneralLedger } from "./components/GeneralLedger";
+import { JournalEntries } from "./components/JournalEntries";
+import { PeriodManagement } from "./components/finance/PeriodManagement";
+import { MultiCurrency } from "./components/finance/MultiCurrency";
+import { ControlAccountsView } from "./components/finance/ControlAccountsView";
+import { IntercompanyAccounting } from "./components/finance/IntercompanyAccounting";
+import { AuditTrail } from "./components/finance/AuditTrail";
+import { AccessControl } from "./components/finance/AccessControl";
 import { PaymentVouchers } from "./components/PaymentVouchers";
 import { ExpenditureManagement } from "./components/ExpenditureManagement";
 import { Budgeting } from "./components/Budgeting";
@@ -346,6 +353,16 @@ export default function App() {
         return <PayrollDashboard />;
       case "FINANCE-General Ledger":
         return <GeneralLedger />;
+      case "FINANCE-Journal Entries":
+        return <JournalEntries />;
+      case "FINANCE-Period Management":
+        return <PeriodManagement />;
+      case "FINANCE-Multi-Currency":
+        return <MultiCurrency />;
+      case "FINANCE-Control Accounts":
+        return <ControlAccountsView />;
+      case "FINANCE-Intercompany":
+        return <IntercompanyAccounting />;
       case "FINANCE-Payment Vouchers":
         return <PaymentVouchers />;
       case "FINANCE-Expenditure Management":
@@ -388,6 +405,10 @@ export default function App() {
         return <FinanceReportingAnalytics initialTab="project" />;
       case "FINANCE-Reporting & Analytics-Audit Tray":
         return <FinanceReportingAnalytics initialTab="audit" />;
+      case "FINANCE-Reporting & Analytics-Audit Trail":
+        return <AuditTrail />;
+      case "FINANCE-Access Control":
+        return <AccessControl />;
       case "FINANCE-Reporting & Analytics-Timesheet Reports":
         return <FinanceReportingAnalytics initialTab="timesheet" />;
       case "FINANCE-Asset Management":
