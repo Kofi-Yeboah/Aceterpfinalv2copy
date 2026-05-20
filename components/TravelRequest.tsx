@@ -16,7 +16,7 @@ import {
   MapPin,
   Paperclip,
 } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
+import { Switch } from "./ui/switch";
 
 interface TravelRequestData {
   id: string;
@@ -480,35 +480,35 @@ export function TravelRequest() {
                   <div className="flex items-center justify-between">
                     <label className="text-sm font-semibold text-slate-700">Hotel Accomodation Required?</label>
                     <div className="flex items-center gap-2">
-                      <Switch checked={formData.hotelRequired} onCheckedChange={(v) => setFormData({ ...formData, hotelRequired: v })} />
+                      <Switch checked={formData.hotelRequired} onCheckedChange={(v: boolean) => setFormData({ ...formData, hotelRequired: v })} />
                       <span className="text-sm text-slate-600">{formData.hotelRequired ? "Yes" : "No"}</span>
                     </div>
                   </div>
                   <div className="flex items-center justify-between">
                     <label className="text-sm font-semibold text-slate-700">Hotel/Airport Shuttle Required?</label>
                     <div className="flex items-center gap-2">
-                      <Switch checked={formData.shuttleRequired} onCheckedChange={(v) => setFormData({ ...formData, shuttleRequired: v })} />
+                      <Switch checked={formData.shuttleRequired} onCheckedChange={(v: boolean) => setFormData({ ...formData, shuttleRequired: v })} />
                       <span className="text-sm text-slate-600">{formData.shuttleRequired ? "Yes" : "No"}</span>
                     </div>
                   </div>
                   <div className="flex items-center justify-between">
                     <label className="text-sm font-semibold text-slate-700">Per Diem Required?</label>
                     <div className="flex items-center gap-2">
-                      <Switch checked={formData.perDiemRequired} onCheckedChange={(v) => setFormData({ ...formData, perDiemRequired: v })} />
+                      <Switch checked={formData.perDiemRequired} onCheckedChange={(v: boolean) => setFormData({ ...formData, perDiemRequired: v })} />
                       <span className="text-sm text-slate-600">{formData.perDiemRequired ? "Yes" : "No"}</span>
                     </div>
                   </div>
                   <div className="flex items-center justify-between">
                     <label className="text-sm font-semibold text-slate-700">Special Requirements?</label>
                     <div className="flex items-center gap-2">
-                      <Switch checked={formData.specialRequirements} onCheckedChange={(v) => setFormData({ ...formData, specialRequirements: v })} />
+                      <Switch checked={formData.specialRequirements} onCheckedChange={(v: boolean) => setFormData({ ...formData, specialRequirements: v })} />
                       <span className="text-sm text-slate-600">{formData.specialRequirements ? "Yes" : "No"}</span>
                     </div>
                   </div>
                   <div className="flex items-center justify-between">
                     <label className="text-sm font-semibold text-slate-700">Requesting on behalf</label>
                     <div className="flex items-center gap-2">
-                      <Switch checked={formData.requestingOnBehalf} onCheckedChange={(v) => setFormData({ ...formData, requestingOnBehalf: v })} />
+                      <Switch checked={formData.requestingOnBehalf} onCheckedChange={(v: boolean) => setFormData({ ...formData, requestingOnBehalf: v })} />
                       <span className="text-sm text-slate-600">{formData.requestingOnBehalf ? "Yes" : "No"}</span>
                     </div>
                   </div>
