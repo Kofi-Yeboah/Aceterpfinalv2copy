@@ -221,10 +221,18 @@ export function LeaveRequest() {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
-    leaveType: "Annual",
-    startDate: "",
-    endDate: "",
-    reason: "",
+    firstName: "Ebenezer",
+    lastName: "Adams",
+    department: "",
+    lineManager: "",
+    contactOnLeave: "",
+    leaveType: "",
+    fromDate: "",
+    toDate: "",
+    returningToWork: "",
+    noOfHolidays: "",
+    totalDaysTaken: "",
+    handingOverTo: "",
   });
 
   const filtered = mockLeaveRequests.filter((req) => {
@@ -593,111 +601,212 @@ export function LeaveRequest() {
         );
       })()}
 
-      {/* New Request Modal */}
+      {/* New Request Full-Page Form */}
       {showNewForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setShowNewForm(false)} />
-          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 p-6 max-h-[85vh] overflow-auto">
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-[15px] text-slate-900">New Leave Request</h2>
-              <button onClick={() => { setShowNewForm(false); setUploadedFiles([]); }} className="p-1.5 hover:bg-slate-100 rounded-lg">
-                <X size={16} className="text-slate-500" />
-              </button>
-            </div>
-            <div className="flex flex-col gap-4">
-              <div>
-                <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1 block">Leave Type</label>
-                <select
-                  value={formData.leaveType}
-                  onChange={(e) => setFormData({ ...formData, leaveType: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] outline-none focus:border-purple-400 bg-white"
-                >
-                  {leaveTypes.map((t) => (
-                    <option key={t} value={t}>{t}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1 block">Start Date</label>
-                  <input
-                    type="date"
-                    value={formData.startDate}
-                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] outline-none focus:border-purple-400"
-                  />
-                </div>
-                <div>
-                  <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1 block">End Date</label>
-                  <input
-                    type="date"
-                    value={formData.endDate}
-                    onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] outline-none focus:border-purple-400"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1 block">Reason</label>
-                <textarea
-                  value={formData.reason}
-                  onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
-                  placeholder="Describe the reason for your leave..."
-                  rows={3}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] outline-none focus:border-purple-400 resize-none"
-                />
+        <div className="fixed inset-0 z-50 bg-white overflow-auto">
+          <div className="max-w-4xl mx-auto py-8 px-6">
+            {/* Form Container */}
+            <div className="border border-slate-300 rounded-sm">
+              {/* Header with title and logo */}
+              <div className="flex items-center justify-between px-8 py-6 border-b border-slate-200">
+                <h2 className="text-2xl font-semibold text-slate-700 underline underline-offset-4">Leave Request<br />Form</h2>
+                <img src="/acet-logo.png" alt="ACET Logo" className="h-16 object-contain" />
               </div>
 
-              {/* File Upload */}
-              <div>
-                <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1 block">
-                  Attachments <span className="text-slate-300 normal-case">(Optional)</span>
-                </label>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  multiple
-                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                />
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-full border-2 border-dashed border-slate-200 rounded-lg p-4 hover:border-purple-300 hover:bg-purple-50/30 transition-colors cursor-pointer flex flex-col items-center gap-1.5"
-                >
-                  <Upload size={18} className="text-slate-400" />
-                  <p className="text-[12px] text-slate-500">Click to upload or drag and drop</p>
-                  <p className="text-[10px] text-slate-400">PDF, DOC, or image files</p>
-                </button>
-                {uploadedFiles.length > 0 && (
-                  <div className="mt-2.5 flex flex-col gap-1.5">
-                    {uploadedFiles.map((file, i) => (
-                      <div key={i} className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg">
-                        <Paperclip size={12} className="text-slate-400 shrink-0" />
-                        <span className="text-[12px] text-slate-700 flex-1 truncate">{file.name}</span>
-                        <span className="text-[10px] text-slate-400 shrink-0">{(file.size / 1024).toFixed(0)} KB</span>
-                        <button onClick={() => removeFile(i)} className="p-0.5 hover:bg-red-50 rounded transition-colors shrink-0">
-                          <Trash2 size={12} className="text-slate-400 hover:text-red-500" />
-                        </button>
-                      </div>
-                    ))}
+              {/* Form Fields */}
+              <div className="px-8 py-6 space-y-5">
+                {/* Row 1: First Name / Last Name */}
+                <div className="grid grid-cols-3 gap-x-6 items-center">
+                  <label className="text-sm font-semibold italic text-slate-700">First Name</label>
+                  <input
+                    type="text"
+                    value={formData.firstName}
+                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                    className="border border-slate-300 px-3 py-2 text-sm text-slate-900 bg-white outline-none focus:border-blue-400"
+                  />
+                  <div className="flex items-center gap-4">
+                    <label className="text-sm font-semibold italic text-slate-700 whitespace-nowrap">Last Name</label>
+                    <input
+                      type="text"
+                      value={formData.lastName}
+                      onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                      className="border border-slate-300 px-3 py-2 text-sm text-slate-900 bg-white outline-none focus:border-blue-400 flex-1"
+                    />
                   </div>
-                )}
+                </div>
+
+                {/* Row 2: Department / Line Manager */}
+                <div className="grid grid-cols-3 gap-x-6 items-center">
+                  <label className="text-sm font-semibold italic text-slate-700">Department</label>
+                  <div className="relative">
+                    <select
+                      value={formData.department}
+                      onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                      className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-900 bg-white outline-none focus:border-blue-400 appearance-none pr-8"
+                    >
+                      <option value=""></option>
+                      <option value="Executive Office">Executive Office</option>
+                      <option value="Research">Research</option>
+                      <option value="Programs">Programs</option>
+                      <option value="Finance">Finance</option>
+                      <option value="HR">HR</option>
+                      <option value="Communications">Communications</option>
+                      <option value="IT">IT</option>
+                    </select>
+                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-red-500 text-xs">*</span>
+                    <ChevronDown size={14} className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <label className="text-sm font-semibold italic text-slate-700 whitespace-nowrap">Line Manager</label>
+                    <div className="relative flex-1">
+                      <input
+                        type="text"
+                        value={formData.lineManager}
+                        onChange={(e) => setFormData({ ...formData, lineManager: e.target.value })}
+                        className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-900 bg-white outline-none focus:border-blue-400 pr-14"
+                      />
+                      <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
+                        <User size={14} className="text-slate-400" />
+                        <Calendar size={14} className="text-slate-400" />
+                        <span className="text-red-500 text-xs ml-0.5">*</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Row 3: Contact While on Leave / Leave Type */}
+                <div className="grid grid-cols-3 gap-x-6 items-center">
+                  <label className="text-sm font-semibold italic text-slate-700">Contact (While on<br />Leave)</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={formData.contactOnLeave}
+                      onChange={(e) => setFormData({ ...formData, contactOnLeave: e.target.value })}
+                      className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-900 bg-white outline-none focus:border-blue-400 pr-6"
+                    />
+                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-red-500 text-xs">*</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <label className="text-sm font-semibold italic text-slate-700 whitespace-nowrap">Leave Type</label>
+                    <div className="relative flex-1">
+                      <select
+                        value={formData.leaveType}
+                        onChange={(e) => setFormData({ ...formData, leaveType: e.target.value })}
+                        className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-900 bg-white outline-none focus:border-blue-400 appearance-none pr-8"
+                      >
+                        <option value="">Select...</option>
+                        {leaveTypes.map((t) => (
+                          <option key={t} value={t}>{t}</option>
+                        ))}
+                      </select>
+                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-red-500 text-xs">*</span>
+                      <ChevronDown size={14} className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <div className="flex justify-end gap-2 mt-2">
+              {/* Leave Details Section Header */}
+              <div className="bg-[#d4edda] py-3 px-8">
+                <h3 className="text-xl font-bold italic text-center text-slate-800">Leave Details</h3>
+              </div>
+
+              {/* Leave Details Fields */}
+              <div className="px-8 py-6 space-y-5">
+                {/* Row 4: From / To */}
+                <div className="grid grid-cols-3 gap-x-6 items-center">
+                  <label className="text-sm font-semibold italic text-slate-700">From</label>
+                  <div className="relative">
+                    <input
+                      type="date"
+                      value={formData.fromDate}
+                      onChange={(e) => setFormData({ ...formData, fromDate: e.target.value })}
+                      className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-900 bg-white outline-none focus:border-blue-400 pr-6"
+                    />
+                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-red-500 text-xs">*</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <label className="text-sm font-semibold italic text-slate-700">To</label>
+                    <div className="relative flex-1">
+                      <input
+                        type="date"
+                        value={formData.toDate}
+                        onChange={(e) => setFormData({ ...formData, toDate: e.target.value })}
+                        className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-900 bg-white outline-none focus:border-blue-400 pr-6"
+                      />
+                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-red-500 text-xs">*</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Row 5: Returning to Work / No. of Holidays */}
+                <div className="grid grid-cols-3 gap-x-6 items-center">
+                  <label className="text-sm font-semibold italic text-slate-700">Returning to Work</label>
+                  <div className="relative">
+                    <input
+                      type="date"
+                      value={formData.returningToWork}
+                      onChange={(e) => setFormData({ ...formData, returningToWork: e.target.value })}
+                      className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-900 bg-white outline-none focus:border-blue-400 pr-6"
+                    />
+                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-red-500 text-xs">*</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <label className="text-sm font-semibold italic text-slate-700 whitespace-nowrap">No. of Holidays</label>
+                    <div className="relative flex-1">
+                      <input
+                        type="number"
+                        value={formData.noOfHolidays}
+                        onChange={(e) => setFormData({ ...formData, noOfHolidays: e.target.value })}
+                        className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-900 bg-white outline-none focus:border-blue-400 pr-6"
+                      />
+                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-red-500 text-xs">*</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Row 6: Total Days Taken / Handing over To */}
+                <div className="grid grid-cols-3 gap-x-6 items-center">
+                  <label className="text-sm font-semibold italic text-slate-700">Total Days Taken</label>
+                  <input
+                    type="text"
+                    value={formData.totalDaysTaken}
+                    onChange={(e) => setFormData({ ...formData, totalDaysTaken: e.target.value })}
+                    className="border border-slate-300 px-3 py-2 text-sm text-slate-900 bg-slate-50 outline-none"
+                    readOnly
+                  />
+                  <div className="flex items-center gap-4">
+                    <label className="text-sm font-semibold italic text-slate-700 whitespace-nowrap">Handing over To</label>
+                    <div className="relative flex-1">
+                      <input
+                        type="text"
+                        value={formData.handingOverTo}
+                        onChange={(e) => setFormData({ ...formData, handingOverTo: e.target.value })}
+                        className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-900 bg-white outline-none focus:border-blue-400 pr-14"
+                      />
+                      <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
+                        <User size={14} className="text-slate-400" />
+                        <Calendar size={14} className="text-slate-400" />
+                        <span className="text-red-500 text-xs ml-0.5">*</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Buttons */}
+              <div className="flex justify-center gap-6 px-8 py-6">
                 <button
                   onClick={() => { setShowNewForm(false); setUploadedFiles([]); }}
-                  className="px-4 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-600 hover:bg-slate-50"
+                  className="px-12 py-2.5 bg-[#c8c8c8] text-slate-800 text-sm font-bold uppercase tracking-wider hover:bg-[#b8b8b8] transition-colors"
                 >
-                  Cancel
+                  SUBMIT
                 </button>
                 <button
-                  onClick={() => { setShowNewForm(false); setUploadedFiles([]); }}
-                  className="px-4 py-2 bg-purple-700 text-white rounded-lg text-[13px] hover:bg-purple-800"
+                  onClick={() => { setShowNewForm(false); setUploadedFiles([]); setFormData({ firstName: "Ebenezer", lastName: "Adams", department: "", lineManager: "", contactOnLeave: "", leaveType: "", fromDate: "", toDate: "", returningToWork: "", noOfHolidays: "", totalDaysTaken: "", handingOverTo: "" }); }}
+                  className="px-12 py-2.5 bg-[#c8c8c8] text-slate-800 text-sm font-bold uppercase tracking-wider hover:bg-[#b8b8b8] transition-colors"
                 >
-                  Submit Request
+                  CANCEL
                 </button>
               </div>
             </div>
