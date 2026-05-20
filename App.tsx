@@ -517,6 +517,8 @@ export default function App() {
         return <DraftingTemplates />;
       case "LEGAL & CONTRACTS-Requests Queue":
         return <RequestsQueue />;
+      case "KNOWLEDGE HUB-Document Vault":
+        return <DocumentVault onNavigate={(navKey: string) => setSelectedMenuItem(navKey)} />;
       case "KNOWLEDGE HUB-Dashboard":
         return <KnowledgeHubDashboard />;
       case "KNOWLEDGE HUB-Proposal Library":

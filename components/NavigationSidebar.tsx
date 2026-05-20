@@ -334,6 +334,7 @@ export function NavigationSidebar({ selectedItem, onSelectItem, collapsed }: Nav
         { icon: <FolderOpen size={iconSize} />, label: "Project Artifacts" },
         { icon: <Stamp size={iconSize} />, label: "Template Engine" },
         { icon: <Eye size={iconSize} />, label: "Donor Intelligence" },
+        { icon: <ShieldCheck size={iconSize} />, label: "Document Vault" },
       ],
     },
   ];
