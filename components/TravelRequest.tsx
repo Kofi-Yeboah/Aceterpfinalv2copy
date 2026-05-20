@@ -22,6 +22,9 @@ interface TravelRequestData {
   id: string;
   referenceNo: string;
   destination: string;
+  departingFrom: string;
+  travelType: string;
+  project: string;
   purpose: string;
   departureDate: string;
   returnDate: string;
@@ -37,38 +40,38 @@ interface TravelRequestData {
 
 const mockRequests: TravelRequestData[] = [
   {
-    id: "1", referenceNo: "TR-2026-0031", destination: "Accra, Ghana", purpose: "Regional Conference on Climate Change",
-    departureDate: "Mar 10, 2026", returnDate: "Mar 15, 2026", estimatedCost: 2500, currency: "GHS", requestDate: "Feb 20, 2026",
+    id: "1", referenceNo: "TR-2026-0031", destination: "Accra, Ghana", departingFrom: "Accra, Ghana", travelType: "Domestic", project: "West Africa Climate Policy",
+    purpose: "Regional Conference on Climate Change", departureDate: "Mar 10, 2026", returnDate: "Mar 15, 2026", estimatedCost: 2500, currency: "GHS", requestDate: "Feb 20, 2026",
     status: "Approved", requestedBy: "Kofi Mensah", justification: "Mandatory attendance as ACET representative for West Africa climate policy discussions.",
     travelMode: "Flight", accommodationType: "Hotel",
   },
   {
-    id: "2", referenceNo: "TR-2026-0028", destination: "Lagos, Nigeria", purpose: "Field Research and Data Collection",
-    departureDate: "Mar 05, 2026", returnDate: "Mar 12, 2026", estimatedCost: 1800, currency: "GHS", requestDate: "Feb 22, 2026",
+    id: "2", referenceNo: "TR-2026-0028", destination: "Lagos, Nigeria", departingFrom: "Accra, Ghana", travelType: "International", project: "West Africa Regional Integration Study",
+    purpose: "Field Research and Data Collection", departureDate: "Mar 05, 2026", returnDate: "Mar 12, 2026", estimatedCost: 1800, currency: "GHS", requestDate: "Feb 22, 2026",
     status: "Pending", requestedBy: "Abena Owusu", justification: "Data collection visits to 5 partner organizations for the West Africa Regional Integration Study.",
     travelMode: "Flight", accommodationType: "Hotel",
   },
   {
-    id: "3", referenceNo: "TR-2026-0025", destination: "Nairobi, Kenya", purpose: "Stakeholder Engagement Meeting",
-    departureDate: "Mar 20, 2026", returnDate: "Mar 23, 2026", estimatedCost: 3200, currency: "GHS", requestDate: "Feb 18, 2026",
+    id: "3", referenceNo: "TR-2026-0025", destination: "Nairobi, Kenya", departingFrom: "Accra, Ghana", travelType: "International", project: "East Africa Energy Partnership",
+    purpose: "Stakeholder Engagement Meeting", departureDate: "Mar 20, 2026", returnDate: "Mar 23, 2026", estimatedCost: 3200, currency: "GHS", requestDate: "Feb 18, 2026",
     status: "In Review", requestedBy: "Richard Antwi", justification: "Meeting with East African development partners for potential collaboration on renewable energy framework.",
     travelMode: "Flight", accommodationType: "Hotel",
   },
   {
-    id: "4", referenceNo: "TR-2026-0022", destination: "Abidjan, Côte d'Ivoire", purpose: "Project Monitoring and Evaluation",
-    departureDate: "Feb 28, 2026", returnDate: "Mar 02, 2026", estimatedCost: 2100, currency: "GHS", requestDate: "Feb 15, 2026",
+    id: "4", referenceNo: "TR-2026-0022", destination: "Abidjan, Côte d'Ivoire", departingFrom: "Accra, Ghana", travelType: "Regional", project: "Field Office Monitoring",
+    purpose: "Project Monitoring and Evaluation", departureDate: "Feb 28, 2026", returnDate: "Mar 02, 2026", estimatedCost: 2100, currency: "GHS", requestDate: "Feb 15, 2026",
     status: "Approved", requestedBy: "Mercy Adjei", justification: "Quarterly M&E visit to Abidjan field office for project progress assessment.",
     travelMode: "Flight", accommodationType: "Guest House",
   },
   {
-    id: "5", referenceNo: "TR-2026-0019", destination: "Dakar, Senegal", purpose: "Training Workshop on Data Analysis",
-    departureDate: "Mar 15, 2026", returnDate: "Mar 20, 2026", estimatedCost: 2800, currency: "GHS", requestDate: "Feb 25, 2026",
+    id: "5", referenceNo: "TR-2026-0019", destination: "Dakar, Senegal", departingFrom: "Accra, Ghana", travelType: "International", project: "Capacity Building Programme",
+    purpose: "Training Workshop on Data Analysis", departureDate: "Mar 15, 2026", returnDate: "Mar 20, 2026", estimatedCost: 2800, currency: "GHS", requestDate: "Feb 25, 2026",
     status: "Pending", requestedBy: "Nana Yaw", justification: "Capacity building workshop organized by UNDP on advanced data analysis for development practitioners.",
     travelMode: "Flight", accommodationType: "Hotel",
   },
   {
-    id: "6", referenceNo: "TR-2026-0016", destination: "Addis Ababa, Ethiopia", purpose: "Policy Dialogue Session",
-    departureDate: "Mar 01, 2026", returnDate: "Mar 05, 2026", estimatedCost: 4500, currency: "GHS", requestDate: "Feb 10, 2026",
+    id: "6", referenceNo: "TR-2026-0016", destination: "Addis Ababa, Ethiopia", departingFrom: "Accra, Ghana", travelType: "International", project: "AU Digital Transformation",
+    purpose: "Policy Dialogue Session", departureDate: "Mar 01, 2026", returnDate: "Mar 05, 2026", estimatedCost: 4500, currency: "GHS", requestDate: "Feb 10, 2026",
     status: "Rejected", requestedBy: "Kwame Asante", justification: "AU Policy Dialogue on digital transformation. Request rejected due to budget constraints — virtual attendance approved instead.",
     travelMode: "Flight", accommodationType: "Hotel",
   },
@@ -180,10 +183,11 @@ export function TravelRequest() {
             <tr>
               <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Reference No.</th>
               <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Destination</th>
-              <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Purpose</th>
-              <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Departure</th>
-              <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Return</th>
-              <th className="text-right px-6 py-3 text-[12px] text-white font-semibold">Est. Cost (GHS)</th>
+              <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Departing From</th>
+              <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Travel Date</th>
+              <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Return Date</th>
+              <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Travel Type</th>
+              <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Project</th>
               <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Status</th>
               <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Request Date</th>
               <th className="text-center px-6 py-3 text-[12px] text-white font-semibold">Actions</th>
@@ -191,7 +195,7 @@ export function TravelRequest() {
           </thead>
           <tbody>
             {filtered.length === 0 ? (
-              <tr><td colSpan={9} className="text-center py-16"><FileText size={40} className="text-slate-200 mx-auto mb-3" /><p className="text-sm text-slate-400">No travel requests found</p></td></tr>
+              <tr><td colSpan={10} className="text-center py-16"><FileText size={40} className="text-slate-200 mx-auto mb-3" /><p className="text-[13px] text-slate-400">No travel requests found</p></td></tr>
             ) : (
               filtered.map((req, idx) => {
                 const sc = statusConfig[req.status];
@@ -199,10 +203,11 @@ export function TravelRequest() {
                   <tr key={req.id} className={`border-b border-slate-100 hover:bg-slate-50 transition-colors ${idx % 2 === 0 ? "bg-white" : "bg-slate-50/50"}`}>
                     <td className="px-6 py-3 text-[12px] text-blue-700">{req.referenceNo}</td>
                     <td className="px-6 py-3 text-[12px] text-slate-900">{req.destination}</td>
-                    <td className="px-6 py-3 text-[12px] text-slate-600 max-w-[240px] truncate">{req.purpose}</td>
+                    <td className="px-6 py-3 text-[12px] text-slate-500">{req.departingFrom}</td>
                     <td className="px-6 py-3 text-[12px] text-slate-500">{req.departureDate}</td>
                     <td className="px-6 py-3 text-[12px] text-slate-500">{req.returnDate}</td>
-                    <td className="px-6 py-3 text-[12px] text-slate-900 text-right">{req.estimatedCost.toLocaleString("en-US", { minimumFractionDigits: 2 })}</td>
+                    <td className="px-6 py-3 text-[12px] text-slate-600">{req.travelType}</td>
+                    <td className="px-6 py-3 text-[12px] text-slate-600 max-w-[180px] truncate">{req.project}</td>
                     <td className="px-6 py-3"><span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] border ${sc.bg} ${sc.text}`}>{sc.icon}{req.status}</span></td>
                     <td className="px-6 py-3 text-[12px] text-slate-500">{req.requestDate}</td>
                     <td className="px-6 py-3 text-center">
@@ -293,281 +298,154 @@ export function TravelRequest() {
         );
       })()}
 
-      {/* New Request Full-Page Form */}
+      {/* New Travel Request Modal */}
       {showNewForm && (
-        <div className="fixed inset-0 z-50 bg-white flex flex-col overflow-hidden">
-          {/* Dark blue header bar */}
-          <div className="bg-[#2c3e6b] px-6 py-4 flex items-center gap-3 shrink-0">
-            <div className="w-8 h-8 rounded-full bg-[#3d5a99] flex items-center justify-center">
-              <Plane size={16} className="text-white" />
-            </div>
-            <span className="text-white text-lg font-medium">Travel Request</span>
-            <span className="text-slate-300 text-lg mx-1">&rarr;</span>
-            <span className="text-white text-lg">New</span>
-          </div>
-
-          <div className="flex flex-1 overflow-hidden">
-            {/* Left Sidebar */}
-            <div className="w-48 bg-slate-50 border-r border-slate-200 py-4 shrink-0">
-              <button
-                onClick={() => setShowNewForm(false)}
-                className="w-full text-left px-5 py-2.5 text-sm text-slate-600 hover:bg-slate-100 transition-colors"
-              >
-                My Travel Requests
-              </button>
-              <button
-                className="w-full text-left px-5 py-2.5 text-sm text-slate-600 hover:bg-slate-100 transition-colors"
-              >
-                All Travel Requests
-              </button>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl w-[680px] max-h-[85vh] overflow-auto shadow-xl">
+            <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+              <h2 className="text-[16px] font-semibold text-slate-900">New Travel Request</h2>
+              <button onClick={() => setShowNewForm(false)} className="text-slate-400 hover:text-slate-600"><X size={18} /></button>
             </div>
 
-            {/* Form Area */}
-            <div className="flex-1 overflow-auto p-8">
-              <div className="max-w-3xl space-y-6">
-                {/* Row: Staff Name / Today's Date */}
-                <div className="grid grid-cols-2 gap-8">
-                  <div>
-                    <label className="text-sm font-semibold text-slate-700 mb-1.5 flex items-center gap-1">
-                      <span className="text-red-500">*</span> Staff Name
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.staffName}
-                      readOnly
-                      className="w-full border-2 border-slate-300 rounded px-3 py-2.5 text-sm text-slate-500 bg-slate-50"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-semibold text-slate-700 mb-1.5 block">Today's Date</label>
-                    <p className="px-3 py-2.5 text-sm text-slate-700">{todayDate}</p>
-                  </div>
-                </div>
-
-                {/* Row: Supervisor / Travel Type */}
-                <div className="grid grid-cols-2 gap-8">
-                  <div>
-                    <label className="text-sm font-semibold text-slate-700 mb-1.5 block">Supervisor</label>
-                    <div className="relative">
-                      <select
-                        value={formData.supervisor}
-                        onChange={(e) => setFormData({ ...formData, supervisor: e.target.value })}
-                        className="w-full border-2 border-slate-300 rounded px-3 py-2.5 text-sm text-slate-600 bg-white appearance-none pr-10"
-                      >
-                        <option value="">Find items</option>
-                        <option value="Ama Darko">Ama Darko</option>
-                        <option value="Kwame Asante">Kwame Asante</option>
-                      </select>
-                      <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-white bg-[#4a6fa5] rounded-sm pointer-events-none" />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-sm font-semibold text-slate-700 mb-1.5 block">Travel Type</label>
-                    <div className="relative">
-                      <select
-                        value={formData.travelType}
-                        onChange={(e) => setFormData({ ...formData, travelType: e.target.value })}
-                        className="w-full border-2 border-slate-300 rounded px-3 py-2.5 text-sm text-slate-600 bg-white appearance-none pr-10"
-                      >
-                        <option value="">Find items</option>
-                        <option value="Domestic">Domestic</option>
-                        <option value="International">International</option>
-                        <option value="Regional">Regional</option>
-                      </select>
-                      <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-white bg-[#4a6fa5] rounded-sm pointer-events-none" />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Row: Departing From / Travel Date + Time */}
-                <div className="grid grid-cols-2 gap-8">
-                  <div>
-                    <label className="text-sm font-semibold text-slate-700 mb-1.5 flex items-center gap-1">
-                      <span className="text-red-500">*</span> Departing From
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.departingFrom}
-                      onChange={(e) => setFormData({ ...formData, departingFrom: e.target.value })}
-                      className="w-full border-2 border-slate-300 rounded px-3 py-2.5 text-sm text-slate-900 bg-white outline-none focus:border-blue-400"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-semibold text-slate-700 mb-1.5 flex items-center gap-1">
-                      <span className="text-red-500">*</span> Travel Date
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="date"
-                        value={formData.travelDate}
-                        onChange={(e) => setFormData({ ...formData, travelDate: e.target.value })}
-                        className="flex-1 border-2 border-slate-300 rounded px-3 py-2.5 text-sm text-slate-900 bg-white outline-none focus:border-blue-400"
-                      />
-                      <select value={formData.travelTimeHour} onChange={(e) => setFormData({ ...formData, travelTimeHour: e.target.value })} className="w-16 border-2 border-slate-300 rounded px-2 py-2.5 text-sm bg-white">
-                        {hours.map((h) => <option key={h} value={h}>{h}</option>)}
-                      </select>
-                      <span className="text-slate-500 font-bold">:</span>
-                      <select value={formData.travelTimeMinute} onChange={(e) => setFormData({ ...formData, travelTimeMinute: e.target.value })} className="w-16 border-2 border-slate-300 rounded px-2 py-2.5 text-sm bg-white">
-                        {minutes.map((m) => <option key={m} value={m}>{m}</option>)}
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Row: Destination / Return Date + Time */}
-                <div className="grid grid-cols-2 gap-8">
-                  <div>
-                    <label className="text-sm font-semibold text-slate-700 mb-1.5 flex items-center gap-1">
-                      <span className="text-red-500">*</span> Destination
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.destination}
-                      onChange={(e) => setFormData({ ...formData, destination: e.target.value })}
-                      className="w-full border-2 border-slate-300 rounded px-3 py-2.5 text-sm text-slate-900 bg-white outline-none focus:border-blue-400"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-semibold text-slate-700 mb-1.5 flex items-center gap-1">
-                      <span className="text-red-500">*</span> Return Date
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="date"
-                        value={formData.returnDate}
-                        onChange={(e) => setFormData({ ...formData, returnDate: e.target.value })}
-                        className="flex-1 border-2 border-slate-300 rounded px-3 py-2.5 text-sm text-slate-900 bg-white outline-none focus:border-blue-400"
-                      />
-                      <select value={formData.returnTimeHour} onChange={(e) => setFormData({ ...formData, returnTimeHour: e.target.value })} className="w-16 border-2 border-slate-300 rounded px-2 py-2.5 text-sm bg-white">
-                        {hours.map((h) => <option key={h} value={h}>{h}</option>)}
-                      </select>
-                      <span className="text-slate-500 font-bold">:</span>
-                      <select value={formData.returnTimeMinute} onChange={(e) => setFormData({ ...formData, returnTimeMinute: e.target.value })} className="w-16 border-2 border-slate-300 rounded px-2 py-2.5 text-sm bg-white">
-                        {minutes.map((m) => <option key={m} value={m}>{m}</option>)}
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Row: Project / Reason For Travel */}
-                <div className="grid grid-cols-2 gap-8">
-                  <div>
-                    <label className="text-sm font-semibold text-slate-700 mb-1.5 flex items-center gap-1">
-                      <span className="text-red-500">*</span> Project
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.project}
-                      onChange={(e) => setFormData({ ...formData, project: e.target.value })}
-                      className="w-full border-2 border-slate-300 rounded px-3 py-2.5 text-sm text-slate-900 bg-white outline-none focus:border-blue-400"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-semibold text-slate-700 mb-1.5 flex items-center gap-1">
-                      <span className="text-red-500">*</span> Reason For Travel
-                    </label>
-                    <textarea
-                      value={formData.reasonForTravel}
-                      onChange={(e) => setFormData({ ...formData, reasonForTravel: e.target.value })}
-                      rows={4}
-                      className="w-full border-2 border-slate-300 rounded px-3 py-2.5 text-sm text-slate-900 bg-white outline-none focus:border-blue-400 resize-none"
-                    />
-                  </div>
-                </div>
-
-                {/* Toggle Switches - 2 column grid */}
-                <div className="grid grid-cols-2 gap-x-8 gap-y-5">
-                  <div className="flex items-center justify-between">
-                    <label className="text-sm font-semibold text-slate-700">Hotel Accomodation Required?</label>
-                    <div className="flex items-center gap-2">
-                      <Switch checked={formData.hotelRequired} onCheckedChange={(v: boolean) => setFormData({ ...formData, hotelRequired: v })} />
-                      <span className="text-sm text-slate-600">{formData.hotelRequired ? "Yes" : "No"}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <label className="text-sm font-semibold text-slate-700">Hotel/Airport Shuttle Required?</label>
-                    <div className="flex items-center gap-2">
-                      <Switch checked={formData.shuttleRequired} onCheckedChange={(v: boolean) => setFormData({ ...formData, shuttleRequired: v })} />
-                      <span className="text-sm text-slate-600">{formData.shuttleRequired ? "Yes" : "No"}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <label className="text-sm font-semibold text-slate-700">Per Diem Required?</label>
-                    <div className="flex items-center gap-2">
-                      <Switch checked={formData.perDiemRequired} onCheckedChange={(v: boolean) => setFormData({ ...formData, perDiemRequired: v })} />
-                      <span className="text-sm text-slate-600">{formData.perDiemRequired ? "Yes" : "No"}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <label className="text-sm font-semibold text-slate-700">Special Requirements?</label>
-                    <div className="flex items-center gap-2">
-                      <Switch checked={formData.specialRequirements} onCheckedChange={(v: boolean) => setFormData({ ...formData, specialRequirements: v })} />
-                      <span className="text-sm text-slate-600">{formData.specialRequirements ? "Yes" : "No"}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <label className="text-sm font-semibold text-slate-700">Requesting on behalf</label>
-                    <div className="flex items-center gap-2">
-                      <Switch checked={formData.requestingOnBehalf} onCheckedChange={(v: boolean) => setFormData({ ...formData, requestingOnBehalf: v })} />
-                      <span className="text-sm text-slate-600">{formData.requestingOnBehalf ? "Yes" : "No"}</span>
-                    </div>
-                  </div>
-                  {formData.requestingOnBehalf && (
-                    <div>
-                      <label className="text-sm font-semibold text-slate-700 mb-1.5 block">User on behalf</label>
-                      <div className="relative">
-                        <select
-                          value={formData.userOnBehalf}
-                          onChange={(e) => setFormData({ ...formData, userOnBehalf: e.target.value })}
-                          className="w-full border-2 border-slate-300 rounded px-3 py-2.5 text-sm text-slate-600 bg-white appearance-none pr-10"
-                        >
-                          <option value="">Find items</option>
-                          <option value="Kofi Mensah">Kofi Mensah</option>
-                          <option value="Abena Owusu">Abena Owusu</option>
-                          <option value="Richard Antwi">Richard Antwi</option>
-                        </select>
-                        <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-white bg-[#4a6fa5] rounded-sm pointer-events-none" />
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Attachments */}
+            <div className="px-6 py-5 space-y-4">
+              {/* Trip Information */}
+              <p className="text-[11px] font-semibold text-purple-700 uppercase tracking-wider">Trip Information</p>
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-semibold text-slate-700 mb-1.5 block">Attachments</label>
-                  <div className="border-2 border-slate-300 rounded p-4">
-                    {uploadedFiles.length === 0 ? (
-                      <p className="text-sm text-slate-400 mb-2">There is nothing attached.</p>
-                    ) : (
-                      <div className="space-y-2 mb-2">
-                        {uploadedFiles.map((file, i) => (
-                          <div key={i} className="flex items-center gap-2 text-sm text-slate-700">
-                            <Paperclip size={14} className="text-slate-400" />
-                            <span className="flex-1 truncate">{file.name}</span>
-                            <button onClick={() => setUploadedFiles((prev) => prev.filter((_, idx) => idx !== i))} className="text-red-400 hover:text-red-600">
-                              <X size={14} />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    <input ref={fileInputRef} type="file" multiple onChange={handleFileUpload} className="hidden" />
-                    <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700">
-                      <Paperclip size={14} /> Attach file
-                    </button>
-                  </div>
+                  <label className="text-[10px] text-slate-500 uppercase block mb-1">Staff Name</label>
+                  <input type="text" value={formData.staffName} readOnly className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] bg-slate-50 text-slate-500 cursor-default" />
                 </div>
-
-                {/* Submit */}
-                <div className="flex justify-center pt-2 pb-6">
-                  <button
-                    onClick={() => setShowNewForm(false)}
-                    className="px-16 py-2.5 bg-slate-200 text-slate-600 text-sm hover:bg-slate-300 transition-colors rounded"
-                  >
-                    Submit
-                  </button>
+                <div>
+                  <label className="text-[10px] text-slate-500 uppercase block mb-1">Today's Date</label>
+                  <p className="px-3 py-2 text-[13px] text-slate-600">{todayDate}</p>
                 </div>
               </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] text-slate-500 uppercase block mb-1">Supervisor</label>
+                  <select value={formData.supervisor} onChange={(e) => setFormData({ ...formData, supervisor: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px]">
+                    <option value="">Select...</option>
+                    <option>Ama Darko</option><option>Kwame Asante</option><option>Abena Owusu</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] text-slate-500 uppercase block mb-1">Travel Type</label>
+                  <select value={formData.travelType} onChange={(e) => setFormData({ ...formData, travelType: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px]">
+                    <option value="">Select...</option>
+                    <option>Domestic</option><option>International</option><option>Regional</option>
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] text-slate-500 uppercase block mb-1">Departing From <span className="text-red-400">*</span></label>
+                  <input type="text" value={formData.departingFrom} onChange={(e) => setFormData({ ...formData, departingFrom: e.target.value })} placeholder="e.g. Accra, Ghana" className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px]" />
+                </div>
+                <div>
+                  <label className="text-[10px] text-slate-500 uppercase block mb-1">Destination <span className="text-red-400">*</span></label>
+                  <input type="text" value={formData.destination} onChange={(e) => setFormData({ ...formData, destination: e.target.value })} placeholder="e.g. Nairobi, Kenya" className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px]" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] text-slate-500 uppercase block mb-1">Travel Date <span className="text-red-400">*</span></label>
+                  <input type="date" value={formData.travelDate} onChange={(e) => setFormData({ ...formData, travelDate: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px]" />
+                </div>
+                <div>
+                  <label className="text-[10px] text-slate-500 uppercase block mb-1">Return Date <span className="text-red-400">*</span></label>
+                  <input type="date" value={formData.returnDate} onChange={(e) => setFormData({ ...formData, returnDate: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px]" />
+                </div>
+              </div>
+              <div>
+                <label className="text-[10px] text-slate-500 uppercase block mb-1">Project <span className="text-red-400">*</span></label>
+                <input type="text" value={formData.project} onChange={(e) => setFormData({ ...formData, project: e.target.value })} placeholder="Enter project name" className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px]" />
+              </div>
+              <div>
+                <label className="text-[10px] text-slate-500 uppercase block mb-1">Reason For Travel <span className="text-red-400">*</span></label>
+                <textarea value={formData.reasonForTravel} onChange={(e) => setFormData({ ...formData, reasonForTravel: e.target.value })} rows={3} placeholder="Describe the purpose of this trip..." className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] resize-none" />
+              </div>
+
+              <hr className="border-slate-100" />
+
+              {/* Requirements */}
+              <p className="text-[11px] font-semibold text-purple-700 uppercase tracking-wider">Requirements</p>
+              <div className="grid grid-cols-2 gap-x-8 gap-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[13px] text-slate-700">Hotel Accommodation Required?</span>
+                  <div className="flex items-center gap-2">
+                    <Switch checked={formData.hotelRequired} onCheckedChange={(v: boolean) => setFormData({ ...formData, hotelRequired: v })} />
+                    <span className="text-[12px] text-slate-500 w-6">{formData.hotelRequired ? "Yes" : "No"}</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[13px] text-slate-700">Hotel/Airport Shuttle Required?</span>
+                  <div className="flex items-center gap-2">
+                    <Switch checked={formData.shuttleRequired} onCheckedChange={(v: boolean) => setFormData({ ...formData, shuttleRequired: v })} />
+                    <span className="text-[12px] text-slate-500 w-6">{formData.shuttleRequired ? "Yes" : "No"}</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[13px] text-slate-700">Per Diem Required?</span>
+                  <div className="flex items-center gap-2">
+                    <Switch checked={formData.perDiemRequired} onCheckedChange={(v: boolean) => setFormData({ ...formData, perDiemRequired: v })} />
+                    <span className="text-[12px] text-slate-500 w-6">{formData.perDiemRequired ? "Yes" : "No"}</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[13px] text-slate-700">Special Requirements?</span>
+                  <div className="flex items-center gap-2">
+                    <Switch checked={formData.specialRequirements} onCheckedChange={(v: boolean) => setFormData({ ...formData, specialRequirements: v })} />
+                    <span className="text-[12px] text-slate-500 w-6">{formData.specialRequirements ? "Yes" : "No"}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4 items-end">
+                <div className="flex items-center justify-between">
+                  <span className="text-[13px] text-slate-700">Requesting on Behalf</span>
+                  <div className="flex items-center gap-2">
+                    <Switch checked={formData.requestingOnBehalf} onCheckedChange={(v: boolean) => setFormData({ ...formData, requestingOnBehalf: v })} />
+                    <span className="text-[12px] text-slate-500 w-6">{formData.requestingOnBehalf ? "Yes" : "No"}</span>
+                  </div>
+                </div>
+                {formData.requestingOnBehalf && (
+                  <div>
+                    <label className="text-[10px] text-slate-500 uppercase block mb-1">User on Behalf</label>
+                    <select value={formData.userOnBehalf} onChange={(e) => setFormData({ ...formData, userOnBehalf: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px]">
+                      <option value="">Select...</option>
+                      <option>Kofi Mensah</option><option>Abena Owusu</option><option>Richard Antwi</option>
+                    </select>
+                  </div>
+                )}
+              </div>
+
+              <hr className="border-slate-100" />
+
+              {/* Attachments */}
+              <p className="text-[11px] font-semibold text-purple-700 uppercase tracking-wider">Attachments</p>
+              <div className="border border-slate-200 rounded-lg p-4">
+                {uploadedFiles.length === 0 ? (
+                  <p className="text-[12px] text-slate-400 mb-2">There is nothing attached.</p>
+                ) : (
+                  <div className="space-y-1.5 mb-2">
+                    {uploadedFiles.map((file, i) => (
+                      <div key={i} className="flex items-center gap-2 text-[12px] text-slate-700">
+                        <Paperclip size={12} className="text-slate-400" />
+                        <span className="flex-1 truncate">{file.name}</span>
+                        <button onClick={() => setUploadedFiles((prev) => prev.filter((_, idx) => idx !== i))} className="text-slate-400 hover:text-red-500"><X size={12} /></button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <input ref={fileInputRef} type="file" multiple onChange={handleFileUpload} className="hidden" />
+                <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-1.5 text-[12px] text-slate-500 hover:text-slate-700">
+                  <Paperclip size={13} /> Attach file
+                </button>
+              </div>
+            </div>
+
+            <div className="px-6 py-4 border-t border-slate-200 flex justify-end gap-3">
+              <button onClick={() => setShowNewForm(false)} className="px-4 py-2 rounded-lg text-[13px] bg-slate-100 text-slate-700 hover:bg-slate-200">Cancel</button>
+              <button onClick={() => setShowNewForm(false)} className="px-4 py-2 rounded-lg text-[13px] text-white hover:opacity-90" style={{ backgroundColor: "#0B01D0" }}>Submit Request</button>
             </div>
           </div>
         </div>

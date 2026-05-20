@@ -11,11 +11,7 @@ import {
   Eye,
   FileText,
   CalendarDays,
-  Upload,
   Paperclip,
-  Trash2,
-  User,
-  Calendar,
   ArrowLeft,
 } from "lucide-react";
 
@@ -25,6 +21,7 @@ interface LeaveRequestRecord {
   leaveType: string;
   startDate: string;
   endDate: string;
+  returningToWork: string;
   days: number;
   reason: string;
   status: "Pending Line Manager" | "Pending HR" | "Approved" | "Rejected";
@@ -46,6 +43,7 @@ const mockLeaveRequests: LeaveRequestRecord[] = [
     leaveType: "Annual",
     startDate: "Mar 15, 2026",
     endDate: "Mar 20, 2026",
+    returningToWork: "Mar 23, 2026",
     days: 6,
     reason: "Family vacation",
     status: "Pending Line Manager",
@@ -65,6 +63,7 @@ const mockLeaveRequests: LeaveRequestRecord[] = [
     leaveType: "Sickness Absence",
     startDate: "Feb 10, 2026",
     endDate: "Feb 12, 2026",
+    returningToWork: "Feb 13, 2026",
     days: 3,
     reason: "Medical appointment",
     status: "Pending HR",
@@ -84,6 +83,7 @@ const mockLeaveRequests: LeaveRequestRecord[] = [
     leaveType: "Annual",
     startDate: "Jan 25, 2026",
     endDate: "Jan 30, 2026",
+    returningToWork: "Feb 02, 2026",
     days: 6,
     reason: "Personal matters",
     status: "Approved",
@@ -103,6 +103,7 @@ const mockLeaveRequests: LeaveRequestRecord[] = [
     leaveType: "Bereavement",
     startDate: "Dec 05, 2025",
     endDate: "Dec 06, 2025",
+    returningToWork: "Dec 08, 2025",
     days: 2,
     reason: "Family bereavement",
     status: "Approved",
@@ -122,6 +123,7 @@ const mockLeaveRequests: LeaveRequestRecord[] = [
     leaveType: "Annual",
     startDate: "Nov 20, 2025",
     endDate: "Nov 25, 2025",
+    returningToWork: "Nov 26, 2025",
     days: 6,
     reason: "Wedding attendance",
     status: "Rejected",
@@ -141,6 +143,7 @@ const mockLeaveRequests: LeaveRequestRecord[] = [
     leaveType: "Sickness Absence",
     startDate: "Oct 15, 2025",
     endDate: "Oct 17, 2025",
+    returningToWork: "Oct 20, 2025",
     days: 3,
     reason: "Flu recovery",
     status: "Approved",
@@ -160,6 +163,7 @@ const mockLeaveRequests: LeaveRequestRecord[] = [
     leaveType: "Unpaid",
     startDate: "Sep 01, 2025",
     endDate: "Sep 10, 2025",
+    returningToWork: "Sep 11, 2025",
     days: 10,
     reason: "Extended personal travel",
     status: "Rejected",
@@ -179,6 +183,7 @@ const mockLeaveRequests: LeaveRequestRecord[] = [
     leaveType: "Maternity",
     startDate: "Jun 01, 2025",
     endDate: "Aug 31, 2025",
+    returningToWork: "Sep 01, 2025",
     days: 92,
     reason: "Maternity leave",
     status: "Approved",
@@ -344,10 +349,10 @@ export function LeaveRequest() {
             <tr>
               <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Reference No.</th>
               <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Leave Type</th>
-              <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Start Date</th>
-              <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">End Date</th>
-              <th className="text-center px-6 py-3 text-[12px] text-white font-semibold">Days</th>
-              <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Reason</th>
+              <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">From</th>
+              <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">To</th>
+              <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Returning to Work</th>
+              <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Line Manager</th>
               <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Status</th>
               <th className="text-left px-6 py-3 text-[12px] text-white font-semibold">Submitted On</th>
               <th className="text-center px-6 py-3 text-[12px] text-white font-semibold">Actions</th>
@@ -358,7 +363,7 @@ export function LeaveRequest() {
               <tr>
                 <td colSpan={9} className="text-center py-16">
                   <FileText size={40} className="text-slate-200 mx-auto mb-3" />
-                  <p className="text-sm text-slate-400">No leave requests found</p>
+                  <p className="text-[13px] text-slate-400">No leave requests found</p>
                 </td>
               </tr>
             ) : (
@@ -370,8 +375,8 @@ export function LeaveRequest() {
                     <td className="px-6 py-3 text-[12px] text-slate-900">{req.leaveType}</td>
                     <td className="px-6 py-3 text-[12px] text-slate-500">{req.startDate}</td>
                     <td className="px-6 py-3 text-[12px] text-slate-500">{req.endDate}</td>
-                    <td className="px-6 py-3 text-[12px] text-slate-900 text-center">{req.days}</td>
-                    <td className="px-6 py-3 text-[12px] text-slate-600 max-w-[220px] truncate">{req.reason}</td>
+                    <td className="px-6 py-3 text-[12px] text-slate-500">{req.returningToWork}</td>
+                    <td className="px-6 py-3 text-[12px] text-slate-700">{req.lineManager}</td>
                     <td className="px-6 py-3">
                       <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] border ${sc.bg} ${sc.text}`}>
                         {sc.icon}
@@ -601,214 +606,104 @@ export function LeaveRequest() {
         );
       })()}
 
-      {/* New Request Full-Page Form */}
+      {/* New Leave Request Modal */}
       {showNewForm && (
-        <div className="fixed inset-0 z-50 bg-white overflow-auto">
-          <div className="max-w-4xl mx-auto py-8 px-6">
-            {/* Form Container */}
-            <div className="border border-slate-300 rounded-sm">
-              {/* Header with title and logo */}
-              <div className="flex items-center justify-between px-8 py-6 border-b border-slate-200">
-                <h2 className="text-2xl font-semibold text-slate-700 underline underline-offset-4">Leave Request<br />Form</h2>
-                <img src="/acet-logo.png" alt="ACET Logo" className="h-16 object-contain" />
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl w-[620px] max-h-[85vh] overflow-auto shadow-xl">
+            <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+              <h2 className="text-[16px] font-semibold text-slate-900">New Leave Request</h2>
+              <button onClick={() => setShowNewForm(false)} className="text-slate-400 hover:text-slate-600"><X size={18} /></button>
+            </div>
+
+            <div className="px-6 py-5 space-y-4">
+              {/* Employee Information */}
+              <p className="text-[11px] font-semibold text-purple-700 uppercase tracking-wider">Employee Information</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] text-slate-500 uppercase block mb-1">First Name</label>
+                  <input type="text" value={formData.firstName} readOnly className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] bg-slate-50 text-slate-500 cursor-default" />
+                </div>
+                <div>
+                  <label className="text-[10px] text-slate-500 uppercase block mb-1">Last Name</label>
+                  <input type="text" value={formData.lastName} readOnly className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] bg-slate-50 text-slate-500 cursor-default" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] text-slate-500 uppercase block mb-1">Department <span className="text-red-400">*</span></label>
+                  <select value={formData.department} onChange={(e) => setFormData({ ...formData, department: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px]">
+                    <option value="">Select...</option>
+                    <option>Executive Office</option><option>Research</option><option>Programs</option>
+                    <option>Finance</option><option>HR</option><option>Communications</option><option>IT</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] text-slate-500 uppercase block mb-1">Line Manager <span className="text-red-400">*</span></label>
+                  <input type="text" value={formData.lineManager} onChange={(e) => setFormData({ ...formData, lineManager: e.target.value })} placeholder="Enter name" className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px]" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] text-slate-500 uppercase block mb-1">Contact While on Leave <span className="text-red-400">*</span></label>
+                  <input type="text" value={formData.contactOnLeave} onChange={(e) => setFormData({ ...formData, contactOnLeave: e.target.value })} placeholder="Phone or email" className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px]" />
+                </div>
+                <div>
+                  <label className="text-[10px] text-slate-500 uppercase block mb-1">Leave Type <span className="text-red-400">*</span></label>
+                  <select value={formData.leaveType} onChange={(e) => setFormData({ ...formData, leaveType: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px]">
+                    <option value="">Select...</option>
+                    {leaveTypes.map((t) => <option key={t}>{t}</option>)}
+                  </select>
+                </div>
               </div>
 
-              {/* Form Fields */}
-              <div className="px-8 py-6 space-y-5">
-                {/* Row 1: First Name / Last Name */}
-                <div className="grid grid-cols-3 gap-x-6 items-center">
-                  <label className="text-sm font-semibold italic text-slate-700">First Name</label>
+              <hr className="border-slate-100" />
+
+              {/* Leave Details */}
+              <p className="text-[11px] font-semibold text-purple-700 uppercase tracking-wider">Leave Details</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] text-slate-500 uppercase block mb-1">From <span className="text-red-400">*</span></label>
+                  <input type="date" value={formData.fromDate} onChange={(e) => setFormData({ ...formData, fromDate: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px]" />
+                </div>
+                <div>
+                  <label className="text-[10px] text-slate-500 uppercase block mb-1">To <span className="text-red-400">*</span></label>
+                  <input type="date" value={formData.toDate} onChange={(e) => setFormData({ ...formData, toDate: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px]" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] text-slate-500 uppercase block mb-1">Returning to Work <span className="text-red-400">*</span></label>
+                  <input type="date" value={formData.returningToWork} onChange={(e) => setFormData({ ...formData, returningToWork: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px]" />
+                </div>
+                <div>
+                  <label className="text-[10px] text-slate-500 uppercase block mb-1">No. of Holidays <span className="text-red-400">*</span></label>
+                  <input type="number" min="0" value={formData.noOfHolidays} onChange={(e) => setFormData({ ...formData, noOfHolidays: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px]" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] text-slate-500 uppercase block mb-1">Total Days Taken</label>
                   <input
                     type="text"
-                    value={formData.firstName}
-                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                    className="border border-slate-300 px-3 py-2 text-sm text-slate-900 bg-white outline-none focus:border-blue-400"
-                  />
-                  <div className="flex items-center gap-4">
-                    <label className="text-sm font-semibold italic text-slate-700 whitespace-nowrap">Last Name</label>
-                    <input
-                      type="text"
-                      value={formData.lastName}
-                      onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                      className="border border-slate-300 px-3 py-2 text-sm text-slate-900 bg-white outline-none focus:border-blue-400 flex-1"
-                    />
-                  </div>
-                </div>
-
-                {/* Row 2: Department / Line Manager */}
-                <div className="grid grid-cols-3 gap-x-6 items-center">
-                  <label className="text-sm font-semibold italic text-slate-700">Department</label>
-                  <div className="relative">
-                    <select
-                      value={formData.department}
-                      onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                      className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-900 bg-white outline-none focus:border-blue-400 appearance-none pr-8"
-                    >
-                      <option value=""></option>
-                      <option value="Executive Office">Executive Office</option>
-                      <option value="Research">Research</option>
-                      <option value="Programs">Programs</option>
-                      <option value="Finance">Finance</option>
-                      <option value="HR">HR</option>
-                      <option value="Communications">Communications</option>
-                      <option value="IT">IT</option>
-                    </select>
-                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-red-500 text-xs">*</span>
-                    <ChevronDown size={14} className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <label className="text-sm font-semibold italic text-slate-700 whitespace-nowrap">Line Manager</label>
-                    <div className="relative flex-1">
-                      <input
-                        type="text"
-                        value={formData.lineManager}
-                        onChange={(e) => setFormData({ ...formData, lineManager: e.target.value })}
-                        className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-900 bg-white outline-none focus:border-blue-400 pr-14"
-                      />
-                      <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
-                        <User size={14} className="text-slate-400" />
-                        <Calendar size={14} className="text-slate-400" />
-                        <span className="text-red-500 text-xs ml-0.5">*</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Row 3: Contact While on Leave / Leave Type */}
-                <div className="grid grid-cols-3 gap-x-6 items-center">
-                  <label className="text-sm font-semibold italic text-slate-700">Contact (While on<br />Leave)</label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={formData.contactOnLeave}
-                      onChange={(e) => setFormData({ ...formData, contactOnLeave: e.target.value })}
-                      className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-900 bg-white outline-none focus:border-blue-400 pr-6"
-                    />
-                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-red-500 text-xs">*</span>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <label className="text-sm font-semibold italic text-slate-700 whitespace-nowrap">Leave Type</label>
-                    <div className="relative flex-1">
-                      <select
-                        value={formData.leaveType}
-                        onChange={(e) => setFormData({ ...formData, leaveType: e.target.value })}
-                        className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-900 bg-white outline-none focus:border-blue-400 appearance-none pr-8"
-                      >
-                        <option value="">Select...</option>
-                        {leaveTypes.map((t) => (
-                          <option key={t} value={t}>{t}</option>
-                        ))}
-                      </select>
-                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-red-500 text-xs">*</span>
-                      <ChevronDown size={14} className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Leave Details Section Header */}
-              <div className="bg-[#d4edda] py-3 px-8">
-                <h3 className="text-xl font-bold italic text-center text-slate-800">Leave Details</h3>
-              </div>
-
-              {/* Leave Details Fields */}
-              <div className="px-8 py-6 space-y-5">
-                {/* Row 4: From / To */}
-                <div className="grid grid-cols-3 gap-x-6 items-center">
-                  <label className="text-sm font-semibold italic text-slate-700">From</label>
-                  <div className="relative">
-                    <input
-                      type="date"
-                      value={formData.fromDate}
-                      onChange={(e) => setFormData({ ...formData, fromDate: e.target.value })}
-                      className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-900 bg-white outline-none focus:border-blue-400 pr-6"
-                    />
-                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-red-500 text-xs">*</span>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <label className="text-sm font-semibold italic text-slate-700">To</label>
-                    <div className="relative flex-1">
-                      <input
-                        type="date"
-                        value={formData.toDate}
-                        onChange={(e) => setFormData({ ...formData, toDate: e.target.value })}
-                        className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-900 bg-white outline-none focus:border-blue-400 pr-6"
-                      />
-                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-red-500 text-xs">*</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Row 5: Returning to Work / No. of Holidays */}
-                <div className="grid grid-cols-3 gap-x-6 items-center">
-                  <label className="text-sm font-semibold italic text-slate-700">Returning to Work</label>
-                  <div className="relative">
-                    <input
-                      type="date"
-                      value={formData.returningToWork}
-                      onChange={(e) => setFormData({ ...formData, returningToWork: e.target.value })}
-                      className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-900 bg-white outline-none focus:border-blue-400 pr-6"
-                    />
-                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-red-500 text-xs">*</span>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <label className="text-sm font-semibold italic text-slate-700 whitespace-nowrap">No. of Holidays</label>
-                    <div className="relative flex-1">
-                      <input
-                        type="number"
-                        value={formData.noOfHolidays}
-                        onChange={(e) => setFormData({ ...formData, noOfHolidays: e.target.value })}
-                        className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-900 bg-white outline-none focus:border-blue-400 pr-6"
-                      />
-                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-red-500 text-xs">*</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Row 6: Total Days Taken / Handing over To */}
-                <div className="grid grid-cols-3 gap-x-6 items-center">
-                  <label className="text-sm font-semibold italic text-slate-700">Total Days Taken</label>
-                  <input
-                    type="text"
-                    value={formData.totalDaysTaken}
-                    onChange={(e) => setFormData({ ...formData, totalDaysTaken: e.target.value })}
-                    className="border border-slate-300 px-3 py-2 text-sm text-slate-900 bg-slate-50 outline-none"
                     readOnly
+                    value={
+                      formData.fromDate && formData.toDate
+                        ? `${Math.max(0, Math.round((new Date(formData.toDate).getTime() - new Date(formData.fromDate).getTime()) / 86400000) + 1)} day(s)`
+                        : ""
+                    }
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] bg-slate-50 text-slate-500 cursor-default"
                   />
-                  <div className="flex items-center gap-4">
-                    <label className="text-sm font-semibold italic text-slate-700 whitespace-nowrap">Handing over To</label>
-                    <div className="relative flex-1">
-                      <input
-                        type="text"
-                        value={formData.handingOverTo}
-                        onChange={(e) => setFormData({ ...formData, handingOverTo: e.target.value })}
-                        className="w-full border border-slate-300 px-3 py-2 text-sm text-slate-900 bg-white outline-none focus:border-blue-400 pr-14"
-                      />
-                      <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
-                        <User size={14} className="text-slate-400" />
-                        <Calendar size={14} className="text-slate-400" />
-                        <span className="text-red-500 text-xs ml-0.5">*</span>
-                      </div>
-                    </div>
-                  </div>
+                </div>
+                <div>
+                  <label className="text-[10px] text-slate-500 uppercase block mb-1">Handing Over To <span className="text-red-400">*</span></label>
+                  <input type="text" value={formData.handingOverTo} onChange={(e) => setFormData({ ...formData, handingOverTo: e.target.value })} placeholder="Enter name" className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px]" />
                 </div>
               </div>
+            </div>
 
-              {/* Buttons */}
-              <div className="flex justify-center gap-6 px-8 py-6">
-                <button
-                  onClick={() => { setShowNewForm(false); setUploadedFiles([]); }}
-                  className="px-12 py-2.5 bg-[#c8c8c8] text-slate-800 text-sm font-bold uppercase tracking-wider hover:bg-[#b8b8b8] transition-colors"
-                >
-                  SUBMIT
-                </button>
-                <button
-                  onClick={() => { setShowNewForm(false); setUploadedFiles([]); setFormData({ firstName: "Ebenezer", lastName: "Adams", department: "", lineManager: "", contactOnLeave: "", leaveType: "", fromDate: "", toDate: "", returningToWork: "", noOfHolidays: "", totalDaysTaken: "", handingOverTo: "" }); }}
-                  className="px-12 py-2.5 bg-[#c8c8c8] text-slate-800 text-sm font-bold uppercase tracking-wider hover:bg-[#b8b8b8] transition-colors"
-                >
-                  CANCEL
-                </button>
-              </div>
+            <div className="px-6 py-4 border-t border-slate-200 flex justify-end gap-3">
+              <button onClick={() => setShowNewForm(false)} className="px-4 py-2 rounded-lg text-[13px] bg-slate-100 text-slate-700 hover:bg-slate-200">Cancel</button>
+              <button onClick={() => setShowNewForm(false)} className="px-4 py-2 rounded-lg text-[13px] text-white hover:opacity-90" style={{ backgroundColor: "#0B01D0" }}>Submit Request</button>
             </div>
           </div>
         </div>
