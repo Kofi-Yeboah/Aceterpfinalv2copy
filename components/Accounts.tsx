@@ -97,7 +97,6 @@ export function Accounts() {
         effectiveDate: new Date().toISOString().split("T")[0],
       }]
     } : a));
-    setShowGovernanceModal(null);
   };
 
   const handleDeleteAccount = (accountId: string) => {
