@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ACET ERP — System Map</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Inter',sans-serif;background:#1a1a2e;overflow:hidden;height:100vh;color:#e2e8f0}
+  .top-bar{position:fixed;top:0;left:0;right:0;height:48px;background:rgba(26,26,46,0.8);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:space-between;padding:0 20px;z-index:200;border-bottom:1px solid rgba(255,255,255,0.04)}
+  .top-bar .title{font-size:13px;font-weight:500;color:rgba(255,255,255,0.5)}
+  .top-bar .title span{color:rgba(255,255,255,0.8);font-weight:600}
+  .top-bar .hint{font-size:11px;color:rgba(255,255,255,0.2)}
+  .info-panel{position:fixed;right:0;top:48px;bottom:0;width:340px;background:rgba(22,22,40,0.97);backdrop-filter:blur(20px);border-left:1px solid rgba(255,255,255,0.06);padding:24px 20px;z-index:190;overflow-y:auto;transform:translateX(100%);transition:transform .25s cubic-bezier(.4,0,.2,1)}
+  .info-panel.visible{transform:translateX(0)}
+  .info-panel::-webkit-scrollbar{width:3px}
+  .info-panel::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:2px}
+  .panel-header{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+  .panel-dot{width:14px;height:14px;border-radius:50%;flex-shrink:0}
+  .panel-title{font-size:16px;font-weight:600;color:rgba(255,255,255,0.9)}
+  .panel-type{font-size:11px;color:rgba(255,255,255,0.25);margin-bottom:12px;padding-left:26px}
+  .panel-desc{font-size:12.5px;color:rgba(255,255,255,0.45);line-height:1.65;margin-bottom:20px}
+  .panel-section{font-size:10px;font-weight:600;color:rgba(255,255,255,0.2);text-transform:uppercase;letter-spacing:1.2px;margin:20px 0 10px;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,0.04)}
+  .flow-item{display:flex;align-items:flex-start;gap:10px;padding:8px;border-radius:6px;margin-bottom:2px;cursor:pointer;transition:background .15s}
+  .flow-item:hover{background:rgba(255,255,255,0.04)}
+  .flow-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:5px}
+  .flow-name{font-size:12px;font-weight:500;color:rgba(255,255,255,0.7)}
+  .flow-action{font-size:11px;color:rgba(255,255,255,0.3);margin-top:2px}
+  .close-btn{position:absolute;top:20px;right:16px;width:24px;height:24px;border-radius:4px;border:none;background:transparent;color:rgba(255,255,255,0.2);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .close-btn:hover{color:rgba(255,255,255,0.5);background:rgba(255,255,255,0.05)}
+  .filters{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:4px;z-index:200;background:rgba(22,22,40,0.85);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:4px}
+  .filter-btn{font-family:'Inter',sans-serif;font-size:11px;font-weight:500;padding:5px 14px;border-radius:5px;border:none;background:transparent;color:rgba(255,255,255,0.3);cursor:pointer;transition:all .15s}
+  .filter-btn:hover{color:rgba(255,255,255,0.5)}
+  .filter-btn.active{color:rgba(255,255,255,0.85);background:rgba(255,255,255,0.08)}
+  .counters{position:fixed;top:60px;left:16px;z-index:200;font-size:11px;color:rgba(255,255,255,0.2)}
+  .counters b{color:rgba(255,255,255,0.4);font-weight:600}
+  .search-box{position:fixed;top:60px;right:20px;z-index:200}
+  .search-box input{font-family:'Inter',sans-serif;font-size:12px;padding:6px 12px;border-radius:6px;border:1px solid rgba(255,255,255,0.08);background:rgba(22,22,40,0.9);color:rgba(255,255,255,0.7);outline:none;width:180px;backdrop-filter:blur(12px)}
+  .search-box input::placeholder{color:rgba(255,255,255,0.2)}
+  .search-box input:focus{border-color:rgba(255,255,255,0.15)}
+</style>
+</head>
+<body>
+<div class="top-bar">
+  <div class="title"><span>ACET ERP</span> &nbsp;System Map</div>
+  <div class="hint">click node to focus · scroll to zoom · drag to pan</div>
+</div>
+<div class="counters"><b>11</b> modules · <b id="ac">0</b> activities · <b id="ec">0</b> flows</div>
+<div class="search-box"><input type="text" id="search" placeholder="Search nodes..."></div>
+<div class="filters">
+  <button class="filter-btn active" data-f="all">All</button>
+  <button class="filter-btn" data-f="people">People</button>
+  <button class="filter-btn" data-f="financial">Financial</button>
+  <button class="filter-btn" data-f="operations">Operations</button>
+  <button class="filter-btn" data-f="governance">Governance</button>
+</div>
+<div class="info-panel" id="panel">
+  <button class="close-btn" onclick="deselect()">×</button>
+  <div class="panel-header"><div class="panel-dot" id="p-dot"></div><div class="panel-title" id="p-title"></div></div>
+  <div class="panel-type" id="p-type"></div>
+  <div class="panel-desc" id="p-desc"></div>
+  <div id="p-flows"></div>
+</div>
+
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script>
+// ======================== DATA ========================
+const modules = [
+  {id:'hr',label:'HR Management',color:'#c084fc',group:'people',
+   desc:'Manages employee lifecycle — recruitment, onboarding, performance reviews, training, offboarding. Central source of truth for all employee data across the organization.'},
+  {id:'finance',label:'Finance',color:'#60a5fa',group:'financial',
+   desc:'Tracks revenue, expenses, budgets, cash flow, AP/AR, payment vouchers, and financial reporting. Every money-touching activity flows through Finance.'},
+  {id:'payroll',label:'Payroll',color:'#2dd4bf',group:'financial',
+   desc:'Processes salaries, tax calculations, deductions, allowances, overtime, bonuses, and generates payslips. Pulls from HR and posts to Finance.'},
+  {id:'procurement',label:'Procurement',color:'#fbbf24',group:'operations',
+   desc:'Full procurement cycle — purchase plans, requisitions, vendor management, POs, goods receipt, spend analytics, and contract tracking.'},
+  {id:'pm',label:'Project Management',color:'#818cf8',group:'operations',
+   desc:'Manages ACET research projects — WBS, Gantt timelines, resource allocation, milestones, risk registers, and project budgets across African countries.'},
+  {id:'ess',label:'Employee Self-Service',color:'#f472b6',group:'people',
+   desc:'Employee portal for leave, payslips, expense claims, personal info updates, timesheets, training enrollment, grievances, and benefits.'},
+  {id:'crm',label:'CRM',color:'#a78bfa',group:'operations',
+   desc:'Manages relationships with donors, partners, government stakeholders. Tracks engagements, MOUs, funding agreements, and activity history.'},
+  {id:'legal',label:'Legal & Contracts',color:'#fb7185',group:'governance',
+   desc:'Employment contracts, vendor agreements, NDAs, compliance tracking, dispute resolution, regulatory filings, and policy management.'},
+  {id:'me',label:'Monitoring & Evaluation',color:'#34d399',group:'operations',
+   desc:'Tracks program outcomes, KPIs, impact metrics, baseline studies, mid-term reviews, and cost-effectiveness analysis.'},
+  {id:'knowledge',label:'Knowledge Hub',color:'#22d3ee',group:'governance',
+   desc:'Institutional repository — policy papers, research outputs, best practices, SOPs, lesson-learned reports, and methodology frameworks.'},
+  {id:'docvault',label:'Document Vault',color:'#94a3b8',group:'governance',
+   desc:'Centralized file storage with version control, access permissions, full-text search, retention policies, and cross-module linking.'},
+];
+
+const activities = [
+  // ── HR ACTIVITIES ──
+  {id:'a_onboard',label:'Employee Onboarding',color:'#c084fc',group:'people',
+   desc:'New hire setup — creates HR record, enrolls in payroll, generates employment contract, provisions ESS access, assigns orientation training.'},
+  {id:'a_offboard',label:'Employee Offboarding',color:'#c084fc',group:'people',
+   desc:'Exit process — final pay calculation, benefit termination, asset return tracking, exit interview, access revocation, knowledge transfer.'},
+  {id:'a_recruit',label:'Recruitment & Hiring',color:'#c084fc',group:'people',
+   desc:'Job posting → applicant screening → interview scheduling → offer letter → acceptance → triggers onboarding.'},
+  {id:'a_perf',label:'Performance Review',color:'#c084fc',group:'people',
+   desc:'Manager evaluates employee against KPIs → self-assessment → 360 feedback → rating → salary adjustment recommendation → training plan.'},
+  {id:'a_training',label:'Training Program',color:'#c084fc',group:'people',
+   desc:'HR creates program → employees enroll via ESS → attendance tracked → assessment → completion certificate → costs posted to Finance.'},
+  {id:'a_promotion',label:'Promotion & Transfer',color:'#c084fc',group:'people',
+   desc:'Manager recommends → HR reviews → approval workflow → grade change → salary adjustment in Payroll → new role assignment.'},
+  {id:'a_attendance',label:'Attendance Tracking',color:'#c084fc',group:'people',
+   desc:'Daily clock-in/out records → feeds into overtime calculation → affects payroll processing → leave balance reconciliation.'},
+  {id:'a_grievance',label:'Grievance Filing',color:'#c084fc',group:'people',
+   desc:'Employee files grievance via ESS → HR assigns investigator → resolution workflow → outcome recorded → may trigger disciplinary action.'},
+  {id:'a_orgchart',label:'Org Structure Update',color:'#c084fc',group:'people',
+   desc:'Department/team restructuring → updates reporting lines → affects approval chains → reassigns project team members.'},
+
+  // ── PAYROLL ACTIVITIES ──
+  {id:'a_salary',label:'Salary Calculation',color:'#2dd4bf',group:'financial',
+   desc:'Monthly salary computation — base pay + allowances - deductions - tax - pension contributions. Uses employee grade from HR.'},
+  {id:'a_payslip',label:'Payslip Generation',color:'#2dd4bf',group:'financial',
+   desc:'After payroll processing, individual payslips with earnings/deductions breakdown published to ESS portal.'},
+  {id:'a_tax',label:'Tax Computation',color:'#2dd4bf',group:'financial',
+   desc:'Calculate PAYE, social security, pension contributions per employee. Generates tax remittance reports for GRA filing.'},
+  {id:'a_overtime',label:'Overtime Processing',color:'#2dd4bf',group:'financial',
+   desc:'Attendance records → identify overtime hours → apply overtime rates → add to monthly salary computation.'},
+  {id:'a_bonus',label:'Bonus & Incentive',color:'#2dd4bf',group:'financial',
+   desc:'Performance ratings trigger bonus calculation → manager approval → one-time payment added to payroll run → posted to Finance.'},
+  {id:'a_deduction',label:'Deduction Processing',color:'#2dd4bf',group:'financial',
+   desc:'Loan repayments, salary advances, union dues, insurance premiums — recurring deductions applied before net pay calculation.'},
+
+  // ── FINANCE ACTIVITIES ──
+  {id:'a_voucher',label:'Payment Voucher',color:'#60a5fa',group:'financial',
+   desc:'Authorized payment document for vendor payments, expense reimbursements, salary disbursements, and petty cash.'},
+  {id:'a_budgetck',label:'Budget Validation',color:'#60a5fa',group:'financial',
+   desc:'Every expenditure validated against available budget allocation before approval. Blocks overspending, suggests reallocation.'},
+  {id:'a_monthend',label:'Month-End Closing',color:'#60a5fa',group:'financial',
+   desc:'Reconcile all transactions — payroll, procurement, project expenses, petty cash — generate trial balance and financial statements.'},
+  {id:'a_invoice',label:'Invoice Processing',color:'#60a5fa',group:'financial',
+   desc:'Vendor invoice received → matched to PO and goods receipt (3-way match) → approved → queued for payment.'},
+  {id:'a_bankrecon',label:'Bank Reconciliation',color:'#60a5fa',group:'financial',
+   desc:'Match bank statement entries against ledger transactions → identify discrepancies → adjust entries → sign off.'},
+  {id:'a_taxfiling',label:'Tax Filing & Remittance',color:'#60a5fa',group:'financial',
+   desc:'Aggregate tax deductions from payroll → prepare statutory returns → file with Ghana Revenue Authority → record payment.'},
+  {id:'a_budgetrealloc',label:'Budget Reallocation',color:'#60a5fa',group:'financial',
+   desc:'Department requests budget transfer between line items → Finance validates → approval workflow → ledger adjustment.'},
+  {id:'a_finreport',label:'Financial Reporting',color:'#60a5fa',group:'financial',
+   desc:'Generate income statement, balance sheet, cash flow statement, donor fund utilization reports, and management accounts.'},
+  {id:'a_petty',label:'Petty Cash Management',color:'#60a5fa',group:'financial',
+   desc:'Cash advance request → approval → disbursement → receipt submission → reconciliation → replenishment.'},
+  {id:'a_ar',label:'Accounts Receivable',color:'#60a5fa',group:'financial',
+   desc:'Track donor pledges, grant installments, and partner contributions. Send reminders, record receipts, age analysis.'},
+  {id:'a_ap',label:'Accounts Payable',color:'#60a5fa',group:'financial',
+   desc:'Track outstanding vendor invoices, staff reimbursements, and statutory obligations. Aging reports, payment scheduling.'},
+  {id:'a_audit',label:'Audit Trail',color:'#60a5fa',group:'governance',
+   desc:'Every financial transaction logged with user, timestamp, and approval chain. Supports internal and external audit requirements.'},
+
+  // ── PROCUREMENT ACTIVITIES ──
+  {id:'a_purchplan',label:'Purchase Plan',color:'#fbbf24',group:'operations',
+   desc:'Annual/quarterly procurement planning — aggregate department needs, estimate costs, align with budget, schedule procurement timeline.'},
+  {id:'a_req',label:'Purchase Requisition',color:'#fbbf24',group:'operations',
+   desc:'Department/project creates purchase request → approval chain → budget check → approved requisition triggers vendor selection.'},
+  {id:'a_vendor',label:'Vendor Selection',color:'#fbbf24',group:'operations',
+   desc:'RFQ/RFP issued → vendor responses evaluated on price, quality, compliance → scoring matrix → award recommendation.'},
+  {id:'a_bideval',label:'Bid Evaluation',color:'#fbbf24',group:'operations',
+   desc:'Evaluation committee scores vendor proposals against weighted criteria → comparative analysis → recommendation report.'},
+  {id:'a_po',label:'Purchase Order',color:'#fbbf24',group:'operations',
+   desc:'Formal order to vendor. Commits budget in Finance, links to Legal contract, specifies delivery terms and payment schedule.'},
+  {id:'a_receipt',label:'Goods Receipt',color:'#fbbf24',group:'operations',
+   desc:'Verify received goods/services against PO specs and quantities. Quality check, damage inspection, acceptance or rejection.'},
+  {id:'a_venpay',label:'Vendor Payment',color:'#60a5fa',group:'financial',
+   desc:'Finance processes payment after 3-way match (PO + invoice + receipt). Creates payment voucher, updates accounts payable.'},
+  {id:'a_veneval',label:'Vendor Performance Review',color:'#fbbf24',group:'operations',
+   desc:'Rate vendors on delivery timeliness, quality, responsiveness, compliance. Affects future vendor selection scoring.'},
+  {id:'a_contract_renew',label:'Contract Renewal',color:'#fbbf24',group:'operations',
+   desc:'Expiring contracts flagged → review performance → negotiate terms → legal review → new contract or termination.'},
+  {id:'a_spendanalysis',label:'Spend Analysis',color:'#fbbf24',group:'operations',
+   desc:'Aggregate procurement data by category, vendor, department, project. Identify savings opportunities and compliance gaps.'},
+
+  // ── PROJECT MANAGEMENT ACTIVITIES ──
+  {id:'a_projcreate',label:'Project Creation',color:'#818cf8',group:'operations',
+   desc:'New project setup — define scope, objectives, timeline, deliverables. Creates project record, assigns PM, initializes WBS.'},
+  {id:'a_projbudget',label:'Project Budgeting',color:'#818cf8',group:'financial',
+   desc:'PM allocates budget across WBS activities. Commitments flow to Finance for tracking. Variance monitoring and alerts.'},
+  {id:'a_staffassign',label:'Staff Assignment',color:'#818cf8',group:'people',
+   desc:'PM requests team members → HR checks availability and skills → staff allocated with effort percentage and timeframe.'},
+  {id:'a_milestone',label:'Milestone Review',color:'#818cf8',group:'operations',
+   desc:'Milestone completion triggers deliverable review, M&E evaluation, budget utilization check, and stakeholder report.'},
+  {id:'a_projpurch',label:'Project Purchase',color:'#818cf8',group:'operations',
+   desc:'Project needs equipment/services → creates purchase requisition in Procurement → costs charged to project budget line.'},
+  {id:'a_timetrack',label:'Time Tracking',color:'#818cf8',group:'operations',
+   desc:'Team members log hours against project tasks via ESS timesheets → PM reviews → affects resource utilization reports.'},
+  {id:'a_risk',label:'Risk Assessment',color:'#818cf8',group:'operations',
+   desc:'Identify project risks → assess probability and impact → define mitigation strategies → monitor and update risk register.'},
+  {id:'a_projclose',label:'Project Closure',color:'#818cf8',group:'operations',
+   desc:'Final deliverables accepted → financial reconciliation → lessons learned documented → team released → archive in Knowledge Hub.'},
+  {id:'a_gantt',label:'Timeline & Scheduling',color:'#818cf8',group:'operations',
+   desc:'Gantt chart creation → task dependencies → critical path analysis → schedule baseline → progress tracking and re-scheduling.'},
+  {id:'a_projreport',label:'Project Status Report',color:'#818cf8',group:'operations',
+   desc:'Weekly/monthly status updates — progress vs plan, budget utilization, risks, issues, upcoming milestones. Sent to stakeholders.'},
+
+  // ── ESS ACTIVITIES ──
+  {id:'a_leave',label:'Leave Request',color:'#f472b6',group:'people',
+   desc:'Employee submits leave via ESS → auto-checks balance → manager approval → HR updates balance → payroll adjusts if unpaid.'},
+  {id:'a_expense',label:'Expense Claim',color:'#f472b6',group:'financial',
+   desc:'Employee uploads receipt in ESS → selects category and project → manager approves → Finance processes reimbursement.'},
+  {id:'a_timesheet',label:'Timesheet Submission',color:'#f472b6',group:'operations',
+   desc:'Employee logs daily hours against projects/tasks → manager approves → data feeds project time tracking and payroll overtime.'},
+  {id:'a_infoUpdate',label:'Personal Info Update',color:'#f472b6',group:'people',
+   desc:'Employee updates address, bank details, emergency contacts, dependents → HR reviews sensitive changes → payroll updates bank info.'},
+  {id:'a_benefits',label:'Benefits Enrollment',color:'#f472b6',group:'people',
+   desc:'Employee selects health insurance, pension options during enrollment window → HR processes → Payroll adjusts deductions.'},
+
+  // ── CRM ACTIVITIES ──
+  {id:'a_donor',label:'Donor Funding',color:'#a78bfa',group:'financial',
+   desc:'Donor commits funding → CRM records agreement and terms → Finance creates receivable → funds allocated to projects.'},
+  {id:'a_partner',label:'Stakeholder Engagement',color:'#a78bfa',group:'operations',
+   desc:'Track meetings, MOUs, and collaborative activities with partner orgs. Links to projects they co-fund or participate in.'},
+  {id:'a_mou',label:'MOU Drafting',color:'#a78bfa',group:'governance',
+   desc:'CRM initiates partnership agreement → Legal drafts MOU → stakeholder review → signatures → stored in Document Vault.'},
+  {id:'a_donorreport',label:'Donor Reporting',color:'#a78bfa',group:'financial',
+   desc:'Generate fund utilization reports per donor agreement → pull project progress from PM → financial data from Finance → send to donor.'},
+  {id:'a_pipeline',label:'Funding Pipeline',color:'#a78bfa',group:'financial',
+   desc:'Track prospective funding from identification → proposal → negotiation → commitment. Forecast revenue for budget planning.'},
+
+  // ── LEGAL ACTIVITIES ──
+  {id:'a_contract',label:'Contract Creation',color:'#fb7185',group:'governance',
+   desc:'New vendor or employment contract → template selection → clause customization → legal review → approval → execution.'},
+  {id:'a_compliance',label:'Compliance Review',color:'#fb7185',group:'governance',
+   desc:'Legal reviews contracts, policies, and processes against Ghanaian labor law, procurement regulations, and donor requirements.'},
+  {id:'a_nda',label:'NDA Processing',color:'#fb7185',group:'governance',
+   desc:'Confidentiality agreement for consultants, partners, vendors → Legal drafts → counterparty signs → stored in vault.'},
+  {id:'a_dispute',label:'Dispute Resolution',color:'#fb7185',group:'governance',
+   desc:'Contract dispute raised → Legal reviews terms → mediation/negotiation → resolution recorded → financial impact assessed.'},
+  {id:'a_policy',label:'Policy Management',color:'#fb7185',group:'governance',
+   desc:'Draft organizational policy → stakeholder consultation → Legal review → board approval → published to Knowledge Hub → staff notified.'},
+  {id:'a_regfiling',label:'Regulatory Filing',color:'#fb7185',group:'governance',
+   desc:'Prepare and submit statutory filings — annual returns, tax registrations, labor compliance reports → track deadlines and confirmations.'},
+
+  // ── M&E ACTIVITIES ──
+  {id:'a_impact',label:'Impact Assessment',color:'#34d399',group:'operations',
+   desc:'Evaluate project outcomes vs targets. Pull cost data from Finance to calculate cost-effectiveness. Publish to Knowledge Hub.'},
+  {id:'a_baseline',label:'Baseline Study',color:'#34d399',group:'operations',
+   desc:'Before project start, establish baseline indicators. Data feeds into M&E framework for measuring change over time.'},
+  {id:'a_midterm',label:'Mid-Term Review',color:'#34d399',group:'operations',
+   desc:'Halfway through project, assess progress against targets → recommend course corrections → update project plan if needed.'},
+  {id:'a_indicator',label:'KPI Tracking',color:'#34d399',group:'operations',
+   desc:'Define and monitor key performance indicators per project and organization-wide. Dashboard visualization and trend analysis.'},
+  {id:'a_evalreport',label:'Evaluation Report',color:'#34d399',group:'operations',
+   desc:'Compile findings from impact assessments, mid-term reviews, and indicator tracking into formal evaluation reports.'},
+  {id:'a_datacollect',label:'Field Data Collection',color:'#34d399',group:'operations',
+   desc:'Survey design → field deployment → data entry → validation → analysis. Feeds into impact assessment and KPI tracking.'},
+
+  // ── KNOWLEDGE HUB ACTIVITIES ──
+  {id:'a_publish',label:'Content Publishing',color:'#22d3ee',group:'governance',
+   desc:'Research output finalized → peer review → formatting → metadata tagging → published to Knowledge Hub → notification sent.'},
+  {id:'a_policydist',label:'Policy Distribution',color:'#22d3ee',group:'governance',
+   desc:'Approved policy published to Knowledge Hub → all-staff notification via ESS → acknowledgment tracking → compliance monitoring.'},
+  {id:'a_lessons',label:'Lessons Learned',color:'#22d3ee',group:'governance',
+   desc:'Post-project or post-incident, teams document what worked and what didn\'t → stored in Knowledge Hub for institutional memory.'},
+
+  // ── DOCUMENT VAULT ACTIVITIES ──
+  {id:'a_docattach',label:'Document Attachment',color:'#94a3b8',group:'governance',
+   desc:'Files from any module (invoices, contracts, policies, reports) stored in Document Vault with metadata linking to source record.'},
+  {id:'a_accessreq',label:'Access Request',color:'#94a3b8',group:'governance',
+   desc:'User requests access to restricted document → owner approves → time-limited access granted → access logged for audit.'},
+  {id:'a_retention',label:'Retention & Archival',color:'#94a3b8',group:'governance',
+   desc:'Documents past retention period flagged → review for archival or disposal → archived documents moved to cold storage.'},
+  {id:'a_versioning',label:'Version Control',color:'#94a3b8',group:'governance',
+   desc:'Document edited → new version created automatically → previous versions preserved → diff comparison available → audit trail.'},
+
+  // ── CROSS-CUTTING ──
+  {id:'a_approval',label:'Approval Workflow',color:'#e879f9',group:'governance',
+   desc:'Unified approval engine. Routes leave, expenses, purchases, project changes, contracts through configurable multi-level chains.'},
+  {id:'a_notification',label:'Notification Dispatch',color:'#e879f9',group:'governance',
+   desc:'System events trigger notifications — approval needed, deadline approaching, document shared, payslip ready, status change.'},
+  {id:'a_useraccess',label:'Access Provisioning',color:'#e879f9',group:'governance',
+   desc:'New user or role change → system provisions module access based on role matrix → removes access on offboarding.'},
+  {id:'a_dataexport',label:'Report & Data Export',color:'#e879f9',group:'governance',
+   desc:'Any module\'s data exportable as PDF, Excel, or CSV. Scheduled reports auto-generated and emailed. Custom report builder.'},
+];
+
+// ======================== EDGES ========================
+const edges = [
+  // ── RECRUITMENT → ONBOARDING FLOW ──
+  {s:'hr',t:'a_recruit',type:'trigger',label:'posts vacancy'},
+  {s:'a_recruit',t:'a_onboard',type:'trigger',label:'hire accepted → onboard'},
+  {s:'a_recruit',t:'a_approval',type:'approval',label:'hiring approval'},
+  {s:'a_recruit',t:'finance',type:'data',label:'recruitment costs'},
+
+  // ── ONBOARDING FLOW ──
+  {s:'hr',t:'a_onboard',type:'trigger',label:'initiates onboarding'},
+  {s:'a_onboard',t:'payroll',type:'data',label:'enrolls in payroll'},
+  {s:'a_onboard',t:'legal',type:'trigger',label:'generates employment contract'},
+  {s:'a_onboard',t:'ess',type:'data',label:'provisions ESS access'},
+  {s:'a_onboard',t:'a_useraccess',type:'trigger',label:'provisions system access'},
+  {s:'a_onboard',t:'a_training',type:'trigger',label:'assigns orientation training'},
+  {s:'a_onboard',t:'a_contract',type:'trigger',label:'employment contract'},
+
+  // ── OFFBOARDING FLOW ──
+  {s:'hr',t:'a_offboard',type:'trigger',label:'initiates exit process'},
+  {s:'a_offboard',t:'payroll',type:'data',label:'final pay calculation'},
+  {s:'a_offboard',t:'a_useraccess',type:'trigger',label:'revokes system access'},
+  {s:'a_offboard',t:'legal',type:'data',label:'termination documentation'},
+  {s:'a_offboard',t:'ess',type:'update',label:'disables account'},
+  {s:'a_offboard',t:'a_lessons',type:'trigger',label:'exit interview insights'},
+  {s:'a_offboard',t:'pm',type:'data',label:'releases from project assignments'},
+
+  // ── ATTENDANCE → PAYROLL ──
+  {s:'ess',t:'a_attendance',type:'trigger',label:'clock in/out'},
+  {s:'a_attendance',t:'a_overtime',type:'data',label:'overtime hours identified'},
+  {s:'a_attendance',t:'hr',type:'update',label:'attendance records'},
+  {s:'a_attendance',t:'a_leave',type:'data',label:'reconciles leave balance'},
+
+  // ── SALARY & PAYROLL FLOW ──
+  {s:'hr',t:'a_salary',type:'data',label:'employee records, grades, allowances'},
+  {s:'a_salary',t:'payroll',type:'trigger',label:'computes gross pay'},
+  {s:'a_overtime',t:'a_salary',type:'data',label:'adds overtime amount'},
+  {s:'a_deduction',t:'a_salary',type:'data',label:'applies deductions'},
+  {s:'a_bonus',t:'payroll',type:'data',label:'adds to payroll run'},
+  {s:'payroll',t:'a_tax',type:'trigger',label:'calculates tax'},
+  {s:'a_tax',t:'a_taxfiling',type:'data',label:'aggregated tax data'},
+  {s:'a_tax',t:'a_salary',type:'data',label:'net pay after tax'},
+  {s:'payroll',t:'a_payslip',type:'trigger',label:'generates payslips'},
+  {s:'a_payslip',t:'ess',type:'data',label:'publishes to employee portal'},
+  {s:'a_payslip',t:'a_notification',type:'trigger',label:'notifies employee'},
+  {s:'payroll',t:'a_voucher',type:'trigger',label:'creates salary voucher'},
+  {s:'a_voucher',t:'finance',type:'update',label:'posts to general ledger'},
+  {s:'a_taxfiling',t:'finance',type:'data',label:'records tax remittance'},
+  {s:'a_taxfiling',t:'a_regfiling',type:'data',label:'statutory filing'},
+
+  // ── DEDUCTION & BONUS ──
+  {s:'hr',t:'a_deduction',type:'data',label:'loan, advance, insurance info'},
+  {s:'a_perf',t:'a_bonus',type:'trigger',label:'high rating triggers bonus'},
+  {s:'a_bonus',t:'a_approval',type:'approval',label:'management approval'},
+  {s:'a_bonus',t:'finance',type:'update',label:'bonus expense posted'},
+
+  // ── PERFORMANCE REVIEW ──
+  {s:'hr',t:'a_perf',type:'trigger',label:'schedules review cycle'},
+  {s:'a_perf',t:'payroll',type:'data',label:'salary adjustment recommendation'},
+  {s:'a_perf',t:'a_training',type:'trigger',label:'recommends training'},
+  {s:'a_perf',t:'a_promotion',type:'trigger',label:'recommends promotion'},
+  {s:'ess',t:'a_perf',type:'data',label:'self-assessment submission'},
+
+  // ── PROMOTION ──
+  {s:'a_promotion',t:'a_approval',type:'approval',label:'management approval'},
+  {s:'a_promotion',t:'hr',type:'update',label:'updates grade & role'},
+  {s:'a_promotion',t:'payroll',type:'data',label:'new salary grade'},
+  {s:'a_promotion',t:'a_notification',type:'trigger',label:'notifies employee'},
+
+  // ── TRAINING ──
+  {s:'hr',t:'a_training',type:'trigger',label:'creates program'},
+  {s:'a_training',t:'ess',type:'data',label:'enrollment & progress'},
+  {s:'a_training',t:'finance',type:'update',label:'posts training costs'},
+  {s:'a_training',t:'docvault',type:'data',label:'stores certificates'},
+  {s:'a_training',t:'a_budgetck',type:'trigger',label:'validates training budget'},
+  {s:'a_training',t:'a_notification',type:'trigger',label:'enrollment confirmation'},
+
+  // ── GRIEVANCE ──
+  {s:'ess',t:'a_grievance',type:'trigger',label:'employee files grievance'},
+  {s:'a_grievance',t:'hr',type:'update',label:'assigns investigator'},
+  {s:'a_grievance',t:'legal',type:'data',label:'escalates if needed'},
+  {s:'a_grievance',t:'a_notification',type:'trigger',label:'status updates'},
+
+  // ── ORG STRUCTURE ──
+  {s:'hr',t:'a_orgchart',type:'trigger',label:'restructures departments'},
+  {s:'a_orgchart',t:'a_approval',type:'approval',label:'updated approval chains'},
+  {s:'a_orgchart',t:'pm',type:'data',label:'reassigns project teams'},
+
+  // ── LEAVE REQUEST ──
+  {s:'ess',t:'a_leave',type:'trigger',label:'employee submits leave'},
+  {s:'a_leave',t:'a_approval',type:'approval',label:'manager sign-off'},
+  {s:'a_leave',t:'hr',type:'update',label:'updates leave balance'},
+  {s:'a_leave',t:'payroll',type:'data',label:'adjusts pay if unpaid'},
+  {s:'a_leave',t:'a_notification',type:'trigger',label:'notifies team'},
+
+  // ── EXPENSE CLAIM ──
+  {s:'ess',t:'a_expense',type:'trigger',label:'submits receipt'},
+  {s:'a_expense',t:'a_approval',type:'approval',label:'manager approves'},
+  {s:'a_expense',t:'a_budgetck',type:'trigger',label:'validates budget'},
+  {s:'a_expense',t:'finance',type:'update',label:'processes reimbursement'},
+  {s:'a_expense',t:'a_voucher',type:'trigger',label:'creates payment voucher'},
+  {s:'a_expense',t:'docvault',type:'data',label:'stores receipt'},
+
+  // ── TIMESHEET ──
+  {s:'ess',t:'a_timesheet',type:'trigger',label:'logs daily hours'},
+  {s:'a_timesheet',t:'a_timetrack',type:'data',label:'feeds project hours'},
+  {s:'a_timesheet',t:'a_overtime',type:'data',label:'identifies overtime'},
+  {s:'a_timesheet',t:'a_approval',type:'approval',label:'manager approves'},
+
+  // ── PERSONAL INFO & BENEFITS ──
+  {s:'ess',t:'a_infoUpdate',type:'trigger',label:'updates personal info'},
+  {s:'a_infoUpdate',t:'hr',type:'update',label:'updates employee record'},
+  {s:'a_infoUpdate',t:'payroll',type:'data',label:'updates bank details'},
+  {s:'ess',t:'a_benefits',type:'trigger',label:'selects benefits'},
+  {s:'a_benefits',t:'hr',type:'update',label:'records enrollment'},
+  {s:'a_benefits',t:'payroll',type:'data',label:'adjusts deductions'},
+  {s:'a_benefits',t:'a_deduction',type:'data',label:'insurance premium'},
+
+  // ── PROCUREMENT: PURCHASE PLAN ──
+  {s:'procurement',t:'a_purchplan',type:'trigger',label:'creates annual plan'},
+  {s:'a_purchplan',t:'a_budgetck',type:'trigger',label:'aligns with budget'},
+  {s:'a_purchplan',t:'a_approval',type:'approval',label:'management approval'},
+  {s:'a_purchplan',t:'a_req',type:'trigger',label:'generates requisitions'},
+
+  // ── PROCUREMENT CHAIN ──
+  {s:'pm',t:'a_projpurch',type:'trigger',label:'project needs supplies'},
+  {s:'a_projpurch',t:'a_req',type:'trigger',label:'creates requisition'},
+  {s:'procurement',t:'a_req',type:'trigger',label:'department request'},
+  {s:'a_req',t:'a_approval',type:'approval',label:'approval chain'},
+  {s:'a_req',t:'a_budgetck',type:'trigger',label:'checks available funds'},
+  {s:'a_req',t:'a_vendor',type:'trigger',label:'approved → select vendor'},
+  {s:'a_vendor',t:'a_bideval',type:'trigger',label:'evaluates bids'},
+  {s:'a_bideval',t:'a_vendor',type:'data',label:'scoring results'},
+  {s:'a_bideval',t:'a_approval',type:'approval',label:'award approval'},
+  {s:'a_vendor',t:'a_po',type:'trigger',label:'issues PO to winner'},
+  {s:'a_po',t:'a_contract',type:'trigger',label:'formalizes vendor agreement'},
+  {s:'a_po',t:'finance',type:'update',label:'commits budget'},
+  {s:'a_po',t:'a_notification',type:'trigger',label:'notifies vendor'},
+  {s:'a_po',t:'a_receipt',type:'trigger',label:'awaits delivery'},
+  {s:'a_receipt',t:'procurement',type:'update',label:'updates PO status'},
+  {s:'a_receipt',t:'a_invoice',type:'trigger',label:'triggers invoice match'},
+  {s:'a_receipt',t:'a_venpay',type:'trigger',label:'confirms for payment'},
+  {s:'a_venpay',t:'finance',type:'update',label:'processes vendor payment'},
+  {s:'a_venpay',t:'a_voucher',type:'trigger',label:'creates payment voucher'},
+  {s:'a_venpay',t:'a_ap',type:'update',label:'clears payable'},
+
+  // ── VENDOR EVALUATION & CONTRACT RENEWAL ──
+  {s:'procurement',t:'a_veneval',type:'trigger',label:'evaluates vendor'},
+  {s:'a_veneval',t:'a_vendor',type:'data',label:'affects future scoring'},
+  {s:'a_veneval',t:'procurement',type:'update',label:'updates vendor rating'},
+  {s:'procurement',t:'a_contract_renew',type:'trigger',label:'expiring contract flagged'},
+  {s:'a_contract_renew',t:'a_veneval',type:'data',label:'reviews performance'},
+  {s:'a_contract_renew',t:'legal',type:'trigger',label:'legal review of terms'},
+  {s:'a_contract_renew',t:'a_contract',type:'trigger',label:'new contract created'},
+
+  // ── SPEND ANALYSIS ──
+  {s:'procurement',t:'a_spendanalysis',type:'trigger',label:'generates report'},
+  {s:'a_spendanalysis',t:'finance',type:'data',label:'pulls expenditure data'},
+  {s:'a_spendanalysis',t:'a_finreport',type:'data',label:'feeds financial reports'},
+
+  // ── INVOICE & 3-WAY MATCH ──
+  {s:'finance',t:'a_invoice',type:'trigger',label:'receives vendor invoice'},
+  {s:'a_invoice',t:'a_po',type:'data',label:'matches to PO'},
+  {s:'a_invoice',t:'a_receipt',type:'data',label:'matches to goods receipt'},
+  {s:'a_invoice',t:'a_venpay',type:'trigger',label:'approved → pay vendor'},
+  {s:'a_invoice',t:'docvault',type:'data',label:'stores invoice copy'},
+
+  // ── PROJECT MANAGEMENT FLOWS ──
+  {s:'pm',t:'a_projcreate',type:'trigger',label:'initiates new project'},
+  {s:'a_projcreate',t:'a_projbudget',type:'trigger',label:'allocates budget'},
+  {s:'a_projcreate',t:'a_staffassign',type:'trigger',label:'assigns initial team'},
+  {s:'a_projcreate',t:'a_gantt',type:'trigger',label:'creates timeline'},
+  {s:'a_projcreate',t:'a_risk',type:'trigger',label:'initial risk assessment'},
+  {s:'a_projcreate',t:'a_baseline',type:'trigger',label:'triggers baseline study'},
+  {s:'a_projcreate',t:'crm',type:'data',label:'links to donor/partner'},
+
+  {s:'a_projbudget',t:'finance',type:'data',label:'budget commitments'},
+  {s:'a_projbudget',t:'a_budgetck',type:'data',label:'sets spending limits'},
+  {s:'a_projbudget',t:'a_approval',type:'approval',label:'budget approval'},
+
+  {s:'a_staffassign',t:'hr',type:'data',label:'checks staff availability'},
+  {s:'a_staffassign',t:'a_notification',type:'trigger',label:'notifies assigned staff'},
+
+  {s:'a_gantt',t:'pm',type:'update',label:'schedule baseline'},
+  {s:'a_gantt',t:'a_milestone',type:'data',label:'defines milestones'},
+
+  {s:'a_timetrack',t:'pm',type:'update',label:'actual vs planned hours'},
+  {s:'a_timetrack',t:'a_projbudget',type:'data',label:'labor cost tracking'},
+
+  {s:'pm',t:'a_milestone',type:'trigger',label:'milestone completed'},
+  {s:'a_milestone',t:'me',type:'data',label:'triggers M&E evaluation'},
+  {s:'a_milestone',t:'finance',type:'data',label:'budget utilization check'},
+  {s:'a_milestone',t:'a_projreport',type:'trigger',label:'generates status update'},
+  {s:'a_milestone',t:'a_notification',type:'trigger',label:'notifies stakeholders'},
+
+  {s:'a_risk',t:'pm',type:'update',label:'updates risk register'},
+  {s:'a_risk',t:'a_notification',type:'trigger',label:'alerts on high risks'},
+
+  {s:'pm',t:'a_projclose',type:'trigger',label:'project complete'},
+  {s:'a_projclose',t:'finance',type:'data',label:'final financial reconciliation'},
+  {s:'a_projclose',t:'a_lessons',type:'trigger',label:'documents lessons learned'},
+  {s:'a_projclose',t:'a_staffassign',type:'update',label:'releases team members'},
+  {s:'a_projclose',t:'me',type:'data',label:'final evaluation'},
+  {s:'a_projclose',t:'a_retention',type:'trigger',label:'archives project docs'},
+
+  {s:'a_projreport',t:'crm',type:'data',label:'donor progress updates'},
+  {s:'a_projreport',t:'a_donorreport',type:'data',label:'feeds donor reports'},
+  {s:'a_projreport',t:'a_dataexport',type:'trigger',label:'exports as PDF'},
+
+  // ── FINANCE FLOWS ──
+  {s:'finance',t:'a_monthend',type:'trigger',label:'initiates month-end'},
+  {s:'a_monthend',t:'payroll',type:'data',label:'reconciles salary postings'},
+  {s:'a_monthend',t:'procurement',type:'data',label:'reconciles vendor payments'},
+  {s:'a_monthend',t:'a_bankrecon',type:'trigger',label:'triggers bank recon'},
+  {s:'a_monthend',t:'a_finreport',type:'trigger',label:'generates financial statements'},
+  {s:'a_monthend',t:'a_audit',type:'data',label:'audit trail snapshot'},
+
+  {s:'finance',t:'a_bankrecon',type:'trigger',label:'initiates reconciliation'},
+  {s:'a_bankrecon',t:'finance',type:'update',label:'adjusting entries'},
+
+  {s:'finance',t:'a_budgetrealloc',type:'trigger',label:'department requests transfer'},
+  {s:'a_budgetrealloc',t:'a_approval',type:'approval',label:'finance head approval'},
+  {s:'a_budgetrealloc',t:'finance',type:'update',label:'adjusts budget lines'},
+
+  {s:'finance',t:'a_petty',type:'trigger',label:'cash advance request'},
+  {s:'a_petty',t:'a_approval',type:'approval',label:'manager approval'},
+  {s:'a_petty',t:'a_voucher',type:'trigger',label:'creates disbursement voucher'},
+  {s:'a_petty',t:'docvault',type:'data',label:'stores receipts'},
+
+  {s:'a_finreport',t:'a_dataexport',type:'trigger',label:'exports reports'},
+  {s:'a_finreport',t:'knowledge',type:'data',label:'annual reports published'},
+  {s:'a_finreport',t:'a_donorreport',type:'data',label:'feeds donor reporting'},
+
+  {s:'finance',t:'a_ar',type:'trigger',label:'tracks receivables'},
+  {s:'a_ar',t:'a_donor',type:'data',label:'donor payment tracking'},
+  {s:'a_ar',t:'a_notification',type:'trigger',label:'payment reminders'},
+  {s:'finance',t:'a_ap',type:'trigger',label:'tracks payables'},
+  {s:'a_ap',t:'a_venpay',type:'data',label:'schedules vendor payments'},
+
+  {s:'a_budgetck',t:'finance',type:'data',label:'confirms available funds'},
+  {s:'a_budgetck',t:'a_notification',type:'trigger',label:'alerts if over budget'},
+
+  {s:'a_audit',t:'docvault',type:'data',label:'stores audit records'},
+  {s:'a_audit',t:'a_compliance',type:'data',label:'feeds compliance review'},
+
+  // ── LEGAL FLOWS ──
+  {s:'a_contract',t:'legal',type:'update',label:'stores contract'},
+  {s:'a_contract',t:'a_compliance',type:'trigger',label:'needs legal review'},
+  {s:'a_contract',t:'docvault',type:'data',label:'stores signed document'},
+  {s:'a_contract',t:'a_notification',type:'trigger',label:'notifies parties'},
+  {s:'a_compliance',t:'legal',type:'update',label:'records review outcome'},
+  {s:'a_compliance',t:'procurement',type:'data',label:'compliance status'},
+  {s:'a_compliance',t:'hr',type:'data',label:'labor law compliance'},
+  {s:'hr',t:'a_contract',type:'trigger',label:'employment contract needed'},
+
+  {s:'legal',t:'a_nda',type:'trigger',label:'drafts NDA'},
+  {s:'a_nda',t:'docvault',type:'data',label:'stores signed NDA'},
+  {s:'a_nda',t:'a_notification',type:'trigger',label:'sends for signature'},
+
+  {s:'legal',t:'a_dispute',type:'trigger',label:'dispute raised'},
+  {s:'a_dispute',t:'finance',type:'data',label:'financial impact assessment'},
+  {s:'a_dispute',t:'a_notification',type:'trigger',label:'escalation alerts'},
+  {s:'a_dispute',t:'docvault',type:'data',label:'stores resolution docs'},
+
+  {s:'legal',t:'a_policy',type:'trigger',label:'drafts policy'},
+  {s:'a_policy',t:'a_approval',type:'approval',label:'board/management approval'},
+  {s:'a_policy',t:'knowledge',type:'data',label:'publishes to Knowledge Hub'},
+  {s:'a_policy',t:'a_policydist',type:'trigger',label:'distributes to staff'},
+  {s:'a_policy',t:'a_notification',type:'trigger',label:'all-staff notification'},
+
+  {s:'legal',t:'a_regfiling',type:'trigger',label:'prepares statutory filing'},
+  {s:'a_regfiling',t:'finance',type:'data',label:'filing fees and payments'},
+  {s:'a_regfiling',t:'docvault',type:'data',label:'stores confirmations'},
+
+  // ── CRM FLOWS ──
+  {s:'crm',t:'a_donor',type:'trigger',label:'donor commits funding'},
+  {s:'a_donor',t:'finance',type:'data',label:'creates receivable'},
+  {s:'a_donor',t:'pm',type:'data',label:'allocates to projects'},
+  {s:'a_donor',t:'a_ar',type:'data',label:'tracks installments'},
+  {s:'a_donor',t:'a_contract',type:'trigger',label:'grant agreement'},
+
+  {s:'crm',t:'a_partner',type:'trigger',label:'tracks engagement'},
+  {s:'a_partner',t:'pm',type:'data',label:'co-funded project links'},
+  {s:'a_partner',t:'a_mou',type:'trigger',label:'formalizes partnership'},
+
+  {s:'crm',t:'a_mou',type:'trigger',label:'initiates MOU'},
+  {s:'a_mou',t:'legal',type:'trigger',label:'legal drafts agreement'},
+  {s:'a_mou',t:'docvault',type:'data',label:'stores signed MOU'},
+  {s:'a_mou',t:'a_notification',type:'trigger',label:'notifies stakeholders'},
+
+  {s:'crm',t:'a_donorreport',type:'trigger',label:'donor requests report'},
+  {s:'a_donorreport',t:'finance',type:'data',label:'pulls financial data'},
+  {s:'a_donorreport',t:'pm',type:'data',label:'pulls project progress'},
+  {s:'a_donorreport',t:'a_dataexport',type:'trigger',label:'exports report'},
+  {s:'a_donorreport',t:'docvault',type:'data',label:'stores report copy'},
+
+  {s:'crm',t:'a_pipeline',type:'trigger',label:'tracks funding prospects'},
+  {s:'a_pipeline',t:'finance',type:'data',label:'revenue forecasting'},
+  {s:'a_pipeline',t:'a_projbudget',type:'data',label:'informs project budgets'},
+
+  // ── M&E FLOWS ──
+  {s:'me',t:'a_impact',type:'trigger',label:'evaluates outcomes'},
+  {s:'a_impact',t:'finance',type:'data',label:'pulls cost data'},
+  {s:'a_impact',t:'knowledge',type:'data',label:'publishes findings'},
+  {s:'a_impact',t:'a_evalreport',type:'trigger',label:'compiles into report'},
+
+  {s:'me',t:'a_baseline',type:'trigger',label:'initiates baseline'},
+  {s:'a_baseline',t:'a_datacollect',type:'trigger',label:'collects baseline data'},
+  {s:'a_baseline',t:'pm',type:'data',label:'establishes project targets'},
+  {s:'a_baseline',t:'a_indicator',type:'data',label:'sets baseline values'},
+
+  {s:'me',t:'a_midterm',type:'trigger',label:'initiates mid-term review'},
+  {s:'a_midterm',t:'pm',type:'data',label:'recommends course corrections'},
+  {s:'a_midterm',t:'a_indicator',type:'data',label:'progress vs baseline'},
+  {s:'a_midterm',t:'a_evalreport',type:'trigger',label:'mid-term report'},
+
+  {s:'me',t:'a_indicator',type:'trigger',label:'defines KPIs'},
+  {s:'a_indicator',t:'a_dataexport',type:'trigger',label:'dashboard exports'},
+  {s:'a_indicator',t:'a_projreport',type:'data',label:'feeds project reports'},
+
+  {s:'me',t:'a_datacollect',type:'trigger',label:'deploys field surveys'},
+  {s:'a_datacollect',t:'a_indicator',type:'data',label:'feeds KPI tracking'},
+  {s:'a_datacollect',t:'docvault',type:'data',label:'stores raw data'},
+
+  {s:'a_evalreport',t:'knowledge',type:'data',label:'publishes evaluation'},
+  {s:'a_evalreport',t:'a_dataexport',type:'trigger',label:'exports as PDF'},
+  {s:'a_evalreport',t:'a_donorreport',type:'data',label:'feeds donor reporting'},
+
+  // ── KNOWLEDGE HUB FLOWS ──
+  {s:'knowledge',t:'a_publish',type:'trigger',label:'publishes content'},
+  {s:'a_publish',t:'a_notification',type:'trigger',label:'notifies subscribers'},
+  {s:'a_publish',t:'docvault',type:'data',label:'stores published version'},
+  {s:'a_publish',t:'a_approval',type:'approval',label:'peer review approval'},
+
+  {s:'a_policydist',t:'ess',type:'data',label:'policy acknowledgment in ESS'},
+  {s:'a_policydist',t:'a_notification',type:'trigger',label:'all-staff notification'},
+  {s:'a_policydist',t:'hr',type:'data',label:'tracks acknowledgment'},
+
+  {s:'a_lessons',t:'knowledge',type:'data',label:'stored for institutional memory'},
+  {s:'a_lessons',t:'pm',type:'data',label:'informs future projects'},
+
+  // ── DOCUMENT VAULT FLOWS ──
+  {s:'procurement',t:'a_docattach',type:'trigger',label:'invoices, RFPs, POs'},
+  {s:'legal',t:'a_docattach',type:'trigger',label:'contracts, NDAs'},
+  {s:'hr',t:'a_docattach',type:'trigger',label:'policies, employee docs'},
+  {s:'finance',t:'a_docattach',type:'trigger',label:'vouchers, statements'},
+  {s:'pm',t:'a_docattach',type:'trigger',label:'project documents'},
+  {s:'me',t:'a_docattach',type:'trigger',label:'evaluation reports'},
+  {s:'a_docattach',t:'docvault',type:'data',label:'stores with metadata'},
+
+  {s:'docvault',t:'a_accessreq',type:'trigger',label:'restricted doc requested'},
+  {s:'a_accessreq',t:'a_approval',type:'approval',label:'owner approves access'},
+  {s:'a_accessreq',t:'a_audit',type:'data',label:'access logged'},
+
+  {s:'docvault',t:'a_retention',type:'trigger',label:'retention period check'},
+  {s:'a_retention',t:'a_approval',type:'approval',label:'disposal approval'},
+  {s:'a_retention',t:'a_audit',type:'data',label:'disposal logged'},
+
+  {s:'docvault',t:'a_versioning',type:'trigger',label:'document edited'},
+  {s:'a_versioning',t:'a_notification',type:'trigger',label:'notifies collaborators'},
+  {s:'a_versioning',t:'a_audit',type:'data',label:'version history logged'},
+
+  // ── APPROVAL ENGINE ──
+  {s:'a_approval',t:'a_notification',type:'trigger',label:'notifies approver'},
+  {s:'a_approval',t:'hr',type:'data',label:'leave & HR approvals'},
+  {s:'a_approval',t:'finance',type:'data',label:'expense & budget approvals'},
+  {s:'a_approval',t:'procurement',type:'data',label:'purchase approvals'},
+  {s:'a_approval',t:'a_audit',type:'data',label:'approval trail logged'},
+
+  // ── NOTIFICATION ENGINE ──
+  {s:'a_notification',t:'ess',type:'data',label:'delivers to employee portal'},
+
+  // ── ACCESS PROVISIONING ──
+  {s:'a_useraccess',t:'hr',type:'data',label:'role-based from HR data'},
+  {s:'a_useraccess',t:'a_audit',type:'data',label:'access changes logged'},
+
+  // ── DATA EXPORT ──
+  {s:'a_dataexport',t:'docvault',type:'data',label:'stores generated reports'},
+];
+
+const edgesNorm = edges.map(e => ({source:e.s,target:e.t,type:e.type,label:e.label}));
+const allNodes = [
+  ...modules.map(m => ({...m, nodeType:'module', r:8})),
+  ...activities.map(a => ({...a, nodeType:'activity', r:4}))
+];
+
+document.getElementById('ac').textContent = activities.length;
+document.getElementById('ec').textContent = edges.length;
+
+// ======================== D3 ========================
+const W = window.innerWidth, H = window.innerHeight;
+const svg = d3.select('body').append('svg').attr('width',W).attr('height',H)
+  .style('position','absolute').style('top',0).style('left',0);
+const defs = svg.append('defs');
+
+const glow = defs.append('filter').attr('id','glow');
+glow.append('feGaussianBlur').attr('stdDeviation','3').attr('result','blur');
+glow.append('feComposite').attr('in','SourceGraphic').attr('in2','blur').attr('operator','over');
+
+const glowBig = defs.append('filter').attr('id','glow-big');
+glowBig.append('feGaussianBlur').attr('stdDeviation','6').attr('result','blur');
+glowBig.append('feComposite').attr('in','SourceGraphic').attr('in2','blur').attr('operator','over');
+
+allNodes.forEach(n => {
+  const gr = defs.append('radialGradient').attr('id',`g-${n.id}`).attr('cx','30%').attr('cy','30%');
+  gr.append('stop').attr('offset','0%').attr('stop-color', d3.color(n.color).brighter(0.6));
+  gr.append('stop').attr('offset','100%').attr('stop-color', n.color);
+});
+
+const g = svg.append('g');
+const zoomB = d3.zoom().scaleExtent([0.1,5]).on('zoom', e => g.attr('transform',e.transform));
+svg.call(zoomB);
+
+const sim = d3.forceSimulation(allNodes)
+  .force('link', d3.forceLink(edgesNorm).id(d=>d.id).distance(d => {
+    const sn = allNodes.find(n=>n.id===(typeof d.source==='string'?d.source:d.source.id));
+    const tn = allNodes.find(n=>n.id===(typeof d.target==='string'?d.target:d.target.id));
+    return (sn?.nodeType==='module'&&tn?.nodeType==='module') ? 280 : 80;
+  }).strength(0.15))
+  .force('charge', d3.forceManyBody().strength(d => d.nodeType==='module' ? -500 : -80))
+  .force('center', d3.forceCenter(W/2, H/2))
+  .force('collision', d3.forceCollide().radius(d => d.nodeType==='module'?45:18))
+  .force('x', d3.forceX(W/2).strength(0.015))
+  .force('y', d3.forceY(H/2).strength(0.015));
+
+const linkEl = g.append('g').selectAll('line').data(edgesNorm).join('line')
+  .attr('stroke','rgba(255,255,255,0.04)').attr('stroke-width',0.6);
+
+const linkLbl = g.append('g').selectAll('text').data(edgesNorm).join('text')
+  .attr('text-anchor','middle').attr('dy',-3)
+  .attr('font-family','Inter').attr('font-size','7.5px').attr('font-weight',400)
+  .attr('fill','rgba(255,255,255,0)').attr('pointer-events','none')
+  .text(d => d.label);
+
+const nodeEl = g.append('g').selectAll('g').data(allNodes).join('g')
+  .attr('cursor','pointer')
+  .call(d3.drag()
+    .on('start',(e,d)=>{if(!e.active)sim.alphaTarget(0.3).restart();d.fx=d.x;d.fy=d.y})
+    .on('drag',(e,d)=>{d.fx=e.x;d.fy=e.y})
+    .on('end',(e,d)=>{if(!e.active)sim.alphaTarget(0);d.fx=null;d.fy=null}));
+
+nodeEl.append('circle')
+  .attr('r', d => d.nodeType==='module'?18:8)
+  .attr('fill', d => d.color).attr('opacity', d => d.nodeType==='module'?0.06:0.04)
+  .attr('class','glow-ring');
+
+nodeEl.append('circle')
+  .attr('r', d => d.r)
+  .attr('fill', d => d.color).attr('opacity',1)
+  .attr('class','dot');
+
+nodeEl.append('text')
+  .attr('x', d => d.nodeType==='module'?14:9)
+  .attr('y', 3.5)
+  .attr('font-family','Inter')
+  .attr('font-size', d => d.nodeType==='module'?'11.5px':'9px')
+  .attr('font-weight', d => d.nodeType==='module'?500:400)
+  .attr('fill', d => d.nodeType==='module'?'rgba(255,255,255,0.75)':'rgba(255,255,255,0.3)')
+  .attr('pointer-events','none').attr('class','label')
+  .text(d => d.label);
+
+// ======================== INTERACTION ========================
+let selected = null;
+
+function getConnected(id) {
+  const linked = edgesNorm.filter(e => {
+    const s = e.source.id??e.source, t = e.target.id??e.target;
+    return s===id||t===id;
+  });
+  const ids = new Set();
+  linked.forEach(e => {ids.add(e.source.id??e.source);ids.add(e.target.id??e.target)});
+  ids.delete(id);
+  return {linked, ids};
+}
+
+nodeEl.on('click', function(ev,d) { ev.stopPropagation(); select(d); });
+
+nodeEl.on('mouseenter', function(ev,d) {
+  if (selected) return;
+  const {linked,ids} = getConnected(d.id);
+  linkEl.attr('stroke', e => {
+    const s=e.source.id,t=e.target.id;
+    return (s===d.id||t===d.id)?'rgba(255,255,255,0.12)':'rgba(255,255,255,0.02)';
+  }).attr('stroke-width', e => {
+    const s=e.source.id,t=e.target.id;
+    return (s===d.id||t===d.id)?1:0.4;
+  });
+  nodeEl.select('.label').attr('fill', n =>
+    n.id===d.id?'rgba(255,255,255,0.95)':
+    ids.has(n.id)?(n.nodeType==='module'?'rgba(255,255,255,0.6)':'rgba(255,255,255,0.3)'):
+    n.nodeType==='module'?'rgba(255,255,255,0.15)':'rgba(255,255,255,0.06)');
+  nodeEl.select('.dot').attr('opacity', n => n.id===d.id||ids.has(n.id)?1:0.12);
+  nodeEl.select('.glow-ring').attr('opacity', n => n.id===d.id?0.2:ids.has(n.id)?0.06:0.01);
+});
+
+nodeEl.on('mouseleave', function() { if(!selected) resetVisuals(); });
+svg.on('click', () => deselect());
+
+function select(d) {
+  selected = d.id;
+  const {linked,ids} = getConnected(d.id);
+
+  nodeEl.select('.dot').transition().duration(200)
+    .attr('opacity', n => n.id===d.id||ids.has(n.id)?1:0.05)
+    .attr('r', n => n.id===d.id?(n.nodeType==='module'?12:6):n.r);
+  nodeEl.select('.glow-ring').transition().duration(200)
+    .attr('opacity', n => n.id===d.id?0.25:ids.has(n.id)?0.06:0.008)
+    .attr('r', n => n.id===d.id?(n.nodeType==='module'?28:14):(n.nodeType==='module'?18:8));
+  nodeEl.select('.label').transition().duration(200)
+    .attr('fill', n =>
+      n.id===d.id?'rgba(255,255,255,1)':
+      ids.has(n.id)?(n.nodeType==='module'?'rgba(255,255,255,0.7)':'rgba(255,255,255,0.45)'):
+      'rgba(255,255,255,0.04)')
+    .attr('font-weight', n => n.id===d.id?700:(n.nodeType==='module'?500:400));
+
+  linkEl.transition().duration(200)
+    .attr('stroke', e => {
+      const s=e.source.id,t=e.target.id;
+      if(s===d.id||t===d.id){const c=d3.color(d.color);c.opacity=0.35;return c+'';}
+      return 'rgba(255,255,255,0.01)';
+    })
+    .attr('stroke-width', e => {
+      const s=e.source.id,t=e.target.id;
+      return (s===d.id||t===d.id)?1.5:0.3;
+    });
+
+  linkLbl.transition().duration(200)
+    .attr('fill', e => {
+      const s=e.source.id,t=e.target.id;
+      return (s===d.id||t===d.id)?'rgba(255,255,255,0.45)':'rgba(255,255,255,0)';
+    });
+
+  // Panel
+  document.getElementById('p-dot').style.background = d.color;
+  document.getElementById('p-title').textContent = d.label;
+  document.getElementById('p-type').textContent = d.nodeType==='module'?'Module':'Activity / Process';
+  document.getElementById('p-desc').textContent = d.desc;
+
+  const flowsEl = document.getElementById('p-flows');
+  flowsEl.innerHTML = '';
+  const outgoing = linked.filter(e => e.source.id===d.id);
+  const incoming = linked.filter(e => e.target.id===d.id);
+
+  if(outgoing.length){
+    flowsEl.innerHTML += '<div class="panel-section">Sends to → ('+outgoing.length+')</div>';
+    outgoing.forEach(e => {
+      const tgt = allNodes.find(n=>n.id===e.target.id);
+      if(!tgt) return;
+      const item = document.createElement('div');
+      item.className='flow-item';
+      item.onclick=()=>select(tgt);
+      item.innerHTML=`<div class="flow-dot" style="background:${tgt.color}"></div>
+        <div><div class="flow-name">${tgt.label}</div>
+        <div class="flow-action">${e.label}</div></div>`;
+      flowsEl.appendChild(item);
+    });
+  }
+  if(incoming.length){
+    flowsEl.innerHTML += '<div class="panel-section">Receives from ← ('+incoming.length+')</div>';
+    incoming.forEach(e => {
+      const src = allNodes.find(n=>n.id===e.source.id);
+      if(!src) return;
+      const item = document.createElement('div');
+      item.className='flow-item';
+      item.onclick=()=>select(src);
+      item.innerHTML=`<div class="flow-dot" style="background:${src.color}"></div>
+        <div><div class="flow-name">${src.label}</div>
+        <div class="flow-action">${e.label}</div></div>`;
+      flowsEl.appendChild(item);
+    });
+  }
+  document.getElementById('panel').classList.add('visible');
+}
+
+window.deselect = function(){
+  selected=null;
+  resetVisuals();
+  document.getElementById('panel').classList.remove('visible');
+};
+
+function resetVisuals(){
+  nodeEl.select('.dot').transition().duration(200).attr('opacity',1).attr('r',d=>d.r);
+  nodeEl.select('.glow-ring').transition().duration(200)
+    .attr('opacity',d=>d.nodeType==='module'?0.06:0.04)
+    .attr('r',d=>d.nodeType==='module'?18:8);
+  nodeEl.select('.label').transition().duration(200)
+    .attr('fill',d=>d.nodeType==='module'?'rgba(255,255,255,0.75)':'rgba(255,255,255,0.3)')
+    .attr('font-weight',d=>d.nodeType==='module'?500:400);
+  linkEl.transition().duration(200).attr('stroke','rgba(255,255,255,0.04)').attr('stroke-width',0.6);
+  linkLbl.transition().duration(200).attr('fill','rgba(255,255,255,0)');
+}
+
+// Filters
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const f = btn.dataset.f;
+    deselect();
+    if(f==='all'){
+      nodeEl.transition().duration(300).attr('opacity',1);
+      linkEl.transition().duration(300).attr('stroke','rgba(255,255,255,0.04)');
+    } else {
+      nodeEl.transition().duration(300).attr('opacity',d=>d.group===f?1:0.06);
+      linkEl.transition().duration(300).attr('stroke',e=>{
+        const sn=allNodes.find(n=>n.id===e.source.id);
+        const tn=allNodes.find(n=>n.id===e.target.id);
+        return (sn?.group===f||tn?.group===f)?'rgba(255,255,255,0.08)':'rgba(255,255,255,0.005)';
+      });
+    }
+  });
+});
+
+// Search
+document.getElementById('search').addEventListener('input', function() {
+  const q = this.value.toLowerCase().trim();
+  if(!q) { resetVisuals(); return; }
+  deselect();
+  const matches = new Set(allNodes.filter(n=>n.label.toLowerCase().includes(q)).map(n=>n.id));
+  nodeEl.select('.dot').transition().duration(200).attr('opacity',n=>matches.has(n.id)?1:0.06);
+  nodeEl.select('.label').transition().duration(200)
+    .attr('fill',n=>matches.has(n.id)?'rgba(255,255,255,0.95)':'rgba(255,255,255,0.05)');
+  nodeEl.select('.glow-ring').transition().duration(200)
+    .attr('opacity',n=>matches.has(n.id)?0.15:0.01);
+});
+
+// Tick
+sim.on('tick', () => {
+  linkEl.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y)
+        .attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);
+  linkLbl.attr('x',d=>(d.source.x+d.target.x)/2)
+         .attr('y',d=>(d.source.y+d.target.y)/2);
+  nodeEl.attr('transform',d=>`translate(${d.x},${d.y})`);
+});
+
+// Fit after settle
+setTimeout(()=>{
+  const b=g.node().getBBox();
+  const s=0.7/Math.max(b.width/W, b.height/H);
+  const tx=W/2-s*(b.x+b.width/2);
+  const ty=H/2-s*(b.y+b.height/2);
+  svg.transition().duration(1500).call(zoomB.transform, d3.zoomIdentity.translate(tx,ty).scale(s));
+},3000);
+</script>
+</body>
+</html>

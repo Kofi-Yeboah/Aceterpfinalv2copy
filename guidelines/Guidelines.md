@@ -1,0 +1,4 @@
+1: For any screens or components with tabs, use the same format or design of the tabs in document Vault
+2: All tables must follow the General Ledger pattern: no p-6 padding wrapper, no rounded-xl bordered inner container. Tables sit directly inside <div className="flex-1 overflow-auto"> with <thead style={{ backgroundColor: "#0B01D0" }}> and stretch edge-to-edge.
+3: All Approval screens must follow the same design pattern used in Task Completion Approval and Project Documents Approval: a table listing items for review (General Ledger pattern), Document Vault–style tabs for filtering by status, a search bar, and a detail view accessed by clicking a row. The detail view should display relevant summary information and actionable options (Approve, Reject/Flag with reasons, View details, Version History where applicable).
+4: Every modal should be formatted like the Schedule Interview modal.
