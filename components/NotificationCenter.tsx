@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Search, ChevronDown, MoreHorizontal, Send, Mail, MessageSquare, Smartphone } from "lucide-react";
-import svgPaths from "../imports/svg-gdqpbhw161";
 import { SendMessageModal } from "./SendMessageModal";
 
 interface Notification {
@@ -231,7 +230,7 @@ export function NotificationCenter() {
         <div className="flex-1 overflow-auto bg-white">
           <table className="w-full">
             <thead>
-              <tr>
+              <tr className="bg-[#0B01D0]">
                 <th className="text-left px-4 py-3 text-white text-[12px] border-b border-slate-100">
                   Message
                 </th>
