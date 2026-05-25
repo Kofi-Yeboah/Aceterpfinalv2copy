@@ -260,10 +260,13 @@ export function PayrollManagementPayroll() {
           </button>
           <button
             onClick={() => setPayrollGenerated(!payrollGenerated)}
+            disabled={!payrollDetails}
             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm flex items-center gap-2 ${
-              payrollGenerated
-                ? "bg-red-600 text-white hover:bg-red-700"
-                : "bg-purple-700 text-white hover:bg-purple-800"
+              !payrollDetails
+                ? "bg-slate-300 text-slate-500 cursor-not-allowed"
+                : payrollGenerated
+                  ? "bg-red-600 text-white hover:bg-red-700"
+                  : "bg-purple-700 text-white hover:bg-purple-800"
             }`}
           >
             <Plus size={16} />
@@ -366,9 +369,9 @@ export function PayrollManagementPayroll() {
                   <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Department</th>
                   <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Position</th>
                   <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Basic Salary</th>
-                  <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Allowances</th>
-                  <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Deductions</th>
-                  <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Net Salary</th>
+                  {payrollGenerated && <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Allowances</th>}
+                  {payrollGenerated && <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Deductions</th>}
+                  {payrollGenerated && <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Net Salary</th>}
                   <th className="text-center px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Action</th>
                 </tr>
               </thead>
@@ -380,9 +383,9 @@ export function PayrollManagementPayroll() {
                     <td className="px-4 py-4"><p className="text-[12px] text-slate-500">{record.department}</p></td>
                     <td className="px-4 py-4"><p className="text-[12px] text-slate-500">{record.position}</p></td>
                     <td className="px-4 py-4"><p className="text-[12px] text-slate-900">{formatCurrency(record.basicSalary)}</p></td>
-                    <td className="px-4 py-4"><p className="text-[12px] text-green-600">{formatCurrency(record.allowances)}</p></td>
-                    <td className="px-4 py-4"><p className="text-[12px] text-red-600">{formatCurrency(record.deductions)}</p></td>
-                    <td className="px-4 py-4"><p className="text-[12px] font-semibold text-slate-900">{formatCurrency(record.netSalary)}</p></td>
+                    {payrollGenerated && <td className="px-4 py-4"><p className="text-[12px] text-green-600">{formatCurrency(record.allowances)}</p></td>}
+                    {payrollGenerated && <td className="px-4 py-4"><p className="text-[12px] text-red-600">{formatCurrency(record.deductions)}</p></td>}
+                    {payrollGenerated && <td className="px-4 py-4"><p className="text-[12px] font-semibold text-slate-900">{formatCurrency(record.netSalary)}</p></td>}
                     <td className="px-4 py-4 text-center"><button onClick={() => setSelectedEmployee(record.id)} className="inline-flex items-center justify-center w-10 h-10 hover:bg-slate-100 rounded transition-colors"><MoreVertical size={20} className="text-blue-800" /></button></td>
                   </tr>
                 ))}
