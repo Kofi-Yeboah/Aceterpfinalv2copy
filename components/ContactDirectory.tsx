@@ -326,20 +326,6 @@ export function ContactDirectory() {
   };
 
   return (
-    <div className="h-full flex flex-col bg-slate-50 overflow-hidden">
-      {/* Header */}
-      <div className="px-6 py-4 border-b border-slate-200 bg-white flex items-center justify-between shrink-0">
-        <h1 className="text-2xl font-semibold text-slate-900">Organizations</h1>
-        <button
-          onClick={() => setShowOrgForm(true)}
-          className="px-4 py-2 bg-purple-700 text-white rounded-lg text-sm font-semibold hover:bg-purple-800 transition-colors shadow-sm flex items-center gap-2"
-        >
-          <Plus size={16} />
-          Add New Organization
-        </button>
-      </div>
-
-      <Organizations onAddOrganization={() => setShowOrgForm(true)} />
-    </div>
+    <Organizations onAddOrganization={() => setShowOrgForm(true)} />
   );
 }

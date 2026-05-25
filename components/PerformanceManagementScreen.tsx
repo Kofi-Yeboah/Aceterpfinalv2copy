@@ -336,10 +336,11 @@ function RatingStars({
   size = "md",
 }: {
   value: number;
-  onChange: (v: number) => void;
+  onChange?: (v: number) => void;
   disabled?: boolean;
   size?: "sm" | "md";
 }) {
+  const readOnly = !onChange || disabled;
   const cls = size === "sm" ? "w-3.5 h-3.5" : "w-4 h-4";
   return (
     <div className="flex items-center gap-0.5">
@@ -347,10 +348,10 @@ function RatingStars({
         <button
           key={v}
           type="button"
-          onClick={() => !disabled && onChange(v)}
-          className={`focus:outline-none ${disabled ? "cursor-default opacity-50" : "cursor-pointer"}`}
-          title={disabled ? "Locked" : `Rate ${v}`}
-          disabled={disabled}
+          onClick={() => !readOnly && onChange?.(v)}
+          className={`focus:outline-none ${readOnly ? "cursor-default" : "cursor-pointer"}`}
+          title={readOnly ? "" : `Rate ${v}`}
+          disabled={readOnly}
         >
           <Star
             className={`${cls} transition-colors ${
@@ -368,7 +369,7 @@ function RatingStars({
 
 // ── Main Component ─────────────────────────────────────────────────────────
 
-export function PerformanceManagementScreen() {
+export function PerformanceManagementScreen({ viewOnly = false }: { viewOnly?: boolean } = {}) {
   const activePeriod = getActivePeriod();
 
   const [view, setView] = useState<"list" | "form" | "detail">("list");
@@ -1084,30 +1085,38 @@ export function PerformanceManagementScreen() {
                                 </td>
                                 {/* Active Period: Employee Comments */}
                                 <td className="px-2 py-2">
-                                  <textarea
-                                    rows={3}
-                                    value={periodData.employeeComments}
-                                    onChange={(e) => updateObjectiveReview(obj.id, updatePeriod, "employeeComments", e.target.value)}
-                                    placeholder="Comments..."
-                                    className="w-full border border-slate-200 rounded px-2 py-1.5 text-[11px] text-slate-800 placeholder:text-slate-300 resize-none focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                  />
+                                  {viewOnly ? (
+                                    <p className="text-[11px] text-slate-600 px-2 py-1.5">{periodData.employeeComments || "—"}</p>
+                                  ) : (
+                                    <textarea
+                                      rows={3}
+                                      value={periodData.employeeComments}
+                                      onChange={(e) => updateObjectiveReview(obj.id, updatePeriod, "employeeComments", e.target.value)}
+                                      placeholder="Comments..."
+                                      className="w-full border border-slate-200 rounded px-2 py-1.5 text-[11px] text-slate-800 placeholder:text-slate-300 resize-none focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                    />
+                                  )}
                                 </td>
                                 {/* Active Period: Manager Comments */}
                                 <td className="px-2 py-2">
-                                  <textarea
-                                    rows={3}
-                                    value={periodData.managerComments}
-                                    onChange={(e) => updateObjectiveReview(obj.id, updatePeriod, "managerComments", e.target.value)}
-                                    placeholder="Comments..."
-                                    className="w-full border border-slate-200 rounded px-2 py-1.5 text-[11px] text-slate-800 placeholder:text-slate-300 resize-none focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                  />
+                                  {viewOnly ? (
+                                    <p className="text-[11px] text-slate-600 px-2 py-1.5">{periodData.managerComments || "—"}</p>
+                                  ) : (
+                                    <textarea
+                                      rows={3}
+                                      value={periodData.managerComments}
+                                      onChange={(e) => updateObjectiveReview(obj.id, updatePeriod, "managerComments", e.target.value)}
+                                      placeholder="Comments..."
+                                      className="w-full border border-slate-200 rounded px-2 py-1.5 text-[11px] text-slate-800 placeholder:text-slate-300 resize-none focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                    />
+                                  )}
                                 </td>
                                 {/* Active Period: Manager Rating */}
                                 <td className="px-2 py-2">
                                   <div className="flex justify-center">
                                     <RatingStars
                                       value={periodData.managerRating}
-                                      onChange={(v) => updateObjectiveReview(obj.id, updatePeriod, "managerRating", v)}
+                                      onChange={viewOnly ? undefined : (v) => updateObjectiveReview(obj.id, updatePeriod, "managerRating", v)}
                                       size="sm"
                                     />
                                   </div>
@@ -1204,21 +1213,25 @@ export function PerformanceManagementScreen() {
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex justify-center">
-                            <RatingStars value={b.rating} onChange={(v) => updateBehavior(b.id, v)} />
+                            <RatingStars value={b.rating} onChange={viewOnly ? undefined : (v) => updateBehavior(b.id, v)} />
                           </div>
                         </td>
                         <td className="px-4 py-3">
-                          <div className="flex items-center justify-center gap-0.5">
-                            <input
-                              type="number"
-                              min={0}
-                              max={25}
-                              value={b.weight}
-                              onChange={(e) => updateBehaviorWeight(b.id, Number(e.target.value))}
-                              className="w-12 text-center border border-slate-200 rounded px-1 py-1.5 text-[12px] focus:outline-none focus:ring-1 focus:ring-blue-500"
-                            />
-                            <span className="text-[10px] text-slate-400">%</span>
-                          </div>
+                          {viewOnly ? (
+                            <p className="text-[12px] text-slate-700 text-center">{b.weight}%</p>
+                          ) : (
+                            <div className="flex items-center justify-center gap-0.5">
+                              <input
+                                type="number"
+                                min={0}
+                                max={25}
+                                value={b.weight}
+                                onChange={(e) => updateBehaviorWeight(b.id, Number(e.target.value))}
+                                className="w-12 text-center border border-slate-200 rounded px-1 py-1.5 text-[12px] focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              />
+                              <span className="text-[10px] text-slate-400">%</span>
+                            </div>
+                          )}
                         </td>
                         <td className="px-4 py-3 text-right">
                           <span className="text-[13px] text-slate-700">{((b.rating / 5) * b.weight).toFixed(1)}</span>
@@ -1244,23 +1257,31 @@ export function PerformanceManagementScreen() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-[12px] text-slate-500 mb-1">Employee Comments</label>
-                    <textarea
-                      rows={4}
-                      value={formData.employeeComment}
-                      onChange={(e) => setFormData((p) => ({ ...p, employeeComment: e.target.value }))}
-                      placeholder="Self-assessment for this period..."
-                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-[13px] text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                    />
+                    {viewOnly ? (
+                      <p className="text-[13px] text-slate-700 py-2">{formData.employeeComment || "—"}</p>
+                    ) : (
+                      <textarea
+                        rows={4}
+                        value={formData.employeeComment}
+                        onChange={(e) => setFormData((p) => ({ ...p, employeeComment: e.target.value }))}
+                        placeholder="Self-assessment for this period..."
+                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-[13px] text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                      />
+                    )}
                   </div>
                   <div>
                     <label className="block text-[12px] text-slate-500 mb-1">Line Manager Comments</label>
-                    <textarea
-                      rows={4}
-                      value={formData.managerComment}
-                      onChange={(e) => setFormData((p) => ({ ...p, managerComment: e.target.value }))}
-                      placeholder="Manager's feedback for this period..."
-                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-[13px] text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                    />
+                    {viewOnly ? (
+                      <p className="text-[13px] text-slate-700 py-2">{formData.managerComment || "—"}</p>
+                    ) : (
+                      <textarea
+                        rows={4}
+                        value={formData.managerComment}
+                        onChange={(e) => setFormData((p) => ({ ...p, managerComment: e.target.value }))}
+                        placeholder="Manager's feedback for this period..."
+                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-[13px] text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                      />
+                    )}
                   </div>
                 </div>
               </div>
@@ -1358,22 +1379,28 @@ export function PerformanceManagementScreen() {
 
               <div className="bg-white border border-slate-200 rounded-xl p-6">
                 <h3 className="text-[14px] text-slate-800 mb-3 border-b border-slate-100 pb-3">Additional Comments</h3>
-                <textarea
-                  rows={4}
-                  value={formData.finalComments}
-                  onChange={(e) => setFormData((p) => ({ ...p, finalComments: e.target.value }))}
-                  placeholder="Overall review summary, development plan, or additional notes..."
-                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-[13px] text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                />
+                {viewOnly ? (
+                  <p className="text-[13px] text-slate-700 py-2">{formData.finalComments || "—"}</p>
+                ) : (
+                  <textarea
+                    rows={4}
+                    value={formData.finalComments}
+                    onChange={(e) => setFormData((p) => ({ ...p, finalComments: e.target.value }))}
+                    placeholder="Overall review summary, development plan, or additional notes..."
+                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-[13px] text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  />
+                )}
               </div>
 
               <div className="flex justify-between pt-2">
                 <button onClick={() => setActiveFormTab(3)} className="px-5 py-2 text-[13px] rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors flex items-center gap-2">
                   <ArrowLeft className="w-4 h-4" /> Back
                 </button>
-                <button onClick={handleSaveForm} className="px-5 py-2 text-[13px] rounded-lg text-white transition-colors flex items-center gap-2" style={{ backgroundColor: "#0B01D0" }}>
-                  <CheckCircle2 className="w-4 h-4" /> Save Record
-                </button>
+                {!viewOnly && (
+                  <button onClick={handleSaveForm} className="px-5 py-2 text-[13px] rounded-lg text-white transition-colors flex items-center gap-2" style={{ backgroundColor: "#0B01D0" }}>
+                    <CheckCircle2 className="w-4 h-4" /> Save Record
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -1498,7 +1525,7 @@ export function PerformanceManagementScreen() {
                     <td className="px-4 py-3 text-center">{rec.overallScore !== null ? <span className={`inline-block px-2 py-0.5 rounded text-[11px] ${recRating.bg} ${recRating.color}`}>{recRating.label}</span> : <span className="text-[12px] text-slate-400">—</span>}</td>
                     <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-center gap-2">
-                        <button onClick={() => handleOpenEdit(rec)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors" title="Edit"><Edit2 className="w-4 h-4" /></button>
+                        {!viewOnly && <button onClick={() => handleOpenEdit(rec)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors" title="Edit"><Edit2 className="w-4 h-4" /></button>}
                         <button onClick={() => handleOpenDetail(rec)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors" title="View"><Eye className="w-4 h-4" /></button>
                       </div>
                     </td>

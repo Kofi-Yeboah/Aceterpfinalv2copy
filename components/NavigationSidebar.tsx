@@ -117,7 +117,7 @@ export function NavigationSidebar({ selectedItem, onSelectItem, collapsed }: Nav
         {
           icon: <CheckCircle size={iconSize} />,
           label: "Approvals",
-          submenu: ["Timesheet Approvals", "Leave Request Approvals", "Travel Request Approvals", "Task Completion Approval", "Procurement Request Approval", "Training Attendance Approval"],
+          submenu: ["Timesheet Approvals", "Leave Request Approvals", "Travel Request Approvals", "Task Completion Approval", "Procurement Request Approval", "Training Attendance Approval", "ACET Scorecard"],
         },
       ],
     },

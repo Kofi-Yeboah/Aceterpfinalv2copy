@@ -66,6 +66,7 @@ import { PotentialProjects } from "./components/PotentialProjects";
 import { GrantCompliance } from "./components/GrantCompliance";
 import { AdvocacyImpactHub } from "./components/AdvocacyImpactHub";
 import { StakeholderManagement } from "./components/StakeholderManagement";
+import { StakeholderDatabase } from "./components/StakeholderDatabase";
 import { AdvocacyCalendar } from "./components/AdvocacyCalendar";
 import { AdvocacyContentCollateral } from "./components/AdvocacyContentCollateral";
 import { ImpactMonitoring } from "./components/ImpactMonitoring";
@@ -223,6 +224,8 @@ export default function App() {
         return <ProjectDocumentsApproval />;
       case "EMPLOYEE SELF-SERVICE-Approvals-Training Attendance Approval":
         return <TrainingAttendanceApproval />;
+      case "EMPLOYEE SELF-SERVICE-Approvals-ACET Scorecard":
+        return <PerformanceManagementScreen />;
       case "EMPLOYEE SELF-SERVICE-Approvals-Pending Approvals":
         return <PendingApprovalsLeave />;
       case "EMPLOYEE SELF-SERVICE-Approvals-Approved":
@@ -251,7 +254,7 @@ export default function App() {
       case "HR MANAGEMENT-Training & Development":
         return <EmployeeTraining />;
       case "HR MANAGEMENT-ACET Scorecard":
-        return <PerformanceManagementScreen />;
+        return <PerformanceManagementScreen viewOnly />;
       case "HR MANAGEMENT-Document Vault":
         return <HRDocumentVault />;
       case "FAVORITES-Dashboard":
@@ -328,7 +331,7 @@ export default function App() {
       case "CRM-Contact Management-Organizations":
         return <ContactDirectory />;
       case "CRM-Contact Management-Stakeholder Management":
-        return <StakeholderManagement />;
+        return <StakeholderDatabase />;
       case "CRM-Contact Management-Relationship Map":
         return <StakeholderManagement />;
       case "CRM-Grant Management-Prospects":
