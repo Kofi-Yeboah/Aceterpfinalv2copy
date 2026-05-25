@@ -248,7 +248,7 @@ export function Programs() {
       <div className="flex-1 overflow-auto">
         <table className="w-full">
           <thead className="sticky top-0 z-10">
-            <tr>
+            <tr style={{ backgroundColor: "#0B01D0" }}>
               <th className="text-left px-4 py-3 text-[12px] text-white whitespace-nowrap font-semibold">Program ID</th>
               <th className="text-left px-4 py-3 text-[12px] text-white whitespace-nowrap font-semibold">Program Name</th>
               <th className="text-left px-4 py-3 text-[12px] text-white whitespace-nowrap font-semibold">Manager</th>
@@ -581,7 +581,7 @@ function ProgramDetailsView({ program, onBack }: { program: Program; onBack: () 
                 </div>
                 <table className="w-full">
                   <thead>
-                    <tr>
+                    <tr style={{ backgroundColor: "#0B01D0" }}>
                       <th className="text-left px-4 py-3 text-[12px] text-white whitespace-nowrap font-semibold">Project Name</th>
                       <th className="text-left px-4 py-3 text-[12px] text-white whitespace-nowrap font-semibold">Project Manager</th>
                       <th className="text-left px-4 py-3 text-[12px] text-white whitespace-nowrap font-semibold">Stage</th>
@@ -659,7 +659,7 @@ function ProgramDetailsView({ program, onBack }: { program: Program; onBack: () 
               <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
                 <table className="w-full">
                   <thead>
-                    <tr>
+                    <tr style={{ backgroundColor: "#0B01D0" }}>
                       <th className="text-left px-4 py-3 text-[12px] text-white whitespace-nowrap font-semibold">Project Name</th>
                       <th className="text-left px-4 py-3 text-[12px] text-white whitespace-nowrap font-semibold">Project Manager</th>
                       <th className="text-left px-4 py-3 text-[12px] text-white whitespace-nowrap font-semibold">Stage</th>

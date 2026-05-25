@@ -14,7 +14,7 @@ export function PayrollManagementPayroll() {
   const [showDepartmentDropdown, setShowDepartmentDropdown] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [activeTab, setActiveTab] = useState<"current" | "past">("current");
+  const [activeView, setActiveView] = useState<"list" | "new">("list");
   const [payrollGenerated, setPayrollGenerated] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showPostPayrollModal, setShowPostPayrollModal] = useState(false);
@@ -31,21 +31,20 @@ export function PayrollManagementPayroll() {
 
   const [postPayrollData, setPostPayrollData] = useState({
     period: "March 2026",
-    rate: "",
-    date: "",
-    voucherNumber: "",
-    salaryPayable: "",
-    internationalStaffSalary: "",
-    nationalStaffSalary: "",
-    irs: "",
-    ssf: "",
-    pf: "",
-    loan: "",
-    otherDeduction: "",
+    rate: "10.9",
+    date: "2026-03-31",
+    voucherNumber: "V12345",
+    salaryPayable: "425000",
+    internationalStaffSalary: "150000",
+    nationalStaffSalary: "275000",
+    irs: "45000",
+    ssf: "23500",
+    pf: "18000",
+    loan: "12000",
+    otherDeduction: "8500",
   });
-
-  const [payrollDataFetched, setPayrollDataFetched] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null);
+  const [showPostedModal, setShowPostedModal] = useState(false);
 
   // Detailed payroll components per employee
   const employeePayrollDetails: Record<string, {
@@ -179,13 +178,13 @@ export function PayrollManagementPayroll() {
   ];
 
   // Past payroll data
-  const pastPayrolls = [
+  const [pastPayrolls, setPastPayrolls] = useState([
     { id: "1", period: "May 2024", processedDate: "May 31, 2024", totalEmployees: 45, totalAmount: 385000, taxRate: 10.43, payRate: 10.9, status: "Paid" },
     { id: "2", period: "April 2024", processedDate: "April 30, 2024", totalEmployees: 43, totalAmount: 368000, taxRate: 10.43, payRate: 10.72, status: "Paid" },
     { id: "3", period: "March 2024", processedDate: "March 31, 2024", totalEmployees: 42, totalAmount: 359000, taxRate: 10.43, payRate: 12.41, status: "Paid" },
     { id: "4", period: "February 2024", processedDate: "February 29, 2024", totalEmployees: 40, totalAmount: 345000, taxRate: 10.43, payRate: 10.9, status: "Paid" },
     { id: "5", period: "January 2024", processedDate: "January 31, 2024", totalEmployees: 39, totalAmount: 338000, taxRate: 10.43, payRate: 10.72, status: "Paid" },
-  ];
+  ]);
 
   const filteredRecords = payrollRecords.filter((record) => {
     const matchesSearch = record.employeeName.toLowerCase().includes(searchQuery.toLowerCase()) || record.employeeId.toLowerCase().includes(searchQuery.toLowerCase());
@@ -223,95 +222,159 @@ export function PayrollManagementPayroll() {
     });
   };
 
-  const handleGetPayroll = () => {
-    setPostPayrollData({
-      ...postPayrollData,
-      salaryPayable: "425000",
-      internationalStaffSalary: "150000",
-      nationalStaffSalary: "275000",
-      irs: "45000",
-      ssf: "23500",
-      pf: "18000",
-      loan: "12000",
-      otherDeduction: "8500",
-    });
-    setPayrollDataFetched(true);
-  };
 
   return (
     <div className="h-full flex flex-col bg-slate-50 overflow-hidden">
-      <div className="px-6 py-4 border-b border-slate-200 bg-white flex justify-between items-center">
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-semibold text-slate-900">Payroll</h1>
-          {payrollGenerated && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-full text-[11px] border border-emerald-200">
-              <CheckCircle2 size={12} />
-              Generated
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-colors shadow-sm flex items-center gap-2"
-          >
-            <Plus size={16} />
-            Create Payroll
-          </button>
-          <button
-            onClick={() => setPayrollGenerated(!payrollGenerated)}
-            disabled={!payrollDetails}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm flex items-center gap-2 ${
-              !payrollDetails
-                ? "bg-slate-300 text-slate-500 cursor-not-allowed"
-                : payrollGenerated
-                  ? "bg-red-600 text-white hover:bg-red-700"
-                  : "bg-purple-700 text-white hover:bg-purple-800"
-            }`}
-          >
-            <Plus size={16} />
-            {payrollGenerated ? "Cancel" : "Process Payroll"}
-          </button>
-          {payrollGenerated && (
+
+      {/* ===== LIST VIEW (default) ===== */}
+      {activeView === "list" && (
+        <>
+          <div className="px-6 py-4 border-b border-slate-200 bg-white flex justify-between items-center">
+            <div>
+              <h1 className="text-2xl font-semibold text-slate-900">Payroll</h1>
+              <p className="text-[12px] text-slate-500 mt-0.5">{pastPayrolls.length} payroll records</p>
+            </div>
             <button
-              onClick={() => setShowPostPayrollModal(true)}
+              onClick={() => setActiveView("new")}
               className="px-4 py-2 bg-[#0B01D0] hover:bg-[#0901a8] rounded-lg text-sm font-semibold text-white transition-colors shadow-sm flex items-center gap-2"
             >
-              <Send size={16} />
-              Post Payroll
+              <Plus size={16} />
+              New Payroll
             </button>
-          )}
-        </div>
-      </div>
+          </div>
 
-      {/* Tabs */}
-      <div className="px-6 py-3 bg-white border-b border-slate-200 shrink-0">
-        <div className="bg-slate-100 p-1 rounded-lg inline-flex gap-1">
-          <button
-            onClick={() => setActiveTab("current")}
-            className={`px-4 py-1.5 rounded-lg text-sm transition-colors min-w-[140px] ${
-              activeTab === "current"
-                ? "bg-[#0B01D0] text-white shadow-sm"
-                : "text-slate-500 hover:text-slate-700"
-            }`}
-          >
-            Current Payroll
-          </button>
-          <button
-            onClick={() => setActiveTab("past")}
-            className={`px-4 py-1.5 rounded-lg text-sm transition-colors min-w-[140px] ${
-              activeTab === "past"
-                ? "bg-[#0B01D0] text-white shadow-sm"
-                : "text-slate-500 hover:text-slate-700"
-            }`}
-          >
-            Past Payrolls
-          </button>
-        </div>
-      </div>
+          <div className="px-6 py-4 bg-white border-b border-slate-200">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 px-4 py-2.5 border border-slate-200 rounded-lg bg-white shadow-sm w-56">
+                <Search size={20} className="text-slate-400" />
+                <input type="text" placeholder="Search payrolls..." className="flex-1 outline-none text-sm text-slate-900 placeholder:text-slate-400" />
+              </div>
+              <div className="flex items-center gap-2.5">
+                <button className="flex items-center gap-3 px-3 py-2.5 border border-slate-200 rounded-lg bg-white hover:bg-slate-50 transition-colors shadow-sm">
+                  <span className="text-sm text-slate-900">Export</span>
+                  <Download size={16} className="text-purple-700" />
+                </button>
+              </div>
+            </div>
+          </div>
 
-      {activeTab === "current" && (
+          <div className="flex-1 overflow-auto bg-white">
+            <table className="w-full">
+              <thead>
+                <tr style={{ backgroundColor: "#0B01D0" }}>
+                  <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Pay Period</th>
+                  <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Processed Date</th>
+                  <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Total Employees</th>
+                  <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Total Amount</th>
+                  <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Pay Rate</th>
+                  <th className="text-center px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Status</th>
+                  <th className="text-center px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pastPayrolls.map((payroll, index) => (
+                  <tr key={payroll.id} className={`border-b border-slate-100 hover:bg-slate-50 ${index % 2 === 0 ? "bg-white" : "bg-slate-50"}`}>
+                    <td className="px-4 py-4"><p className="text-[12px] font-medium text-slate-900">{payroll.period}</p></td>
+                    <td className="px-4 py-4"><p className="text-[12px] text-slate-500">{payroll.processedDate}</p></td>
+                    <td className="px-4 py-4"><p className="text-[12px] text-slate-900">{payroll.totalEmployees}</p></td>
+                    <td className="px-4 py-4"><p className="text-[12px] font-semibold text-slate-900">{formatCurrency(payroll.totalAmount)}</p></td>
+                    <td className="px-4 py-4"><p className="text-[12px] text-slate-900">{payroll.payRate}</p></td>
+                    <td className="px-4 py-4 text-center">
+                      <span className={`inline-flex items-center px-2 py-1 rounded-xl text-[12px] ${
+                        payroll.status === "Pending" ? "bg-amber-50 text-amber-600" :
+                        payroll.status === "Canceled" ? "bg-red-50 text-red-600" :
+                        "bg-green-50 text-green-600"
+                      }`}>
+                        {payroll.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4 text-center">
+                      <button className="inline-flex items-center justify-center w-10 h-10 hover:bg-slate-100 rounded transition-colors">
+                        <MoreVertical size={20} className="text-[#0B01D0]" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="px-6 py-4 border-t border-slate-200 bg-white flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <select value={itemsPerPage} onChange={(e) => setItemsPerPage(Number(e.target.value))} className="px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
+                <option value={10}>10 per page</option>
+                <option value={25}>25 per page</option>
+                <option value={50}>50 per page</option>
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <button onClick={() => setCurrentPage(Math.max(1, currentPage - 1))} className="px-3 py-2 border border-slate-200 rounded hover:bg-slate-50 transition-colors"><ChevronDown size={16} className="rotate-90 text-pink-600" /></button>
+              <button className="px-3 py-2 text-sm bg-pink-50 text-pink-600 rounded transition-colors">1</button>
+              <button className="px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded transition-colors">2</button>
+              <button onClick={() => setCurrentPage(currentPage + 1)} className="px-3 py-2 border border-slate-200 rounded hover:bg-slate-50 transition-colors"><ChevronDown size={16} className="-rotate-90 text-pink-600" /></button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ===== NEW PAYROLL VIEW ===== */}
+      {activeView === "new" && (
         <>
+          <div className="px-6 py-4 border-b border-slate-200 bg-white flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <button onClick={() => { setActiveView("list"); setPayrollGenerated(false); setPayrollDetails(null); }} className="p-1.5 hover:bg-slate-100 rounded-lg">
+                <ArrowLeft size={18} className="text-slate-600" />
+              </button>
+              <div>
+                <h1 className="text-2xl font-semibold text-slate-900">New Payroll</h1>
+                <p className="text-[12px] text-slate-500 mt-0.5">Create and process a new payroll run</p>
+              </div>
+              {payrollGenerated && (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-full text-[11px] border border-emerald-200">
+                  <CheckCircle2 size={12} />
+                  Generated
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowCreateModal(true)}
+                disabled={payrollGenerated}
+                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm flex items-center gap-2 ${
+                  payrollGenerated
+                    ? "bg-slate-200 border border-slate-200 text-slate-400 cursor-not-allowed"
+                    : "bg-white border border-slate-300 text-slate-700 hover:bg-slate-50"
+                }`}
+              >
+                <Plus size={16} />
+                Create Payroll
+              </button>
+              <button
+                onClick={() => setPayrollGenerated(!payrollGenerated)}
+                disabled={!payrollDetails}
+                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm flex items-center gap-2 ${
+                  !payrollDetails
+                    ? "bg-slate-300 text-slate-500 cursor-not-allowed"
+                    : payrollGenerated
+                      ? "bg-red-600 text-white hover:bg-red-700"
+                      : "bg-purple-700 text-white hover:bg-purple-800"
+                }`}
+              >
+                <Plus size={16} />
+                {payrollGenerated ? "Cancel" : "Process Payroll"}
+              </button>
+              {payrollGenerated && (
+                <button
+                  onClick={() => setShowPostPayrollModal(true)}
+                  className="px-4 py-2 bg-[#0B01D0] hover:bg-[#0901a8] rounded-lg text-sm font-semibold text-white transition-colors shadow-sm flex items-center gap-2"
+                >
+                  <Send size={16} />
+                  Post Payroll
+                </button>
+              )}
+            </div>
+          </div>
+
           {payrollDetails && (
             <div className="bg-white border border-slate-200 rounded-lg px-8 py-6 shadow-sm mx-[24px] my-[16px]">
               <h2 className="text-lg font-semibold text-slate-900 mb-6">Payroll Information</h2>
@@ -338,7 +401,6 @@ export function PayrollManagementPayroll() {
                 <Search size={20} className="text-slate-400" />
                 <input type="text" placeholder="Search" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="flex-1 outline-none text-sm text-slate-900 placeholder:text-slate-400" />
               </div>
-
               <div className="flex items-center gap-2.5">
                 <div className="relative">
                   <button onClick={() => { setShowDepartmentDropdown(!showDepartmentDropdown); }} className="flex items-center gap-3 px-3 py-2.5 border border-slate-200 rounded-lg bg-white hover:bg-slate-50 transition-colors shadow-sm">
@@ -387,79 +449,6 @@ export function PayrollManagementPayroll() {
                     {payrollGenerated && <td className="px-4 py-4"><p className="text-[12px] text-red-600">{formatCurrency(record.deductions)}</p></td>}
                     {payrollGenerated && <td className="px-4 py-4"><p className="text-[12px] font-semibold text-slate-900">{formatCurrency(record.netSalary)}</p></td>}
                     <td className="px-4 py-4 text-center"><button onClick={() => setSelectedEmployee(record.id)} className="inline-flex items-center justify-center w-10 h-10 hover:bg-slate-100 rounded transition-colors"><MoreVertical size={20} className="text-blue-800" /></button></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="px-6 py-4 border-t border-slate-200 bg-white flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <select value={itemsPerPage} onChange={(e) => setItemsPerPage(Number(e.target.value))} className="px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
-                <option value={10}>10 per page</option>
-                <option value={25}>25 per page</option>
-                <option value={50}>50 per page</option>
-              </select>
-            </div>
-            <div className="flex items-center gap-2">
-              <button onClick={() => setCurrentPage(Math.max(1, currentPage - 1))} className="px-3 py-2 border border-slate-200 rounded hover:bg-slate-50 transition-colors"><ChevronDown size={16} className="rotate-90 text-pink-600" /></button>
-              <button className="px-3 py-2 text-sm bg-pink-50 text-pink-600 rounded transition-colors">1</button>
-              <button className="px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded transition-colors">2</button>
-              <button onClick={() => setCurrentPage(currentPage + 1)} className="px-3 py-2 border border-slate-200 rounded hover:bg-slate-50 transition-colors"><ChevronDown size={16} className="-rotate-90 text-pink-600" /></button>
-            </div>
-          </div>
-        </>
-      )}
-
-      {activeTab === "past" && (
-        <>
-          <div className="px-6 py-4 bg-white border-b border-slate-200">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3 px-4 py-2.5 border border-slate-200 rounded-lg bg-white shadow-sm w-56">
-                <Search size={20} className="text-slate-400" />
-                <input type="text" placeholder="Search" className="flex-1 outline-none text-sm text-slate-900 placeholder:text-slate-400" />
-              </div>
-
-              <div className="flex items-center gap-2.5">
-                <button className="flex items-center gap-3 px-3 py-2.5 border border-slate-200 rounded-lg bg-white hover:bg-slate-50 transition-colors shadow-sm">
-                  <span className="text-sm text-slate-900">Export</span>
-                  <Download size={16} className="text-purple-700" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex-1 overflow-auto bg-white">
-            <table className="w-full">
-              <thead>
-                <tr style={{ backgroundColor: "#0B01D0" }}>
-                  <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Pay Period</th>
-                  <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Processed Date</th>
-                  <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Total Employees</th>
-                  <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Total Amount</th>
-                  <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Pay Rate</th>
-                  <th className="text-center px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Status</th>
-                  <th className="text-center px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pastPayrolls.map((payroll, index) => (
-                  <tr key={payroll.id} className={`border-b border-slate-100 hover:bg-slate-50 ${index % 2 === 0 ? "bg-white" : "bg-slate-50"}`}>
-                    <td className="px-4 py-4"><p className="text-[12px] font-medium text-slate-900">{payroll.period}</p></td>
-                    <td className="px-4 py-4"><p className="text-[12px] text-slate-500">{payroll.processedDate}</p></td>
-                    <td className="px-4 py-4"><p className="text-[12px] text-slate-900">{payroll.totalEmployees}</p></td>
-                    <td className="px-4 py-4"><p className="text-[12px] font-semibold text-slate-900">{formatCurrency(payroll.totalAmount)}</p></td>
-                    <td className="px-4 py-4"><p className="text-[12px] text-slate-900">{payroll.payRate}</p></td>
-                    <td className="px-4 py-4 text-center">
-                      <span className="inline-flex items-center px-2 py-1 rounded-xl text-[12px] bg-green-50 text-green-600">
-                        {payroll.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4 text-center">
-                      <button className="inline-flex items-center justify-center w-10 h-10 hover:bg-slate-100 rounded transition-colors">
-                        <MoreVertical size={20} className="text-[#0B01D0]" />
-                      </button>
-                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -545,45 +534,61 @@ export function PayrollManagementPayroll() {
               <div className="bg-slate-50 border border-slate-200 rounded-xl p-5">
                 <h3 className="text-sm font-semibold text-slate-900 mb-4">Basic Information</h3>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-[12px] text-slate-500 font-medium">Period</label>
-                    <select value={postPayrollData.period} onChange={(e) => setPostPayrollData({ ...postPayrollData, period: e.target.value })} className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 bg-white">
-                      {PERIODS.map((period) => (<option key={period} value={period}>{period}</option>))}
-                    </select>
+                  <div className="space-y-1">
+                    <p className="text-[12px] text-slate-500 font-medium">Period</p>
+                    <p className="text-[13px] font-medium text-slate-900">{postPayrollData.period}</p>
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-[12px] text-slate-500 font-medium">Rate</label>
-                    <input type="text" value={postPayrollData.rate} onChange={(e) => setPostPayrollData({ ...postPayrollData, rate: e.target.value })} className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500" placeholder="10.9" />
+                  <div className="space-y-1">
+                    <p className="text-[12px] text-slate-500 font-medium">Rate</p>
+                    <p className="text-[13px] font-medium text-slate-900">{postPayrollData.rate}</p>
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-[12px] text-slate-500 font-medium">Date</label>
-                    <input type="date" value={postPayrollData.date} onChange={(e) => setPostPayrollData({ ...postPayrollData, date: e.target.value })} className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500" />
+                  <div className="space-y-1">
+                    <p className="text-[12px] text-slate-500 font-medium">Date</p>
+                    <p className="text-[13px] font-medium text-slate-900">{postPayrollData.date}</p>
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-[12px] text-slate-500 font-medium">Voucher Number</label>
-                    <input type="text" value={postPayrollData.voucherNumber} onChange={(e) => setPostPayrollData({ ...postPayrollData, voucherNumber: e.target.value })} className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500" placeholder="V12345" />
+                  <div className="space-y-1">
+                    <p className="text-[12px] text-slate-500 font-medium">Voucher Number</p>
+                    <p className="text-[13px] font-medium text-slate-900">{postPayrollData.voucherNumber}</p>
                   </div>
                 </div>
               </div>
               <div className="bg-blue-50 border border-blue-200 rounded-xl p-5">
                 <h3 className="text-sm font-semibold text-slate-900 mb-4">Payroll Details</h3>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2"><label className="text-[12px] text-slate-500 font-medium">Salary Payable</label><input type="text" value={postPayrollData.salaryPayable} onChange={(e) => setPostPayrollData({ ...postPayrollData, salaryPayable: e.target.value })} className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 bg-white" placeholder="100000" /></div>
-                  <div className="space-y-2"><label className="text-[12px] text-slate-500 font-medium">International Staff Salary</label><input type="text" value={postPayrollData.internationalStaffSalary} onChange={(e) => setPostPayrollData({ ...postPayrollData, internationalStaffSalary: e.target.value })} className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 bg-white" placeholder="50000" /></div>
-                  <div className="space-y-2"><label className="text-[12px] text-slate-500 font-medium">National Staff Salary</label><input type="text" value={postPayrollData.nationalStaffSalary} onChange={(e) => setPostPayrollData({ ...postPayrollData, nationalStaffSalary: e.target.value })} className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 bg-white" placeholder="50000" /></div>
-                  <div className="space-y-2"><label className="text-[12px] text-slate-500 font-medium">IRS</label><input type="text" value={postPayrollData.irs} onChange={(e) => setPostPayrollData({ ...postPayrollData, irs: e.target.value })} className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 bg-white" placeholder="10000" /></div>
-                  <div className="space-y-2"><label className="text-[12px] text-slate-500 font-medium">SSF</label><input type="text" value={postPayrollData.ssf} onChange={(e) => setPostPayrollData({ ...postPayrollData, ssf: e.target.value })} className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 bg-white" placeholder="5000" /></div>
-                  <div className="space-y-2"><label className="text-[12px] text-slate-500 font-medium">PF</label><input type="text" value={postPayrollData.pf} onChange={(e) => setPostPayrollData({ ...postPayrollData, pf: e.target.value })} className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 bg-white" placeholder="3000" /></div>
-                  <div className="space-y-2"><label className="text-[12px] text-slate-500 font-medium">Loan</label><input type="text" value={postPayrollData.loan} onChange={(e) => setPostPayrollData({ ...postPayrollData, loan: e.target.value })} className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 bg-white" placeholder="2000" /></div>
-                  <div className="space-y-2"><label className="text-[12px] text-slate-500 font-medium">Other Deduction</label><input type="text" value={postPayrollData.otherDeduction} onChange={(e) => setPostPayrollData({ ...postPayrollData, otherDeduction: e.target.value })} className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 bg-white" placeholder="1000" /></div>
+                  <div className="space-y-1"><p className="text-[12px] text-slate-500 font-medium">Salary Payable</p><p className="text-[13px] font-mono font-medium text-slate-900">{postPayrollData.salaryPayable}</p></div>
+                  <div className="space-y-1"><p className="text-[12px] text-slate-500 font-medium">International Staff Salary</p><p className="text-[13px] font-mono font-medium text-slate-900">{postPayrollData.internationalStaffSalary}</p></div>
+                  <div className="space-y-1"><p className="text-[12px] text-slate-500 font-medium">National Staff Salary</p><p className="text-[13px] font-mono font-medium text-slate-900">{postPayrollData.nationalStaffSalary}</p></div>
+                  <div className="space-y-1"><p className="text-[12px] text-slate-500 font-medium">IRS</p><p className="text-[13px] font-mono font-medium text-slate-900">{postPayrollData.irs}</p></div>
+                  <div className="space-y-1"><p className="text-[12px] text-slate-500 font-medium">SSF</p><p className="text-[13px] font-mono font-medium text-slate-900">{postPayrollData.ssf}</p></div>
+                  <div className="space-y-1"><p className="text-[12px] text-slate-500 font-medium">PF</p><p className="text-[13px] font-mono font-medium text-slate-900">{postPayrollData.pf}</p></div>
+                  <div className="space-y-1"><p className="text-[12px] text-slate-500 font-medium">Loan</p><p className="text-[13px] font-mono font-medium text-slate-900">{postPayrollData.loan}</p></div>
+                  <div className="space-y-1"><p className="text-[12px] text-slate-500 font-medium">Other Deduction</p><p className="text-[13px] font-mono font-medium text-slate-900">{postPayrollData.otherDeduction}</p></div>
                 </div>
               </div>
             </div>
             <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-between shrink-0">
-              <button onClick={handleGetPayroll} disabled={!postPayrollData.period || !postPayrollData.rate || !postPayrollData.date || !postPayrollData.voucherNumber} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-[13px] hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"><FileText size={14} />Get Payroll</button>
               <div className="flex items-center gap-2">
                 <button onClick={() => setShowPostPayrollModal(false)} className="px-4 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-600 hover:bg-slate-50">Cancel</button>
-                <button onClick={() => { setShowPostPayrollModal(false); }} disabled={!payrollDataFetched} className="px-4 py-2 bg-purple-700 text-white rounded-lg text-[13px] hover:bg-purple-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">Post Payroll</button>
+                <button onClick={() => {
+                  const totalAmount = payrollRecords.reduce((sum, r) => sum + r.netSalary, 0);
+                  const today = new Date();
+                  const newEntry = {
+                    id: String(pastPayrolls.length + 1),
+                    period: postPayrollData.period,
+                    processedDate: today.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }),
+                    totalEmployees: payrollRecords.length,
+                    totalAmount,
+                    taxRate: 10.43,
+                    payRate: Number(postPayrollData.rate) || 10.9,
+                    status: "Pending",
+                  };
+                  setPastPayrolls([newEntry, ...pastPayrolls]);
+                  setShowPostPayrollModal(false);
+                  setPayrollGenerated(false);
+                  setPayrollDetails(null);
+                  setShowPostedModal(true);
+                  setActiveView("list");
+                }} className="px-4 py-2 bg-purple-700 text-white rounded-lg text-[13px] hover:bg-purple-800 transition-colors">Post Payroll</button>
               </div>
             </div>
           </div>
@@ -661,6 +666,24 @@ export function PayrollManagementPayroll() {
           </div>
         );
       })()}
+
+      {/* Payroll Posted Success Modal */}
+      {showPostedModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 overflow-hidden">
+            <div className="p-8 text-center">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle2 size={32} className="text-green-600" />
+              </div>
+              <h2 className="text-xl font-semibold text-slate-900 mb-2">Payroll Posted Successfully</h2>
+              <p className="text-[13px] text-slate-500">The payroll has been posted and moved to history with a pending status. It will be processed shortly.</p>
+            </div>
+            <div className="px-6 py-4 border-t border-slate-200 flex justify-center">
+              <button onClick={() => setShowPostedModal(false)} className="px-6 py-2 bg-[#0B01D0] text-white rounded-lg text-[13px] font-medium hover:bg-[#0901a8] transition-colors">OK</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
