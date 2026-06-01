@@ -559,6 +559,8 @@ function AddVersionModal({ conceptId, onClose }: { conceptId: number; onClose: (
    ═══════════════════════════════════════════════════════════════════════════════ */
 function AddConceptModal({ onClose }: { onClose: () => void }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const uploadFileInputRef = useRef<HTMLInputElement>(null);
+  const [inputMode, setInputMode] = useState<"manual" | "upload">("manual");
   const [form, setForm] = useState({
     name: "",
     description: "",
@@ -573,6 +575,12 @@ function AddConceptModal({ onClose }: { onClose: () => void }) {
   const [uploadedFiles, setUploadedFiles] = useState<{ name: string; size: string; type: string }[]>([]);
   const [dragOver, setDragOver] = useState(false);
 
+  // Upload tab state
+  const [uploadForm, setUploadForm] = useState({ title: "", description: "" });
+  const [conceptFile, setConceptFile] = useState<{ name: string; size: string; type: string } | null>(null);
+  const [uploadDragOver, setUploadDragOver] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+
   const handleFiles = (fileList: FileList | null) => {
     if (!fileList) return;
     const newFiles = Array.from(fileList).map(f => ({
@@ -583,32 +591,79 @@ function AddConceptModal({ onClose }: { onClose: () => void }) {
     setUploadedFiles(prev => [...prev, ...newFiles]);
   };
 
-  const handleSave = () => {
-    if (!form.name || !form.description || !form.outcomeGoal || !form.programArea || !form.leadContact || !form.estimatedBudget) return;
-    addPotentialProject({
-      name: form.name,
-      donorId: null,
-      donorName: "",
-      donorCodes: [],
-      proposalId: null,
-      programArea: form.programArea,
-      status: "Drafts",
-      estimatedBudget: Number(form.estimatedBudget),
-      currency: form.currency,
-      startDate: form.startDate || "TBD",
-      endDate: form.endDate || "TBD",
-      probability: 0,
-      description: form.description,
-      outcomeGoal: form.outcomeGoal,
-      leadContact: form.leadContact,
-      lastUpdated: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-      files: uploadedFiles,
-      versionHistory: [{ version: 1, date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }), author: form.leadContact, changes: "Initial concept created" }],
+  const handleConceptFileUpload = (fileList: FileList | null) => {
+    if (!fileList || fileList.length === 0) return;
+    const file = fileList[0];
+    const ext = file.name.split(".").pop()?.toLowerCase() || "";
+    const allowedExts = ["pdf", "doc", "docx"];
+    if (!allowedExts.includes(ext)) {
+      setUploadError("Invalid file type. Only PDF and Word documents (.pdf, .doc, .docx) are accepted.");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setUploadError("File size exceeds 10 MB. Please upload a smaller file.");
+      return;
+    }
+    setUploadError("");
+    setConceptFile({
+      name: file.name,
+      size: file.size > 1024 * 1024 ? `${(file.size / (1024 * 1024)).toFixed(1)} MB` : `${(file.size / 1024).toFixed(0)} KB`,
+      type: ext,
     });
+  };
+
+  const handleSave = () => {
+    if (inputMode === "manual") {
+      if (!form.name || !form.description || !form.outcomeGoal || !form.programArea || !form.leadContact || !form.estimatedBudget) return;
+      addPotentialProject({
+        name: form.name,
+        donorId: null,
+        donorName: "",
+        donorCodes: [],
+        proposalId: null,
+        programArea: form.programArea,
+        status: "Drafts",
+        estimatedBudget: Number(form.estimatedBudget),
+        currency: form.currency,
+        startDate: form.startDate || "TBD",
+        endDate: form.endDate || "TBD",
+        probability: 0,
+        description: form.description,
+        outcomeGoal: form.outcomeGoal,
+        leadContact: form.leadContact,
+        lastUpdated: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+        files: uploadedFiles,
+        versionHistory: [{ version: 1, date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }), author: form.leadContact, changes: "Initial concept created" }],
+      });
+    } else {
+      if (!uploadForm.title || !uploadForm.description || !conceptFile) return;
+      addPotentialProject({
+        name: uploadForm.title,
+        donorId: null,
+        donorName: "",
+        donorCodes: [],
+        proposalId: null,
+        programArea: "—",
+        status: "Drafts",
+        estimatedBudget: 0,
+        currency: "USD",
+        startDate: "TBD",
+        endDate: "TBD",
+        probability: 0,
+        description: uploadForm.description,
+        outcomeGoal: "—",
+        leadContact: "—",
+        lastUpdated: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+        files: [conceptFile],
+        versionHistory: [{ version: 1, date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }), author: "—", changes: "Concept uploaded from document" }],
+      });
+    }
     onClose();
   };
 
-  const isValid = form.name && form.description && form.outcomeGoal && form.programArea && form.leadContact && form.estimatedBudget;
+  const isManualValid = form.name && form.description && form.outcomeGoal && form.programArea && form.leadContact && form.estimatedBudget;
+  const isUploadValid = uploadForm.title && uploadForm.description && conceptFile;
+  const isValid = inputMode === "manual" ? isManualValid : isUploadValid;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -620,106 +675,214 @@ function AddConceptModal({ onClose }: { onClose: () => void }) {
           </div>
           <button onClick={onClose} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-slate-100"><X size={18} className="text-slate-400" /></button>
         </div>
-        <div className="flex-1 overflow-auto p-6 space-y-5">
-          <div>
-            <label className="block text-[12px] text-slate-700 font-semibold mb-1.5">Concept Name <span className="text-red-500">*</span></label>
-            <input type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
-              placeholder="Enter concept name"
-              className="w-full border border-slate-200 rounded-lg px-3.5 py-2.5 text-[13px] text-slate-700 outline-none focus:border-[#0B01D0] focus:ring-1 focus:ring-[#0B01D0]/20 placeholder:text-slate-400" />
-          </div>
-          <div>
-            <label className="block text-[12px] text-slate-700 font-semibold mb-1.5">Description <span className="text-red-500">*</span></label>
-            <textarea rows={3} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })}
-              placeholder="Describe the concept"
-              className="w-full border border-slate-200 rounded-lg px-3.5 py-2.5 text-[13px] text-slate-700 outline-none focus:border-[#0B01D0] focus:ring-1 focus:ring-[#0B01D0]/20 resize-none placeholder:text-slate-400" />
-          </div>
-          <div>
-            <label className="block text-[12px] text-slate-700 font-semibold mb-1.5">Outcome / Goal <span className="text-red-500">*</span></label>
-            <textarea rows={2} value={form.outcomeGoal} onChange={e => setForm({ ...form, outcomeGoal: e.target.value })}
-              placeholder="What is the expected outcome?"
-              className="w-full border border-slate-200 rounded-lg px-3.5 py-2.5 text-[13px] text-slate-700 outline-none focus:border-[#0B01D0] focus:ring-1 focus:ring-[#0B01D0]/20 resize-none placeholder:text-slate-400" />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-[12px] text-slate-700 font-semibold mb-1.5">Program Area <span className="text-red-500">*</span></label>
-              <input type="text" value={form.programArea} onChange={e => setForm({ ...form, programArea: e.target.value })}
-                placeholder="e.g., Education, Health"
-                className="w-full border border-slate-200 rounded-lg px-3.5 py-2.5 text-[13px] text-slate-700 outline-none focus:border-[#0B01D0] focus:ring-1 focus:ring-[#0B01D0]/20 placeholder:text-slate-400" />
-            </div>
-            <div>
-              <label className="block text-[12px] text-slate-700 font-semibold mb-1.5">Lead Contact <span className="text-red-500">*</span></label>
-              <input type="text" value={form.leadContact} onChange={e => setForm({ ...form, leadContact: e.target.value })}
-                placeholder="Enter lead contact name"
-                className="w-full border border-slate-200 rounded-lg px-3.5 py-2.5 text-[13px] text-slate-700 outline-none focus:border-[#0B01D0] focus:ring-1 focus:ring-[#0B01D0]/20 placeholder:text-slate-400" />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-[12px] text-slate-700 font-semibold mb-1.5">Estimated Budget <span className="text-red-500">*</span></label>
-              <input type="number" value={form.estimatedBudget} onChange={e => setForm({ ...form, estimatedBudget: e.target.value })}
-                placeholder="0"
-                className="w-full border border-slate-200 rounded-lg px-3.5 py-2.5 text-[13px] text-slate-700 outline-none focus:border-[#0B01D0] focus:ring-1 focus:ring-[#0B01D0]/20 placeholder:text-slate-400" />
-            </div>
-            <div>
-              <label className="block text-[12px] text-slate-700 font-semibold mb-1.5">Currency <span className="text-red-500">*</span></label>
-              <div className="relative">
-                <select value={form.currency} onChange={e => setForm({ ...form, currency: e.target.value })}
-                  className="w-full border border-slate-200 rounded-lg px-3.5 py-2.5 text-[13px] text-slate-700 outline-none focus:border-[#0B01D0] focus:ring-1 focus:ring-[#0B01D0]/20 appearance-none bg-white">
-                  <option>USD</option><option>GBP</option><option>EUR</option><option>GHS</option>
-                </select>
-                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-              </div>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-[12px] text-slate-700 font-semibold mb-1.5">Start Date</label>
-              <input type="text" value={form.startDate} onChange={e => setForm({ ...form, startDate: e.target.value })}
-                placeholder="e.g., Jan 2027"
-                className="w-full border border-slate-200 rounded-lg px-3.5 py-2.5 text-[13px] text-slate-700 outline-none focus:border-[#0B01D0] focus:ring-1 focus:ring-[#0B01D0]/20 placeholder:text-slate-400" />
-            </div>
-            <div>
-              <label className="block text-[12px] text-slate-700 font-semibold mb-1.5">End Date</label>
-              <input type="text" value={form.endDate} onChange={e => setForm({ ...form, endDate: e.target.value })}
-                placeholder="e.g., Dec 2029"
-                className="w-full border border-slate-200 rounded-lg px-3.5 py-2.5 text-[13px] text-slate-700 outline-none focus:border-[#0B01D0] focus:ring-1 focus:ring-[#0B01D0]/20 placeholder:text-slate-400" />
-            </div>
-          </div>
-          <div>
-            <label className="block text-[12px] text-slate-700 font-semibold mb-1.5">Upload Supporting Documents</label>
-            <div
-              onDragOver={e => { e.preventDefault(); setDragOver(true); }}
-              onDragLeave={() => setDragOver(false)}
-              onDrop={e => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files); }}
-              onClick={() => fileInputRef.current?.click()}
-              className={cn(
-                "border-2 border-dashed rounded-lg py-8 flex flex-col items-center justify-center cursor-pointer transition-colors",
-                dragOver ? "border-[#0B01D0] bg-[#0B01D0]/5" : "border-slate-200 hover:border-slate-300 bg-slate-50"
-              )}
+
+        {/* Tabs */}
+        <div className="px-6 pt-4 pb-0 shrink-0">
+          <div className="bg-slate-100 p-1 rounded-lg inline-flex gap-1">
+            <button
+              onClick={() => setInputMode("manual")}
+              className={`px-4 py-1.5 rounded-lg text-[12px] font-medium transition-colors min-w-[120px] ${
+                inputMode === "manual" ? "bg-[#0B01D0] text-white shadow-sm" : "text-slate-500 hover:text-slate-700"
+              }`}
             >
-              <Upload size={22} className="text-slate-400 mb-2" />
-              <p className="text-[12px] text-[#0B01D0] font-medium">Click to upload or drag and drop</p>
-              <input ref={fileInputRef} type="file" multiple className="hidden" onChange={e => handleFiles(e.target.files)} />
-            </div>
-            {uploadedFiles.length > 0 && (
-              <div className="mt-3 space-y-1.5">
-                {uploadedFiles.map((f, i) => (
-                  <div key={i} className="flex items-center justify-between px-3 py-2 bg-slate-50 rounded-lg border border-slate-100">
-                    <div className="flex items-center gap-2">
-                      <FileText size={14} className="text-blue-500" />
-                      <span className="text-[11px] text-slate-700 font-medium">{f.name}</span>
-                      <span className="text-[10px] text-slate-400">{f.size}</span>
-                    </div>
-                    <button onClick={(e) => { e.stopPropagation(); setUploadedFiles(prev => prev.filter((_, j) => j !== i)); }} className="text-slate-400 hover:text-red-500"><X size={13} /></button>
-                  </div>
-                ))}
-              </div>
-            )}
+              Manual Input
+            </button>
+            <button
+              onClick={() => setInputMode("upload")}
+              className={`px-4 py-1.5 rounded-lg text-[12px] font-medium transition-colors min-w-[120px] ${
+                inputMode === "upload" ? "bg-[#0B01D0] text-white shadow-sm" : "text-slate-500 hover:text-slate-700"
+              }`}
+            >
+              Upload
+            </button>
           </div>
+        </div>
+
+        <div className="flex-1 overflow-auto p-6 space-y-5">
+          {inputMode === "manual" && (
+            <>
+              <div>
+                <label className="block text-[12px] text-slate-700 font-semibold mb-1.5">Concept Name <span className="text-red-500">*</span></label>
+                <input type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
+                  placeholder="Enter concept name"
+                  className="w-full border border-slate-200 rounded-lg px-3.5 py-2.5 text-[13px] text-slate-700 outline-none focus:border-[#0B01D0] focus:ring-1 focus:ring-[#0B01D0]/20 placeholder:text-slate-400" />
+              </div>
+              <div>
+                <label className="block text-[12px] text-slate-700 font-semibold mb-1.5">Description <span className="text-red-500">*</span></label>
+                <textarea rows={3} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })}
+                  placeholder="Describe the concept"
+                  className="w-full border border-slate-200 rounded-lg px-3.5 py-2.5 text-[13px] text-slate-700 outline-none focus:border-[#0B01D0] focus:ring-1 focus:ring-[#0B01D0]/20 resize-none placeholder:text-slate-400" />
+              </div>
+              <div>
+                <label className="block text-[12px] text-slate-700 font-semibold mb-1.5">Outcome / Goal <span className="text-red-500">*</span></label>
+                <textarea rows={2} value={form.outcomeGoal} onChange={e => setForm({ ...form, outcomeGoal: e.target.value })}
+                  placeholder="What is the expected outcome?"
+                  className="w-full border border-slate-200 rounded-lg px-3.5 py-2.5 text-[13px] text-slate-700 outline-none focus:border-[#0B01D0] focus:ring-1 focus:ring-[#0B01D0]/20 resize-none placeholder:text-slate-400" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[12px] text-slate-700 font-semibold mb-1.5">Program Area <span className="text-red-500">*</span></label>
+                  <input type="text" value={form.programArea} onChange={e => setForm({ ...form, programArea: e.target.value })}
+                    placeholder="e.g., Education, Health"
+                    className="w-full border border-slate-200 rounded-lg px-3.5 py-2.5 text-[13px] text-slate-700 outline-none focus:border-[#0B01D0] focus:ring-1 focus:ring-[#0B01D0]/20 placeholder:text-slate-400" />
+                </div>
+                <div>
+                  <label className="block text-[12px] text-slate-700 font-semibold mb-1.5">Lead Contact <span className="text-red-500">*</span></label>
+                  <input type="text" value={form.leadContact} onChange={e => setForm({ ...form, leadContact: e.target.value })}
+                    placeholder="Enter lead contact name"
+                    className="w-full border border-slate-200 rounded-lg px-3.5 py-2.5 text-[13px] text-slate-700 outline-none focus:border-[#0B01D0] focus:ring-1 focus:ring-[#0B01D0]/20 placeholder:text-slate-400" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[12px] text-slate-700 font-semibold mb-1.5">Estimated Budget <span className="text-red-500">*</span></label>
+                  <input type="number" value={form.estimatedBudget} onChange={e => setForm({ ...form, estimatedBudget: e.target.value })}
+                    placeholder="0"
+                    className="w-full border border-slate-200 rounded-lg px-3.5 py-2.5 text-[13px] text-slate-700 outline-none focus:border-[#0B01D0] focus:ring-1 focus:ring-[#0B01D0]/20 placeholder:text-slate-400" />
+                </div>
+                <div>
+                  <label className="block text-[12px] text-slate-700 font-semibold mb-1.5">Currency <span className="text-red-500">*</span></label>
+                  <div className="relative">
+                    <select value={form.currency} onChange={e => setForm({ ...form, currency: e.target.value })}
+                      className="w-full border border-slate-200 rounded-lg px-3.5 py-2.5 text-[13px] text-slate-700 outline-none focus:border-[#0B01D0] focus:ring-1 focus:ring-[#0B01D0]/20 appearance-none bg-white">
+                      <option>USD</option><option>GBP</option><option>EUR</option><option>GHS</option>
+                    </select>
+                    <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[12px] text-slate-700 font-semibold mb-1.5">Start Date</label>
+                  <input type="text" value={form.startDate} onChange={e => setForm({ ...form, startDate: e.target.value })}
+                    placeholder="e.g., Jan 2027"
+                    className="w-full border border-slate-200 rounded-lg px-3.5 py-2.5 text-[13px] text-slate-700 outline-none focus:border-[#0B01D0] focus:ring-1 focus:ring-[#0B01D0]/20 placeholder:text-slate-400" />
+                </div>
+                <div>
+                  <label className="block text-[12px] text-slate-700 font-semibold mb-1.5">End Date</label>
+                  <input type="text" value={form.endDate} onChange={e => setForm({ ...form, endDate: e.target.value })}
+                    placeholder="e.g., Dec 2029"
+                    className="w-full border border-slate-200 rounded-lg px-3.5 py-2.5 text-[13px] text-slate-700 outline-none focus:border-[#0B01D0] focus:ring-1 focus:ring-[#0B01D0]/20 placeholder:text-slate-400" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-[12px] text-slate-700 font-semibold mb-1.5">Upload Supporting Documents</label>
+                <div
+                  onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+                  onDragLeave={() => setDragOver(false)}
+                  onDrop={e => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files); }}
+                  onClick={() => fileInputRef.current?.click()}
+                  className={cn(
+                    "border-2 border-dashed rounded-lg py-8 flex flex-col items-center justify-center cursor-pointer transition-colors",
+                    dragOver ? "border-[#0B01D0] bg-[#0B01D0]/5" : "border-slate-200 hover:border-slate-300 bg-slate-50"
+                  )}
+                >
+                  <Upload size={22} className="text-slate-400 mb-2" />
+                  <p className="text-[12px] text-[#0B01D0] font-medium">Click to upload or drag and drop</p>
+                  <input ref={fileInputRef} type="file" multiple className="hidden" onChange={e => handleFiles(e.target.files)} />
+                </div>
+                {uploadedFiles.length > 0 && (
+                  <div className="mt-3 space-y-1.5">
+                    {uploadedFiles.map((f, i) => (
+                      <div key={i} className="flex items-center justify-between px-3 py-2 bg-slate-50 rounded-lg border border-slate-100">
+                        <div className="flex items-center gap-2">
+                          <FileText size={14} className="text-blue-500" />
+                          <span className="text-[11px] text-slate-700 font-medium">{f.name}</span>
+                          <span className="text-[10px] text-slate-400">{f.size}</span>
+                        </div>
+                        <button onClick={(e) => { e.stopPropagation(); setUploadedFiles(prev => prev.filter((_, j) => j !== i)); }} className="text-slate-400 hover:text-red-500"><X size={13} /></button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
+          {inputMode === "upload" && (
+            <>
+              <div>
+                <label className="block text-[12px] text-slate-700 font-semibold mb-1.5">Concept Title <span className="text-red-500">*</span></label>
+                <input type="text" value={uploadForm.title} onChange={e => setUploadForm({ ...uploadForm, title: e.target.value })}
+                  placeholder="Enter the concept title"
+                  className="w-full border border-slate-200 rounded-lg px-3.5 py-2.5 text-[13px] text-slate-700 outline-none focus:border-[#0B01D0] focus:ring-1 focus:ring-[#0B01D0]/20 placeholder:text-slate-400" />
+              </div>
+              <div>
+                <label className="block text-[12px] text-slate-700 font-semibold mb-1.5">Brief Description <span className="text-red-500">*</span></label>
+                <textarea rows={3} value={uploadForm.description} onChange={e => setUploadForm({ ...uploadForm, description: e.target.value })}
+                  placeholder="Provide a brief description of the concept"
+                  className="w-full border border-slate-200 rounded-lg px-3.5 py-2.5 text-[13px] text-slate-700 outline-none focus:border-[#0B01D0] focus:ring-1 focus:ring-[#0B01D0]/20 resize-none placeholder:text-slate-400" />
+              </div>
+              <div>
+                <label className="block text-[12px] text-slate-700 font-semibold mb-1.5">Upload Concept Document <span className="text-red-500">*</span></label>
+                <div
+                  onDragOver={e => { e.preventDefault(); setUploadDragOver(true); }}
+                  onDragLeave={() => setUploadDragOver(false)}
+                  onDrop={e => { e.preventDefault(); setUploadDragOver(false); handleConceptFileUpload(e.dataTransfer.files); }}
+                  onClick={() => uploadFileInputRef.current?.click()}
+                  className={cn(
+                    "border-2 border-dashed rounded-lg py-10 flex flex-col items-center justify-center cursor-pointer transition-colors",
+                    uploadDragOver ? "border-[#0B01D0] bg-[#0B01D0]/5" : "border-slate-200 hover:border-slate-300 bg-slate-50"
+                  )}
+                >
+                  <div className="w-12 h-12 rounded-full bg-[#0B01D0]/10 flex items-center justify-center mb-3">
+                    <Upload size={22} className="text-[#0B01D0]" />
+                  </div>
+                  <p className="text-[13px] text-[#0B01D0] font-medium">Click to upload or drag and drop</p>
+                  <p className="text-[11px] text-slate-400 mt-1">Select your concept note document</p>
+                  <input ref={uploadFileInputRef} type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={e => handleConceptFileUpload(e.target.files)} />
+                </div>
+
+                {/* File specifications */}
+                <div className="mt-3 bg-slate-50 border border-slate-200 rounded-lg px-4 py-3">
+                  <p className="text-[11px] font-semibold text-slate-600 mb-2">File Requirements</p>
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <div className="w-1 h-1 rounded-full bg-slate-400" />
+                      <p className="text-[11px] text-slate-500"><span className="font-medium text-slate-600">Accepted formats:</span> PDF (.pdf), Word Document (.doc, .docx)</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-1 h-1 rounded-full bg-slate-400" />
+                      <p className="text-[11px] text-slate-500"><span className="font-medium text-slate-600">Maximum file size:</span> 10 MB</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-1 h-1 rounded-full bg-slate-400" />
+                      <p className="text-[11px] text-slate-500"><span className="font-medium text-slate-600">Note:</span> Only one document can be uploaded per concept</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Error message */}
+                {uploadError && (
+                  <div className="mt-2 px-3 py-2 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-[11px] text-red-600 font-medium">{uploadError}</p>
+                  </div>
+                )}
+
+                {/* Uploaded file preview */}
+                {conceptFile && (
+                  <div className="mt-3 flex items-center justify-between px-3 py-2.5 bg-green-50 rounded-lg border border-green-200">
+                    <div className="flex items-center gap-2">
+                      <FileText size={16} className="text-green-600" />
+                      <div>
+                        <p className="text-[12px] text-green-800 font-medium">{conceptFile.name}</p>
+                        <p className="text-[10px] text-green-600">{conceptFile.size} &middot; {conceptFile.type.toUpperCase()}</p>
+                      </div>
+                    </div>
+                    <button onClick={() => { setConceptFile(null); setUploadError(""); }} className="p-1 hover:bg-green-100 rounded">
+                      <X size={14} className="text-green-600" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
         </div>
         <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-end gap-3 shrink-0">
           <button onClick={onClose} className="px-4 py-2.5 border border-slate-200 rounded-lg text-[12px] text-slate-600 hover:bg-slate-50 font-medium">Cancel</button>
-          <button onClick={handleSave} disabled={!isValid} className="px-4 py-2.5 bg-[#0B01D0] text-white rounded-lg text-[12px] font-semibold hover:bg-[#0a01b8] disabled:opacity-40 shadow-sm">Save Concept</button>
+          <button onClick={handleSave} disabled={!isValid} className="px-4 py-2.5 bg-[#0B01D0] text-white rounded-lg text-[12px] font-semibold hover:bg-[#0a01b8] disabled:opacity-40 shadow-sm">
+            {inputMode === "manual" ? "Save Concept" : "Upload Concept"}
+          </button>
         </div>
       </div>
     </div>
