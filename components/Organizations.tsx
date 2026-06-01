@@ -462,7 +462,28 @@ export function Organizations({ onAddOrganization }: OrganizationsProps) {
             ))}
           </div>
 
-          {/* Agreement Ready Banner */}
+          {/* Pipeline → Agreement promotion banner */}
+          {org.status === "Pipeline" && org.type === "Donor" && (
+            <div className="mx-6 my-3 p-4 bg-blue-50 border border-blue-200 rounded-xl flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+                  <TrendingUp size={18} className="text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-[13px] font-semibold text-blue-800">Ready for Agreement</p>
+                  <p className="text-[11px] text-blue-600 mt-0.5">{org.name} is in the pipeline. When discussions conclude, create an agreement to formalize the partnership.</p>
+                </div>
+              </div>
+              <button
+                onClick={() => updateOrgStatus(org.id, "Agreement")}
+                className="flex items-center gap-1.5 px-4 py-2.5 bg-[#0B01D0] text-white rounded-lg text-[12px] font-semibold hover:bg-[#0a01b8] shadow-sm shrink-0"
+              >
+                <FileText size={13} /> Create Agreement
+              </button>
+            </div>
+          )}
+
+          {/* Agreement confirmed banner */}
           {org.status === "Agreement" && org.type === "Donor" && (
             <div className="mx-6 my-3 p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -471,11 +492,11 @@ export function Organizations({ onAddOrganization }: OrganizationsProps) {
                 </div>
                 <div>
                   <p className="text-[13px] font-semibold text-emerald-800">Agreement Stage</p>
-                  <p className="text-[11px] text-emerald-600 mt-0.5">{org.name} has reached the agreement stage. Ready to formalize a grant agreement.</p>
+                  <p className="text-[11px] text-emerald-600 mt-0.5">{org.name} has reached the agreement stage. Grant agreement is being formalized.</p>
                 </div>
               </div>
               <button className="flex items-center gap-1.5 px-4 py-2.5 bg-emerald-600 text-white rounded-lg text-[12px] font-semibold hover:bg-emerald-700 shadow-sm shrink-0">
-                <FileText size={13} /> Create Agreement
+                <FileText size={13} /> View Agreement
               </button>
             </div>
           )}
@@ -647,9 +668,8 @@ export function Organizations({ onAddOrganization }: OrganizationsProps) {
                 <p className="text-[12px] text-slate-500">{org.engagements.length} engagement(s) recorded</p>
                 <button
                   onClick={() => {
-                    // Auto-advance status: Prospect → Pipeline → Agreement
+                    // Auto-advance: Prospect → Pipeline on first engagement
                     if (org.status === "Prospect") updateOrgStatus(org.id, "Pipeline");
-                    else if (org.status === "Pipeline") updateOrgStatus(org.id, "Agreement");
                   }}
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0B01D0] text-white rounded-lg text-[11px] font-medium hover:bg-[#0a01b8]"
                 ><Plus size={12} /> Log Engagement</button>
