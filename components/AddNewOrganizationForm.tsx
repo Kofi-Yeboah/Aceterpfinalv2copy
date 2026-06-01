@@ -44,8 +44,10 @@ const LOCATIONS = [
 ];
 
 const STATUSES = [
-  { value: "Active", label: "Active", desc: "Currently engaged" },
   { value: "Prospect", label: "Prospect", desc: "Potential partner" },
+  { value: "Pipeline", label: "Pipeline", desc: "Initial engagement" },
+  { value: "Engagement", label: "Engagement", desc: "Active discussions" },
+  { value: "Active", label: "Active", desc: "Currently engaged" },
   { value: "Inactive", label: "Inactive", desc: "No longer active" },
 ];
 
@@ -59,7 +61,7 @@ export function AddNewOrganizationForm({ onBack, onSave }: AddNewOrganizationFor
     website: "",
     contactEmail: "",
     contactPhone: "",
-    status: "Active",
+    status: "Prospect",
     description: "",
   });
 

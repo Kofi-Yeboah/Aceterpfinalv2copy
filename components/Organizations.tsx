@@ -3,7 +3,7 @@ import {
   Plus, Search, MoreHorizontal, X, Building2, MapPin, Globe,
   Mail, Phone, Users, Edit2, Trash2, Eye, ChevronDown,
   Calendar, DollarSign, Briefcase, FileText, MessageSquare,
-  ArrowLeft, Download, Clock, Star, Target, TrendingUp,
+  ArrowLeft, Download, Clock, Star, Target, TrendingUp, CheckCircle2,
 } from "lucide-react";
 import { cn } from "../lib/utils";
 
@@ -66,7 +66,7 @@ interface Organization {
   contactEmail: string;
   contactPhone: string;
   contactCount: number;
-  status: "Active" | "Inactive" | "Prospect";
+  status: "Active" | "Inactive" | "Prospect" | "Pipeline" | "Engagement";
   dateAdded: string;
   description?: string;
   address?: string;
@@ -295,7 +295,7 @@ const ORGANIZATIONS: Organization[] = [
    ═══════════════════════════════════════════════════════════════════════════════ */
 
 const ORG_TYPE_FILTERS = ["All", "Donor", "Government/Policymaker", "Media/Journalist", "Private Sector", "CSO/Partner"];
-const STATUS_FILTERS = ["All", "Active", "Inactive", "Prospect"];
+const STATUS_FILTERS = ["All", "Prospect", "Pipeline", "Engagement", "Active", "Inactive"];
 
 const fmt = (n: number) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0 }).format(n);
@@ -316,6 +316,8 @@ const getStatusColor = (status: string) => {
     case "Active": return "bg-green-50 text-green-700";
     case "Inactive": return "bg-red-50 text-red-600";
     case "Prospect": return "bg-amber-50 text-amber-700";
+    case "Pipeline": return "bg-blue-50 text-blue-700";
+    case "Engagement": return "bg-purple-50 text-purple-700";
     default: return "bg-slate-100 text-slate-600";
   }
 };
@@ -354,6 +356,7 @@ interface OrganizationsProps {
 }
 
 export function Organizations({ onAddOrganization }: OrganizationsProps) {
+  const [organizations, setOrganizations] = useState<Organization[]>(ORGANIZATIONS);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedType, setSelectedType] = useState("All");
   const [selectedStatus, setSelectedStatus] = useState("All");
@@ -370,7 +373,21 @@ export function Organizations({ onAddOrganization }: OrganizationsProps) {
     setShowStatusDropdown(false);
   };
 
-  const filtered = ORGANIZATIONS.filter((org) => {
+  // Helper to update an organization's status
+  const updateOrgStatus = (orgId: number, newStatus: Organization["status"]) => {
+    setOrganizations(prev => prev.map(o => o.id === orgId ? { ...o, status: newStatus } : o));
+    if (selectedOrg && selectedOrg.id === orgId) {
+      setSelectedOrg(prev => prev ? { ...prev, status: newStatus } : prev);
+    }
+  };
+
+  // Compute tab counts from all orgs (before type/search filter for accurate counts)
+  const statusCounts = STATUS_FILTERS.reduce<Record<string, number>>((acc, s) => {
+    acc[s] = s === "All" ? organizations.length : organizations.filter(o => o.status === s).length;
+    return acc;
+  }, {});
+
+  const filtered = organizations.filter((org) => {
     const matchesType = selectedType === "All" || org.type === selectedType;
     const matchesStatus = selectedStatus === "All" || org.status === selectedStatus;
     const matchesSearch =
@@ -448,6 +465,24 @@ export function Organizations({ onAddOrganization }: OrganizationsProps) {
               </div>
             ))}
           </div>
+
+          {/* Agreement Ready Banner */}
+          {org.status === "Engagement" && org.type === "Donor" && (
+            <div className="mx-6 my-3 p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+                  <CheckCircle2 size={18} className="text-emerald-600" />
+                </div>
+                <div>
+                  <p className="text-[13px] font-semibold text-emerald-800">Ready for Agreement</p>
+                  <p className="text-[11px] text-emerald-600 mt-0.5">{org.name} has active engagement. Ready to formalize a grant agreement.</p>
+                </div>
+              </div>
+              <button className="flex items-center gap-1.5 px-4 py-2.5 bg-emerald-600 text-white rounded-lg text-[12px] font-semibold hover:bg-emerald-700 shadow-sm shrink-0">
+                <FileText size={13} /> Create Agreement
+              </button>
+            </div>
+          )}
 
           {/* Detail Tabs */}
           <div className="px-6 pb-0">
@@ -614,7 +649,14 @@ export function Organizations({ onAddOrganization }: OrganizationsProps) {
             <div className="flex-1 overflow-auto">
               <div className="px-6 py-3 bg-white border-b border-slate-200 flex items-center justify-between">
                 <p className="text-[12px] text-slate-500">{org.engagements.length} engagement(s) recorded</p>
-                <button className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0B01D0] text-white rounded-lg text-[11px] font-medium hover:bg-[#0a01b8]"><Plus size={12} /> Log Engagement</button>
+                <button
+                  onClick={() => {
+                    // Auto-advance status: Prospect → Pipeline → Engagement
+                    if (org.status === "Prospect") updateOrgStatus(org.id, "Pipeline");
+                    else if (org.status === "Pipeline") updateOrgStatus(org.id, "Engagement");
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0B01D0] text-white rounded-lg text-[11px] font-medium hover:bg-[#0a01b8]"
+                ><Plus size={12} /> Log Engagement</button>
               </div>
               {org.engagements.length > 0 ? (
                 <div className="max-w-5xl mx-auto py-6 px-4 space-y-4">
@@ -792,7 +834,30 @@ export function Organizations({ onAddOrganization }: OrganizationsProps) {
         </div>
       </div>
 
-      {/* Filters Bar */}
+      {/* Status Tabs */}
+      <div className="px-6 py-3 bg-white border-b border-slate-200 shrink-0">
+        <div className="flex items-center justify-between gap-3">
+          <div className="bg-slate-100 p-1 rounded-lg inline-flex gap-1">
+            {STATUS_FILTERS.map(status => (
+              <button
+                key={status}
+                onClick={() => { setSelectedStatus(status); setCurrentPage(1); }}
+                className={cn(
+                  "px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors flex items-center gap-1.5",
+                  selectedStatus === status ? "bg-[#0B01D0] text-white shadow-sm" : "text-slate-500 hover:text-slate-700"
+                )}
+              >
+                {status}
+                <span className={cn("px-1.5 py-0.5 rounded-full text-[9px]", selectedStatus === status ? "bg-white/20" : "bg-slate-200/80")}>
+                  {statusCounts[status] || 0}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Search & Type Filter */}
       <div className="px-6 py-3 bg-white border-b border-slate-200 shrink-0">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 px-3 py-2 border border-slate-200 rounded-lg bg-white w-64">
@@ -836,37 +901,6 @@ export function Organizations({ onAddOrganization }: OrganizationsProps) {
                         )}
                       >
                         {type === "All" ? "All Types" : type}
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-
-            {/* Status Filter */}
-            <div className="relative">
-              <button
-                onClick={() => { closeDropdowns(); setShowStatusDropdown(!showStatusDropdown); }}
-                className={cn("flex items-center gap-2 px-3 py-2 border rounded-lg hover:bg-slate-50 transition-colors text-[12px] min-w-[120px]",
-                  selectedStatus !== "All" ? "border-[#0B01D0]/30 bg-[#0B01D0]/5" : "border-slate-200 bg-white"
-                )}
-              >
-                <span className="text-slate-700 truncate">{selectedStatus === "All" ? "All Statuses" : selectedStatus}</span>
-                <ChevronDown size={13} className="text-slate-400 shrink-0" />
-              </button>
-              {showStatusDropdown && (
-                <>
-                  <div className="fixed inset-0 z-10" onClick={() => setShowStatusDropdown(false)} />
-                  <div className="absolute right-0 top-full mt-1 w-40 bg-white border border-slate-200 rounded-lg shadow-lg z-20">
-                    {STATUS_FILTERS.map((status) => (
-                      <button
-                        key={status}
-                        onClick={() => { setSelectedStatus(status); setShowStatusDropdown(false); setCurrentPage(1); }}
-                        className={cn("w-full px-3 py-2 text-left text-[12px] hover:bg-slate-50 transition-colors",
-                          selectedStatus === status ? "bg-[#0B01D0]/5 text-[#0B01D0] font-medium" : "text-slate-700"
-                        )}
-                      >
-                        {status === "All" ? "All Statuses" : status}
                       </button>
                     ))}
                   </div>
