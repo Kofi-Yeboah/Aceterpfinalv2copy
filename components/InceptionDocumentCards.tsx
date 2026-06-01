@@ -169,11 +169,6 @@ interface VersionEntry {
 }
 
 const MOCK_VERSION_HISTORY: Record<string, VersionEntry[]> = {
-  "concept-notes": [
-    { version: "v3.0", date: "Feb 10, 2026", uploadedBy: "Yaw Osei", fileSize: "1.2 MB", notes: "Final version with stakeholder feedback incorporated" },
-    { version: "v2.0", date: "Jan 25, 2026", uploadedBy: "Yaw Osei", fileSize: "1.1 MB", notes: "Updated budget estimates and timeline" },
-    { version: "v1.0", date: "Jan 10, 2026", uploadedBy: "Kofi Mensah", fileSize: "980 KB", notes: "Initial draft submitted for review" },
-  ],
   wbs: [
     { version: "v2.0", date: "Feb 8, 2026", uploadedBy: "Yaw Osei", fileSize: "420 KB", notes: "Added Phase 4 tasks and milestones" },
     { version: "v1.0", date: "Jan 22, 2026", uploadedBy: "Yaw Osei", fileSize: "380 KB", notes: "Initial WBS structure" },
@@ -337,7 +332,6 @@ function VersionHistoryModal({
 // ─── Document Icon Helper ───────────────────────────────────────────────────────
 function getDocIcon(docId: string) {
   const iconMap: Record<string, { bg: string; color: string }> = {
-    "concept-notes": { bg: "bg-blue-50", color: "text-blue-600" },
     wbs: { bg: "bg-violet-50", color: "text-violet-600" },
     "staff-allocation": { bg: "bg-orange-50", color: "text-orange-600" },
     budget: { bg: "bg-green-50", color: "text-green-600" },
@@ -590,7 +584,6 @@ export function InceptionDocumentCards({
   const [documents, setDocuments] = useState<Document[]>(
     isPendingApproval
       ? [
-          { id: "concept-notes", title: "Concept Notes", uploaded: true, fileName: "Concept_Notes_document.pdf", disabled: true },
           { id: "wbs", title: "Work Breakdown Structure", uploaded: true, fileName: "Work_Breakdown_Structure_document.pdf", disabled: true },
           { id: "staff-allocation", title: "Staff Allocation", uploaded: true, fileName: "Staff_Allocation_document.pdf", disabled: true },
           { id: "budget", title: "Budget", uploaded: true, fileName: "Budget_document.pdf", disabled: true },
@@ -602,7 +595,6 @@ export function InceptionDocumentCards({
           { id: "travel", title: "Travel Plan", uploaded: true, fileName: "Travel_Plan_document.pdf", disabled: true },
         ]
       : [
-          { id: "concept-notes", title: "Concept Notes", uploaded: true, fileName: "West_Africa_Regional_Integration_Study_concept_notes_1256.pdf" },
           { id: "wbs", title: "Work Breakdown Structure", uploaded: false },
           { id: "staff-allocation", title: "Staff Allocation", uploaded: false },
           { id: "budget", title: "Budget", uploaded: false },
