@@ -1,6 +1,6 @@
 import { useState } from "react";
 import {
-  ArrowLeft, Building2, MapPin, Globe, Mail, Phone, FileText, Tag
+  ArrowLeft, Building2, MapPin, Globe, Mail, Phone, FileText
 } from "lucide-react";
 import { cn } from "../lib/utils";
 
@@ -43,13 +43,6 @@ const LOCATIONS = [
   "Addis Ababa, Ethiopia",
 ];
 
-const STATUSES = [
-  { value: "Prospect", label: "Prospect", desc: "Potential partner" },
-  { value: "Pipeline", label: "Pipeline", desc: "Initial engagement" },
-  { value: "Engagement", label: "Engagement", desc: "Active discussions" },
-  { value: "Active", label: "Active", desc: "Currently engaged" },
-  { value: "Inactive", label: "Inactive", desc: "No longer active" },
-];
 
 export function AddNewOrganizationForm({ onBack, onSave }: AddNewOrganizationFormProps) {
   const [formData, setFormData] = useState({
@@ -169,42 +162,20 @@ export function AddNewOrganizationForm({ onBack, onSave }: AddNewOrganizationFor
                 </div>
               </div>
 
-              {/* Sector & Status */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className={labelClass}>Sector / Industry</label>
-                  <select
-                    value={formData.sector}
-                    onChange={(e) => update("sector", e.target.value)}
-                    className={selectClass}
-                    style={selectArrow}
-                  >
-                    <option value="">Select sector...</option>
-                    {SECTORS.map((s) => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className={labelClass}>Status</label>
-                  <div className="flex gap-2">
-                    {STATUSES.map((s) => (
-                      <button
-                        key={s.value}
-                        type="button"
-                        onClick={() => update("status", s.value)}
-                        className={cn(
-                          "flex-1 px-3 py-2 rounded-lg text-sm border transition-colors text-center",
-                          formData.status === s.value
-                            ? "bg-purple-50 border-purple-300 text-purple-700 font-medium"
-                            : "bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
-                        )}
-                      >
-                        {s.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+              {/* Sector */}
+              <div>
+                <label className={labelClass}>Sector / Industry</label>
+                <select
+                  value={formData.sector}
+                  onChange={(e) => update("sector", e.target.value)}
+                  className={selectClass}
+                  style={selectArrow}
+                >
+                  <option value="">Select sector...</option>
+                  {SECTORS.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
               </div>
             </div>
           </div>

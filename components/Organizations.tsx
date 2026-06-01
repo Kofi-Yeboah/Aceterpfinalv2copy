@@ -66,7 +66,7 @@ interface Organization {
   contactEmail: string;
   contactPhone: string;
   contactCount: number;
-  status: "Active" | "Inactive" | "Prospect" | "Pipeline" | "Engagement";
+  status: "Prospect" | "Pipeline" | "Agreement";
   dateAdded: string;
   description?: string;
   address?: string;
@@ -85,7 +85,7 @@ const ORGANIZATIONS: Organization[] = [
     id: 1, name: "Ford Foundation", type: "Donor", sector: "Philanthropy",
     location: "New York, USA", website: "www.fordfoundation.org",
     contactEmail: "info@fordfoundation.org", contactPhone: "+1 212 573 5000",
-    contactCount: 3, status: "Active", dateAdded: "Jan 15, 2024",
+    contactCount: 3, status: "Agreement", dateAdded: "Jan 15, 2024",
     description: "The Ford Foundation is an American private foundation with the mission of advancing human welfare. It provides funding for economic transformation programs across Africa.",
     address: "320 E 43rd Street, New York, NY 10017, USA",
     contacts: [
@@ -113,7 +113,7 @@ const ORGANIZATIONS: Organization[] = [
     id: 2, name: "USAID", type: "Donor", sector: "International Development",
     location: "Accra, Ghana", website: "www.usaid.gov",
     contactEmail: "ghana@usaid.gov", contactPhone: "+233 302 741 200",
-    contactCount: 2, status: "Active", dateAdded: "Feb 8, 2024",
+    contactCount: 2, status: "Agreement", dateAdded: "Feb 8, 2024",
     description: "United States Agency for International Development supports Ghana's development across health, education, and economic growth sectors.",
     address: "No. 24 Fourth Circular Road, Cantonments, Accra",
     contacts: [
@@ -135,7 +135,7 @@ const ORGANIZATIONS: Organization[] = [
     id: 3, name: "World Bank", type: "Donor", sector: "Multilateral Finance",
     location: "Washington, USA", website: "www.worldbank.org",
     contactEmail: "contact@worldbank.org", contactPhone: "+1 202 473 1000",
-    contactCount: 2, status: "Active", dateAdded: "Mar 1, 2024",
+    contactCount: 2, status: "Pipeline", dateAdded: "Mar 1, 2024",
     description: "The World Bank Group provides financial and technical assistance to developing countries around the world.",
     address: "1818 H Street NW, Washington, DC 20433, USA",
     contacts: [
@@ -154,7 +154,7 @@ const ORGANIZATIONS: Organization[] = [
     id: 4, name: "Bill & Melinda Gates Foundation", type: "Donor", sector: "Philanthropy",
     location: "Seattle, USA", website: "www.gatesfoundation.org",
     contactEmail: "info@gatesfoundation.org", contactPhone: "+1 206 709 3100",
-    contactCount: 2, status: "Active", dateAdded: "Jan 22, 2024",
+    contactCount: 2, status: "Pipeline", dateAdded: "Jan 22, 2024",
     description: "The Gates Foundation works to help all people lead healthy, productive lives through grants in global health, education, and economic opportunity.",
     address: "500 5th Ave N, Seattle, WA 98109, USA",
     contacts: [
@@ -173,7 +173,7 @@ const ORGANIZATIONS: Organization[] = [
     id: 5, name: "EU Development Fund", type: "Donor", sector: "International Development",
     location: "Brussels, Belgium", website: "www.eu-fund.org",
     contactEmail: "contact@eu-fund.org", contactPhone: "+32 2 299 1111",
-    contactCount: 1, status: "Active", dateAdded: "Apr 10, 2024",
+    contactCount: 1, status: "Prospect", dateAdded: "Apr 10, 2024",
     description: "The European Development Fund is the main instrument for providing EU development aid to Africa.",
     contacts: [
       { id: 10, name: "Hans Mueller", title: "Program Manager", email: "h.mueller@eu-fund.org", phone: "+32 2 299 2222", role: "Primary Contact", department: "ACP Programs", lastInteraction: "Jan 15, 2026" },
@@ -199,7 +199,7 @@ const ORGANIZATIONS: Organization[] = [
     id: 7, name: "Ministry of Finance", type: "Government/Policymaker", sector: "Government",
     location: "Accra, Ghana", website: "www.mofep.gov.gh",
     contactEmail: "info@mof.gov.gh", contactPhone: "+233 302 665 132",
-    contactCount: 1, status: "Active", dateAdded: "Feb 18, 2024",
+    contactCount: 1, status: "Agreement", dateAdded: "Feb 18, 2024",
     description: "The Ministry of Finance of Ghana is responsible for economic planning, fiscal policy, and public financial management.",
     contacts: [
       { id: 11, name: "Dr. Kwame Asante", title: "Director of Policy", email: "k.asante@mof.gov.gh", phone: "+233 302 665 140", role: "Primary Contact", department: "Policy Planning", lastInteraction: "Mar 8, 2026" },
@@ -217,7 +217,7 @@ const ORGANIZATIONS: Organization[] = [
     id: 8, name: "Ministry of Health", type: "Government/Policymaker", sector: "Government",
     location: "Accra, Ghana", website: "www.moh.gov.gh",
     contactEmail: "info@moh.gov.gh", contactPhone: "+233 302 665 421",
-    contactCount: 1, status: "Active", dateAdded: "Mar 12, 2024",
+    contactCount: 1, status: "Pipeline", dateAdded: "Mar 12, 2024",
     contacts: [
       { id: 12, name: "Dr. Akosua Mensah", title: "Chief Director", email: "a.mensah@moh.gov.gh", phone: "+233 302 665 430", role: "Primary Contact", department: "Administration", lastInteraction: "Feb 5, 2026" },
     ],
@@ -231,7 +231,7 @@ const ORGANIZATIONS: Organization[] = [
     id: 9, name: "Daily Graphic", type: "Media/Journalist", sector: "Media & Publishing",
     location: "Accra, Ghana", website: "www.dailygraphic.com.gh",
     contactEmail: "editor@dailygraphic.com.gh", contactPhone: "+233 302 228 911",
-    contactCount: 1, status: "Active", dateAdded: "May 3, 2024",
+    contactCount: 1, status: "Pipeline", dateAdded: "May 3, 2024",
     contacts: [
       { id: 13, name: "Kwesi Owusu-Ansah", title: "Business Editor", email: "k.owusu@dailygraphic.com.gh", phone: "+233 302 228 920", role: "Media Contact", department: "Business Desk", lastInteraction: "Mar 12, 2026" },
     ],
@@ -245,7 +245,7 @@ const ORGANIZATIONS: Organization[] = [
     id: 10, name: "Ghana Broadcasting Corporation", type: "Media/Journalist", sector: "Broadcasting",
     location: "Accra, Ghana", website: "www.gbc.com.gh",
     contactEmail: "news@gbc.com.gh", contactPhone: "+233 302 768 312",
-    contactCount: 1, status: "Active", dateAdded: "May 15, 2024",
+    contactCount: 1, status: "Prospect", dateAdded: "May 15, 2024",
     contacts: [
       { id: 14, name: "Nana Akua", title: "Senior Producer", email: "n.akua@gbc.com.gh", phone: "+233 302 768 320", role: "Media Contact", department: "News & Current Affairs", lastInteraction: "Feb 22, 2026" },
     ],
@@ -259,7 +259,7 @@ const ORGANIZATIONS: Organization[] = [
     id: 11, name: "TechGhana Ltd", type: "Private Sector", sector: "Technology",
     location: "Accra, Ghana", website: "www.techghana.com",
     contactEmail: "info@techghana.com", contactPhone: "+233 302 500 100",
-    contactCount: 1, status: "Active", dateAdded: "Jul 8, 2024",
+    contactCount: 1, status: "Pipeline", dateAdded: "Jul 8, 2024",
     contacts: [
       { id: 15, name: "Kofi Mensah", title: "CEO", email: "k.mensah@techghana.com", phone: "+233 302 500 110", role: "Executive Contact", department: "Management", lastInteraction: "Mar 1, 2026" },
     ],
@@ -275,7 +275,7 @@ const ORGANIZATIONS: Organization[] = [
     id: 12, name: "WACSI", type: "CSO/Partner", sector: "Capacity Building",
     location: "Accra, Ghana", website: "www.wacsi.org",
     contactEmail: "info@wacsi.org", contactPhone: "+233 302 780 222",
-    contactCount: 1, status: "Active", dateAdded: "Aug 20, 2024",
+    contactCount: 1, status: "Agreement", dateAdded: "Aug 20, 2024",
     description: "West Africa Civil Society Institute strengthens civil society in the region through capacity development and research.",
     contacts: [
       { id: 16, name: "Nana Asantewaa", title: "Executive Director", email: "n.asantewaa@wacsi.org", phone: "+233 302 780 230", role: "Primary Contact", department: "Management", lastInteraction: "Feb 15, 2026" },
@@ -295,7 +295,7 @@ const ORGANIZATIONS: Organization[] = [
    ═══════════════════════════════════════════════════════════════════════════════ */
 
 const ORG_TYPE_FILTERS = ["All", "Donor", "Government/Policymaker", "Media/Journalist", "Private Sector", "CSO/Partner"];
-const STATUS_FILTERS = ["All", "Prospect", "Pipeline", "Engagement", "Active", "Inactive"];
+const STATUS_FILTERS = ["All", "Prospect", "Pipeline", "Agreement"];
 
 const fmt = (n: number) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0 }).format(n);
@@ -313,11 +313,9 @@ const getTypeColor = (type: string) => {
 
 const getStatusColor = (status: string) => {
   switch (status) {
-    case "Active": return "bg-green-50 text-green-700";
-    case "Inactive": return "bg-red-50 text-red-600";
     case "Prospect": return "bg-amber-50 text-amber-700";
     case "Pipeline": return "bg-blue-50 text-blue-700";
-    case "Engagement": return "bg-purple-50 text-purple-700";
+    case "Agreement": return "bg-purple-50 text-purple-700";
     default: return "bg-slate-100 text-slate-600";
   }
 };
@@ -361,7 +359,6 @@ export function Organizations({ onAddOrganization }: OrganizationsProps) {
   const [selectedType, setSelectedType] = useState("All");
   const [selectedStatus, setSelectedStatus] = useState("All");
   const [showTypeDropdown, setShowTypeDropdown] = useState(false);
-  const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [showActionMenu, setShowActionMenu] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null);
@@ -370,7 +367,6 @@ export function Organizations({ onAddOrganization }: OrganizationsProps) {
 
   const closeDropdowns = () => {
     setShowTypeDropdown(false);
-    setShowStatusDropdown(false);
   };
 
   // Helper to update an organization's status
@@ -467,15 +463,15 @@ export function Organizations({ onAddOrganization }: OrganizationsProps) {
           </div>
 
           {/* Agreement Ready Banner */}
-          {org.status === "Engagement" && org.type === "Donor" && (
+          {org.status === "Agreement" && org.type === "Donor" && (
             <div className="mx-6 my-3 p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
                   <CheckCircle2 size={18} className="text-emerald-600" />
                 </div>
                 <div>
-                  <p className="text-[13px] font-semibold text-emerald-800">Ready for Agreement</p>
-                  <p className="text-[11px] text-emerald-600 mt-0.5">{org.name} has active engagement. Ready to formalize a grant agreement.</p>
+                  <p className="text-[13px] font-semibold text-emerald-800">Agreement Stage</p>
+                  <p className="text-[11px] text-emerald-600 mt-0.5">{org.name} has reached the agreement stage. Ready to formalize a grant agreement.</p>
                 </div>
               </div>
               <button className="flex items-center gap-1.5 px-4 py-2.5 bg-emerald-600 text-white rounded-lg text-[12px] font-semibold hover:bg-emerald-700 shadow-sm shrink-0">
@@ -651,9 +647,9 @@ export function Organizations({ onAddOrganization }: OrganizationsProps) {
                 <p className="text-[12px] text-slate-500">{org.engagements.length} engagement(s) recorded</p>
                 <button
                   onClick={() => {
-                    // Auto-advance status: Prospect → Pipeline → Engagement
+                    // Auto-advance status: Prospect → Pipeline → Agreement
                     if (org.status === "Prospect") updateOrgStatus(org.id, "Pipeline");
-                    else if (org.status === "Pipeline") updateOrgStatus(org.id, "Engagement");
+                    else if (org.status === "Pipeline") updateOrgStatus(org.id, "Agreement");
                   }}
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0B01D0] text-white rounded-lg text-[11px] font-medium hover:bg-[#0a01b8]"
                 ><Plus size={12} /> Log Engagement</button>
