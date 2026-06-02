@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   Plus, Search, MoreHorizontal, X, Building2, MapPin, Globe,
-  Mail, Phone, Users, Edit2, Trash2, Eye, ChevronDown,
+  Mail, Phone, User, Users, Edit2, Trash2, Eye, ChevronDown,
   Calendar, DollarSign, Briefcase, FileText, MessageSquare,
   ArrowLeft, Download, Clock, Star, Target, TrendingUp, CheckCircle2,
+  UploadCloud,
 } from "lucide-react";
 import { cn } from "../lib/utils";
+import { addAgreement, getAgreementsByDonor, type Agreement } from "../lib/donorPipelineStore";
 
 /* ═══════════════════════════════════════════════════════════════════════════════
    TYPES
@@ -363,6 +365,13 @@ export function Organizations({ onAddOrganization }: OrganizationsProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null);
   const [detailTab, setDetailTab] = useState<DetailTab>("info");
+  const [showAgreementModal, setShowAgreementModal] = useState(false);
+  const [contractFile, setContractFile] = useState<File | null>(null);
+  const [proposalFile, setProposalFile] = useState<File | null>(null);
+  const [agreementError, setAgreementError] = useState("");
+  const [viewAgreement, setViewAgreement] = useState<Agreement | null>(null);
+  const contractInputRef = useRef<HTMLInputElement>(null);
+  const proposalInputRef = useRef<HTMLInputElement>(null);
   const rowsPerPage = 10;
 
   const closeDropdowns = () => {
@@ -375,6 +384,79 @@ export function Organizations({ onAddOrganization }: OrganizationsProps) {
     if (selectedOrg && selectedOrg.id === orgId) {
       setSelectedOrg(prev => prev ? { ...prev, status: newStatus } : prev);
     }
+  };
+
+  const ALLOWED_TYPES = [
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ];
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+
+  const handleAgreementFile = (file: File | undefined, target: "contract" | "proposal") => {
+    if (!file) return;
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      setAgreementError("Only PDF or Word documents are accepted.");
+      return;
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      setAgreementError("File must be under 10 MB.");
+      return;
+    }
+    setAgreementError("");
+    if (target === "contract") setContractFile(file);
+    else setProposalFile(file);
+  };
+
+  const handleCreateAgreement = () => {
+    if (!contractFile || !proposalFile) {
+      setAgreementError("Both a contract and a proposal must be uploaded.");
+      return;
+    }
+    if (selectedOrg) {
+      updateOrgStatus(selectedOrg.id, "Agreement");
+
+      // Add agreement to the shared store so it appears in Grant Management > Agreements
+      const totalFunds = selectedOrg.funds.reduce((s, f) => s + f.amount, 0);
+      const primaryContact = selectedOrg.contacts.length > 0 ? selectedOrg.contacts[0].name : "—";
+      const programArea = selectedOrg.funds.length > 0 ? selectedOrg.funds[0].programArea : selectedOrg.projects.length > 0 ? selectedOrg.projects[0].programArea : "General";
+      const today = new Date();
+      const todayStr = today.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+      const endDate = new Date(today.getFullYear() + 2, today.getMonth(), today.getDate());
+      const endStr = endDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+
+      addAgreement({
+        donorId: selectedOrg.id,
+        donorName: selectedOrg.name,
+        conceptId: 0,
+        conceptName: "—",
+        title: `${selectedOrg.name} — Grant Agreement`,
+        type: "Grant Agreement",
+        status: "Draft",
+        amount: totalFunds || 0,
+        currency: "USD",
+        programArea,
+        contactPerson: primaryContact,
+        terms: "To be finalized upon review of contract and proposal documents.",
+        startDate: todayStr,
+        endDate: endStr,
+        contractFileName: contractFile.name,
+        proposalFileName: proposalFile.name,
+        createdDate: todayStr,
+        description: `Grant agreement created for ${selectedOrg.name} with uploaded contract and proposal.`,
+      });
+    }
+    setShowAgreementModal(false);
+    setContractFile(null);
+    setProposalFile(null);
+    setAgreementError("");
+  };
+
+  const openAgreementModal = () => {
+    setContractFile(null);
+    setProposalFile(null);
+    setAgreementError("");
+    setShowAgreementModal(true);
   };
 
   // Compute tab counts from all orgs (before type/search filter for accurate counts)
@@ -413,6 +495,7 @@ export function Organizations({ onAddOrganization }: OrganizationsProps) {
     ];
 
     return (
+      <>
       <div className="h-full flex flex-col bg-slate-50 overflow-hidden">
         {/* Detail Header */}
         <div className="bg-white border-b border-slate-200 shrink-0">
@@ -475,7 +558,7 @@ export function Organizations({ onAddOrganization }: OrganizationsProps) {
                 </div>
               </div>
               <button
-                onClick={() => updateOrgStatus(org.id, "Agreement")}
+                onClick={openAgreementModal}
                 className="flex items-center gap-1.5 px-4 py-2.5 bg-[#0B01D0] text-white rounded-lg text-[12px] font-semibold hover:bg-[#0a01b8] shadow-sm shrink-0"
               >
                 <FileText size={13} /> Create Agreement
@@ -495,8 +578,14 @@ export function Organizations({ onAddOrganization }: OrganizationsProps) {
                   <p className="text-[11px] text-emerald-600 mt-0.5">{org.name} has reached the agreement stage. Grant agreement is being formalized.</p>
                 </div>
               </div>
-              <button className="flex items-center gap-1.5 px-4 py-2.5 bg-emerald-600 text-white rounded-lg text-[12px] font-semibold hover:bg-emerald-700 shadow-sm shrink-0">
-                <FileText size={13} /> View Agreement
+              <button
+                onClick={() => {
+                  const donorAgreements = getAgreementsByDonor(org.id);
+                  if (donorAgreements.length > 0) setViewAgreement(donorAgreements[donorAgreements.length - 1]);
+                }}
+                className="flex items-center gap-1.5 px-4 py-2.5 bg-emerald-600 text-white rounded-lg text-[12px] font-semibold hover:bg-emerald-700 shadow-sm shrink-0"
+              >
+                <Eye size={13} /> View Agreement
               </button>
             </div>
           )}
@@ -830,6 +919,277 @@ export function Organizations({ onAddOrganization }: OrganizationsProps) {
           )}
         </div>
       </div>
+
+      {/* ── CREATE AGREEMENT MODAL ── */}
+      {showAgreementModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowAgreementModal(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-[520px] max-h-[90vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+              <div>
+                <h2 className="text-[16px] font-semibold text-slate-900">Create Agreement</h2>
+                <p className="text-[11px] text-slate-400 mt-0.5">Upload the contract and proposal to formalize the agreement with {org.name}</p>
+              </div>
+              <button onClick={() => setShowAgreementModal(false)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600"><X size={16} /></button>
+            </div>
+
+            <div className="px-6 py-5 space-y-5">
+              {/* Contract Upload */}
+              <div>
+                <label className="text-[11px] uppercase text-slate-500 font-medium mb-2 block">Contract <span className="text-red-500">*</span></label>
+                <input
+                  ref={contractInputRef}
+                  type="file"
+                  accept=".pdf,.doc,.docx"
+                  className="hidden"
+                  onChange={(e) => handleAgreementFile(e.target.files?.[0], "contract")}
+                />
+                {contractFile ? (
+                  <div className="flex items-center gap-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
+                    <div className="w-9 h-9 rounded-lg bg-emerald-100 flex items-center justify-center shrink-0">
+                      <FileText size={16} className="text-emerald-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[12px] font-medium text-slate-800 truncate">{contractFile.name}</p>
+                      <p className="text-[10px] text-slate-400">{(contractFile.size / 1024).toFixed(1)} KB</p>
+                    </div>
+                    <button onClick={() => setContractFile(null)} className="p-1 rounded hover:bg-emerald-100 text-slate-400 hover:text-red-500"><X size={14} /></button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => contractInputRef.current?.click()}
+                    className="w-full flex flex-col items-center gap-2 p-5 border-2 border-dashed border-slate-200 rounded-xl hover:border-[#0B01D0]/40 hover:bg-slate-50 transition-colors cursor-pointer"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center">
+                      <UploadCloud size={18} className="text-slate-400" />
+                    </div>
+                    <div className="text-center">
+                      <p className="text-[12px] font-medium text-slate-700">Upload Contract</p>
+                      <p className="text-[10px] text-slate-400 mt-0.5">PDF or Word · Max 10 MB</p>
+                    </div>
+                  </button>
+                )}
+              </div>
+
+              {/* Proposal Upload */}
+              <div>
+                <label className="text-[11px] uppercase text-slate-500 font-medium mb-2 block">Proposal <span className="text-red-500">*</span></label>
+                <input
+                  ref={proposalInputRef}
+                  type="file"
+                  accept=".pdf,.doc,.docx"
+                  className="hidden"
+                  onChange={(e) => handleAgreementFile(e.target.files?.[0], "proposal")}
+                />
+                {proposalFile ? (
+                  <div className="flex items-center gap-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
+                    <div className="w-9 h-9 rounded-lg bg-emerald-100 flex items-center justify-center shrink-0">
+                      <FileText size={16} className="text-emerald-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[12px] font-medium text-slate-800 truncate">{proposalFile.name}</p>
+                      <p className="text-[10px] text-slate-400">{(proposalFile.size / 1024).toFixed(1)} KB</p>
+                    </div>
+                    <button onClick={() => setProposalFile(null)} className="p-1 rounded hover:bg-emerald-100 text-slate-400 hover:text-red-500"><X size={14} /></button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => proposalInputRef.current?.click()}
+                    className="w-full flex flex-col items-center gap-2 p-5 border-2 border-dashed border-slate-200 rounded-xl hover:border-[#0B01D0]/40 hover:bg-slate-50 transition-colors cursor-pointer"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center">
+                      <UploadCloud size={18} className="text-slate-400" />
+                    </div>
+                    <div className="text-center">
+                      <p className="text-[12px] font-medium text-slate-700">Upload Proposal</p>
+                      <p className="text-[10px] text-slate-400 mt-0.5">PDF or Word · Max 10 MB</p>
+                    </div>
+                  </button>
+                )}
+              </div>
+
+              {/* Specs note */}
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                <p className="text-[10px] text-slate-500 leading-relaxed">
+                  <span className="font-semibold text-slate-600">Requirements:</span> Both a signed contract and a project proposal must be uploaded to create an agreement. Accepted formats: PDF, Word (.doc, .docx). Maximum file size: 10 MB each.
+                </p>
+              </div>
+
+              {/* Error */}
+              {agreementError && (
+                <p className="text-[11px] text-red-600 font-medium">{agreementError}</p>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-end gap-3">
+              <button
+                onClick={() => setShowAgreementModal(false)}
+                className="px-4 py-2 border border-slate-200 rounded-lg text-[12px] text-slate-600 hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateAgreement}
+                disabled={!contractFile || !proposalFile}
+                className="px-5 py-2 bg-[#0B01D0] text-white rounded-lg text-[12px] font-semibold hover:bg-[#0a01b8] disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+              >
+                Create Agreement
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── VIEW AGREEMENT MODAL ── */}
+      {viewAgreement && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setViewAgreement(null)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-[600px] max-h-[90vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
+                  <FileText size={18} className="text-emerald-600" />
+                </div>
+                <div>
+                  <h2 className="text-[16px] font-semibold text-slate-900">{viewAgreement.title}</h2>
+                  <p className="text-[11px] text-slate-400 mt-0.5">Agreement with {viewAgreement.donorName}</p>
+                </div>
+              </div>
+              <button onClick={() => setViewAgreement(null)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600"><X size={16} /></button>
+            </div>
+
+            <div className="px-6 py-5 space-y-5">
+              {/* Status & Type */}
+              <div className="flex items-center gap-3">
+                <span className={cn("px-2.5 py-1 rounded-full text-[10px] font-medium", viewAgreement.status === "Draft" ? "bg-slate-100 text-slate-600" : viewAgreement.status === "Active" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700")}>{viewAgreement.status}</span>
+                <span className="px-2.5 py-1 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">{viewAgreement.type}</span>
+              </div>
+
+              {/* Key Details */}
+              <div className="bg-slate-50 border border-slate-200 rounded-xl overflow-hidden">
+                <div className="px-4 py-2.5 bg-slate-100 border-b border-slate-200">
+                  <h3 className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">Agreement Details</h3>
+                </div>
+                <div className="divide-y divide-slate-100">
+                  {[
+                    { icon: <Building2 size={13} className="text-slate-400" />, label: "Donor", value: viewAgreement.donorName },
+                    { icon: <User size={13} className="text-slate-400" />, label: "Contact Person", value: viewAgreement.contactPerson },
+                    { icon: <DollarSign size={13} className="text-slate-400" />, label: "Amount", value: fmt(viewAgreement.amount) },
+                    { icon: <Briefcase size={13} className="text-slate-400" />, label: "Program Area", value: viewAgreement.programArea },
+                    { icon: <Calendar size={13} className="text-slate-400" />, label: "Start Date", value: viewAgreement.startDate },
+                    { icon: <Calendar size={13} className="text-slate-400" />, label: "End Date", value: viewAgreement.endDate },
+                    { icon: <Clock size={13} className="text-slate-400" />, label: "Created", value: viewAgreement.createdDate },
+                  ].map((row, i) => (
+                    <div key={i} className="flex items-center justify-between px-4 py-2.5">
+                      <span className="text-[11px] text-slate-500 flex items-center gap-2">{row.icon} {row.label}</span>
+                      <span className="text-[11px] text-slate-800 font-medium text-right max-w-[60%]">{row.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* People Involved */}
+              {org.contacts.length > 0 && (
+                <div className="bg-slate-50 border border-slate-200 rounded-xl overflow-hidden">
+                  <div className="px-4 py-2.5 bg-slate-100 border-b border-slate-200">
+                    <h3 className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">People Involved</h3>
+                  </div>
+                  <div className="divide-y divide-slate-100">
+                    {org.contacts.map((c) => (
+                      <div key={c.id} className="flex items-center gap-3 px-4 py-3">
+                        <div className="w-8 h-8 rounded-full bg-[#0B01D0]/10 flex items-center justify-center shrink-0">
+                          <span className="text-[10px] font-bold text-[#0B01D0]">{c.name.split(" ").map(n => n[0]).join("")}</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[12px] font-medium text-slate-800">{c.name}</p>
+                          <p className="text-[10px] text-slate-400">{c.title} · {c.department}</p>
+                        </div>
+                        <span className="text-[9px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 font-medium shrink-0">{c.role}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Uploaded Documents */}
+              <div className="bg-slate-50 border border-slate-200 rounded-xl overflow-hidden">
+                <div className="px-4 py-2.5 bg-slate-100 border-b border-slate-200">
+                  <h3 className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">Uploaded Documents</h3>
+                </div>
+                <div className="p-4 space-y-3">
+                  {viewAgreement.contractFileName && (
+                    <div className="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-lg">
+                      <div className="w-9 h-9 rounded-lg bg-red-50 flex items-center justify-center shrink-0">
+                        <FileText size={16} className="text-red-500" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[12px] font-medium text-slate-800 truncate">{viewAgreement.contractFileName}</p>
+                        <p className="text-[10px] text-slate-400">Contract</p>
+                      </div>
+                      <button className="px-3 py-1.5 text-[10px] font-medium text-[#0B01D0] border border-[#0B01D0]/20 rounded-lg hover:bg-[#0B01D0]/5">
+                        <Download size={12} />
+                      </button>
+                    </div>
+                  )}
+                  {viewAgreement.proposalFileName && (
+                    <div className="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-lg">
+                      <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+                        <FileText size={16} className="text-blue-500" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[12px] font-medium text-slate-800 truncate">{viewAgreement.proposalFileName}</p>
+                        <p className="text-[10px] text-slate-400">Proposal</p>
+                      </div>
+                      <button className="px-3 py-1.5 text-[10px] font-medium text-[#0B01D0] border border-[#0B01D0]/20 rounded-lg hover:bg-[#0B01D0]/5">
+                        <Download size={12} />
+                      </button>
+                    </div>
+                  )}
+                  {!viewAgreement.contractFileName && !viewAgreement.proposalFileName && (
+                    <p className="text-[11px] text-slate-400 text-center py-3">No documents uploaded</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Terms */}
+              {viewAgreement.terms && (
+                <div className="bg-slate-50 border border-slate-200 rounded-xl overflow-hidden">
+                  <div className="px-4 py-2.5 bg-slate-100 border-b border-slate-200">
+                    <h3 className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">Terms & Conditions</h3>
+                  </div>
+                  <div className="p-4">
+                    <p className="text-[12px] text-slate-600 leading-relaxed">{viewAgreement.terms}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Description */}
+              {viewAgreement.description && (
+                <div className="bg-slate-50 border border-slate-200 rounded-xl overflow-hidden">
+                  <div className="px-4 py-2.5 bg-slate-100 border-b border-slate-200">
+                    <h3 className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">Description</h3>
+                  </div>
+                  <div className="p-4">
+                    <p className="text-[12px] text-slate-600 leading-relaxed">{viewAgreement.description}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-end">
+              <button
+                onClick={() => setViewAgreement(null)}
+                className="px-5 py-2 bg-[#0B01D0] text-white rounded-lg text-[12px] font-semibold hover:bg-[#0a01b8] shadow-sm"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      </>
     );
   }
 

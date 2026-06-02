@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { createPortal } from "react-dom";
 import { cn } from "../lib/utils";
+import { getPotentialProjects } from "../lib/donorPipelineStore";
 
 // ── Dropdown rendered via portal (avoids clipping) ──
 function PortalDropdown({
@@ -184,10 +185,9 @@ export function AddProjectForm({ onBack, onSave }: AddProjectFormProps) {
   // ── Linked documents ──
   const [linkedProposal, setLinkedProposal] = useState("");
   const [linkedContract, setLinkedContract] = useState("");
-  const [linkedConceptNote, setLinkedConceptNote] = useState("");
+  const [selectedConceptNote, setSelectedConceptNote] = useState("");
   const [linkedProposalUpload, setLinkedProposalUpload] = useState<LinkedDocumentUpload | null>(null);
   const [linkedContractUpload, setLinkedContractUpload] = useState<LinkedDocumentUpload | null>(null);
-  const [linkedConceptNoteUpload, setLinkedConceptNoteUpload] = useState<LinkedDocumentUpload | null>(null);
 
   // ── Deliverables ──
   const [deliverables, setDeliverables] = useState<Deliverable[]>([
@@ -220,6 +220,7 @@ export function AddProjectForm({ onBack, onSave }: AddProjectFormProps) {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const programRef = useRef<HTMLButtonElement>(null);
   const donorRef = useRef<HTMLButtonElement>(null);
+  const conceptNoteRef = useRef<HTMLButtonElement>(null);
   const projectLeadRef = useRef<HTMLButtonElement>(null);
   const projectCoordinatorRef = useRef<HTMLButtonElement>(null);
   const reportTypeRefs = useRef<Record<string, HTMLButtonElement | null>>({});
@@ -352,12 +353,6 @@ export function AddProjectForm({ onBack, onSave }: AddProjectFormProps) {
     const uploadedDoc = createLinkedDocumentUpload(matchedContract?.title || "Signed-Contract", donor);
     setLinkedContractUpload(uploadedDoc);
     setLinkedContract(uploadedDoc.name);
-  };
-
-  const handleLinkedConceptNoteUpload = () => {
-    const uploadedDoc = createLinkedDocumentUpload("Concept-Note", donor);
-    setLinkedConceptNoteUpload(uploadedDoc);
-    setLinkedConceptNote(uploadedDoc.name);
   };
 
   const handleAdditionalProposalUpload = (adId: string, donorName: string) => {
@@ -735,6 +730,54 @@ export function AddProjectForm({ onBack, onSave }: AddProjectFormProps) {
                     </div>
                   )}
                 </div>
+              </div>
+
+              {/* Concept Note */}
+              <div>
+                <label className="block text-[12px] text-slate-600 mb-1.5">
+                  Concept Note
+                </label>
+                <button
+                  ref={conceptNoteRef}
+                  type="button"
+                  onClick={() => setOpenDropdown(openDropdown === "conceptNote" ? null : "conceptNote")}
+                  className="w-full flex items-center justify-between px-3.5 py-2.5 border border-slate-300 rounded-lg bg-white hover:bg-slate-50 transition-colors"
+                >
+                  <span className={cn("text-sm truncate", selectedConceptNote ? "text-slate-900" : "text-slate-400")}>
+                    {selectedConceptNote || "Select a concept note"}
+                  </span>
+                  <ChevronDown size={15} className="text-slate-400 shrink-0" />
+                </button>
+                {openDropdown === "conceptNote" && (
+                  <PortalDropdown anchorRef={conceptNoteRef} onClose={closeAllDropdowns} width={440}>
+                    {getPotentialProjects().map((p) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => { setSelectedConceptNote(p.name); closeAllDropdowns(); }}
+                        className={cn(
+                          "w-full px-4 py-2.5 text-left hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0",
+                          selectedConceptNote === p.name && "bg-purple-50"
+                        )}
+                      >
+                        <p className={cn("text-sm", selectedConceptNote === p.name ? "text-purple-700 font-medium" : "text-slate-700")}>{p.name}</p>
+                        <p className="text-[10px] text-slate-400 mt-0.5">{p.programArea} · {p.status} · {p.leadContact}</p>
+                      </button>
+                    ))}
+                    {getPotentialProjects().length === 0 && (
+                      <p className="px-4 py-3 text-sm text-slate-400">No concept notes available</p>
+                    )}
+                  </PortalDropdown>
+                )}
+                {selectedConceptNote && (
+                  <div className="mt-2 flex items-center gap-2 px-3 py-2 bg-violet-50 border border-violet-200 rounded-lg">
+                    <FileText size={14} className="text-violet-600 shrink-0" />
+                    <span className="text-[11px] text-violet-800 flex-1 truncate">{selectedConceptNote}</span>
+                    <button type="button" onClick={() => setSelectedConceptNote("")} className="p-0.5 hover:bg-violet-100 rounded">
+                      <X size={12} className="text-violet-600" />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -1169,48 +1212,6 @@ export function AddProjectForm({ onBack, onSave }: AddProjectFormProps) {
                     <span className="text-[10px] text-cyan-700 shrink-0">{linkedContractUpload.size}</span>
                     <button type="button" onClick={() => { setLinkedContract(""); setLinkedContractUpload(null); }} className="p-0.5 hover:bg-cyan-100 rounded">
                       <X size={12} className="text-cyan-600" />
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Linked Concept Note */}
-              <div>
-                <label className="block text-[12px] text-slate-600 mb-1.5">
-                  Concept Note Document <span className="text-red-500">*</span>
-                </label>
-                <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50/60 p-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center shrink-0">
-                        <Upload size={16} className="text-violet-600" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className={cn("text-sm font-medium truncate", linkedConceptNoteUpload ? "text-slate-900" : "text-slate-500")}>
-                          {linkedConceptNoteUpload?.name || "Upload the concept note document"}
-                        </p>
-                        <p className="text-[11px] text-slate-400 mt-0.5">Add the approved concept note for the project</p>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleLinkedConceptNoteUpload}
-                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white border border-slate-200 text-[12px] text-slate-700 hover:bg-slate-100 transition-colors shrink-0"
-                    >
-                      <Upload size={13} />
-                      {linkedConceptNoteUpload ? "Replace file" : "Upload file"}
-                    </button>
-                  </div>
-                </div>
-                {linkedConceptNoteUpload && (
-                  <div className="mt-2 flex items-center gap-2 px-3 py-2 bg-violet-50 border border-violet-200 rounded-lg">
-                    <FileText size={14} className="text-violet-600 shrink-0" />
-                    <span className="text-[11px] text-violet-800 flex-1 truncate">
-                      {linkedConceptNoteUpload.name}
-                    </span>
-                    <span className="text-[10px] text-violet-700 shrink-0">{linkedConceptNoteUpload.size}</span>
-                    <button type="button" onClick={() => { setLinkedConceptNote(""); setLinkedConceptNoteUpload(null); }} className="p-0.5 hover:bg-violet-100 rounded">
-                      <X size={12} className="text-violet-600" />
                     </button>
                   </div>
                 )}

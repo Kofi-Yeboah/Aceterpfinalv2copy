@@ -331,7 +331,7 @@ export function ProposalsAgreements() {
                   </div>
                 </td>
                 <td className="px-4 py-3 text-[11px] text-slate-600">{a.donorName}</td>
-                <td className="px-4 py-3"><span className={cn("px-2 py-0.5 rounded-full text-[10px] font-medium", TYPE_COLORS[a.type])}>{a.type}</span></td>
+                <td className="px-4 py-3"><span className={cn("px-2 py-0.5 rounded-full text-[10px] font-medium whitespace-nowrap", TYPE_COLORS[a.type])}>{a.type}</span></td>
                 <td className="px-4 py-3 text-[11px] text-slate-600">{a.programArea}</td>
                 <td className="px-4 py-3 text-[11px] text-slate-700 font-medium">{fmt(a.amount, a.currency)}</td>
                 <td className="px-4 py-3"><span className={cn("px-2 py-0.5 rounded-full text-[10px] font-medium", STATUS_COLORS[a.status])}>{a.status}</span></td>
