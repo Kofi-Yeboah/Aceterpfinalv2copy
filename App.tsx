@@ -36,6 +36,7 @@ import { JobTitles } from "./components/JobTitles";
 import { Contracts } from "./components/Contracts";
 import { Departments } from "./components/Departments";
 import { EmployeeTraining } from "./components/EmployeeTraining";
+import { SuccessionPlanning } from "./components/SuccessionPlanning";
 import { PerformanceManagementScreen } from "./components/PerformanceManagementScreen";
 import { MainDashboard } from "./components/MainDashboard";
 import { UserManagement } from "./components/UserManagement";
@@ -253,6 +254,8 @@ export default function App() {
         return <Departments />;
       case "HR MANAGEMENT-Training & Development":
         return <EmployeeTraining />;
+      case "HR MANAGEMENT-Succession Planning":
+        return <SuccessionPlanning />;
       case "HR MANAGEMENT-ACET Scorecard":
         return <PerformanceManagementScreen viewOnly />;
       case "HR MANAGEMENT-Document Vault":

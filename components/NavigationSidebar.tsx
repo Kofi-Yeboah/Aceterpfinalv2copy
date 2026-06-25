@@ -45,6 +45,7 @@ import {
   Handshake,
   Megaphone,
   FolderOpen,
+  GitBranch,
 } from "lucide-react";
 
 interface MenuItem {
@@ -137,6 +138,7 @@ export function NavigationSidebar({ selectedItem, onSelectItem, collapsed }: Nav
         },
         { icon: <Award size={iconSize} />, label: "ACET Scorecard" },
         { icon: <GraduationCap size={iconSize} />, label: "Training & Development" },
+        { icon: <GitBranch size={iconSize} />, label: "Succession Planning" },
         { icon: <FolderOpen size={iconSize} />, label: "Document Vault" },
         {
           icon: <CheckCircle size={iconSize} />,
