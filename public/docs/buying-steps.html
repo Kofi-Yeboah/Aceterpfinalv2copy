@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Buying Something — Flow Diagram</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛒</text></svg>">
+
+</head>
+<body>
+<a href="./index.html" style="position:fixed;top:14px;left:14px;z-index:99;font:600 12px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;text-decoration:none;color:#fff;background:#1f7a4d;padding:7px 13px;border-radius:999px;box-shadow:0 2px 10px rgba(0,0,0,.18)">&larr; All documents</a>
+<style>
+  :root {
+    --bg: #fbfbfc; --card: #ffffff; --ink: #14181a; --ink-soft: #4b555a;
+    --muted: #7c868b; --line: #e1e6e8;
+    --accent: #1f7a4d; --accent-soft: #e7f2ec; --accent-line: #9ccfb6;
+    --sys-bg: #f3f6f9; --sys-line: #d2dde5; --sys-ink: #23485f;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #15181a; --card: #1e2225; --ink: #e8ecee; --ink-soft: #b4bec2;
+      --muted: #8b969b; --line: #2b3134;
+      --accent: #5fc78e; --accent-soft: #163024; --accent-line: #2f6a4c;
+      --sys-bg: #1b242a; --sys-line: #2e404e; --sys-ink: #94c2db;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #15181a; --card: #1e2225; --ink: #e8ecee; --ink-soft: #b4bec2;
+    --muted: #8b969b; --line: #2b3134;
+    --accent: #5fc78e; --accent-soft: #163024; --accent-line: #2f6a4c;
+    --sys-bg: #1b242a; --sys-line: #2e404e; --sys-ink: #94c2db;
+  }
+  :root[data-theme="light"] {
+    --bg: #fbfbfc; --card: #ffffff; --ink: #14181a; --ink-soft: #4b555a;
+    --muted: #7c868b; --line: #e1e6e8;
+    --accent: #1f7a4d; --accent-soft: #e7f2ec; --accent-line: #9ccfb6;
+    --sys-bg: #f3f6f9; --sys-line: #d2dde5; --sys-ink: #23485f;
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 16px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 0 24px 70px; }
+
+  header { padding: 52px 0 22px; border-bottom: 2px solid var(--ink); margin-bottom: 8px; }
+  h1 { font-size: clamp(1.8rem, 4.5vw, 2.4rem); line-height: 1.1; letter-spacing: -0.02em; font-weight: 750; margin: 0 0 10px; }
+  .lede { font-size: 1.02rem; color: var(--ink-soft); margin: 0; max-width: 60ch; }
+
+  /* Column key */
+  .key { display: grid; grid-template-columns: 54px 1fr 1fr; gap: 14px; padding: 14px 0 6px; align-items: end; }
+  .key div { font-size: 10.5px; font-weight: 750; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+  .key .k2 { padding-left: 2px; }
+  .key .k3 { color: var(--sys-ink); }
+
+  /* Phase band */
+  .phase { display: flex; align-items: center; gap: 12px; margin: 26px 0 12px; }
+  .phase span { font-size: 10.5px; font-weight: 750; letter-spacing: 0.11em; text-transform: uppercase; color: var(--accent); background: var(--accent-soft); padding: 4px 11px; border-radius: 999px; white-space: nowrap; }
+  .phase i { flex: 1; height: 1px; background: var(--line); }
+
+  /* A step row */
+  .step { display: grid; grid-template-columns: 54px 1fr 1fr; gap: 14px; align-items: stretch; position: relative; }
+  .rail { position: relative; display: flex; justify-content: center; }
+  .rail::before { content: ""; position: absolute; top: 0; bottom: -18px; width: 2px; background: var(--accent-line); }
+  .step:last-of-type .rail::before { display: none; }
+  .node {
+    position: relative; z-index: 1; width: 36px; height: 36px; border-radius: 50%;
+    background: var(--accent); color: #fff; display: grid; place-items: center;
+    font-size: 14px; font-weight: 750; font-variant-numeric: tabular-nums; flex-shrink: 0;
+    margin-top: 14px; box-shadow: 0 0 0 4px var(--bg);
+  }
+
+  .what {
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 13px 15px; margin-bottom: 18px;
+  }
+  .what h2 { font-size: 1rem; font-weight: 700; margin: 0 0 4px; letter-spacing: -0.005em; }
+  .what p { margin: 0; font-size: 13.5px; color: var(--ink-soft); }
+  .actor { display: inline-block; margin-top: 9px; font-size: 10.5px; font-weight: 650; color: var(--accent); background: var(--accent-soft); padding: 3px 9px; border-radius: 5px; }
+
+  .sys {
+    background: var(--sys-bg); border: 1px solid var(--sys-line); border-radius: 12px;
+    padding: 13px 15px; margin-bottom: 18px;
+  }
+  .path {
+    font-family: var(--mono); font-size: 11.5px; color: var(--sys-ink);
+    background: var(--card); border-radius: 6px; padding: 6px 9px; margin: 0 0 8px;
+    overflow-x: auto; white-space: nowrap;
+  }
+  .path:last-child { margin-bottom: 0; }
+  .sys p { margin: 0 0 8px; font-size: 13px; color: var(--ink-soft); }
+  .sys p:last-child { margin-bottom: 0; }
+  .btn { font-family: var(--mono); font-size: 11.5px; background: var(--card); border: 1px solid var(--sys-line); border-radius: 5px; padding: 1px 6px; white-space: nowrap; color: var(--ink); }
+  .auto { display: inline-block; font-size: 10.5px; font-weight: 700; color: #fff; background: var(--accent); padding: 2px 8px; border-radius: 5px; margin-bottom: 8px; }
+
+  /* Loop back */
+  .loop {
+    margin: 6px 0 0 54px; padding: 16px 18px; border: 2px dashed var(--accent-line);
+    border-radius: 12px; background: var(--accent-soft);
+  }
+  .loop p { margin: 0; font-size: 13.5px; color: var(--ink-soft); }
+  .loop b { color: var(--ink); }
+
+  footer { margin-top: 34px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
+
+  @media (max-width: 720px) {
+    .key { display: none; }
+    .step { grid-template-columns: 40px 1fr; }
+    .step .sys { grid-column: 2; margin-top: -10px; }
+    .rail::before { bottom: -10px; }
+    .node { width: 30px; height: 30px; font-size: 12.5px; margin-top: 12px; }
+    .loop { margin-left: 40px; }
+  }
+
+  @media print {
+    body { background: #fff; }
+    .step { break-inside: avoid; }
+    header { padding-top: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<div class="wrap">
+
+  <header>
+    <h1>Buying something — the ten steps</h1>
+    <p class="lede">
+      What happens at each stage, who does it, and the exact screen and button in the system where
+      it gets done.
+    </p>
+  </header>
+
+  <div class="key">
+    <div></div>
+    <div class="k2">What happens</div>
+    <div class="k3">Where in the system</div>
+  </div>
+
+  <!-- ── PHASE 1 ── -->
+  <div class="phase"><span>Before you can buy</span><i></i></div>
+
+  <div class="step">
+    <div class="rail"><div class="node">1</div></div>
+    <div class="what">
+      <h2>A supplier joins our list</h2>
+      <p>They send their papers. We check they're real, current, and not on a banned list. Then they get an ID number and join the approved list.</p>
+      <span class="actor">Procurement · or the supplier</span>
+    </div>
+    <div class="sys">
+      <p class="path">Supplier Management › Onboard Firm</p>
+      <p>Fill the form, attach each document with its expiry date, then <span class="btn">Complete Onboarding</span>.</p>
+      <p class="path">Vendor Portal › Register as a vendor</p>
+      <p>If they register themselves it waits in the <b>Pending Review</b> tab until Procurement clicks <span class="btn">Approve Registration</span>.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="rail"><div class="node">2</div></div>
+    <div class="what">
+      <h2>We write down what we plan to buy</h2>
+      <p>Each team lists what they'll need and what it costs. Procurement checks the rules, Finance checks the money. Both must agree.</p>
+      <span class="actor">Requestor → Procurement → Finance</span>
+    </div>
+    <div class="sys">
+      <p class="path">Purchase Plan › Departmental Plans › Add Plan Item</p>
+      <p>Typing the cost <b>suggests the buying method</b>. Then <span class="btn">Save &amp; Submit for Review</span>. Project-funded work goes under <b>Project Plans</b> instead.</p>
+      <p class="path">Approvals › Procurement Plan Approvals</p>
+      <p>Two queues — <b>Procurement review</b>, then <b>Finance verification</b>. Open one, click <span class="btn">Review</span>, approve or reject with a reason.</p>
+    </div>
+  </div>
+
+  <!-- ── PHASE 2 ── -->
+  <div class="phase"><span>Getting it approved</span><i></i></div>
+
+  <div class="step">
+    <div class="rail"><div class="node">3</div></div>
+    <div class="what">
+      <h2>Someone asks to buy something</h2>
+      <p>They pick the item off the plan, say which fund pays, and attach the specification or terms of reference.</p>
+      <span class="actor">Requestor</span>
+    </div>
+    <div class="sys">
+      <p class="path">Purchase Requisitions › Add New Requisition</p>
+      <p>Then <span class="btn">Submit Requisition</span>. If anything's missing the button won't go through — red messages point at the exact fields.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="rail"><div class="node">4</div></div>
+    <div class="what">
+      <h2>The bosses say yes</h2>
+      <p>Manager first, then Procurement and Finance together, then the COO if it's over $10,000. A rejection must carry a written reason.</p>
+      <span class="actor">Dept Head → Procurement + Finance → COO</span>
+    </div>
+    <div class="sys">
+      <p class="path">Approvals › Purchase Requisitions</p>
+      <p class="path">Approvals › Senior Management Approval</p>
+      <p>Each approver works their own queue: <span class="btn">Approve</span> or <span class="btn">Reject</span>. Rejected work comes back via <span class="btn">Resubmit for Approval</span>.</p>
+    </div>
+  </div>
+
+  <!-- ── PHASE 3 ── -->
+  <div class="phase"><span>Finding a supplier</span><i></i></div>
+
+  <div class="step">
+    <div class="rail"><div class="node">5</div></div>
+    <div class="what">
+      <h2>We look for someone to supply it</h2>
+      <p>Small job: ask a few for prices. Medium: invite a shortlist. Big: advertise openly. The value decides.</p>
+      <span class="actor">Procurement</span>
+    </div>
+    <div class="sys">
+      <span class="auto">Happens automatically</span>
+      <p class="path">Sourcing</p>
+      <p>The case <b>appears on its own</b> once the requisition is approved. Open it for a stepper of the right stages. <span class="btn">Change Method</span> needs a reason if it breaks the value band.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="rail"><div class="node">6</div></div>
+    <div class="what">
+      <h2>Suppliers send in their offers</h2>
+      <p>Offers arrive sealed. Nobody at ACET can open one until the closing date has passed.</p>
+      <span class="actor">Suppliers · Procurement</span>
+    </div>
+    <div class="sys">
+      <p class="path">Sourcing › case › Advertisement / Invite Bidders</p>
+      <p>Publish with <span class="btn">Publish Now</span>, or pick the shortlist and <span class="btn">Send Invitations</span>.</p>
+      <p class="path">Vendor Portal › Open Tenders › View &amp; bid</p>
+      <p>Their side: attach and <span class="btn">Submit sealed bid</span>. They get a receipt number instantly.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="rail"><div class="node">7</div></div>
+    <div class="what">
+      <h2>We pick a winner and sign</h2>
+      <p>Technical scores are settled before prices are revealed. Then the request number becomes the contract number.</p>
+      <span class="actor">Evaluation panel · Procurement</span>
+    </div>
+    <div class="sys">
+      <p class="path">Sourcing › case › Bid Opening</p>
+      <p>In order: <span class="btn">Close Tender</span> → <span class="btn">Open Technical Envelope</span> → <span class="btn">Open Financial Envelope</span>. Opening early is refused.</p>
+      <p class="path">Sourcing › case › Contract Award</p>
+      <p><span class="btn">Award Contract</span> — blocked suppliers can't be picked. Then <span class="btn">Generate Purchase Order</span> for goods.</p>
+    </div>
+  </div>
+
+  <!-- ── PHASE 4 ── -->
+  <div class="phase"><span>After the contract</span><i></i></div>
+
+  <div class="step">
+    <div class="rail"><div class="node">8</div></div>
+    <div class="what">
+      <h2>They do the work, and we check it</h2>
+      <p>The coordinator uploads the proof. Somebody <em>else</em> has to accept it — you can't approve your own work.</p>
+      <span class="actor">Contract Coordinator → a second reviewer</span>
+    </div>
+    <div class="sys">
+      <p class="path">Contract Management › contract › Deliverables</p>
+      <p><span class="btn">Upload Deliverable</span>, then a different person clicks <span class="btn">Accept</span> or <span class="btn">Reject</span>.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="rail"><div class="node">9</div></div>
+    <div class="what">
+      <h2>They send a bill, and we pay it</h2>
+      <p>Four people in order. The bill must be matched to work we already accepted before it can move at all.</p>
+      <span class="actor">Coordinator → Procurement → Supervisor → Finance</span>
+    </div>
+    <div class="sys">
+      <p class="path">Invoices &nbsp;·&nbsp; or Contract Management › Invoices &amp; Payments</p>
+      <p><span class="btn">Match &amp; Review</span> → <span class="btn">Procurement Review</span> → <span class="btn">Supervisor Approval</span> → <span class="btn">Process Payment</span>. Only the button for the current stage is shown.</p>
+      <p><span class="btn">Query</span> sends it back to the vendor with a reason at any stage.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="rail"><div class="node">10</div></div>
+    <div class="what">
+      <h2>We close the job and score them</h2>
+      <p>Score out of 10 on quality, timeliness, cost, rules and behaviour. Then the closing checklist and the certificate.</p>
+      <span class="actor">Coordinator + Supervisor · Procurement · Finance</span>
+    </div>
+    <div class="sys">
+      <p class="path">Contract Management › contract › Performance</p>
+      <p>Score it, add a supervisor, submit. It lands on the supplier's profile by itself.</p>
+      <p class="path">Contract Management › contract › Close-Out</p>
+      <p>Generate the certificate and report, then <span class="btn">Close Contract</span>. If anything's outstanding it refuses and names it.</p>
+    </div>
+  </div>
+
+  <div class="loop">
+    <p>
+      <b>↺ Back to step 1.</b> The score from step 10 lands on the supplier's record and decides who
+      may be invited next time. Score below 5 and they're flagged — the next award needs management
+      approval before it can go ahead.
+    </p>
+  </div>
+
+  <footer>
+    ACET ERP · Procurement module. All paths start from the <b>Procurement</b> section of the left
+    sidebar. Switch the acting user with the name badge at the top right — the system won't let one
+    person approve their own work.
+  </footer>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>ACET Procurement — Documentation Hub</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
+
+</head>
+<body>
+
+<style>
+  :root {
+    --bg: #fbfbfc; --card: #ffffff; --ink: #13171a; --ink-soft: #485257; --muted: #798388;
+    --line: #e2e6e9; --rule: #14181a;
+    --note-bg: #f4f7f9; --note-line: #d3dde5; --note-ink: #23485f;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --buy: #1f7a4d; --contract: #2f5aa8; --supplier: #14706b; --sourcing: #6a4aa3;
+    --test: #9a6a15; --ref: #444b50;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #16181a; --card: #1e2124; --ink: #e9edee; --ink-soft: #b7c0c4; --muted: #8d979b;
+      --line: #2c3134; --rule: #e9edee; --note-bg: #1c252b; --note-line: #2f4150; --note-ink: #96c4dd;
+      --buy: #5fc78e; --contract: #7ea8e8; --supplier: #5cbdb5; --sourcing: #a98fd8;
+      --test: #d6a84a; --ref: #a6b0b5; }
+  }
+  :root[data-theme="dark"] { --bg: #16181a; --card: #1e2124; --ink: #e9edee; --ink-soft: #b7c0c4; --muted: #8d979b;
+    --line: #2c3134; --rule: #e9edee; --note-bg: #1c252b; --note-line: #2f4150; --note-ink: #96c4dd;
+    --buy: #5fc78e; --contract: #7ea8e8; --supplier: #5cbdb5; --sourcing: #a98fd8;
+    --test: #d6a84a; --ref: #a6b0b5; }
+  :root[data-theme="light"] { --bg: #fbfbfc; --card: #ffffff; --ink: #13171a; --ink-soft: #485257; --muted: #798388;
+    --line: #e2e6e9; --rule: #14181a; --note-bg: #f4f7f9; --note-line: #d3dde5; --note-ink: #23485f;
+    --buy: #1f7a4d; --contract: #2f5aa8; --supplier: #14706b; --sourcing: #6a4aa3;
+    --test: #9a6a15; --ref: #444b50; }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 60px 22px 90px; }
+
+  header { padding-bottom: 26px; border-bottom: 2px solid var(--rule); margin-bottom: 8px; }
+  .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin: 0 0 14px; }
+  h1 { font-size: clamp(2rem, 5.5vw, 2.9rem); line-height: 1.08; letter-spacing: -0.025em; font-weight: 760; margin: 0 0 14px; text-wrap: balance; }
+  .lede { font-size: 1.1rem; color: var(--ink-soft); margin: 0; max-width: 58ch; }
+
+  /* Which one do I use */
+  .picker { margin: 30px 0 6px; padding: 20px 22px; background: var(--note-bg); border: 1px solid var(--note-line); border-radius: 14px; }
+  .picker h2 { font-size: .82rem; letter-spacing: .09em; text-transform: uppercase; font-weight: 750; color: var(--note-ink); margin: 0 0 12px; }
+  .picker dl { margin: 0; display: grid; gap: 9px; }
+  .picker div { display: grid; grid-template-columns: 210px 1fr; gap: 14px; align-items: baseline; }
+  .picker dt { font-weight: 650; font-size: 14px; }
+  .picker dd { margin: 0; font-size: 14px; color: var(--ink-soft); }
+  @media (max-width: 620px) { .picker div { grid-template-columns: 1fr; gap: 1px; } }
+
+  .group { margin: 42px 0 0; }
+  .group > h2 { font-size: .84rem; letter-spacing: .1em; text-transform: uppercase; font-weight: 750; color: var(--muted); margin: 0 0 4px; }
+  .group > p { margin: 0 0 16px; font-size: 14.5px; color: var(--ink-soft); max-width: 60ch; }
+
+  .cards { display: grid; gap: 12px; }
+
+  a.doc {
+    display: block; text-decoration: none; color: inherit;
+    background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--dot, var(--muted));
+    border-radius: 12px; padding: 17px 19px;
+    transition: border-color .12s, box-shadow .12s, transform .12s;
+  }
+  a.doc:hover, a.doc:focus-visible { box-shadow: 0 2px 14px rgba(0,0,0,.07); transform: translateY(-1px); outline: none; }
+  a.doc:focus-visible { border-color: var(--dot); }
+
+  .doc-top { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+  .doc h3 { font-size: 1.08rem; font-weight: 700; margin: 0; letter-spacing: -0.008em; }
+  .meta { font-family: var(--mono); font-size: 11px; color: var(--muted); white-space: nowrap; }
+  .doc p { margin: 6px 0 0; font-size: 14.5px; color: var(--ink-soft); }
+  .for { display: inline-block; margin-top: 10px; font-size: 11px; font-weight: 650; letter-spacing: .03em; text-transform: uppercase; color: var(--dot); }
+
+  .note { margin: 44px 0 0; padding: 18px 20px; border-left: 3px solid var(--note-ink); background: var(--note-bg); border-radius: 0 12px 12px 0; }
+  .note p { margin: 0 0 9px; font-size: 14.5px; color: var(--ink-soft); }
+  .note p:last-child { margin: 0; }
+  .note b { color: var(--ink); }
+
+  footer { margin-top: 42px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); }
+  code { font-family: var(--mono); font-size: .87em; background: var(--note-bg); padding: 1.5px 5px; border-radius: 4px; }
+
+  @media print { a.doc { break-inside: avoid; } body { background: #fff; } }
+  @media (prefers-reduced-motion: reduce) { a.doc { transition: none; } a.doc:hover { transform: none; } }
+</style>
+
+<div class="wrap">
+
+  <header>
+    <p class="eyebrow">ACET ERP · Procurement Module</p>
+    <h1>Procurement documentation</h1>
+    <p class="lede">
+      Eight documents covering the same system at different depths — from a ten-step explainer to a
+      full traceability reference. Start wherever your audience is.
+    </p>
+  </header>
+
+  <div class="picker">
+    <h2>Which one do I need?</h2>
+    <dl>
+      <div><dt>Presenting to staff or a board</dt><dd>The four plain-English guides, or either diagram.</dd></div>
+      <div><dt>Training someone to use it</dt><dd>The plain-English guides — every step names the screen and button.</dd></div>
+      <div><dt>Testing that it works</dt><dd>The walkthrough. 34 steps, tick as you go.</dd></div>
+      <div><dt>Answering an auditor or donor</dt><dd>The full reference — every requirement mapped to the code that satisfies it.</dd></div>
+    </dl>
+  </div>
+
+  <!-- ── EXPLAIN ── -->
+  <div class="group">
+    <h2>Explain it</h2>
+    <p>Four plain-English guides, one per area. Each step says what happens, why it matters, and the exact screen and button in the system.</p>
+    <div class="cards">
+
+      <a class="doc" style="--dot: var(--buy)" href="./buying.html">
+        <div class="doc-top"><h3>How ACET buys things</h3><span class="meta">10 steps</span></div>
+        <p>The whole process end to end — supplier joins, plan, request, approvals, sourcing, bids, award, delivery, payment, rating. The one to read first.</p>
+        <span class="for">Start here</span>
+      </a>
+
+      <a class="doc" style="--dot: var(--supplier)" href="./suppliers.html">
+        <div class="doc-top"><h3>How ACET manages suppliers</h3><span class="meta">9 steps</span></div>
+        <p>Getting onto the approved list and staying on it — screening, approval, banking, document expiry, scoring, and what happens when a supplier lets us down.</p>
+        <span class="for">Supplier management</span>
+      </a>
+
+      <a class="doc" style="--dot: var(--sourcing)" href="./sourcing.html">
+        <div class="doc-top"><h3>How ACET finds a supplier</h3><span class="meta">8 steps</span></div>
+        <p>From approved request to signed contract. Opens with the four ways to buy and the money band for each, then sealed bidding and staged envelope opening.</p>
+        <span class="for">Sourcing</span>
+      </a>
+
+      <a class="doc" style="--dot: var(--contract)" href="./contracts.html">
+        <div class="doc-top"><h3>How ACET manages a contract</h3><span class="meta">9 steps</span></div>
+        <p>What happens after the supplier is chosen — setup, deliverables, the four-person invoice chain, variations, scoring and close-out.</p>
+        <span class="for">Contract management</span>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- ── SHOW ── -->
+  <div class="group">
+    <h2>Show it</h2>
+    <p>Two views of the same ten steps. Pick the one that suits the room — or use both, the swimlane on screen and the other as a handout.</p>
+    <div class="cards">
+
+      <a class="doc" style="--dot: var(--buy)" href="./swimlane.html">
+        <div class="doc-top"><h3>Swimlane flow</h3><span class="meta">5 lanes</span></div>
+        <p>Classic swimlane by role — Requestor, Approvers, Procurement, Finance, Supplier — with decision diamonds, Yes/No branches and every loop-back drawn. Each box names its screen.</p>
+        <span class="for">Best for a slide</span>
+      </a>
+
+      <a class="doc" style="--dot: var(--buy)" href="./buying-steps.html">
+        <div class="doc-top"><h3>Step-and-screen flow</h3><span class="meta">10 steps</span></div>
+        <p>The same journey as a vertical spine: what happens on the left, where it's done on the right, grouped into four phases. Prints cleanly on A4.</p>
+        <span class="for">Best as a handout</span>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- ── PROVE ── -->
+  <div class="group">
+    <h2>Prove it</h2>
+    <p>Sit at the system and walk the whole thing, including the moments where it should refuse you.</p>
+    <div class="cards">
+
+      <a class="doc" style="--dot: var(--test)" href="./walkthrough.html">
+        <div class="doc-top"><h3>End-to-end walkthrough</h3><span class="meta">34 steps · ~45 min</span></div>
+        <p>Click-by-click test script with tick boxes. Nine steps are deliberate failures — the refusals are what prove the controls are real. Note the flagged gap at the top before you start.</p>
+        <span class="for">Testing &amp; UAT</span>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- ── REFERENCE ── -->
+  <div class="group">
+    <h2>Full detail</h2>
+    <p>The complete specification, for implementation, audit and donor questions.</p>
+    <div class="cards">
+
+      <a class="doc" style="--dot: var(--ref)" href="./reference.html">
+        <div class="doc-top"><h3>End-to-end process flows</h3><span class="meta">16 flows</span></div>
+        <p>Every flow with its actors, controls and exception paths — plus the reminder and escalation windows, the value thresholds, ten exception routes, and a traceability matrix mapping each requirement to the code that satisfies it.</p>
+        <span class="for">Reference &amp; audit</span>
+      </a>
+
+    </div>
+  </div>
+
+  <div class="note">
+    <p><b>Sharing these.</b> Every page here is a plain public URL on the ACET deployment — send the address of this page and your colleagues get the whole set, no sign-in needed.</p>
+    <p><b>One known gap.</b> The walkthrough opens with it: <b>Purchase Plan › Departmental Plans</b>
+    and <b>Project Plans</b> are display-only and don't feed the plan approval queue. The plan step
+    still works end to end through <b>Employee Self-Service › Procurement Plan</b>, which is the
+    route the walkthrough uses.</p>
+  </div>
+
+  <footer>
+    A ninth document lives in the codebase rather than here: <code>docs/PROCUREMENT-FLOWS.md</code>
+    is the same reference in Markdown, versioned alongside the code so it changes when the system
+    does. All eight pages above render in light and dark, and print to A4.
+  </footer>
+
+</div>
+
+</body>
+</html>

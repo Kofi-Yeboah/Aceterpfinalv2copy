@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>How ACET Manages a Contract — The Simple Version</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📄</text></svg>">
+
+</head>
+<body>
+<a href="./index.html" style="position:fixed;top:14px;left:14px;z-index:99;font:600 12px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;text-decoration:none;color:#fff;background:#1f7a4d;padding:7px 13px;border-radius:999px;box-shadow:0 2px 10px rgba(0,0,0,.18)">&larr; All documents</a>
+<style>
+  :root {
+    --bg: #fbfbfc; --card: #ffffff; --ink: #161a1d; --ink-soft: #4a5459;
+    --muted: #7b868b; --accent: #2f5aa8; --accent-soft: #e8eef8;
+    --line: #e2e6e8; --why-bg: #f3f5f9; --sys-bg: #f2f5f8; --sys-line: #d3dde5; --sys-ink: #23485f;
+    --stop: #a33a32; --stop-bg: #f9ecea;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #16181a; --card: #1e2124; --ink: #e9edee; --ink-soft: #b6c0c3;
+      --muted: #8c979b; --accent: #7ea8e8; --accent-soft: #1b2436;
+      --line: #2c3134; --why-bg: #222630; --sys-bg: #1c252b; --sys-line: #2f4150; --sys-ink: #96c4dd;
+      --stop: #e08a80; --stop-bg: #2e1d1b;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #16181a; --card: #1e2124; --ink: #e9edee; --ink-soft: #b6c0c3;
+    --muted: #8c979b; --accent: #7ea8e8; --accent-soft: #1b2436;
+    --line: #2c3134; --why-bg: #222630; --sys-bg: #1c252b; --sys-line: #2f4150; --sys-ink: #96c4dd;
+    --stop: #e08a80; --stop-bg: #2e1d1b;
+  }
+  :root[data-theme="light"] {
+    --bg: #fbfbfc; --card: #ffffff; --ink: #161a1d; --ink-soft: #4a5459;
+    --muted: #7b868b; --accent: #2f5aa8; --accent-soft: #e8eef8;
+    --line: #e2e6e8; --why-bg: #f3f5f9; --sys-bg: #f2f5f8; --sys-line: #d3dde5; --sys-ink: #23485f;
+    --stop: #a33a32; --stop-bg: #f9ecea;
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 17px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 740px; margin: 0 auto; padding: 0 24px 80px; }
+  header { padding: 64px 0 8px; }
+  h1 { font-size: clamp(2rem, 6vw, 2.7rem); line-height: 1.1; letter-spacing: -0.02em; font-weight: 750; margin: 0 0 14px; text-wrap: balance; }
+  .lede { font-size: 1.15rem; color: var(--ink-soft); margin: 0; max-width: 44ch; }
+
+  .chain { display: flex; flex-wrap: wrap; gap: 8px; margin: 36px 0 8px; padding: 20px; background: var(--accent-soft); border-radius: 16px; }
+  .chain span { font-size: 0.82rem; font-weight: 650; color: var(--accent); background: var(--card); padding: 6px 12px; border-radius: 999px; white-space: nowrap; }
+
+  .steps { margin-top: 44px; display: flex; flex-direction: column; }
+  .step { position: relative; padding-left: 62px; padding-bottom: 38px; }
+  .step:last-child { padding-bottom: 0; }
+  .step::before { content: ""; position: absolute; left: 21px; top: 46px; bottom: 0; width: 2px; background: var(--line); }
+  .step:last-child::before { display: none; }
+  .num { position: absolute; left: 0; top: 0; width: 44px; height: 44px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; font-size: 1.05rem; font-weight: 750; font-variant-numeric: tabular-nums; }
+  .step h2 { font-size: 1.32rem; font-weight: 700; letter-spacing: -0.01em; margin: 6px 0 4px; text-wrap: balance; }
+  .who { display: inline-block; font-size: 0.75rem; font-weight: 650; color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 10px; }
+  .step p { margin: 0 0 12px; color: var(--ink-soft); }
+
+  .why { background: var(--why-bg); border-radius: 12px; padding: 13px 16px; font-size: 0.95rem; color: var(--ink-soft); }
+  .why b { color: var(--ink); font-weight: 700; }
+
+  .sys { margin-top: 12px; background: var(--sys-bg); border: 1px solid var(--sys-line); border-radius: 12px; padding: 14px 16px; }
+  .sys-label { font-size: 0.7rem; font-weight: 750; letter-spacing: 0.09em; text-transform: uppercase; color: var(--sys-ink); margin: 0 0 9px; }
+  .path { font-family: var(--mono); font-size: 0.83rem; color: var(--sys-ink); background: var(--card); border-radius: 7px; padding: 7px 10px; margin: 0 0 9px; overflow-x: auto; white-space: nowrap; }
+  .sys p { margin: 0 0 7px; font-size: 0.94rem; color: var(--ink-soft); }
+  .sys p:last-child { margin-bottom: 0; }
+  .btn { font-family: var(--mono); font-size: 0.85em; background: var(--card); border: 1px solid var(--sys-line); border-radius: 5px; padding: 1px 6px; white-space: nowrap; color: var(--ink); }
+
+  .blocks { margin-top: 12px; background: var(--stop-bg); border-radius: 12px; padding: 13px 16px; font-size: 0.94rem; color: var(--ink-soft); }
+  .blocks b { color: var(--stop); font-weight: 750; }
+  .blocks ul { margin: 8px 0 0; padding-left: 20px; display: flex; flex-direction: column; gap: 5px; }
+
+  /* Invoice relay */
+  .relay { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 14px 0 4px; }
+  .relay div { flex: 1 1 120px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+  .relay strong { display: block; font-size: 0.8rem; color: var(--accent); font-weight: 700; }
+  .relay span { font-size: 0.82rem; color: var(--muted); }
+
+  .loop { margin-top: 46px; padding: 28px; background: var(--card); border: 2px solid var(--accent); border-radius: 18px; text-align: center; }
+  .loop h2 { font-size: 1.25rem; margin: 0 0 8px; font-weight: 700; }
+  .loop p { margin: 0; color: var(--ink-soft); }
+
+  .tip { margin-top: 30px; padding: 18px 20px; border-left: 3px solid var(--accent); background: var(--why-bg); border-radius: 0 12px 12px 0; }
+  .tip p { margin: 0; font-size: 0.96rem; color: var(--ink-soft); }
+
+  .plain { margin-top: 42px; padding-top: 26px; border-top: 1px solid var(--line); }
+  .plain h2 { font-size: 1rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); margin: 0 0 16px; font-weight: 700; }
+  .plain dl { margin: 0; display: grid; gap: 12px; }
+  .plain div { display: grid; grid-template-columns: 200px 1fr; gap: 14px; }
+  .plain dt { font-weight: 650; color: var(--ink); }
+  .plain dd { margin: 0; color: var(--ink-soft); font-size: 0.95rem; }
+
+  @media (max-width: 560px) {
+    .plain div { grid-template-columns: 1fr; gap: 2px; }
+    .step { padding-left: 52px; }
+    .num { width: 38px; height: 38px; font-size: 0.95rem; }
+    .step::before { left: 18px; top: 40px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<div class="wrap">
+
+  <header>
+    <h1>How ACET manages a contract</h1>
+    <p class="lede">What happens after we've chosen a supplier — from signing, to paying, to closing the job — in nine plain steps.</p>
+  </header>
+
+  <div class="chain">
+    <span>1 · Contract is created</span>
+    <span>2 · We fill in the details</span>
+    <span>3 · We watch the dates</span>
+    <span>4 · They deliver</span>
+    <span>5 · Someone checks it</span>
+    <span>6 · The bill arrives</span>
+    <span>7 · Four checks, then pay</span>
+    <span>8 · If things change</span>
+    <span>9 · Score and close</span>
+  </div>
+
+  <div class="steps">
+
+    <div class="step">
+      <div class="num">1</div>
+      <span class="who">Contract Created</span>
+      <h2>The contract comes into being</h2>
+      <p>
+        Once a winner has been chosen in Sourcing, the contract is created for us automatically. The
+        request number becomes the contract number — so <b>PR-2026-101</b> becomes <b>CNT-2026-101</b>.
+        Occasionally we sign something outside that route, and then we type it in by hand.
+      </p>
+      <div class="why"><b>Why it matters:</b> keeping the same number means we can always walk backwards from a payment to the original request that authorised it.</div>
+      <div class="sys">
+        <p class="sys-label">In the system</p>
+        <p class="path">Procurement › Contract Management</p>
+        <p>Contracts that came from Sourcing are <b>already in the list</b>. For anything else, click <span class="btn">Register Contract</span> to open a five-step form.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num">2</div>
+      <span class="who">Setting It Up</span>
+      <h2>We fill in the details</h2>
+      <p>
+        A contract needs more than a number. We record who is looking after it, what the supplier
+        must hand over and by when, how much we pay at each stage, and we attach the signed
+        document. We can name up to three coordinators — the people who get every alert about it.
+      </p>
+      <div class="why"><b>Why it matters:</b> everything later in this flow — deliverables, payments, reminders, close-out — is measured against what we write down here.</div>
+      <div class="sys">
+        <p class="sys-label">In the system</p>
+        <p>The five steps of the form are: <b>1</b> who and what · <b>2</b> money terms · <b>3</b> what they must deliver and when · <b>4</b> the payment schedule · <b>5</b> the signed contract and up to three coordinators.</p>
+        <p>Choose <b>Lump Sum</b> for a fixed price, or <b>Time Based</b> for a daily/weekly/monthly rate — which then asks for a maximum amount it can never exceed.</p>
+        <p>If a contract came over from Sourcing with nothing filled in, the screen shows <span class="btn">Complete contract setup</span>, which opens the same form.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num">3</div>
+      <span class="who">Monitoring</span>
+      <h2>We watch the dates</h2>
+      <p>
+        From now on the system watches the calendar so nobody has to remember. It chases the
+        coordinator a week before something is due, and again when it's late. If an approval sits
+        untouched for two days it sends a reminder; after three it tells someone more senior.
+      </p>
+      <div class="why"><b>Why it matters:</b> most contract problems are just things quietly going past their date. Nothing here depends on a person remembering.</div>
+      <div class="sys">
+        <p class="sys-label">In the system</p>
+        <p class="path">Procurement › Contract Management</p>
+        <p>The top of the screen shows alert cards: contracts expiring, deliverables overdue, invoices waiting, variations pending.</p>
+        <p class="path">Procurement › Notifications &amp; Reminders</p>
+        <p>Everything the system has sent, and everything it's currently chasing. The <b>Reminder queue</b> tab shows who is being waited on and what has been escalated.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num">4</div>
+      <span class="who">Deliverables</span>
+      <h2>The supplier delivers, and we file the proof</h2>
+      <p>
+        The supplier hands over the work. The contract coordinator uploads the evidence — the
+        report, the delivery note, the inspection form, the photos. For goods and works they also
+        tick that the items were received and passed inspection.
+      </p>
+      <div class="why"><b>Why it matters:</b> this is the evidence that later justifies paying the bill. No evidence, no payment.</div>
+      <div class="sys">
+        <p class="sys-label">In the system</p>
+        <p class="path">Procurement › Contract Management › open the contract › Deliverables</p>
+        <p>Click <span class="btn">Upload Deliverable</span>, choose the milestone, attach the real files, and submit.</p>
+        <p>Whatever you choose, it saves as <b>Submitted</b> — never as accepted. Only somebody else can accept it, which is step 5.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num">5</div>
+      <span class="who">Acceptance</span>
+      <h2>A second person checks it</h2>
+      <p>
+        Someone other than the person who uploaded it opens the evidence and decides: accept it, put
+        it under review, or reject it. Rejecting requires them to write down what's wrong, and it
+        goes back to the coordinator to fix.
+      </p>
+      <div class="why"><b>Why it matters:</b> one person cannot both do the work and sign it off. This is the single most important control in the whole contract flow.</div>
+      <div class="sys">
+        <p class="sys-label">In the system</p>
+        <p>On the same <b>Deliverables</b> tab: <span class="btn">Accept</span>, <span class="btn">Under Review</span> or <span class="btn">Reject</span>.</p>
+        <p>If you try to accept something you uploaded yourself, the system stops you and says so plainly. Switch to another user with the name badge at the top-right.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num">6</div>
+      <span class="who">Invoice Received</span>
+      <h2>The bill arrives</h2>
+      <p>
+        The supplier sends their invoice — either through the portal, which files it against the
+        contract by itself, or by email, in which case the coordinator types it in.
+      </p>
+      <div class="why"><b>Why it matters:</b> however it arrives, it lands in the same queue and follows the same rules. There's no side door.</div>
+      <div class="sys">
+        <p class="sys-label">In the system</p>
+        <p class="path">Procurement › Contract Management › open the contract › Invoices &amp; Payments</p>
+        <p>Click <span class="btn">Record Invoice</span> for one that came by email. Or the supplier does it themselves at <b>Vendor Portal › Contracts &amp; Invoices › Submit invoice</b>.</p>
+        <p>The system refuses a duplicate invoice number, and refuses any invoice that would take the total above what the contract allows — it tells you to raise a variation first.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num">7</div>
+      <span class="who">Invoice Approval</span>
+      <h2>Four checks, then we pay</h2>
+      <p>
+        The bill passes through four different people, in order. Each one has to finish before the
+        next can start.
+      </p>
+      <div class="relay">
+        <div><strong>1. Coordinator</strong><span>Matches it to accepted work</span></div>
+        <div><strong>2. Procurement</strong><span>Checks it against the contract</span></div>
+        <div><strong>3. Supervisor</strong><span>Gives final approval</span></div>
+        <div><strong>4. Finance</strong><span>Pays and records it</span></div>
+      </div>
+      <div class="why"><b>Why it matters:</b> money only leaves after four separate people have each confirmed their own part.</div>
+      <div class="sys">
+        <p class="sys-label">In the system</p>
+        <p>On the <b>Invoices &amp; Payments</b> tab each invoice shows a stage strip, and <b>only the button for the stage it's actually at</b>: <span class="btn">Match &amp; Review</span> → <span class="btn">Procurement Review</span> → <span class="btn">Supervisor Approval</span> → <span class="btn">Process Payment</span>.</p>
+        <p>At any stage, <span class="btn">Query</span> sends the bill back to the supplier with a written reason; <span class="btn">Resubmit</span> puts a corrected one back at the start.</p>
+        <p class="path">Procurement › Invoices</p>
+        <p>The same queue across every contract, for whoever is working through a stack of them.</p>
+      </div>
+      <div class="blocks">
+        <b>What the system will not let you do</b>
+        <ul>
+          <li>Pay a bill that hasn't been through all four stages.</li>
+          <li>Approve a bill that isn't linked to a deliverable we already <em>accepted</em>.</li>
+          <li>Skip the "this meets the contract specification" confirmation.</li>
+          <li>Give supervisor approval if you were the one who did the coordinator review.</li>
+          <li>Record a payment without a bank reference number.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num">8</div>
+      <span class="who">Change Management</span>
+      <h2>If something needs to change</h2>
+      <p>
+        Sometimes the job grows, or runs late, or the scope shifts. That's allowed — but a change to
+        a signed contract goes through <b>the same approvals as a brand new purchase</b>: department
+        head, Procurement, Finance, then the COO. Once all four agree, the system rewrites the
+        contract value and the end date by itself and files a numbered amendment.
+      </p>
+      <div class="why"><b>Why it matters:</b> contracts can't quietly grow. Every increase is approved by four people and permanently recorded as Amendment 1, 2, 3 and so on.</div>
+      <div class="sys">
+        <p class="sys-label">In the system</p>
+        <p class="path">Procurement › Contract Management › open the contract › Change Management</p>
+        <p>Click <span class="btn">New Change Request</span>, tick what's changing (scope, time, cost, terms — you can tick more than one), write the reason, and <b>attach the supporting document</b>. The form won't submit without one.</p>
+        <p>As you type "2 weeks" or "3 months", the screen shows you the new end date and the new contract value before you send it.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num">9</div>
+      <span class="who">Performance &amp; Close-Out</span>
+      <h2>We score them, then close the job</h2>
+      <p>
+        At the end (and halfway through, for long jobs) we score the supplier out of 10 on quality,
+        timeliness, cost control, following the rules, and professionalism. The coordinator scores;
+        a supervisor approves. Then we run the closing checklist, print the certificate, and shut
+        the contract.
+      </p>
+      <div class="why"><b>Why it matters:</b> a score below 5 flags the supplier automatically, and next time they need management permission before we can use them. The rating is what makes good behaviour worth something.</div>
+      <div class="sys">
+        <p class="sys-label">In the system</p>
+        <p class="path">… open the contract › Performance</p>
+        <p>Pick <b>Mid-Term</b> or <b>Final</b>, slide the five scores, add a supervisor, submit. The score appears on the supplier's profile in Supplier Management on its own — you don't copy it across.</p>
+        <p class="path">… open the contract › Close-Out</p>
+        <p>The checklist ticks itself where it can: all deliverables accepted, all invoices paid, final evaluation done, signed contract on file. Only "Procurement confirms compliance" is a manual tick. Generate the <span class="btn">Certificate of Completion</span> and <span class="btn">Final Closure Report</span>, then <span class="btn">Close Contract</span>.</p>
+        <p>If something is outstanding, the button refuses and <b>tells you exactly what's missing</b> — for example "2 invoices not yet paid: INV-DV-004…".</p>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="loop">
+    <h2>The job is done — and it feeds the next one</h2>
+    <p>
+      The closed contract stays on file with its full history, and the supplier's score follows them
+      into the next tender. Good performance earns more work; poor performance needs management
+      approval before they can bid again.
+    </p>
+  </div>
+
+  <div class="tip">
+    <p>
+      <b>Demonstrating this?</b> The invoice chain in step 7 is the best thing to show. Start as Ama
+      (coordinator), switch to Felix (Procurement), then James (supervisor), then Abena (Finance) —
+      using the name badge at the top-right. Try clicking the buttons out of order first; the refusals
+      are the point.
+    </p>
+  </div>
+
+  <div class="plain">
+    <h2>The words people use</h2>
+    <dl>
+      <div><dt>Contract coordinator</dt><dd>The person looking after the contract day to day. Up to three per contract.</dd></div>
+      <div><dt>Deliverable</dt><dd>A thing the supplier promised to hand over — a report, goods, finished work.</dd></div>
+      <div><dt>Milestone</dt><dd>A point in the contract where something is due.</dd></div>
+      <div><dt>Lump sum</dt><dd>One fixed price for the whole job.</dd></div>
+      <div><dt>Time based</dt><dd>Paid per day, week or month, up to a maximum.</dd></div>
+      <div><dt>Invoice</dt><dd>The bill from the supplier.</dd></div>
+      <div><dt>Query</dt><dd>Sending a bill back to be corrected.</dd></div>
+      <div><dt>Variation / amendment</dt><dd>An approved change to a signed contract.</dd></div>
+      <div><dt>Close-out</dt><dd>Finishing the contract properly and filing everything.</dd></div>
+      <div><dt>Audit trail</dt><dd>The permanent record of who did what, and when.</dd></div>
+    </dl>
+  </div>
+
+</div>
+
+</body>
+</html>

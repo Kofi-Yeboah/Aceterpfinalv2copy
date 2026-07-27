@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Buying Something — Swimlane Flow</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛒</text></svg>">
+
+</head>
+<body>
+<a href="./index.html" style="position:fixed;top:14px;left:14px;z-index:99;font:600 12px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;text-decoration:none;color:#fff;background:#1f7a4d;padding:7px 13px;border-radius:999px;box-shadow:0 2px 10px rgba(0,0,0,.18)">&larr; All documents</a>
+<style>
+  :root {
+    --page: #faf7f0;
+    --lane-head: #2b2b2b;
+    --lane-head-text: #ffffff;
+    --lane-line: #ddd8cc;
+    --lane-alt: #f4f0e6;
+    --stroke: #33383a;
+    --ink: #1b1f21;
+    --muted: #6e767a;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --page: #191c1e; --lane-head: #0e1012; --lane-line: #2f3437; --lane-alt: #1e2224; --stroke: #99a3a7; --ink: #e6eaec; --muted: #8d979b; }
+  }
+  :root[data-theme="dark"] { --page: #191c1e; --lane-head: #0e1012; --lane-line: #2f3437; --lane-alt: #1e2224; --stroke: #99a3a7; --ink: #e6eaec; --muted: #8d979b; }
+  :root[data-theme="light"] { --page: #faf7f0; --lane-head: #2b2b2b; --lane-line: #ddd8cc; --lane-alt: #f4f0e6; --stroke: #33383a; --ink: #1b1f21; --muted: #6e767a; }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--ink); font-family: var(--sans); line-height: 1.5; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 40px 20px 60px; }
+
+  h1 { font-size: clamp(1.6rem, 4vw, 2.1rem); font-weight: 750; letter-spacing: -0.02em; margin: 0 0 8px; }
+  .lede { color: var(--muted); margin: 0 0 20px; max-width: 62ch; font-size: 0.98rem; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 16px; margin: 0 0 22px; padding: 12px 16px; border: 1px solid var(--lane-line); border-radius: 10px; background: var(--lane-alt); }
+  .legend span { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--muted); }
+  .sw { width: 22px; height: 13px; border: 1.5px solid var(--stroke); flex-shrink: 0; }
+  .sw.start { border-radius: 7px; background: #b7e585; }
+  .sw.proc { border-radius: 3px; background: #b3aaf2; }
+  .sw.dec { background: #f7dc6f; transform: rotate(45deg) scale(.78); }
+  .sw.end { border-radius: 7px; background: #f5867e; }
+  .sw.dash { background: none; border-style: dashed; }
+
+  .scroller { overflow-x: auto; border: 1px solid var(--lane-line); border-radius: 12px; background: var(--page); }
+  svg { display: block; min-width: 1040px; }
+
+  .lane-title { font: 600 15px var(--sans); fill: var(--lane-head-text); }
+  .node-title { font: 600 13px var(--sans); fill: #17191b; }
+  .node-path { font: 10.5px var(--mono); fill: #4a4f52; }
+  .edge-label { font: 600 11.5px var(--sans); fill: var(--muted); }
+  .step-num { font: 700 11px var(--sans); fill: #ffffff; }
+  .note { font: italic 11px var(--sans); fill: var(--muted); }
+
+  .flow { fill: none; stroke: var(--stroke); stroke-width: 1.7; }
+  .flow.dashed { stroke-dasharray: 6 5; }
+
+  footer { margin-top: 22px; font-size: 12.5px; color: var(--muted); }
+  footer b { color: var(--ink); }
+
+  @media print { body { background: #fff; } .scroller { border: none; } svg { min-width: 0; width: 100%; } }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+
+  <h1>Buying something — who does what, and where</h1>
+  <p class="lede">
+    The ten steps as a swimlane. Each lane is a role, each box names the screen the work is done on.
+  </p>
+
+  <div class="legend">
+    <span><i class="sw start"></i> Start</span>
+    <span><i class="sw proc"></i> Action</span>
+    <span><i class="sw dec"></i> Decision</span>
+    <span><i class="sw end"></i> End</span>
+    <span><i class="sw dash"></i> Prerequisite</span>
+  </div>
+
+  <div class="scroller">
+  <svg viewBox="0 0 1740 2360" role="img" aria-labelledby="ttl desc">
+    <title id="ttl">Swimlane flow diagram of the ACET procurement process</title>
+    <desc id="desc">Ten steps across five lanes — Requestor and Coordinator, Approvers, Procurement, Finance, and Supplier — from supplier registration and annual planning through requisition, approval, sourcing, sealed bidding, award, delivery, invoicing and close-out. Each box names the screen in the system where the step is performed.</desc>
+
+    <defs>
+      <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--stroke)"/>
+      </marker>
+    </defs>
+
+    <!-- Lane backgrounds -->
+    <rect x="20" y="56" width="336" height="2280" fill="var(--lane-alt)"/>
+    <rect x="692" y="56" width="336" height="2280" fill="var(--lane-alt)"/>
+    <rect x="1364" y="56" width="336" height="2280" fill="var(--lane-alt)"/>
+
+    <!-- Lane header band -->
+    <rect x="20" y="0" width="1680" height="56" fill="var(--lane-head)"/>
+    <text class="lane-title" x="188"  y="34" text-anchor="middle">Requestor / Coordinator</text>
+    <text class="lane-title" x="524"  y="34" text-anchor="middle">Approvers</text>
+    <text class="lane-title" x="860"  y="34" text-anchor="middle">Procurement</text>
+    <text class="lane-title" x="1196" y="34" text-anchor="middle">Finance</text>
+    <text class="lane-title" x="1532" y="34" text-anchor="middle">Supplier</text>
+
+    <!-- Lane dividers -->
+    <g stroke="var(--lane-line)" stroke-width="1.5">
+      <line x1="356"  y1="56" x2="356"  y2="2336"/>
+      <line x1="692"  y1="56" x2="692"  y2="2336"/>
+      <line x1="1028" y1="56" x2="1028" y2="2336"/>
+      <line x1="1364" y1="56" x2="1364" y2="2336"/>
+      <rect x="20" y="56" width="1680" height="2280" fill="none"/>
+    </g>
+
+    <!-- ══════════ EDGES (drawn first so shapes sit on top) ══════════ -->
+    <g class="flow" marker-end="url(#arrow)">
+      <!-- 1 → 2 : supplier registers, procurement screens it -->
+      <path d="M 1532 170 V 200 H 860 V 224"/>
+      <!-- 2 ⇢ 11 : must be an approved vendor before bidding (prerequisite) -->
+      <path class="flow dashed" d="M 980 271 H 1330 V 1471 H 1410" marker-end="url(#arrow)"/>
+      <!-- 3 → 4 -->
+      <path d="M 188 430 V 460 H 860 V 484"/>
+      <!-- 4 Yes → 5 -->
+      <path d="M 860 578 V 600 H 188 V 624"/>
+      <!-- 4 No → back to 3 -->
+      <path d="M 760 534 H 40 V 400 H 66"/>
+      <!-- 5 → 6 -->
+      <path d="M 188 712 V 756"/>
+      <!-- 6 No → back to 5 -->
+      <path d="M 88 806 H 40 V 671 H 66"/>
+      <!-- 6 Yes → 7 -->
+      <path d="M 188 850 V 872 H 524 V 894"/>
+      <!-- 7 → 8 -->
+      <path d="M 524 982 V 1024"/>
+      <!-- 8 No → back to 5 -->
+      <path d="M 424 1074 H 30 V 692 H 66"/>
+      <!-- 8 Yes → 9 -->
+      <path d="M 524 1118 V 1142 H 860 V 1164"/>
+      <!-- 9 → 10 -->
+      <path d="M 860 1252 V 1294"/>
+      <!-- 10 → 11 -->
+      <path d="M 860 1382 V 1405 H 1532 V 1424"/>
+      <!-- 11 → 12 -->
+      <path d="M 1532 1512 V 1535 H 860 V 1554"/>
+      <!-- 12 → 13 -->
+      <path d="M 860 1642 V 1665 H 188 V 1684"/>
+      <!-- 13 → 14 -->
+      <path d="M 188 1772 V 1795 H 524 V 1814"/>
+      <!-- 14 No → back to 13 -->
+      <path d="M 424 1864 H 30 V 1731 H 66"/>
+      <!-- 14 Yes → 15 -->
+      <path d="M 624 1864 H 1196 V 1954"/>
+      <!-- 15 → 16 -->
+      <path d="M 1196 2042 V 2065 H 860 V 2084"/>
+      <!-- 16 → 17 -->
+      <path d="M 860 2172 V 2195 H 188 V 2214"/>
+    </g>
+
+    <!-- Edge labels -->
+    <text class="edge-label" x="878"  y="596"  >Yes</text>
+    <text class="edge-label" x="742"  y="524"  text-anchor="end">No</text>
+    <text class="edge-label" x="206"  y="868"  >Yes</text>
+    <text class="edge-label" x="82"   y="796"  text-anchor="end">No</text>
+    <text class="edge-label" x="542"  y="1138" >Yes</text>
+    <text class="edge-label" x="406"  y="1064" text-anchor="end">No</text>
+    <text class="edge-label" x="646"  y="1856" >Yes</text>
+    <text class="edge-label" x="406"  y="1854" text-anchor="end">No</text>
+    <text class="note"       x="1338" y="800"  text-anchor="end">must be an approved vendor</text>
+
+    <!-- ══════════ NODES ══════════ -->
+
+    <!-- 1 — Supplier registers (START) -->
+    <g>
+      <rect x="1412" y="110" width="240" height="60" rx="30" fill="#b7e585" stroke="var(--stroke)" stroke-width="1.7"/>
+      <circle cx="1412" cy="110" r="13" fill="#1f7a4d"/><text class="step-num" x="1412" y="114" text-anchor="middle">1</text>
+      <text class="node-title" x="1532" y="136" text-anchor="middle">Register on the portal</text>
+      <text class="node-path"  x="1532" y="152" text-anchor="middle">Vendor Portal › Register</text>
+    </g>
+
+    <!-- 2 — Procurement approves registration -->
+    <g>
+      <rect x="740" y="230" width="240" height="82" rx="10" fill="#b3aaf2" stroke="var(--stroke)" stroke-width="1.7"/>
+      <text class="node-title" x="860" y="262" text-anchor="middle">Screen &amp; approve vendor</text>
+      <text class="node-path"  x="860" y="281" text-anchor="middle">Supplier Management ›</text>
+      <text class="node-path"  x="860" y="295" text-anchor="middle">Pending Review › Approve</text>
+    </g>
+
+    <!-- 3 — Add plan item (START) -->
+    <g>
+      <rect x="68" y="370" width="240" height="60" rx="30" fill="#b7e585" stroke="var(--stroke)" stroke-width="1.7"/>
+      <circle cx="68" cy="370" r="13" fill="#1f7a4d"/><text class="step-num" x="68" y="374" text-anchor="middle">2</text>
+      <text class="node-title" x="188" y="396" text-anchor="middle">Add plan item</text>
+      <text class="node-path"  x="188" y="412" text-anchor="middle">Purchase Plan › Add Plan Item</text>
+    </g>
+
+    <!-- 4 — Plan review decision -->
+    <g>
+      <polygon points="860,490 990,534 860,578 730,534" fill="#f7dc6f" stroke="var(--stroke)" stroke-width="1.7"/>
+      <text class="node-title" x="860" y="529" text-anchor="middle">Procurement +</text>
+      <text class="node-title" x="860" y="545" text-anchor="middle">Finance approve?</text>
+    </g>
+
+    <!-- 5 — Raise requisition -->
+    <g>
+      <rect x="68" y="630" width="240" height="82" rx="10" fill="#b3aaf2" stroke="var(--stroke)" stroke-width="1.7"/>
+      <circle cx="68" cy="630" r="13" fill="#1f7a4d"/><text class="step-num" x="68" y="634" text-anchor="middle">3</text>
+      <text class="node-title" x="188" y="662" text-anchor="middle">Raise requisition</text>
+      <text class="node-path"  x="188" y="681" text-anchor="middle">Purchase Requisitions ›</text>
+      <text class="node-path"  x="188" y="695" text-anchor="middle">Add New Requisition</text>
+    </g>
+
+    <!-- 6 — Validation gate -->
+    <g>
+      <polygon points="188,762 288,806 188,850 88,806" fill="#f7dc6f" stroke="var(--stroke)" stroke-width="1.7"/>
+      <text class="node-title" x="188" y="802" text-anchor="middle">Validation</text>
+      <text class="node-title" x="188" y="818" text-anchor="middle">passed?</text>
+    </g>
+
+    <!-- 7 — Approval chain -->
+    <g>
+      <rect x="404" y="900" width="240" height="82" rx="10" fill="#b3aaf2" stroke="var(--stroke)" stroke-width="1.7"/>
+      <circle cx="404" cy="900" r="13" fill="#1f7a4d"/><text class="step-num" x="404" y="904" text-anchor="middle">4</text>
+      <text class="node-title" x="524" y="928" text-anchor="middle">Dept Head → Procurement</text>
+      <text class="node-title" x="524" y="944" text-anchor="middle">+ Finance → COO</text>
+      <text class="node-path"  x="524" y="965" text-anchor="middle">Approvals › Purchase Requisitions</text>
+    </g>
+
+    <!-- 8 — Approved? -->
+    <g>
+      <polygon points="524,1030 624,1074 524,1118 424,1074" fill="#f7dc6f" stroke="var(--stroke)" stroke-width="1.7"/>
+      <text class="node-title" x="524" y="1079" text-anchor="middle">Approved?</text>
+    </g>
+
+    <!-- 9 — Sourcing case -->
+    <g>
+      <rect x="740" y="1170" width="240" height="82" rx="10" fill="#b3aaf2" stroke="var(--stroke)" stroke-width="1.7"/>
+      <circle cx="740" cy="1170" r="13" fill="#1f7a4d"/><text class="step-num" x="740" y="1174" text-anchor="middle">5</text>
+      <text class="node-title" x="860" y="1198" text-anchor="middle">Sourcing case created</text>
+      <text class="node-title" x="860" y="1214" text-anchor="middle">automatically</text>
+      <text class="node-path"  x="860" y="1235" text-anchor="middle">Sourcing</text>
+    </g>
+
+    <!-- 10 — Publish / invite -->
+    <g>
+      <rect x="740" y="1300" width="240" height="82" rx="10" fill="#b3aaf2" stroke="var(--stroke)" stroke-width="1.7"/>
+      <circle cx="740" cy="1300" r="13" fill="#1f7a4d"/><text class="step-num" x="740" y="1304" text-anchor="middle">6</text>
+      <text class="node-title" x="860" y="1332" text-anchor="middle">Publish tender or</text>
+      <text class="node-title" x="860" y="1348" text-anchor="middle">invite bidders</text>
+      <text class="node-path"  x="860" y="1369" text-anchor="middle">Sourcing › case › Publish Now</text>
+    </g>
+
+    <!-- 11 — Sealed bid -->
+    <g>
+      <rect x="1412" y="1430" width="240" height="82" rx="10" fill="#b3aaf2" stroke="var(--stroke)" stroke-width="1.7"/>
+      <text class="node-title" x="1532" y="1462" text-anchor="middle">Submit sealed bid</text>
+      <text class="node-path"  x="1532" y="1481" text-anchor="middle">Vendor Portal ›</text>
+      <text class="node-path"  x="1532" y="1495" text-anchor="middle">Open Tenders › View &amp; bid</text>
+    </g>
+
+    <!-- 12 — Open, evaluate, award -->
+    <g>
+      <rect x="740" y="1560" width="240" height="82" rx="10" fill="#b3aaf2" stroke="var(--stroke)" stroke-width="1.7"/>
+      <circle cx="740" cy="1560" r="13" fill="#1f7a4d"/><text class="step-num" x="740" y="1564" text-anchor="middle">7</text>
+      <text class="node-title" x="860" y="1592" text-anchor="middle">Open envelopes,</text>
+      <text class="node-title" x="860" y="1608" text-anchor="middle">evaluate, award</text>
+      <text class="node-path"  x="860" y="1629" text-anchor="middle">Sourcing › case › Award Contract</text>
+    </g>
+
+    <!-- 13 — Upload deliverable -->
+    <g>
+      <rect x="68" y="1690" width="240" height="82" rx="10" fill="#b3aaf2" stroke="var(--stroke)" stroke-width="1.7"/>
+      <circle cx="68" cy="1690" r="13" fill="#1f7a4d"/><text class="step-num" x="68" y="1694" text-anchor="middle">8</text>
+      <text class="node-title" x="188" y="1722" text-anchor="middle">Upload deliverable</text>
+      <text class="node-path"  x="188" y="1741" text-anchor="middle">Contract Management ›</text>
+      <text class="node-path"  x="188" y="1755" text-anchor="middle">Deliverables › Upload</text>
+    </g>
+
+    <!-- 14 — Second reviewer -->
+    <g>
+      <polygon points="524,1820 624,1864 524,1908 424,1864" fill="#f7dc6f" stroke="var(--stroke)" stroke-width="1.7"/>
+      <text class="node-title" x="524" y="1859" text-anchor="middle">Accepted by a</text>
+      <text class="node-title" x="524" y="1875" text-anchor="middle">2nd reviewer?</text>
+    </g>
+
+    <!-- 15 — Invoice chain -->
+    <g>
+      <rect x="1076" y="1960" width="240" height="82" rx="10" fill="#b3aaf2" stroke="var(--stroke)" stroke-width="1.7"/>
+      <circle cx="1076" cy="1960" r="13" fill="#1f7a4d"/><text class="step-num" x="1076" y="1964" text-anchor="middle">9</text>
+      <text class="node-title" x="1196" y="1988" text-anchor="middle">Four approvals,</text>
+      <text class="node-title" x="1196" y="2004" text-anchor="middle">then pay</text>
+      <text class="node-path"  x="1196" y="2025" text-anchor="middle">Invoices › Process Payment</text>
+    </g>
+
+    <!-- 16 — Score and close -->
+    <g>
+      <rect x="740" y="2090" width="240" height="82" rx="10" fill="#b3aaf2" stroke="var(--stroke)" stroke-width="1.7"/>
+      <circle cx="740" cy="2090" r="13" fill="#1f7a4d"/><text class="step-num" x="740" y="2094" text-anchor="middle">10</text>
+      <text class="node-title" x="860" y="2122" text-anchor="middle">Score supplier,</text>
+      <text class="node-title" x="860" y="2138" text-anchor="middle">close the contract</text>
+      <text class="node-path"  x="860" y="2159" text-anchor="middle">Performance, then Close-Out</text>
+    </g>
+
+    <!-- 17 — END -->
+    <g>
+      <rect x="68" y="2220" width="240" height="60" rx="30" fill="#f5867e" stroke="var(--stroke)" stroke-width="1.7"/>
+      <text class="node-title" x="188" y="2246" text-anchor="middle">Contract closed</text>
+      <text class="node-path"  x="188" y="2262" text-anchor="middle">Rating feeds the next tender</text>
+    </g>
+
+  </svg>
+  </div>
+
+  <footer>
+    <b>Reading the loops:</b> every "No" goes back to the person who raised the work, never forward.
+    A rejected plan line returns to the requestor, a failed validation blocks submission, a rejected
+    requisition comes back for correction, and a deliverable the second reviewer won't accept goes
+    back to the coordinator. <b>Step 5 has no owner action</b> — the sourcing case is created by the
+    system the moment the requisition clears its approvals.
+  </footer>
+
+</div>
+
+</body>
+</html>

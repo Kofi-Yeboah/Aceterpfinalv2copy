@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>How ACET Manages Suppliers — The Simple Version</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤝</text></svg>">
+
+</head>
+<body>
+<a href="./index.html" style="position:fixed;top:14px;left:14px;z-index:99;font:600 12px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;text-decoration:none;color:#fff;background:#1f7a4d;padding:7px 13px;border-radius:999px;box-shadow:0 2px 10px rgba(0,0,0,.18)">&larr; All documents</a>
+<style>
+  :root {
+    --bg: #fbfbfc; --card: #ffffff; --ink: #161a1d; --ink-soft: #4a5459;
+    --muted: #7b868b; --accent: #14706b; --accent-soft: #e3f0ef;
+    --line: #e2e6e8; --why-bg: #f2f7f6; --sys-bg: #f2f5f8; --sys-line: #d3dde5; --sys-ink: #23485f;
+    --stop: #a33a32; --stop-bg: #f9ecea; --warn: #8a5d0f; --warn-bg: #f8f2e4;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #16181a; --card: #1e2124; --ink: #e9edee; --ink-soft: #b6c0c3;
+      --muted: #8c979b; --accent: #5cbdb5; --accent-soft: #14312f;
+      --line: #2c3134; --why-bg: #1f2a29; --sys-bg: #1c252b; --sys-line: #2f4150; --sys-ink: #96c4dd;
+      --stop: #e08a80; --stop-bg: #2e1d1b; --warn: #d6a84a; --warn-bg: #2c2416;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #16181a; --card: #1e2124; --ink: #e9edee; --ink-soft: #b6c0c3;
+    --muted: #8c979b; --accent: #5cbdb5; --accent-soft: #14312f;
+    --line: #2c3134; --why-bg: #1f2a29; --sys-bg: #1c252b; --sys-line: #2f4150; --sys-ink: #96c4dd;
+    --stop: #e08a80; --stop-bg: #2e1d1b; --warn: #d6a84a; --warn-bg: #2c2416;
+  }
+  :root[data-theme="light"] {
+    --bg: #fbfbfc; --card: #ffffff; --ink: #161a1d; --ink-soft: #4a5459;
+    --muted: #7b868b; --accent: #14706b; --accent-soft: #e3f0ef;
+    --line: #e2e6e8; --why-bg: #f2f7f6; --sys-bg: #f2f5f8; --sys-line: #d3dde5; --sys-ink: #23485f;
+    --stop: #a33a32; --stop-bg: #f9ecea; --warn: #8a5d0f; --warn-bg: #f8f2e4;
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 17px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 740px; margin: 0 auto; padding: 0 24px 80px; }
+  header { padding: 64px 0 8px; }
+  h1 { font-size: clamp(2rem, 6vw, 2.7rem); line-height: 1.1; letter-spacing: -0.02em; font-weight: 750; margin: 0 0 14px; text-wrap: balance; }
+  .lede { font-size: 1.15rem; color: var(--ink-soft); margin: 0; max-width: 44ch; }
+
+  .chain { display: flex; flex-wrap: wrap; gap: 8px; margin: 36px 0 8px; padding: 20px; background: var(--accent-soft); border-radius: 16px; }
+  .chain span { font-size: 0.82rem; font-weight: 650; color: var(--accent); background: var(--card); padding: 6px 12px; border-radius: 999px; white-space: nowrap; }
+
+  .steps { margin-top: 44px; display: flex; flex-direction: column; }
+  .step { position: relative; padding-left: 62px; padding-bottom: 38px; }
+  .step:last-child { padding-bottom: 0; }
+  .step::before { content: ""; position: absolute; left: 21px; top: 46px; bottom: 0; width: 2px; background: var(--line); }
+  .step:last-child::before { display: none; }
+  .num { position: absolute; left: 0; top: 0; width: 44px; height: 44px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; font-size: 1.05rem; font-weight: 750; font-variant-numeric: tabular-nums; }
+  .step h2 { font-size: 1.32rem; font-weight: 700; letter-spacing: -0.01em; margin: 6px 0 4px; text-wrap: balance; }
+  .who { display: inline-block; font-size: 0.75rem; font-weight: 650; color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 10px; }
+  .step p { margin: 0 0 12px; color: var(--ink-soft); }
+
+  .why { background: var(--why-bg); border-radius: 12px; padding: 13px 16px; font-size: 0.95rem; color: var(--ink-soft); }
+  .why b { color: var(--ink); font-weight: 700; }
+
+  .sys { margin-top: 12px; background: var(--sys-bg); border: 1px solid var(--sys-line); border-radius: 12px; padding: 14px 16px; }
+  .sys-label { font-size: 0.7rem; font-weight: 750; letter-spacing: 0.09em; text-transform: uppercase; color: var(--sys-ink); margin: 0 0 9px; }
+  .path { font-family: var(--mono); font-size: 0.83rem; color: var(--sys-ink); background: var(--card); border-radius: 7px; padding: 7px 10px; margin: 0 0 9px; overflow-x: auto; white-space: nowrap; }
+  .sys p { margin: 0 0 7px; font-size: 0.94rem; color: var(--ink-soft); }
+  .sys p:last-child { margin-bottom: 0; }
+  .btn { font-family: var(--mono); font-size: 0.85em; background: var(--card); border: 1px solid var(--sys-line); border-radius: 5px; padding: 1px 6px; white-space: nowrap; color: var(--ink); }
+
+  .flags { margin-top: 12px; background: var(--warn-bg); border-radius: 12px; padding: 13px 16px; font-size: 0.94rem; color: var(--ink-soft); }
+  .flags b { color: var(--warn); font-weight: 750; }
+  .flags ul { margin: 8px 0 0; padding-left: 20px; display: flex; flex-direction: column; gap: 5px; }
+
+  .gate { margin-top: 12px; background: var(--stop-bg); border-radius: 12px; padding: 13px 16px; font-size: 0.94rem; color: var(--ink-soft); }
+  .gate b { color: var(--stop); font-weight: 750; }
+  .gate ul { margin: 8px 0 0; padding-left: 20px; display: flex; flex-direction: column; gap: 5px; }
+
+  .lights { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin: 16px 0 4px; }
+  .lights div { border-radius: 12px; padding: 14px; border: 1px solid var(--line); background: var(--card); }
+  .lights strong { display: block; font-size: 0.86rem; font-weight: 750; margin-bottom: 3px; }
+  .lights span { font-size: 0.86rem; color: var(--ink-soft); }
+  .g strong { color: #2c6e49; } .a strong { color: var(--warn); } .r strong { color: var(--stop); }
+
+  .loop { margin-top: 46px; padding: 28px; background: var(--card); border: 2px solid var(--accent); border-radius: 18px; text-align: center; }
+  .loop h2 { font-size: 1.25rem; margin: 0 0 8px; font-weight: 700; }
+  .loop p { margin: 0; color: var(--ink-soft); }
+
+  .tip { margin-top: 30px; padding: 18px 20px; border-left: 3px solid var(--accent); background: var(--why-bg); border-radius: 0 12px 12px 0; }
+  .tip p { margin: 0; font-size: 0.96rem; color: var(--ink-soft); }
+
+  .plain { margin-top: 42px; padding-top: 26px; border-top: 1px solid var(--line); }
+  .plain h2 { font-size: 1rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); margin: 0 0 16px; font-weight: 700; }
+  .plain dl { margin: 0; display: grid; gap: 12px; }
+  .plain div { display: grid; grid-template-columns: 200px 1fr; gap: 14px; }
+  .plain dt { font-weight: 650; color: var(--ink); }
+  .plain dd { margin: 0; color: var(--ink-soft); font-size: 0.95rem; }
+
+  @media (max-width: 560px) {
+    .plain div { grid-template-columns: 1fr; gap: 2px; }
+    .step { padding-left: 52px; }
+    .num { width: 38px; height: 38px; font-size: 0.95rem; }
+    .step::before { left: 18px; top: 40px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<div class="wrap">
+
+  <header>
+    <h1>How ACET manages suppliers</h1>
+    <p class="lede">How a company or consultant gets onto our approved list, stays on it, and what happens if they let us down — in nine plain steps.</p>
+  </header>
+
+  <div class="chain">
+    <span>1 · They ask to join</span>
+    <span>2 · They send papers</span>
+    <span>3 · System screens them</span>
+    <span>4 · Procurement approves</span>
+    <span>5 · Finance checks the bank</span>
+    <span>6 · They can get work</span>
+    <span>7 · Papers stay current</span>
+    <span>8 · Every job is scored</span>
+    <span>9 · Slip up, get flagged</span>
+  </div>
+
+  <div class="steps">
+
+    <div class="step">
+      <div class="num">1</div>
+      <span class="who">Registration</span>
+      <h2>Someone asks to work with ACET</h2>
+      <p>
+        There are two doors in. Either the company registers itself on our online portal, or someone
+        in Procurement types their details in for them — usually because we met them offline and
+        want them on the list.
+      </p>
+      <div class="why"><b>Why it matters:</b> both doors lead to exactly the same checks. Nobody gets on the list by knowing someone.</div>
+      <div class="sys">
+        <p class="sys-label">In the system</p>
+        <p class="path">Procurement › Supplier Management › Onboard Firm</p>
+        <p>The button changes with the tab you're on — <span class="btn">Onboard Firm</span> or <span class="btn">Onboard Individual Consultant</span>. Fill in the details and finish with <span class="btn">Complete Onboarding</span>.</p>
+        <p class="path">Procurement › Vendor Portal › Register as a vendor or consultant</p>
+        <p>The supplier's own door. They fill in the same form themselves and submit it.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num">2</div>
+      <span class="who">Documents</span>
+      <h2>They send their papers</h2>
+      <p>
+        A <b>company</b> gives us its certificate of incorporation, tax clearance, SSNIT clearance,
+        VAT registration, references and a signed compliance form. An <b>individual consultant</b>
+        gives us a CV, a passport or national ID, proof of where they live, and bank confirmation.
+      </p>
+      <p>Each document that expires is recorded with its expiry date.</p>
+      <div class="why"><b>Why it matters:</b> the expiry date is the important bit — it's what lets the system chase them for a renewal later, instead of us finding out too late.</div>
+      <div class="sys">
+        <p class="sys-label">In the system</p>
+        <p>In the onboarding form there's a row per document. Attach the real file and type its expiry date next to it.</p>
+        <p>Suppliers can add or replace documents themselves any time at <b>Vendor Portal › My Profile › Compliance documents</b>.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num">3</div>
+      <span class="who">Automatic Screening</span>
+      <h2>The system checks them, on its own</h2>
+      <p>
+        As soon as the name is typed, four checks run without anyone asking. Is this already on our
+        list under a slightly different name? Is this name on a banned list? Are any documents
+        missing or already expired? And, based on all of that, how risky are they?
+      </p>
+      <div class="why"><b>Why it matters:</b> these are the checks people forget or skip when they're busy. The system doesn't get busy.</div>
+      <div class="sys">
+        <p class="sys-label">In the system</p>
+        <p>Warnings appear <b>as you type the legal name</b>, before you've even finished the form. When you submit, a summary panel lists everything found before the record is saved.</p>
+      </div>
+      <div class="flags">
+        <b>The four automatic checks</b>
+        <ul>
+          <li><b>Duplicate</b> — ignores "Ltd", "Inc", "Ghana" and so on, so "Tech Solutions Inc." and "Tech Solutions" are spotted as the same firm.</li>
+          <li><b>Banned list</b> — matches against donor and statutory debarment names. A hit raises an urgent alert and blocks approval.</li>
+          <li><b>Documents</b> — flags anything missing, expired, or expiring within 30 days.</li>
+          <li><b>Risk level</b> — Low, Medium or High, worked out from their score, their documents and their status. It's recalculated every time anything changes.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num">4</div>
+      <span class="who">Approval</span>
+      <h2>Procurement approves them</h2>
+      <p>
+        A new registration is not live. It sits waiting until someone in Procurement reads it, looks
+        at the warnings, and approves it. Only then does it get a vendor ID number and join the
+        approved list.
+      </p>
+      <div class="why"><b>Why it matters:</b> a supplier cannot be given work while they're still waiting. The system simply won't offer them in Sourcing.</div>
+      <div class="sys">
+        <p class="sys-label">In the system</p>
+        <p class="path">Procurement › Supplier Management › Pending Review</p>
+        <p>Everything waiting sits in this tab. Open one and click <span class="btn">Approve Registration</span>.</p>
+        <p>If a mandatory document is still missing, the button refuses and <b>names the missing documents</b> rather than just failing.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num">5</div>
+      <span class="who">Banking</span>
+      <h2>Finance confirms the bank account</h2>
+      <p>
+        Separately from Procurement, someone in Finance checks that the bank account really belongs
+        to this supplier, and marks it confirmed. Their name is recorded against it.
+      </p>
+      <div class="why"><b>Why it matters:</b> the people who choose a supplier are not the people who confirm where the money goes. That split is deliberate.</div>
+      <div class="sys">
+        <p class="sys-label">In the system</p>
+        <p class="path">Procurement › Supplier Management › open the vendor › Overview</p>
+        <p>In the banking panel, click <span class="btn">Validate Banking Details</span>. Only a Finance user sees this button working; everyone else sees it greyed out with the reason.</p>
+        <p>Account numbers stay masked everywhere else. If the account is later changed, the confirmation clears itself and Finance has to check it again.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num">6</div>
+      <span class="who">The Approved List</span>
+      <h2>Now they can be given work</h2>
+      <p>
+        From here on they appear in Sourcing when we're picking who to invite. Every time anyone
+        tries to invite or award them, the system re-checks them right at that moment — not once at
+        registration, but every single time.
+      </p>
+      <div class="why"><b>Why it matters:</b> a supplier who was fine in March but whose tax certificate lapsed in July gets caught in July, not next year.</div>
+      <div class="sys">
+        <p class="sys-label">In the system</p>
+        <p>Nothing to do here — this happens by itself inside Sourcing. The vendor picker shows each supplier's rating, category and status, sorted best first.</p>
+      </div>
+      <div class="lights">
+        <div class="g"><strong>Green — go ahead</strong><span>Active, papers current. Invite or award freely.</span></div>
+        <div class="a"><strong>Amber — needs sign-off</strong><span>Flagged, scored under 5, or a lapsed document. Management must approve first.</span></div>
+        <div class="r"><strong>Red — blocked</strong><span>Suspended, blacklisted, on a banned list, or still awaiting approval. Cannot be picked at all.</span></div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num">7</div>
+      <span class="who">Keeping Current</span>
+      <h2>Their papers have to stay current</h2>
+      <p>
+        Certificates expire. The system watches every expiry date and starts chasing before it
+        happens — the supplier gets asked for a fresh copy, and Procurement is told too.
+      </p>
+      <div class="why"><b>Why it matters:</b> nobody has to keep a spreadsheet of expiry dates. And an expired certificate doesn't quietly slip through — it turns them amber at step 6.</div>
+      <div class="sys">
+        <p class="sys-label">In the system</p>
+        <p class="path">Procurement › Supplier Management › Document Expiry</p>
+        <p>A live list of everyone with something expired, expiring, or never provided.</p>
+        <p class="path">Procurement › Notifications &amp; Reminders</p>
+        <p>Shows what the system is currently chasing and who it has already reminded.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num">8</div>
+      <span class="who">Performance</span>
+      <h2>Every job they do gets scored</h2>
+      <p>
+        At the end of each contract, the coordinator scores the supplier out of 10 on quality,
+        timeliness, cost control, following the rules, and professionalism. A supervisor approves the
+        score. It then appears on the supplier's profile by itself — nobody copies it across.
+      </p>
+      <div class="why"><b>Why it matters:</b> their headline rating is the average of every job they've ever done for us, not just the last one or somebody's opinion.</div>
+      <div class="sys">
+        <p class="sys-label">In the system</p>
+        <p class="path">Procurement › Supplier Management › open the vendor › Performance</p>
+        <p>Shows every evaluation with its contract number, who scored it, who approved it, and the score on each criterion.</p>
+        <p class="path">Procurement › Supplier Management › Performance</p>
+        <p>The league table — everyone ranked by score, so you can see at a glance who's worth using again.</p>
+        <p>Scores are created in <b>Contract Management › Performance</b> at the end of a job, not typed in here.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num">9</div>
+      <span class="who">Flag, Suspend, Blacklist</span>
+      <h2>If they let us down</h2>
+      <p>
+        A score below 5 flags them automatically — no one has to decide. On top of that, a person can
+        flag, suspend or blacklist a supplier for fraud, poor work or breaking the rules. Every one of
+        those needs a written reason, and it's kept for ever.
+      </p>
+      <p>A blocked supplier can ask to come back, but only Senior Management can let them.</p>
+      <div class="why"><b>Why it matters:</b> this is what makes the score mean something. A bad job actually costs a supplier their next contract.</div>
+      <div class="sys">
+        <p class="sys-label">In the system</p>
+        <p class="path">Procurement › Supplier Management › open the vendor</p>
+        <p>Buttons: <span class="btn">Flag Vendor</span>, <span class="btn">Suspend</span>, <span class="btn">Blacklist</span>. Each opens a box that won't submit without a reason.</p>
+        <p>To bring one back: <span class="btn">Request Reactivation</span>, then a Senior Management user clicks <span class="btn">Approve Reactivation</span>.</p>
+        <p class="path">Procurement › Supplier Management › Blocked</p>
+        <p>Everyone currently flagged, suspended or blacklisted — with the reason and who did it.</p>
+      </div>
+      <div class="gate">
+        <b>What blocking actually does</b>
+        <ul>
+          <li>They stop appearing in the Sourcing vendor picker.</li>
+          <li>They can't be invited to a tender or awarded a contract.</li>
+          <li>If they log into the portal, they're told plainly why they can't bid.</li>
+          <li>Only Senior Management can reverse it.</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="loop">
+    <h2>One list, checked every time</h2>
+    <p>
+      Everything above feeds one approved list, and Sourcing checks that list fresh at every
+      invitation and every award. That's the whole point: the checks aren't done once at
+      registration and then trusted for years.
+    </p>
+  </div>
+
+  <div class="tip">
+    <p>
+      <b>Demonstrating this?</b> Two things land well. Type "Global Trade Partners Ltd" into the
+      onboarding form and watch the banned-list warning appear before you finish typing. Then open
+      Kwame Construction Ltd — flagged, scored 4.7 — and try to invite them in Sourcing. The system
+      makes you get management approval first.
+    </p>
+  </div>
+
+  <div class="plain">
+    <h2>The words people use</h2>
+    <dl>
+      <div><dt>Vendor / supplier</dt><dd>A company or person we buy from.</dd></div>
+      <div><dt>Onboarding</dt><dd>Getting a new supplier registered and approved.</dd></div>
+      <div><dt>Vendor ID</dt><dd>Their number on our list, e.g. VND-1001.</dd></div>
+      <div><dt>Prequalified</dt><dd>Approved, papers current — allowed to bid.</dd></div>
+      <div><dt>Debarment / banned list</dt><dd>Names donors or governments have barred from public work.</dd></div>
+      <div><dt>Risk level</dt><dd>Low, Medium or High — worked out by the system, not typed in.</dd></div>
+      <div><dt>Flagged</dt><dd>A warning on their record. They can still work, with permission.</dd></div>
+      <div><dt>Suspended</dt><dd>Temporarily stopped, usually pending an investigation.</dd></div>
+      <div><dt>Blacklisted</dt><dd>Permanently stopped.</dd></div>
+    </dl>
+  </div>
+
+</div>
+
+</body>
+</html>

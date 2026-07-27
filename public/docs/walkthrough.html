@@ -1,0 +1,632 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Procurement — End-to-End Walkthrough</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✅</text></svg>">
+
+</head>
+<body>
+<a href="./index.html" style="position:fixed;top:14px;left:14px;z-index:99;font:600 12px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;text-decoration:none;color:#fff;background:#1f7a4d;padding:7px 13px;border-radius:999px;box-shadow:0 2px 10px rgba(0,0,0,.18)">&larr; All documents</a>
+<style>
+  :root {
+    --bg: #fbfbfc; --card: #fff; --ink: #14181a; --ink-soft: #4b555a; --muted: #7c868b;
+    --line: #e1e6e8; --accent: #1f7a4d; --accent-soft: #e7f2ec;
+    --sys-bg: #f3f6f9; --sys-line: #d2dde5; --sys-ink: #23485f;
+    --ok-bg: #edf7f1; --ok-line: #a8d7bd; --ok-ink: #17603c;
+    --stop-bg: #fdeceb; --stop-line: #f0b8b3; --stop-ink: #9d332b;
+    --warn-bg: #fdf6e6; --warn-line: #ecd39a; --warn-ink: #86611a;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #16181a; --card: #1e2124; --ink: #e9edee; --ink-soft: #b6c0c3; --muted: #8c979b;
+      --line: #2c3134; --accent: #5fc78e; --accent-soft: #1a2f24;
+      --sys-bg: #1c252b; --sys-line: #2f4150; --sys-ink: #96c4dd;
+      --ok-bg: #16281f; --ok-line: #2c5a41; --ok-ink: #7fcda3;
+      --stop-bg: #2c1c1a; --stop-line: #5b302b; --stop-ink: #e79289;
+      --warn-bg: #2a2416; --warn-line: #55482a; --warn-ink: #d7b467; }
+  }
+  :root[data-theme="dark"] { --bg: #16181a; --card: #1e2124; --ink: #e9edee; --ink-soft: #b6c0c3; --muted: #8c979b;
+    --line: #2c3134; --accent: #5fc78e; --accent-soft: #1a2f24;
+    --sys-bg: #1c252b; --sys-line: #2f4150; --sys-ink: #96c4dd;
+    --ok-bg: #16281f; --ok-line: #2c5a41; --ok-ink: #7fcda3;
+    --stop-bg: #2c1c1a; --stop-line: #5b302b; --stop-ink: #e79289;
+    --warn-bg: #2a2416; --warn-line: #55482a; --warn-ink: #d7b467; }
+  :root[data-theme="light"] { --bg: #fbfbfc; --card: #fff; --ink: #14181a; --ink-soft: #4b555a; --muted: #7c868b;
+    --line: #e1e6e8; --accent: #1f7a4d; --accent-soft: #e7f2ec;
+    --sys-bg: #f3f6f9; --sys-line: #d2dde5; --sys-ink: #23485f;
+    --ok-bg: #edf7f1; --ok-line: #a8d7bd; --ok-ink: #17603c;
+    --stop-bg: #fdeceb; --stop-line: #f0b8b3; --stop-ink: #9d332b;
+    --warn-bg: #fdf6e6; --warn-line: #ecd39a; --warn-ink: #86611a; }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 15.5px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 48px 22px 80px; }
+
+  h1 { font-size: clamp(1.7rem, 4.5vw, 2.3rem); font-weight: 750; letter-spacing: -0.02em; margin: 0 0 10px; }
+  .lede { color: var(--ink-soft); margin: 0 0 22px; max-width: 62ch; }
+
+  .callout { border: 1px solid; border-radius: 12px; padding: 15px 17px; margin: 0 0 22px; }
+  .callout.warn { background: var(--warn-bg); border-color: var(--warn-line); }
+  .callout.warn b { color: var(--warn-ink); }
+  .callout p { margin: 0 0 8px; font-size: 14.5px; color: var(--ink-soft); }
+  .callout p:last-child { margin: 0; }
+
+  .part { margin: 34px 0 14px; padding-bottom: 8px; border-bottom: 2px solid var(--ink); }
+  .part h2 { font-size: 1.15rem; font-weight: 750; margin: 0; }
+  .part p { margin: 4px 0 0; font-size: 13.5px; color: var(--muted); }
+
+  .step { display: grid; grid-template-columns: 26px 1fr; gap: 12px; padding: 13px 0; border-bottom: 1px solid var(--line); }
+  .step:last-child { border-bottom: none; }
+  input[type=checkbox] { width: 17px; height: 17px; margin-top: 3px; accent-color: var(--accent); cursor: pointer; }
+  .id { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--accent); }
+  .act { margin: 2px 0 0; font-weight: 600; font-size: 15px; }
+  .who { display: inline-block; font-size: 10.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--accent); background: var(--accent-soft); padding: 2px 8px; border-radius: 5px; margin-left: 6px; vertical-align: 1px; }
+  .path { font-family: var(--mono); font-size: 11.5px; color: var(--sys-ink); background: var(--sys-bg); border: 1px solid var(--sys-line); border-radius: 6px; padding: 5px 9px; margin: 7px 0 0; overflow-x: auto; white-space: nowrap; }
+  .do { margin: 7px 0 0; font-size: 14px; color: var(--ink-soft); }
+  .exp { margin: 7px 0 0; font-size: 13.5px; padding: 8px 11px; border-radius: 8px; background: var(--ok-bg); border: 1px solid var(--ok-line); color: var(--ink-soft); }
+  .exp b { color: var(--ok-ink); }
+  .btn { font-family: var(--mono); font-size: 0.86em; background: var(--card); border: 1px solid var(--sys-line); border-radius: 5px; padding: 1px 6px; white-space: nowrap; color: var(--ink); }
+
+  .neg .exp { background: var(--stop-bg); border-color: var(--stop-line); }
+  .neg .exp b { color: var(--stop-ink); }
+
+  footer { margin-top: 36px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); }
+
+  @media print {
+    body { background: #fff; font-size: 11pt; }
+    .step { break-inside: avoid; }
+    input[type=checkbox] { -webkit-appearance: none; appearance: none; border: 1.5px solid #666; border-radius: 3px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+
+  <h1>End-to-end walkthrough</h1>
+  <p class="lede">
+    Every click, in order, from registering a supplier to closing the contract and rating them.
+    Tick each box as it passes. Roughly 45 minutes at a steady pace.
+  </p>
+
+  <div class="callout warn">
+    <p><b>⚠ Read this first — one link in the chain is broken.</b></p>
+    <p>
+      <b>Procurement › Purchase Plan › Departmental Plans</b> and <b>Project Plans</b> are display-only
+      tables. They aren't connected to the data store, so nothing you do there reaches
+      <b>Approvals › Procurement Plan Approvals</b> — that queue will only ever show the eight items
+      seeded in the system.
+    </p>
+    <p>
+      The plan step still works end to end, just from a different screen: <b>Employee Self-Service ›
+      Procurement Plan</b>, which is the route Part B below uses. Part B2 is marked optional so you
+      can see the two-station review on the seeded items.
+    </p>
+  </div>
+
+  <div class="callout">
+    <p><b>Before you start.</b> Sign in, then find the <b>name badge at the top right</b> — that's the
+    role switcher. You'll use it constantly: the system refuses to let one person approve their own
+    work, so a single identity cannot walk this through.</p>
+    <p style="margin-top:8px;">Your cast: <b>Ama Darko</b> (requestor &amp; contract coordinator) ·
+    <b>James Owusu</b> (department head &amp; supervisor) · <b>Felix Addo</b> (procurement) ·
+    <b>Abena Osei</b> (finance) · <b>Nana Adjei</b> (COO).</p>
+  </div>
+
+  <!-- ══ PART A ══ -->
+  <div class="part"><h2>Part A — Get a supplier onto the list</h2><p>Step 1 of the flow</p></div>
+
+  <div class="step"><input type="checkbox">
+    <div>
+      <span class="id">A1</span><span class="who">Supplier</span>
+      <p class="act">Register through the portal</p>
+      <p class="path">Procurement › Vendor Portal › Register as a vendor or consultant</p>
+      <p class="do">Choose <b>Corporate entity</b>. Fill the form. Attach a file against
+        <b>Certificate of Incorporation</b> and <b>Tax Clearance Certificate</b> — any PDF will do —
+        and give each an expiry date. Submit.</p>
+      <div class="exp"><b>Expect:</b> a confirmation screen with a new vendor ID (VND-1010 or higher)
+        and a note that Procurement must review it before the account goes live.</div>
+    </div>
+  </div>
+
+  <div class="step"><input type="checkbox">
+    <div>
+      <span class="id">A2</span><span class="who">Supplier</span>
+      <p class="act">Try a banned name, to see screening fire</p>
+      <p class="do">Register again, but type <b>Global Trade Partners Ltd</b> as the legal name.</p>
+      <div class="exp"><b>Expect:</b> a sanctions warning appears <b>as you type</b>, before you
+        finish the form.</div>
+    </div>
+  </div>
+
+  <div class="step"><input type="checkbox">
+    <div>
+      <span class="id">A3</span><span class="who">Felix — Procurement</span>
+      <p class="act">Approve the registration</p>
+      <p class="path">Procurement › Supplier Management › Firms</p>
+      <p class="do">Find your new vendor — status <b>Pending Onboarding</b>. Open the row menu and
+        click <span class="btn">Approve Registration</span>.</p>
+      <div class="exp"><b>Expect:</b> status flips to <b>Active</b>. If documents are missing the
+        button refuses and <b>names them</b>.</div>
+    </div>
+  </div>
+
+  <div class="step"><input type="checkbox">
+    <div>
+      <span class="id">A4</span><span class="who">Abena — Finance</span>
+      <p class="act">Validate the bank account</p>
+      <p class="path">Procurement › Supplier Management › open the vendor</p>
+      <p class="do">In the banking panel, click <span class="btn">Validate Banking Details</span>.</p>
+      <div class="exp"><b>Expect:</b> marked validated with Abena's name. As Felix, the same button
+        is <b>greyed out with a reason</b> — that's the separation working.</div>
+    </div>
+  </div>
+
+  <!-- ══ PART B ══ -->
+  <div class="part"><h2>Part B — Put it on the plan</h2><p>Step 2 of the flow</p></div>
+
+  <div class="step"><input type="checkbox">
+    <div>
+      <span class="id">B1</span><span class="who">Ama — Requestor</span>
+      <p class="act">Add an item to the plan</p>
+      <p class="path">Employee Self-Service › Procurement Plan</p>
+      <p class="do">On an approved plan, click <span class="btn">Add Item</span>. Fill it in and submit.</p>
+      <div class="exp"><b>Expect:</b> the item lands in <b>Pending Verification</b>, not straight onto
+        the plan.</div>
+    </div>
+  </div>
+
+  <div class="step"><input type="checkbox">
+    <div>
+      <span class="id">B2</span><span class="who">Finance</span>
+      <p class="act">Verify it</p>
+      <p class="do">On the same screen, approve the pending item from the verification section.</p>
+      <div class="exp"><b>Expect:</b> it moves onto the approved plan and the version history records
+        the change.</div>
+    </div>
+  </div>
+
+  <div class="step"><input type="checkbox">
+    <div>
+      <span class="id">B3</span><span class="who">Felix, then Abena</span>
+      <p class="act">Optional — see the two-station plan review</p>
+      <p class="path">Procurement › Approvals › Procurement Plan Approvals</p>
+      <p class="do">Open the <b>Procurement review</b> queue, click <span class="btn">Review</span> on an
+        item, approve it. Switch to Abena and clear it from <b>Finance verification</b>.</p>
+      <div class="exp"><b>Expect:</b> an item only reaches <b>Approved</b> after <b>both</b> stations
+        pass it. Try rejecting with an empty reason — the button stays disabled.</div>
+    </div>
+  </div>
+
+  <!-- ══ PART C ══ -->
+  <div class="part"><h2>Part C — Raise it and get it approved</h2><p>Steps 3 and 4</p></div>
+
+  <div class="step"><input type="checkbox">
+    <div>
+      <span class="id">C1</span><span class="who">Ama — Requestor</span>
+      <p class="act">Initiate a requisition from the plan</p>
+      <p class="path">Employee Self-Service › Procurement Plan</p>
+      <p class="do">In the approved plan items table, click <span class="btn">Initiate</span> on a row.
+        The <b>Create Purchase Requisition</b> form opens with the plan details already filled in and
+        locked.</p>
+      <div class="exp"><b>Expect:</b> a read-only panel showing the plan activity, category, cost and
+        budget code — proof the requisition is tied to the plan.</div>
+    </div>
+  </div>
+
+  <div class="step"><input type="checkbox">
+    <div>
+      <span class="id">C2</span><span class="who">Ama — Requestor</span>
+      <p class="act">Try to submit it half-finished</p>
+      <p class="do">Without attaching a TOR or specification, click <span class="btn">Submit Requisition</span>.</p>
+      <div class="exp"><b>Expect:</b> submission is <b>blocked</b>, with red messages naming the exact
+        missing fields.</div>
+    </div>
+  </div>
+
+  <div class="step"><input type="checkbox">
+    <div>
+      <span class="id">C3</span><span class="who">Ama — Requestor</span>
+      <p class="act">Complete it properly and submit</p>
+      <p class="do">Attach a document, fill the delivery timeline (goods) or start/end dates
+        (services), then submit. Note the <b>PR number</b>.</p>
+      <div class="exp"><b>Expect:</b> it appears under <b>Procurement › Purchase Requisitions</b> at
+        <b>Pending Dept Approval</b>, with a 5-step tracker showing who holds it.</div>
+    </div>
+  </div>
+
+  <div class="step"><input type="checkbox">
+    <div>
+      <span class="id">C4</span><span class="who">James — Dept Head</span>
+      <p class="act">Reject it first, on purpose</p>
+      <p class="path">Employee Self-Service › Approvals › Procurement Request Approval</p>
+      <p class="do">Open your requisition, click <span class="btn">Reject</span>, and try to confirm
+        with an empty reason. Then type one and confirm.</p>
+      <div class="exp"><b>Expect:</b> confirm is disabled until a reason is typed. Status becomes
+        <b>Rejected</b> with the reason on the record.</div>
+    </div>
+  </div>
+
+  <div class="step"><input type="checkbox">
+    <div>
+      <span class="id">C5</span><span class="who">Ama — Requestor</span>
+      <p class="act">Correct it and resubmit</p>
+      <p class="path">Procurement › Purchase Requisitions</p>
+      <p class="do">Open the rejected requisition and click <span class="btn">Resubmit for Approval</span>.</p>
+      <div class="exp"><b>Expect:</b> back to <b>Pending Dept Approval</b>, with the rejection reason
+        and a resubmission count retained. <b>This is the route that used to be a dead end.</b></div>
+    </div>
+  </div>
+
+  <div class="step"><input type="checkbox">
+    <div>
+      <span class="id">C6</span><span class="who">James — Dept Head</span>
+      <p class="act">Approve it this time</p>
+      <p class="do">Same screen, click <span class="btn">Approve</span>.</p>
+      <div class="exp"><b>Expect:</b> status becomes <b>Pending Procurement &amp; Finance</b> — both
+        stations at once, labelled PARALLEL.</div>
+    </div>
+  </div>
+
+  <div class="step"><input type="checkbox">
+    <div>
+      <span class="id">C7</span><span class="who">Felix — Procurement</span>
+      <p class="act">Approve one half of the parallel stage</p>
+      <p class="path">Procurement › Approvals › Purchase Requisitions</p>
+      <p class="do">Approve it, then look at the requisition's status.</p>
+      <div class="exp"><b>Expect:</b> it does <b>not</b> advance — it's still waiting on Finance. The
+        screen says the other station hasn't cleared yet.</div>
+    </div>
+  </div>
+
+  <div class="step"><input type="checkbox">
+    <div>
+      <span class="id">C8</span><span class="who">Abena — Finance</span>
+      <p class="act">Approve the other half</p>
+      <p class="path">Finance › Approvals › Procurement Requests</p>
+      <p class="do">Approve it.</p>
+      <div class="exp"><b>Expect:</b> if the value is <b>over $10,000</b> it moves to
+        <b>Pending Senior Mgmt</b>. If under, it goes straight to <b>Approved</b>.</div>
+    </div>
+  </div>
+
+  <div class="step"><input type="checkbox">
+    <div>
+      <span class="id">C9</span><span class="who">Nana — COO</span>
+      <p class="act">Give final approval</p>
+      <p class="path">Procurement › Approvals › Senior Management Approval</p>
+      <p class="do">Approve it.</p>
+      <div class="exp"><b>Expect:</b> status <b>Approved</b>. Watch what happens next on its own.</div>
+    </div>
+  </div>
+
+  <!-- ══ PART D ══ -->
+  <div class="part"><h2>Part D — Find a supplier</h2><p>Steps 5, 6 and 7</p></div>
+
+  <div class="step"><input type="checkbox">
+    <div>
+      <span class="id">D1</span><span class="who">Felix — Procurement</span>
+      <p class="act">Confirm the sourcing case created itself</p>
+      <p class="path">Procurement › Sourcing</p>
+      <div class="exp"><b>Expect:</b> a new case is already in the list, carrying your PR number,
+        description, budget and requestor. <b>Nobody created it.</b> Open it — the stepper is built
+        for that buying method.</div>
+    </div>
+  </div>
+
+  <div class="step"><input type="checkbox">
+    <div>
+      <span class="id">D2</span><span class="who">Felix — Procurement</span>
+      <p class="act">Try changing the method off-threshold</p>
+      <p class="do">Click <span class="btn">Change Method</span> and pick one that doesn't match the
+        value band.</p>
+      <div class="exp"><b>Expect:</b> a warning showing the correct band, and a <b>justification is
+        required</b> before it will accept the change.</div>
+    </div>
+  </div>
+
+  <div class="step"><input type="checkbox">
+    <div>
+      <span class="id">D3</span><span class="who">Felix — Procurement</span>
+      <p class="act">Upload the solicitation documents</p>
+      <p class="do">On the first step, use <span class="btn">Upload Document</span> against each
+        required slot. Upload a second version of one of them.</p>
+      <div class="exp"><b>Expect:</b> real files attach, and replacing one <b>keeps the previous
+        version</b> in its history rather than overwriting it.</div>
+    </div>
+  </div>
+
+  <div class="step"><input type="checkbox">
+    <div>
+      <span class="id">D4</span><span class="who">Felix — Procurement</span>
+      <p class="act">Publish or invite</p>
+      <p class="do">Open competition: tick the channels and click <span class="btn">Publish Now</span>.
+        Limited or RFQ: pick bidders and click <span class="btn">Send Invitations</span>.</p>
+      <div class="exp"><b>Expect:</b> in the vendor picker, <b>Kwame Construction Ltd</b> is flagged
+        and needs management sign-off, and blacklisted vendors can't be selected at all.</div>
+    </div>
+  </div>
+
+  <div class="step"><input type="checkbox">
+    <div>
+      <span class="id">D5</span><span class="who">Supplier</span>
+      <p class="act">Submit a sealed bid</p>
+      <p class="path">Procurement › Vendor Portal › Open Tenders › View &amp; bid</p>
+      <p class="do">Sign in as a vendor, open the tender you just published, attach a file and click
+        <span class="btn">Submit sealed bid</span>.</p>
+      <div class="exp"><b>Expect:</b> an immediate receipt with a submission ID and acknowledgement
+        reference.</div>
+    </div>
+  </div>
+
+  <div class="step"><input type="checkbox">
+    <div>
+      <span class="id">D6</span><span class="who">Felix — Procurement</span>
+      <p class="act">Try to open the envelope early</p>
+      <p class="do">Back in the sourcing case, click <span class="btn">Open Technical Envelope</span>
+        <b>without</b> closing the tender first.</p>
+      <div class="exp"><b>Expect:</b> <b>refused</b>, telling you the tender is still open and giving
+        the closing date. The bid shows as <b>Sealed</b> — vendor and timestamp visible, contents not.</div>
+    </div>
+  </div>
+
+  <div class="step"><input type="checkbox">
+    <div>
+      <span class="id">D7</span><span class="who">Felix — Procurement</span>
+      <p class="act">Close, then open the envelopes in order</p>
+      <p class="do"><span class="btn">Close Tender for Submissions</span> →
+        <span class="btn">Open Technical Envelope</span> → <span class="btn">Open Financial Envelope</span>.</p>
+      <div class="exp"><b>Expect:</b> bids unseal and <b>auto-populate the bid list</b>. Who opened
+        each envelope and when is recorded.</div>
+    </div>
+  </div>
+
+  <div class="step"><input type="checkbox">
+    <div>
+      <span class="id">D8</span><span class="who">Felix — Procurement</span>
+      <p class="act">Evaluate and award</p>
+      <p class="do">Upload the evaluation report, <span class="btn">Skip Step</span> through
+        negotiations, then <span class="btn">Award Contract</span> and pick your winner.</p>
+      <div class="exp"><b>Expect:</b> a contract number derived from the PR number
+        (PR-2026-<b>101</b> → CNT-2026-<b>101</b>), and the requisition now reads
+        <b>Converted to Sourcing</b>.</div>
+    </div>
+  </div>
+
+  <!-- ══ PART E ══ -->
+  <div class="part"><h2>Part E — Deliver and check</h2><p>Step 8</p></div>
+
+  <div class="step"><input type="checkbox">
+    <div>
+      <span class="id">E1</span><span class="who">Felix — Procurement</span>
+      <p class="act">Complete the contract setup</p>
+      <p class="path">Procurement › Contract Management</p>
+      <p class="do">Find your new contract — it'll carry a <b>Setup</b> badge. Click
+        <span class="btn">Complete contract setup</span> and fill the five steps: terms, milestones,
+        payment schedule, signed contract, and <b>Ama Darko as coordinator</b>.</p>
+      <div class="exp"><b>Expect:</b> a deliverable is seeded for each milestone you entered.</div>
+    </div>
+  </div>
+
+  <div class="step"><input type="checkbox">
+    <div>
+      <span class="id">E2</span><span class="who">Ama — Coordinator</span>
+      <p class="act">Upload the proof of delivery</p>
+      <p class="path">… open the contract › Deliverables › Upload Deliverable</p>
+      <p class="do">Pick the milestone, attach a file, submit.</p>
+      <div class="exp"><b>Expect:</b> it saves as <b>Submitted</b> — never as accepted, whatever you
+        chose in the form.</div>
+    </div>
+  </div>
+
+  <div class="step"><input type="checkbox">
+    <div>
+      <span class="id">E3</span><span class="who">Ama — Coordinator</span>
+      <p class="act">Try to accept your own upload</p>
+      <p class="do">Still as Ama, click <span class="btn">Accept</span> on the deliverable you just
+        submitted.</p>
+      <div class="exp"><b>Expect:</b> <b>refused</b> — it tells you the submitter can't also approve
+        it. <b>This is the key control.</b></div>
+    </div>
+  </div>
+
+  <div class="step"><input type="checkbox">
+    <div>
+      <span class="id">E4</span><span class="who">James — Supervisor</span>
+      <p class="act">Accept it as a second person</p>
+      <p class="do">Switch user, then <span class="btn">Accept</span>.</p>
+      <div class="exp"><b>Expect:</b> deliverable <b>Accepted</b> and the milestone marked complete.</div>
+    </div>
+  </div>
+
+  <!-- ══ PART F ══ -->
+  <div class="part"><h2>Part F — The bill</h2><p>Step 9 — the most important part to test</p></div>
+
+  <div class="step"><input type="checkbox">
+    <div>
+      <span class="id">F1</span><span class="who">Supplier</span>
+      <p class="act">Submit an invoice from the portal</p>
+      <p class="path">Procurement › Vendor Portal › Contracts &amp; Invoices › Submit invoice</p>
+      <p class="do">Enter a number and an amount, attach a file, submit.</p>
+      <div class="exp"><b>Expect:</b> it appears under <b>Procurement › Invoices</b> at
+        <b>Submitted</b>.</div>
+    </div>
+  </div>
+
+  <div class="step"><input type="checkbox">
+    <div>
+      <span class="id">F2</span><span class="who">Supplier</span>
+      <p class="act">Try to invoice above the contract value</p>
+      <p class="do">Submit another invoice for far more than the contract is worth.</p>
+      <div class="exp"><b>Expect:</b> <b>refused</b>, telling you it exceeds the ceiling and a cost
+        variation is needed first.</div>
+    </div>
+  </div>
+
+  <div class="step"><input type="checkbox">
+    <div>
+      <span class="id">F3</span><span class="who">Abena — Finance</span>
+      <p class="act">Try to pay it immediately</p>
+      <p class="path">Procurement › Invoices › open the invoice</p>
+      <div class="exp"><b>Expect:</b> no payment button — only the action for the stage it's actually
+        at. The chain cannot be skipped.</div>
+    </div>
+  </div>
+
+  <div class="step"><input type="checkbox">
+    <div>
+      <span class="id">F4</span><span class="who">Ama — Coordinator</span>
+      <p class="act">Match it to a deliverable</p>
+      <p class="do">Click <span class="btn">Match &amp; Review</span>. Try confirming <b>without</b>
+        picking a deliverable, then without ticking the specification box.</p>
+      <div class="exp"><b>Expect:</b> refused both times. Only <b>Accepted</b> deliverables appear in
+        the dropdown.</div>
+    </div>
+  </div>
+
+  <div class="step"><input type="checkbox">
+    <div>
+      <span class="id">F5</span><span class="who">Felix — Procurement</span>
+      <p class="act">Validate against the contract</p>
+      <p class="do">Click <span class="btn">Procurement Review</span>.</p>
+      <div class="exp"><b>Expect:</b> status <b>Procurement Approved</b>.</div>
+    </div>
+  </div>
+
+  <div class="step"><input type="checkbox">
+    <div>
+      <span class="id">F6</span><span class="who">Ama — Coordinator</span>
+      <p class="act">Try to give supervisor approval yourself</p>
+      <p class="do">Still as Ama, attempt <span class="btn">Supervisor Approval</span>.</p>
+      <div class="exp"><b>Expect:</b> <b>refused</b> — you did the coordinator review, so you can't
+        also sign it off.</div>
+    </div>
+  </div>
+
+  <div class="step"><input type="checkbox">
+    <div>
+      <span class="id">F7</span><span class="who">James — Supervisor</span>
+      <p class="act">Approve it properly</p>
+      <p class="do">Switch user, click <span class="btn">Supervisor Approval</span>.</p>
+      <div class="exp"><b>Expect:</b> status <b>Supervisor Approved</b> — cleared for payment.</div>
+    </div>
+  </div>
+
+  <div class="step"><input type="checkbox">
+    <div>
+      <span class="id">F8</span><span class="who">Abena — Finance</span>
+      <p class="act">Pay it</p>
+      <p class="do">Click <span class="btn">Process Payment</span>. Try submitting with an empty
+        reference number first, then fill it in.</p>
+      <div class="exp"><b>Expect:</b> refused without a reference. Once paid, the invoice reads
+        <b>Paid</b> and the <b>contract balance drops</b>.</div>
+    </div>
+  </div>
+
+  <!-- ══ PART G ══ -->
+  <div class="part"><h2>Part G — Score and close</h2><p>Step 10</p></div>
+
+  <div class="step"><input type="checkbox">
+    <div>
+      <span class="id">G1</span><span class="who">Ama, then James</span>
+      <p class="act">Evaluate the supplier</p>
+      <p class="path">… open the contract › Performance</p>
+      <p class="do">Choose <b>Final</b>, set the five scores, name James as supervisor, submit. Set the
+        scores <b>below 5</b> if you want to see the flagging.</p>
+      <div class="exp"><b>Expect:</b> the score appears on the supplier's profile in Supplier
+        Management <b>by itself</b>. Below 5, the vendor is <b>automatically flagged</b>.</div>
+    </div>
+  </div>
+
+  <div class="step"><input type="checkbox">
+    <div>
+      <span class="id">G2</span><span class="who">Felix — Procurement</span>
+      <p class="act">Try to close with work outstanding</p>
+      <p class="path">… open the contract › Close-Out</p>
+      <p class="do">Click <span class="btn">Close Contract</span> before everything is done.</p>
+      <div class="exp"><b>Expect:</b> refused, <b>naming exactly what's missing</b> — e.g. "2 invoices
+        not yet paid: INV-…".</div>
+    </div>
+  </div>
+
+  <div class="step"><input type="checkbox">
+    <div>
+      <span class="id">G3</span><span class="who">Felix — Procurement</span>
+      <p class="act">Finish the checklist and close</p>
+      <p class="do">Tick <b>Procurement confirms compliance</b> (the only manual one), generate the
+        <span class="btn">Certificate of Completion</span> and <span class="btn">Final Closure Report</span>,
+        then <span class="btn">Close Contract</span>.</p>
+      <div class="exp"><b>Expect:</b> status <b>Closed</b>. The other four checklist items were
+        <b>computed, not ticked by hand</b>.</div>
+    </div>
+  </div>
+
+  <!-- ══ PART H ══ -->
+  <div class="part"><h2>Part H — Confirm the loop closes</h2><p>The rating feeds the next purchase</p></div>
+
+  <div class="step"><input type="checkbox">
+    <div>
+      <span class="id">H1</span><span class="who">Felix — Procurement</span>
+      <p class="act">Check the score reached the supplier</p>
+      <p class="path">Procurement › Supplier Management › open the vendor › Performance</p>
+      <div class="exp"><b>Expect:</b> your evaluation is listed with its contract number, evaluator
+        and supervisor. Nobody copied it there.</div>
+    </div>
+  </div>
+
+  <div class="step"><input type="checkbox">
+    <div>
+      <span class="id">H2</span><span class="who">Felix — Procurement</span>
+      <p class="act">Try to award that supplier again</p>
+      <p class="path">Procurement › Sourcing › any open case › vendor picker</p>
+      <div class="exp"><b>Expect:</b> if you scored them below 5 they now need <b>management approval
+        and a written justification</b> before they can be invited. <b>The loop is closed.</b></div>
+    </div>
+  </div>
+
+  <!-- ══ NEGATIVE ══ -->
+  <div class="part"><h2>Quick audit checks</h2><p>Run these last — they prove the trail exists</p></div>
+
+  <div class="step neg"><input type="checkbox">
+    <div>
+      <span class="id">N1</span>
+      <p class="act">The audit trail is complete</p>
+      <p class="path">… open the contract › Audit Trail</p>
+      <div class="exp"><b>Expect:</b> every action you took — registration, deliverable, each invoice
+        approval, payment, evaluation, closure — each with a <b>real name</b>, not "Current User".</div>
+    </div>
+  </div>
+
+  <div class="step neg"><input type="checkbox">
+    <div>
+      <span class="id">N2</span>
+      <p class="act">Reports reflect what you did</p>
+      <p class="path">Procurement › Reporting &amp; Analytics › Contract Reports › Active Contracts</p>
+      <div class="exp"><b>Expect:</b> your contract in the list with real figures, and
+        <b>Export to Excel</b> downloads a file that actually opens.</div>
+    </div>
+  </div>
+
+  <div class="step neg"><input type="checkbox">
+    <div>
+      <span class="id">N3</span>
+      <p class="act">Role gating holds</p>
+      <p class="do">Switch to <b>Selorm Agbo (Audit)</b> and walk the procurement screens.</p>
+      <div class="exp"><b>Expect:</b> everything is readable, every action button is
+        <b>disabled with a reason on hover</b>.</div>
+    </div>
+  </div>
+
+  <footer>
+    If any step behaves differently from its expected result, note the step ID — that's enough to
+    trace it. The steps most worth watching are <b>E3</b>, <b>F4</b> and <b>F6</b>: those three
+    refusals are the controls that make the whole chain trustworthy.
+  </footer>
+
+</div>
+
+</body>
+</html>

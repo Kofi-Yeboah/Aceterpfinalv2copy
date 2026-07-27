@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>How ACET Finds a Supplier — The Simple Version</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔍</text></svg>">
+
+</head>
+<body>
+<a href="./index.html" style="position:fixed;top:14px;left:14px;z-index:99;font:600 12px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;text-decoration:none;color:#fff;background:#1f7a4d;padding:7px 13px;border-radius:999px;box-shadow:0 2px 10px rgba(0,0,0,.18)">&larr; All documents</a>
+<style>
+  :root {
+    --bg: #fbfbfc; --card: #ffffff; --ink: #161a1d; --ink-soft: #4a5459;
+    --muted: #7b868b; --accent: #6a4aa3; --accent-soft: #eee9f6;
+    --line: #e2e6e8; --why-bg: #f5f3f9; --sys-bg: #f2f5f8; --sys-line: #d3dde5; --sys-ink: #23485f;
+    --stop: #a33a32; --stop-bg: #f9ecea;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #16181a; --card: #1e2124; --ink: #e9edee; --ink-soft: #b6c0c3;
+      --muted: #8c979b; --accent: #a98fd8; --accent-soft: #241d33;
+      --line: #2c3134; --why-bg: #262232; --sys-bg: #1c252b; --sys-line: #2f4150; --sys-ink: #96c4dd;
+      --stop: #e08a80; --stop-bg: #2e1d1b;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #16181a; --card: #1e2124; --ink: #e9edee; --ink-soft: #b6c0c3;
+    --muted: #8c979b; --accent: #a98fd8; --accent-soft: #241d33;
+    --line: #2c3134; --why-bg: #262232; --sys-bg: #1c252b; --sys-line: #2f4150; --sys-ink: #96c4dd;
+    --stop: #e08a80; --stop-bg: #2e1d1b;
+  }
+  :root[data-theme="light"] {
+    --bg: #fbfbfc; --card: #ffffff; --ink: #161a1d; --ink-soft: #4a5459;
+    --muted: #7b868b; --accent: #6a4aa3; --accent-soft: #eee9f6;
+    --line: #e2e6e8; --why-bg: #f5f3f9; --sys-bg: #f2f5f8; --sys-line: #d3dde5; --sys-ink: #23485f;
+    --stop: #a33a32; --stop-bg: #f9ecea;
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 17px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 740px; margin: 0 auto; padding: 0 24px 80px; }
+  header { padding: 64px 0 8px; }
+  h1 { font-size: clamp(2rem, 6vw, 2.7rem); line-height: 1.1; letter-spacing: -0.02em; font-weight: 750; margin: 0 0 14px; text-wrap: balance; }
+  .lede { font-size: 1.15rem; color: var(--ink-soft); margin: 0; max-width: 44ch; }
+
+  .chain { display: flex; flex-wrap: wrap; gap: 8px; margin: 36px 0 8px; padding: 20px; background: var(--accent-soft); border-radius: 16px; }
+  .chain span { font-size: 0.82rem; font-weight: 650; color: var(--accent); background: var(--card); padding: 6px 12px; border-radius: 999px; white-space: nowrap; }
+
+  /* Four ways to shop */
+  .ways { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin: 30px 0 8px; }
+  .way { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
+  .way h3 { margin: 0 0 3px; font-size: 1rem; font-weight: 750; color: var(--accent); }
+  .way .band { font-family: var(--mono); font-size: 0.78rem; color: var(--muted); display: block; margin-bottom: 8px; }
+  .way p { margin: 0; font-size: 0.9rem; color: var(--ink-soft); }
+
+  .steps { margin-top: 44px; display: flex; flex-direction: column; }
+  .step { position: relative; padding-left: 62px; padding-bottom: 38px; }
+  .step:last-child { padding-bottom: 0; }
+  .step::before { content: ""; position: absolute; left: 21px; top: 46px; bottom: 0; width: 2px; background: var(--line); }
+  .step:last-child::before { display: none; }
+  .num { position: absolute; left: 0; top: 0; width: 44px; height: 44px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; font-size: 1.05rem; font-weight: 750; font-variant-numeric: tabular-nums; }
+  .step h2 { font-size: 1.32rem; font-weight: 700; letter-spacing: -0.01em; margin: 6px 0 4px; text-wrap: balance; }
+  .who { display: inline-block; font-size: 0.75rem; font-weight: 650; color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 10px; }
+  .step p { margin: 0 0 12px; color: var(--ink-soft); }
+
+  .why { background: var(--why-bg); border-radius: 12px; padding: 13px 16px; font-size: 0.95rem; color: var(--ink-soft); }
+  .why b { color: var(--ink); font-weight: 700; }
+
+  .sys { margin-top: 12px; background: var(--sys-bg); border: 1px solid var(--sys-line); border-radius: 12px; padding: 14px 16px; }
+  .sys-label { font-size: 0.7rem; font-weight: 750; letter-spacing: 0.09em; text-transform: uppercase; color: var(--sys-ink); margin: 0 0 9px; }
+  .path { font-family: var(--mono); font-size: 0.83rem; color: var(--sys-ink); background: var(--card); border-radius: 7px; padding: 7px 10px; margin: 0 0 9px; overflow-x: auto; white-space: nowrap; }
+  .sys p { margin: 0 0 7px; font-size: 0.94rem; color: var(--ink-soft); }
+  .sys p:last-child { margin-bottom: 0; }
+  .btn { font-family: var(--mono); font-size: 0.85em; background: var(--card); border: 1px solid var(--sys-line); border-radius: 5px; padding: 1px 6px; white-space: nowrap; color: var(--ink); }
+
+  .gate { margin-top: 12px; background: var(--stop-bg); border-radius: 12px; padding: 13px 16px; font-size: 0.94rem; color: var(--ink-soft); }
+  .gate b { color: var(--stop); font-weight: 750; }
+  .gate ul { margin: 8px 0 0; padding-left: 20px; display: flex; flex-direction: column; gap: 5px; }
+
+  .stepper { margin: 16px 0 4px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; }
+  .stepper ol { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 7px; }
+  .stepper li { font-size: 0.92rem; color: var(--ink-soft); }
+  .stepper li b { color: var(--ink); }
+  .stepper em { font-style: normal; color: var(--muted); font-size: 0.88em; }
+
+  .loop { margin-top: 46px; padding: 28px; background: var(--card); border: 2px solid var(--accent); border-radius: 18px; text-align: center; }
+  .loop h2 { font-size: 1.25rem; margin: 0 0 8px; font-weight: 700; }
+  .loop p { margin: 0; color: var(--ink-soft); }
+
+  .tip { margin-top: 30px; padding: 18px 20px; border-left: 3px solid var(--accent); background: var(--why-bg); border-radius: 0 12px 12px 0; }
+  .tip p { margin: 0; font-size: 0.96rem; color: var(--ink-soft); }
+
+  .plain { margin-top: 42px; padding-top: 26px; border-top: 1px solid var(--line); }
+  .plain h2 { font-size: 1rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); margin: 0 0 16px; font-weight: 700; }
+  .plain dl { margin: 0; display: grid; gap: 12px; }
+  .plain div { display: grid; grid-template-columns: 200px 1fr; gap: 14px; }
+  .plain dt { font-weight: 650; color: var(--ink); }
+  .plain dd { margin: 0; color: var(--ink-soft); font-size: 0.95rem; }
+
+  @media (max-width: 560px) {
+    .plain div { grid-template-columns: 1fr; gap: 2px; }
+    .step { padding-left: 52px; }
+    .num { width: 38px; height: 38px; font-size: 0.95rem; }
+    .step::before { left: 18px; top: 40px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<div class="wrap">
+
+  <header>
+    <h1>How ACET finds a supplier</h1>
+    <p class="lede">What happens between "the request is approved" and "we have a signed contract" — in eight plain steps.</p>
+  </header>
+
+  <div class="chain">
+    <span>1 · The case appears</span>
+    <span>2 · Choose how to shop</span>
+    <span>3 · Prepare the papers</span>
+    <span>4 · Tell the suppliers</span>
+    <span>5 · Sealed offers arrive</span>
+    <span>6 · Open the envelopes</span>
+    <span>7 · Score and negotiate</span>
+    <span>8 · Award and sign</span>
+  </div>
+
+  <h2 style="margin:42px 0 4px;font-size:1.15rem;font-weight:750;">First — the four ways we can shop</h2>
+  <p style="margin:0 0 4px;color:var(--ink-soft);font-size:0.98rem;">The bigger the money, the more competition we're required to run. The system suggests the right one for you based on the value.</p>
+  <div class="ways">
+    <div class="way">
+      <h3>Direct Selection</h3>
+      <span class="band">up to $5,000</span>
+      <p>Go straight to one supplier. Always needs a written reason explaining why only they can do it.</p>
+    </div>
+    <div class="way">
+      <h3>Request for Quotation</h3>
+      <span class="band">$5,000 – $50,000</span>
+      <p>Ask a handful of known suppliers for prices and compare them. No public advert.</p>
+    </div>
+    <div class="way">
+      <h3>Limited Competition</h3>
+      <span class="band">$50,000 – $200,000</span>
+      <p>Invite a shortlist to bid. Needs a reason for why the market was restricted.</p>
+    </div>
+    <div class="way">
+      <h3>Open Competition</h3>
+      <span class="band">above $200,000</span>
+      <p>Advertise publicly. Anyone qualified can bid.</p>
+    </div>
+  </div>
+
+  <div class="steps" style="margin-top:48px;">
+
+    <div class="step">
+      <div class="num">1</div>
+      <span class="who">Initiation</span>
+      <h2>The case appears by itself</h2>
+      <p>
+        Nobody creates anything here. The moment a purchase request finishes its approvals, a
+        sourcing case appears in the list on its own, carrying everything across — what's needed, the
+        budget, who asked for it, and which fund pays.
+      </p>
+      <div class="why"><b>Why it matters:</b> nothing can be sourced that didn't come through an approved request. There's no way to start buying something halfway down the process.</div>
+      <div class="sys">
+        <p class="sys-label">In the system</p>
+        <p class="path">Procurement › Sourcing</p>
+        <p>The new case is in the list with its own number, e.g. <b>SRC-2026-004</b>, linked back to the request that created it. Open it to see a numbered stepper down the left.</p>
+        <p>The requester is attached to the case automatically, so they get told at every stage without having to chase anyone.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num">2</div>
+      <span class="who">Method</span>
+      <h2>We confirm how we're going to shop</h2>
+      <p>
+        The buying method already came across from the plan and the value. Procurement can still
+        change it — but if the new choice doesn't match the value band, the system asks for a written
+        reason before it will accept it.
+      </p>
+      <div class="why"><b>Why it matters:</b> people can override the rule when there's a genuine reason, but never quietly. The reason is kept on the record.</div>
+      <div class="sys">
+        <p class="sys-label">In the system</p>
+        <p>In the open case, click <span class="btn">Change Method</span>. The dropdown shows all four methods <b>with their value bands</b>, and warns you if your choice sits outside the band for this amount.</p>
+        <p>Confirm with <span class="btn">Confirm Method Change</span>. The steps down the left <b>rebuild themselves</b> for the new method — anything you'd already finished is kept.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num">3</div>
+      <span class="who">Solicitation</span>
+      <h2>We prepare the papers</h2>
+      <p>
+        Before we can ask anyone for a price, we write down exactly what we want: the specification
+        for goods, or the terms of reference for a service. Plus how we'll score the offers — decided
+        <em>before</em> we see any of them.
+      </p>
+      <div class="why"><b>Why it matters:</b> agreeing how you'll mark the answers before the answers arrive is what stops the scoring being bent to fit a favourite.</div>
+      <div class="sys">
+        <p class="sys-label">In the system</p>
+        <p>The first step is called <b>Solicitation (ITB)</b> for goods or <b>Solicitation (RFP)</b> for services. Click <span class="btn">Upload Document</span> against each required slot.</p>
+        <p>Every upload keeps its history — replacing a file with <span class="btn">Upload New Version</span> keeps the old one visible rather than overwriting it.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num">4</div>
+      <span class="who">Advertise or Invite</span>
+      <h2>We tell the suppliers</h2>
+      <p>
+        For an open tender, we publish it — it goes onto the supplier portal, and we record wherever
+        else it was advertised. For a limited one, we pick a shortlist and only they can see it. For
+        a direct selection, we pick the single supplier.
+      </p>
+      <div class="why"><b>Why it matters:</b> whoever we pick here is checked against the approved supplier list at that exact moment. Blocked suppliers simply can't be selected.</div>
+      <div class="sys">
+        <p class="sys-label">In the system</p>
+        <p><b>Open tender</b> — the <b>Advertisement</b> step. Tick where it's being advertised and click <span class="btn">Publish Now</span>. It appears on the portal immediately.</p>
+        <p><b>Limited or RFQ</b> — the <b>Invite Bidders</b> step. Pick from the supplier list, say whether you want a technical proposal, a financial one, or both, then <span class="btn">Send Invitations</span>.</p>
+        <p><b>Direct</b> — the step is called <b>Select Vendor</b> and lets you pick only one.</p>
+        <p>Not on our list yet? <span class="btn">Register Vendor</span> adds them without leaving the screen.</p>
+      </div>
+      <div class="gate">
+        <b>Who you can and can't pick</b>
+        <ul>
+          <li><b>Blocked</b> suppliers can't be selected at all — the reason is shown next to their name.</li>
+          <li><b>Flagged</b> suppliers, or anyone scoring under 5, need a management sign-off and a written justification before you can invite them.</li>
+          <li>Everyone else is listed with their rating, sorted best first.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num">5</div>
+      <span class="who">Submissions</span>
+      <h2>Sealed offers arrive</h2>
+      <p>
+        Suppliers log into the portal, download the papers, and upload their offer. Each one is
+        sealed the moment it arrives and given a receipt number. We can see <em>that</em> an offer
+        arrived and exactly when — but not what's inside it.
+      </p>
+      <div class="why"><b>Why it matters:</b> nobody at ACET can read an offer early, and no supplier can change theirs after the deadline. Both of those are enforced by the system, not by trust.</div>
+      <div class="sys">
+        <p class="sys-label">In the system</p>
+        <p class="path">Procurement › Vendor Portal › Open Tenders › View &amp; bid</p>
+        <p><b>Their side</b> — download, attach, click <span class="btn">Submit sealed bid</span>. They get a submission ID and acknowledgement reference on screen straight away.</p>
+        <p><b>Our side</b> — the <b>Online Submissions</b> step lists who has bid and when, each marked <b>Sealed</b>. Bids that came in by hand can be added with <span class="btn">Record Bid Received</span>, and both kinds sit in one list tagged by where they came from.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num">6</div>
+      <span class="who">Bid Opening</span>
+      <h2>We open the envelopes — in order</h2>
+      <p>
+        On closing day we close the tender, then open the technical envelopes and score the quality.
+        Only afterwards do we open the financial envelopes and see the prices.
+      </p>
+      <div class="why"><b>Why it matters:</b> quality is judged without anyone knowing the prices. It's the single best protection against picking a favourite and justifying it afterwards.</div>
+      <div class="sys">
+        <p class="sys-label">In the system</p>
+        <p>On the <b>Bid Opening</b> step, in this order: <span class="btn">Close Tender for Submissions</span> → <span class="btn">Open Technical Envelope</span> → later <span class="btn">Open Financial Envelope</span>.</p>
+        <p>Try to open anything while the tender is still accepting bids and the system refuses, telling you the closing date. Whoever opened each envelope, and when, is recorded permanently.</p>
+        <p>Once opened, the bids <b>flow into the list by themselves</b> — nobody retypes them. Upload the opening minutes and attendance sheet against the same step.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num">7</div>
+      <span class="who">Evaluation</span>
+      <h2>We score them, and negotiate if we need to</h2>
+      <p>
+        The panel scores the offers against the criteria we agreed in step 3 and uploads the
+        evaluation report. For consultancies there may be an interview stage. Then, if there's
+        anything to settle on price or scope, we negotiate and write down what was agreed.
+      </p>
+      <div class="why"><b>Why it matters:</b> the decision and the reasoning are both on file, so anyone auditing us later can see not just who won, but why.</div>
+      <div class="sys">
+        <p class="sys-label">In the system</p>
+        <p>On <b>Evaluation &amp; Approvals</b>, upload the evaluation report, score matrix or interview scores — the slots change depending on what you're buying.</p>
+        <p><b>Negotiations</b> is optional. If you didn't hold any, click <span class="btn">Skip Step</span> and the case moves on. Otherwise upload the minutes.</p>
+        <p>Finish a stage with <span class="btn">Complete Step</span>, which notifies the requester and stakeholders that it's moved on.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num">8</div>
+      <span class="who">Award</span>
+      <h2>We award it and the contract is born</h2>
+      <p>
+        We pick the winner. The system checks one final time that they're still allowed to work with
+        us, then turns the request number into a contract number and creates the contract. For goods
+        it can also raise the purchase order.
+      </p>
+      <div class="why"><b>Why it matters:</b> the same number now follows the job from the original request all the way to the final payment.</div>
+      <div class="sys">
+        <p class="sys-label">In the system</p>
+        <p>On the <b>Contract Award</b> step, click <span class="btn">Award Contract</span> and choose the winner.</p>
+        <p>What happens next, without anyone doing it: the contract is created in Contract Management, the award is written onto the supplier's profile, and the original request is marked <b>Converted to Sourcing</b>.</p>
+        <p>For goods, <span class="btn">Generate Purchase Order</span> raises the PO — which routes to the COO for signature if it's $10,000 or more, otherwise to the Procurement Head.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="loop">
+    <h2>And the job now begins</h2>
+    <p>
+      Sourcing ends the moment the contract exists. Everything after that — delivering, checking,
+      invoicing, paying, closing — is the contract management flow.
+    </p>
+  </div>
+
+  <div class="tip">
+    <p>
+      <b>Demonstrating this?</b> The sealed-envelope part is the one people remember. Submit a bid
+      from the Vendor Portal, go back to the sourcing case and show it sitting there as
+      <b>Sealed</b> — name and timestamp visible, contents not. Then try
+      <span class="btn">Open Technical Envelope</span> before closing the tender and let the system
+      refuse you.
+    </p>
+  </div>
+
+  <div class="plain">
+    <h2>The words people use</h2>
+    <dl>
+      <div><dt>Sourcing case</dt><dd>One buying exercise, from approved request to signed contract.</dd></div>
+      <div><dt>Solicitation</dt><dd>The pack of documents telling suppliers what we want.</dd></div>
+      <div><dt>ITB / RFP</dt><dd>Invitation to Bid (for goods) / Request for Proposals (for services).</dd></div>
+      <div><dt>EoI</dt><dd>Expression of Interest — a short "yes, I'm interested and here's why I'm suitable".</dd></div>
+      <div><dt>Shortlist</dt><dd>The few we invite to make a full offer.</dd></div>
+      <div><dt>Bid / offer</dt><dd>What a supplier sends back.</dd></div>
+      <div><dt>Envelope</dt><dd>A sealed part of a bid. Technical and financial are opened separately.</dd></div>
+      <div><dt>Bid opening</dt><dd>The formal moment the sealed offers are unsealed.</dd></div>
+      <div><dt>Award</dt><dd>Choosing the winner.</dd></div>
+      <div><dt>Purchase order</dt><dd>The formal instruction to a supplier to deliver goods.</dd></div>
+    </dl>
+  </div>
+
+</div>
+
+</body>
+</html>

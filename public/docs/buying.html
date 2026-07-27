@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>How ACET Buys Things — The Simple Version</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛒</text></svg>">
+
+</head>
+<body>
+<a href="./index.html" style="position:fixed;top:14px;left:14px;z-index:99;font:600 12px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;text-decoration:none;color:#fff;background:#1f7a4d;padding:7px 13px;border-radius:999px;box-shadow:0 2px 10px rgba(0,0,0,.18)">&larr; All documents</a>
+<style>
+  :root {
+    --bg: #fbfbfc; --card: #ffffff; --ink: #161a1d; --ink-soft: #4a5459;
+    --muted: #7b868b; --accent: #1f7a4d; --accent-soft: #e6f2eb;
+    --line: #e2e6e8; --why-bg: #f4f7f5; --sys-bg: #f2f5f8; --sys-line: #d3dde5; --sys-ink: #23485f;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #16181a; --card: #1e2124; --ink: #e9edee; --ink-soft: #b6c0c3;
+      --muted: #8c979b; --accent: #5fc78e; --accent-soft: #1a2f24;
+      --line: #2c3134; --why-bg: #232a26; --sys-bg: #1c252b; --sys-line: #2f4150; --sys-ink: #96c4dd;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #16181a; --card: #1e2124; --ink: #e9edee; --ink-soft: #b6c0c3;
+    --muted: #8c979b; --accent: #5fc78e; --accent-soft: #1a2f24;
+    --line: #2c3134; --why-bg: #232a26; --sys-bg: #1c252b; --sys-line: #2f4150; --sys-ink: #96c4dd;
+  }
+  :root[data-theme="light"] {
+    --bg: #fbfbfc; --card: #ffffff; --ink: #161a1d; --ink-soft: #4a5459;
+    --muted: #7b868b; --accent: #1f7a4d; --accent-soft: #e6f2eb;
+    --line: #e2e6e8; --why-bg: #f4f7f5; --sys-bg: #f2f5f8; --sys-line: #d3dde5; --sys-ink: #23485f;
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 17px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 740px; margin: 0 auto; padding: 0 24px 80px; }
+  header { padding: 64px 0 8px; }
+  h1 { font-size: clamp(2rem, 6vw, 2.7rem); line-height: 1.1; letter-spacing: -0.02em; font-weight: 750; margin: 0 0 14px; text-wrap: balance; }
+  .lede { font-size: 1.15rem; color: var(--ink-soft); margin: 0; max-width: 42ch; }
+
+  .chain { display: flex; flex-wrap: wrap; gap: 8px; margin: 36px 0 8px; padding: 20px; background: var(--accent-soft); border-radius: 16px; }
+  .chain span { font-size: 0.82rem; font-weight: 650; color: var(--accent); background: var(--card); padding: 6px 12px; border-radius: 999px; white-space: nowrap; }
+
+  .steps { margin-top: 44px; display: flex; flex-direction: column; }
+  .step { position: relative; padding-left: 62px; padding-bottom: 38px; }
+  .step:last-child { padding-bottom: 0; }
+  .step::before { content: ""; position: absolute; left: 21px; top: 46px; bottom: 0; width: 2px; background: var(--line); }
+  .step:last-child::before { display: none; }
+  .num { position: absolute; left: 0; top: 0; width: 44px; height: 44px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; font-size: 1.05rem; font-weight: 750; font-variant-numeric: tabular-nums; }
+  .step h2 { font-size: 1.32rem; font-weight: 700; letter-spacing: -0.01em; margin: 6px 0 4px; text-wrap: balance; }
+  .who { display: inline-block; font-size: 0.75rem; font-weight: 650; color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 10px; }
+  .step p { margin: 0 0 12px; color: var(--ink-soft); }
+
+  .why { background: var(--why-bg); border-radius: 12px; padding: 13px 16px; font-size: 0.95rem; color: var(--ink-soft); }
+  .why b { color: var(--ink); font-weight: 700; }
+
+  .sys { margin-top: 12px; background: var(--sys-bg); border: 1px solid var(--sys-line); border-radius: 12px; padding: 14px 16px; }
+  .sys-label { font-size: 0.7rem; font-weight: 750; letter-spacing: 0.09em; text-transform: uppercase; color: var(--sys-ink); margin: 0 0 9px; }
+  .path { font-family: var(--mono); font-size: 0.83rem; color: var(--sys-ink); background: var(--card); border-radius: 7px; padding: 7px 10px; margin: 0 0 9px; overflow-x: auto; white-space: nowrap; }
+  .sys p { margin: 0 0 7px; font-size: 0.94rem; color: var(--ink-soft); }
+  .sys p:last-child { margin-bottom: 0; }
+  .btn { font-family: var(--mono); font-size: 0.85em; background: var(--card); border: 1px solid var(--sys-line); border-radius: 5px; padding: 1px 6px; white-space: nowrap; color: var(--ink); }
+
+  .loop { margin-top: 46px; padding: 28px; background: var(--card); border: 2px solid var(--accent); border-radius: 18px; text-align: center; }
+  .loop h2 { font-size: 1.25rem; margin: 0 0 8px; font-weight: 700; }
+  .loop p { margin: 0; color: var(--ink-soft); }
+
+  .plain { margin-top: 42px; padding-top: 26px; border-top: 1px solid var(--line); }
+  .plain h2 { font-size: 1rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); margin: 0 0 16px; font-weight: 700; }
+  .plain dl { margin: 0; display: grid; gap: 12px; }
+  .plain div { display: grid; grid-template-columns: 190px 1fr; gap: 14px; }
+  .plain dt { font-weight: 650; color: var(--ink); }
+  .plain dd { margin: 0; color: var(--ink-soft); font-size: 0.95rem; }
+
+  .tip { margin-top: 30px; padding: 18px 20px; border-left: 3px solid var(--accent); background: var(--why-bg); border-radius: 0 12px 12px 0; }
+  .tip p { margin: 0; font-size: 0.96rem; color: var(--ink-soft); }
+
+  @media (max-width: 560px) {
+    .plain div { grid-template-columns: 1fr; gap: 2px; }
+    .step { padding-left: 52px; }
+    .num { width: 38px; height: 38px; font-size: 0.95rem; }
+    .step::before { left: 18px; top: 40px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<div class="wrap">
+
+  <header>
+    <h1>How ACET buys things</h1>
+    <p class="lede">The whole process, start to finish, in ten plain steps — and exactly where each one happens in the system.</p>
+  </header>
+
+  <div class="chain">
+    <span>1 · Suppliers join</span>
+    <span>2 · We plan</span>
+    <span>3 · Someone asks</span>
+    <span>4 · Bosses say yes</span>
+    <span>5 · We shop around</span>
+    <span>6 · Offers come in</span>
+    <span>7 · We pick &amp; sign</span>
+    <span>8 · They deliver</span>
+    <span>9 · We pay</span>
+    <span>10 · We score them</span>
+  </div>
+
+  <div class="steps">
+
+    <div class="step">
+      <div class="num">1</div>
+      <span class="who">Supplier Management</span>
+      <h2>A supplier joins our list</h2>
+      <p>
+        A company or a consultant tells us they want to work with ACET. They send their papers —
+        business certificate, tax certificate, bank details, ID. We check the papers are real, that
+        none have expired, and that the name isn't on any banned list. If everything is fine, they
+        get an ID number and go on our approved list.
+      </p>
+      <div class="why"><b>Why it matters:</b> we can only buy from people on this list. It stops us handing money to a stranger.</div>
+      <div class="sys">
+        <p class="sys-label">In the system</p>
+        <p class="path">Procurement › Supplier Management › Onboard</p>
+        <p>Click <span class="btn">Onboard</span>, choose <b>Firm</b> or <b>Individual</b>, fill the form, and attach each document with its expiry date. Finish with <span class="btn">Complete Onboarding</span>.</p>
+        <p>As you type the name, the screen warns you straight away if it looks like a duplicate or matches a banned list.</p>
+        <p><b>Or the supplier does it themselves:</b> <span class="path" style="display:inline-block;margin:4px 0;">Procurement › Vendor Portal › Register as a vendor or consultant</span> Their registration then waits in the <b>Pending Review</b> tab of Supplier Management until Procurement clicks <span class="btn">Approve</span>.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num">2</div>
+      <span class="who">Procurement Plan</span>
+      <h2>We write down what we plan to buy</h2>
+      <p>
+        At the start of the year, each team lists what they will need, roughly what it costs, and
+        when. Procurement checks it follows the rules. Finance checks there is money for it. Only
+        when both agree does it go on the plan.
+      </p>
+      <div class="why"><b>Why it matters:</b> if it isn't on the plan, it can't be bought. No surprise spending.</div>
+      <div class="sys">
+        <p class="sys-label">In the system</p>
+        <p class="path">Procurement › Purchase Plan › Add Plan Item</p>
+        <p>Fill in the activity, the cost and the dates. When you type the cost, the system <b>suggests the buying method for you</b> and shows the value bands. Then <span class="btn">Save &amp; Submit for Review</span> — or <span class="btn">Save as Draft</span> to finish later.</p>
+        <p class="path">Procurement › Approvals › Procurement Plan Approvals</p>
+        <p>Two queues here: <b>Procurement review</b> and <b>Finance verification</b>. Open an item, click <span class="btn">Review</span>, then either approve it or <span class="btn">Reject with reason</span>. It only becomes usable after <em>both</em> queues have passed it.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num">3</div>
+      <span class="who">Purchase Requisition</span>
+      <h2>Someone asks to buy something</h2>
+      <p>
+        When the time comes, the person who needs the item fills in a request form. They pick the
+        item from the plan, say what it will cost, say which fund pays for it, and attach a
+        description of exactly what they want.
+      </p>
+      <div class="why"><b>Why it matters:</b> the system won't let them send it until every part is filled in properly. It tells them exactly what's missing.</div>
+      <div class="sys">
+        <p class="sys-label">In the system</p>
+        <p class="path">Procurement › Purchase Requisitions › Add New Requisition</p>
+        <p>Pick the plan item from the dropdown, fill the form, attach the Terms of Reference (for services) or Technical Specifications (for goods), then <span class="btn">Submit Requisition</span>.</p>
+        <p>If anything is missing, the button won't go through — red messages appear on the exact fields that need fixing.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num">4</div>
+      <span class="who">Approvals</span>
+      <h2>The bosses say yes</h2>
+      <p>
+        The request goes up the ladder: first their manager, then Procurement and Finance together
+        (both at the same time, to save days), and if it costs more than $10,000, the COO as well.
+        Anyone can say no — but they must write down why, and then the person fixes it and sends it
+        again.
+      </p>
+      <div class="why"><b>Why it matters:</b> several people check before any money is committed, and nothing gets rejected without a reason.</div>
+      <div class="sys">
+        <p class="sys-label">In the system</p>
+        <p class="path">Procurement › Approvals › Purchase Requisitions</p>
+        <p class="path">Procurement › Approvals › Senior Management Approval</p>
+        <p>Each approver opens their own queue, reads the request, then clicks <span class="btn">Approve</span> or <span class="btn">Reject</span>. Reject won't submit until a reason is typed in.</p>
+        <p>If it was rejected, the requester opens it and clicks <span class="btn">Resubmit for Approval</span> after fixing it. They can also click <span class="btn">Withdraw</span> to cancel a request that's no longer needed.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num">5</div>
+      <span class="who">Sourcing</span>
+      <h2>We look for someone to supply it</h2>
+      <p>
+        Now Procurement goes shopping. How they shop depends on the size. Something small: ask a few
+        suppliers for prices. Something medium: invite a short list. Something big: advertise it
+        openly so anyone can bid.
+      </p>
+      <div class="why"><b>Why it matters:</b> the bigger the spend, the more competition we're required to run — that's how we get a fair price.</div>
+      <div class="sys">
+        <p class="sys-label">In the system</p>
+        <p class="path">Procurement › Sourcing</p>
+        <p>You don't create anything here — <b>the case appears on its own</b> as soon as the requisition is approved. Open it and you'll see a numbered stepper with the exact stages for that buying method.</p>
+        <p>Procurement can still click <span class="btn">Change Method</span>; if the new choice doesn't match the value band, the system asks for a written reason first.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num">6</div>
+      <span class="who">Vendor Portal</span>
+      <h2>Suppliers send in their offers</h2>
+      <p>
+        Suppliers log into the portal, download the tender documents, and upload their offer. The
+        offer goes into a sealed envelope. Nobody at ACET can open it until the closing date has
+        passed. The technical part is opened first and the prices later, so quality is judged before
+        anyone sees the money.
+      </p>
+      <div class="why"><b>Why it matters:</b> nobody can peek early, and nobody can change their offer after the deadline.</div>
+      <div class="sys">
+        <p class="sys-label">In the system</p>
+        <p><b>Our side</b> — in the sourcing case, upload the tender documents, then click <span class="btn">Publish</span> on the Advertisement step (open tenders) or pick the invited firms on the Invitation step (restricted tenders).</p>
+        <p class="path">Procurement › Vendor Portal › Open Tenders › View &amp; bid</p>
+        <p><b>Their side</b> — the supplier downloads the documents, attaches their offer, and clicks <span class="btn">Submit sealed bid</span>. They get a receipt number immediately.</p>
+        <p><b>Opening day</b> — back in the sourcing case: <span class="btn">Close Tender</span>, then <span class="btn">Open Technical Envelope</span>, and later <span class="btn">Open Financial Envelope</span>. The system refuses to open anything early.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num">7</div>
+      <span class="who">Award &amp; Contract</span>
+      <h2>We pick a winner and sign</h2>
+      <p>
+        The offers are scored and a winner is chosen. We check one last time that the winner is
+        still allowed to work with us. Then the request number becomes the contract number, and we
+        write down the deliverables, the dates and the payment schedule.
+      </p>
+      <div class="why"><b>Why it matters:</b> the same number follows the job from start to finish, so any payment can always be traced back to the original request.</div>
+      <div class="sys">
+        <p class="sys-label">In the system</p>
+        <p>In the sourcing case, go to the last step and click <span class="btn">Award Contract</span>. Pick the winner from the list — <b>blocked suppliers can't be picked</b>, and flagged ones need management sign-off first.</p>
+        <p>The contract is created automatically. For goods you can also click <span class="btn">Generate Purchase Order</span>, which routes to the COO for signature if it's $10,000 or more.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num">8</div>
+      <span class="who">Deliverables</span>
+      <h2>They do the work, and we check it</h2>
+      <p>
+        The supplier delivers. The contract coordinator uploads the proof — a report, a delivery
+        note, an inspection form. Then somebody <em>else</em> has to look at it and accept it.
+      </p>
+      <div class="why"><b>Why it matters:</b> the person who uploads the proof cannot approve their own work. Two different people, always.</div>
+      <div class="sys">
+        <p class="sys-label">In the system</p>
+        <p class="path">Procurement › Contract Management › open the contract › Deliverables</p>
+        <p>The coordinator clicks <span class="btn">Upload Deliverable</span>. A second person then clicks <span class="btn">Accept</span> or <span class="btn">Reject</span>. Full detail is in the contract flow.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num">9</div>
+      <span class="who">Invoice &amp; Payment</span>
+      <h2>They send a bill, and we pay it</h2>
+      <p>
+        The supplier sends an invoice. It has to be matched to work we have already accepted. Then
+        Procurement checks it against the contract, a supervisor approves it, and only then does
+        Finance pay — recording the date, the amount and the bank reference.
+      </p>
+      <div class="why"><b>Why it matters:</b> we never pay for something we haven't received and checked. If anything looks wrong, anyone in the chain can send the bill back with a reason.</div>
+      <div class="sys">
+        <p class="sys-label">In the system</p>
+        <p class="path">Procurement › Invoices</p>
+        <p>This screen shows every bill across every contract, grouped by which stage it's waiting at. Open one and the only button you'll see is the one for the stage it's actually at. Full detail is in the contract flow.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num">10</div>
+      <span class="who">Close-out &amp; Rating</span>
+      <h2>We close the job and give them a score</h2>
+      <p>
+        When everything is delivered and paid, we check the list is complete, print a completion
+        certificate, and score the supplier out of 10 — on quality, on being on time, on cost, on
+        following the rules, and on how they behaved.
+      </p>
+      <div class="why"><b>Why it matters:</b> a score below 5 puts a flag on them. Next time, they need special permission before we can use them again.</div>
+      <div class="sys">
+        <p class="sys-label">In the system</p>
+        <p class="path">Procurement › Contract Management › open the contract › Performance, then Close-Out</p>
+        <p>Score the supplier on the <b>Performance</b> tab, then finish on <b>Close-Out</b> with <span class="btn">Close Contract</span>. The score lands on the supplier's profile in Supplier Management by itself.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="loop">
+    <h2>And then it starts again</h2>
+    <p>
+      The score from step 10 decides who is allowed back at step 1. Good suppliers get more work.
+      Poor ones don't — unless management specifically approves it.
+    </p>
+  </div>
+
+  <div class="tip">
+    <p>
+      <b>Demonstrating this to a room?</b> Use the name badge at the top-right of the screen to switch
+      between Felix (Procurement), Abena (Finance), James (Department Head) and Nana (COO). The system
+      deliberately won't let one person approve their own work, so you need to switch to walk a
+      request all the way through.
+    </p>
+  </div>
+
+  <div class="plain">
+    <h2>The words people use</h2>
+    <dl>
+      <div><dt>Supplier / vendor</dt><dd>A company or person we buy from.</dd></div>
+      <div><dt>Procurement plan</dt><dd>The shopping list for the year.</dd></div>
+      <div><dt>Requisition</dt><dd>The form someone fills in to ask to buy something.</dd></div>
+      <div><dt>Sourcing</dt><dd>Looking for someone to supply it.</dd></div>
+      <div><dt>Tender / bid</dt><dd>An advert asking suppliers to offer a price, and the offer they send back.</dd></div>
+      <div><dt>Award</dt><dd>Choosing the winner.</dd></div>
+      <div><dt>Deliverable</dt><dd>A thing the supplier promised to hand over.</dd></div>
+      <div><dt>Invoice</dt><dd>The bill.</dd></div>
+      <div><dt>Variation</dt><dd>A change to a signed contract — more money, more time, or different work.</dd></div>
+      <div><dt>Close-out</dt><dd>Finishing the job properly and filing everything.</dd></div>
+    </dl>
+  </div>
+
+</div>
+
+</body>
+</html>
