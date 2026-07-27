@@ -1,362 +1,84 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
-  Search, Download, Upload, ChevronDown, MoreHorizontal, Plus, X, Eye, Edit2,
-  Building2, User, Star, AlertTriangle, ShieldAlert, ShieldBan, ShieldCheck,
-  ArrowLeft, FileText, Check, Paperclip, Upload as UploadIcon, Clock,
-  Users, Loader, Flag, TrendingUp, CalendarClock
+  Search, Download, ChevronDown, MoreHorizontal, Plus, X, Eye, Building2, User, Star,
+  AlertTriangle, ShieldAlert, ShieldBan, ShieldCheck, FileText, Check, Paperclip,
+  Users, Loader, Flag, TrendingUp, CalendarClock, Clock, Layers, CheckCircle2, XCircle,
+  FileSpreadsheet, FileDown, Printer, Info, BadgeCheck, Trophy, Edit2,
 } from "lucide-react";
-import { SupplierDetailsView, type SupplierDetailData } from "./SupplierDetailsView";
-
-/* ══════════════════════════════════════════════════════════════════════════════
-   TYPES
-   ══════════════════════════════════════════════════════════════════════════════ */
-
-type VendorType = "Firm" | "Individual";
-type VendorStatus = "Active" | "Pending Onboarding" | "Flagged" | "Blacklisted" | "Suspended" | "Pending Reactivation";
-type RiskLevel = "Low" | "Medium" | "High";
-
-interface PerformanceScore {
-  quality: number;
-  timeliness: number;
-  responsiveness: number;
-  costManagement: number;
-  compliance: number;
-}
-
-interface FirmVendor {
-  id: string;
-  vendorId: string;
-  type: "Firm";
-  legalBusinessName: string;
-  registrationNumber: string;
-  taxId: string;
-  registeredAddress: string;
-  contactPerson: string;
-  email: string;
-  phone: string;
-  bankName: string;
-  bankAccountNumber: string;
-  category: string;
-  subCategory: string;
-  riskLevel: RiskLevel;
-  status: VendorStatus;
-  performance: PerformanceScore;
-  totalOrders: number;
-  totalSpend: number;
-  documents: string[];
-  documentExpiry: Record<string, string>;
-  dateOnboarded: string;
-}
-
-interface HistoricalRate {
-  assignment: string;
-  rate: number;
-  rateType: "Daily" | "Monthly";
-  period: string;
-}
-
-interface IndividualVendor {
-  id: string;
-  vendorId: string;
-  type: "Individual";
-  legalName: string;
-  contactEmail: string;
-  contactPhone: string;
-  idType: "Passport" | "National ID" | "Driver's License";
-  idNumber: string;
-  residentialAddress: string;
-  bankName: string;
-  bankAccountNumber: string;
-  category: string;
-  subCategory: string;
-  riskLevel: RiskLevel;
-  status: VendorStatus;
-  performance: PerformanceScore;
-  totalOrders: number;
-  totalSpend: number;
-  documents: string[];
-  documentExpiry: Record<string, string>;
-  dateOnboarded: string;
-  expertAreas: string[];
-  historicalRates: HistoricalRate[];
-}
-
-type Vendor = FirmVendor | IndividualVendor;
+import { SupplierDetailsView } from "./SupplierDetailsView";
+import { ProcurementTabs, ProcurementTabBar, type ProcurementTab } from "./procurement/ProcurementTabs";
+import { ProcurementStatCards } from "./procurement/ProcurementStatCards";
+import {
+  subscribe as subscribeVendors,
+  getVendors, getVendorStats, getPerformanceRanking, getVendorsByCategory,
+  getBlockedVendors, getVendorsWithDocumentIssues, getVendorFlags, hasVendorWarning,
+  avgScore, vendorDisplayName, vendorEmail, vendorAddress, peekNextVendorId,
+  registerVendor, updateVendor, approveVendorRegistration, changeVendorStatus,
+  requestReactivation, approveReactivation,
+  findPotentialDuplicates, isSanctioned,
+  VENDOR_CATEGORIES, SUB_CATEGORIES, VENDOR_STATUSES,
+  FIRM_DOC_CHECKLIST, INDIVIDUAL_DOC_CHECKLIST, EXPERT_AREAS_OPTIONS,
+  type Vendor, type FirmVendor, type IndividualVendor,
+  type VendorType, type VendorStatus, type RiskLevel, type VendorFlags,
+} from "../lib/vendorStore";
+import {
+  can, denialReason, getCurrentUser, hasRole, subscribe as subscribeUser,
+} from "../lib/currentUser";
+import { pickFiles, FileValidationError, type UploadedFile } from "../lib/fileUpload";
+import { exportToCSV, exportToExcel, exportToPDF, type ExportColumn } from "../lib/exportUtils";
 
 /* ══════════════════════════════════════════════════════════════════════════════
    CONSTANTS
-   ═══════════════════════════════════════════════════════��══════════════════════ */
-
-const CATEGORIES = ["All Categories", "Goods", "Works", "Consulting"];
-const SUB_CATEGORIES: Record<string, string[]> = {
-  Goods: ["IT Equipment", "Office Supplies", "Medical Supplies", "Vehicles", "Furniture"],
-  Works: ["Construction", "Renovation", "Installation", "Maintenance"],
-  Consulting: ["Management Consulting", "IT Consulting", "Financial Advisory", "Legal Services", "Research"],
-};
-const STATUSES: VendorStatus[] = ["Active", "Pending Onboarding", "Flagged", "Blacklisted", "Suspended", "Pending Reactivation"];
-const STATUS_FILTERS = ["All Statuses", ...STATUSES];
-const RISK_LEVELS: RiskLevel[] = ["Low", "Medium", "High"];
-
-const EXPERT_AREAS_OPTIONS = [
-  "Policy Analysis", "Data Science", "M&E", "Gender Studies", "Agricultural Economics",
-  "Public Health", "Climate Change", "Education", "Governance", "Statistics",
-  "Project Management", "Financial Analysis", "Legal Advisory", "IT Systems", "Human Resources",
-];
-
-const FIRM_DOC_CHECKLIST = [
-  "Certificate of Incorporation",
-  "Tax Clearance Certificate",
-  "SSNIT Clearance",
-  "VAT Registration",
-  "Performance References",
-];
-const INDIVIDUAL_DOC_CHECKLIST = [
-  "CV / Resume",
-  "Passport / National ID Copy",
-  "Proof of Residential Address",
-  "Bank Account Confirmation",
-];
-
-/* ══════════════════════════════════════════════════════════════════════════════
-   MOCK DATA
    ══════════════════════════════════════════════════════════════════════════════ */
 
-let nextVendorNumber = 1009;
+const F = "'Montserrat Variable', sans-serif";
 
-const firmVendors: FirmVendor[] = [
-  {
-    id: "f1", vendorId: "VND-1001", type: "Firm", legalBusinessName: "Tech Solutions Inc.",
-    registrationNumber: "CS-2018-45678", taxId: "TIN-GH-2345678", registeredAddress: "14 Independence Ave, Accra",
-    contactPerson: "John Smith", email: "john@techsolutions.com", phone: "+233 20 123 4567",
-    bankName: "GCB Bank", bankAccountNumber: "****4521", category: "Goods", subCategory: "IT Equipment",
-    riskLevel: "Low", status: "Active",
-    performance: { quality: 9.2, timeliness: 8.8, responsiveness: 9.0, costManagement: 8.5, compliance: 9.4 },
-    totalOrders: 45, totalSpend: 285000,
-    documents: ["Certificate of Incorporation", "Tax Clearance Certificate", "SSNIT Clearance", "VAT Registration", "Performance References"],
-    documentExpiry: { "Tax Clearance Certificate": "2026-06-01", "SSNIT Clearance": "2026-08-15", "VAT Registration": "2027-01-10" },
-    dateOnboarded: "2022-03-15",
-  },
-  {
-    id: "f2", vendorId: "VND-1002", type: "Firm", legalBusinessName: "Office Depot Ltd.",
-    registrationNumber: "CS-2016-34521", taxId: "TIN-GH-1234567", registeredAddress: "23 Oxford Street, Osu, Accra",
-    contactPerson: "Sarah Johnson", email: "sarah@officedepot.com", phone: "+233 24 234 5678",
-    bankName: "Ecobank Ghana", bankAccountNumber: "****7892", category: "Goods", subCategory: "Office Supplies",
-    riskLevel: "Low", status: "Active",
-    performance: { quality: 8.5, timeliness: 9.0, responsiveness: 8.8, costManagement: 9.2, compliance: 8.7 },
-    totalOrders: 78, totalSpend: 145000,
-    documents: ["Certificate of Incorporation", "Tax Clearance Certificate", "SSNIT Clearance", "VAT Registration", "Performance References"],
-    documentExpiry: { "Tax Clearance Certificate": "2026-07-20", "SSNIT Clearance": "2026-09-30", "VAT Registration": "2027-03-15" },
-    dateOnboarded: "2021-08-10",
-  },
-  {
-    id: "f3", vendorId: "VND-1003", type: "Firm", legalBusinessName: "PrintWorks Ghana Ltd",
-    registrationNumber: "CS-2019-56789", taxId: "TIN-GH-3456789", registeredAddress: "5 Ring Road East, Accra",
-    contactPerson: "Michael Brown", email: "michael@printworks.com.gh", phone: "+233 27 345 6789",
-    bankName: "Stanbic Bank", bankAccountNumber: "****3341", category: "Goods", subCategory: "Office Supplies",
-    riskLevel: "Low", status: "Active",
-    performance: { quality: 8.0, timeliness: 7.5, responsiveness: 8.2, costManagement: 8.8, compliance: 8.0 },
-    totalOrders: 32, totalSpend: 52000,
-    documents: ["Certificate of Incorporation", "Tax Clearance Certificate", "SSNIT Clearance", "VAT Registration"],
-    documentExpiry: { "Tax Clearance Certificate": "2026-05-20", "SSNIT Clearance": "2026-04-30" },
-    dateOnboarded: "2023-01-20",
-  },
-  {
-    id: "f4", vendorId: "VND-1004", type: "Firm", legalBusinessName: "La Palm Royal Beach Hotel",
-    registrationNumber: "CS-2005-12345", taxId: "TIN-GH-9876543", registeredAddress: "La Beach Road, Trade Fair, Accra",
-    contactPerson: "Emily Davis", email: "events@lapalmhotel.com", phone: "+233 30 271 2500",
-    bankName: "Standard Chartered", bankAccountNumber: "****6654", category: "Works", subCategory: "Maintenance",
-    riskLevel: "Medium", status: "Active",
-    performance: { quality: 9.0, timeliness: 8.5, responsiveness: 9.2, costManagement: 7.8, compliance: 9.0 },
-    totalOrders: 15, totalSpend: 98000,
-    documents: ["Certificate of Incorporation", "Tax Clearance Certificate", "VAT Registration", "Performance References"],
-    documentExpiry: { "Tax Clearance Certificate": "2026-12-01", "VAT Registration": "2027-06-01" },
-    dateOnboarded: "2022-06-01",
-  },
-  {
-    id: "f5", vendorId: "VND-1005", type: "Firm", legalBusinessName: "MedSupply GH",
-    registrationNumber: "CS-2020-78901", taxId: "TIN-GH-6543210", registeredAddress: "12 Liberation Road, Accra",
-    contactPerson: "Grace Owusu", email: "grace@medsupplygh.com", phone: "+233 26 456 7890",
-    bankName: "Absa Bank", bankAccountNumber: "****8812", category: "Goods", subCategory: "Medical Supplies",
-    riskLevel: "Medium", status: "Active",
-    performance: { quality: 8.8, timeliness: 8.2, responsiveness: 7.9, costManagement: 8.0, compliance: 9.1 },
-    totalOrders: 22, totalSpend: 168000,
-    documents: ["Certificate of Incorporation", "Tax Clearance Certificate", "SSNIT Clearance", "VAT Registration", "Performance References"],
-    documentExpiry: { "Tax Clearance Certificate": "2026-10-15", "SSNIT Clearance": "2026-11-20", "VAT Registration": "2027-02-28" },
-    dateOnboarded: "2023-04-12",
-  },
-  {
-    id: "f6", vendorId: "VND-1006", type: "Firm", legalBusinessName: "CreativeEdge Designs",
-    registrationNumber: "CS-2021-23456", taxId: "TIN-GH-4567890", registeredAddress: "8 Cantonments Rd, Accra",
-    contactPerson: "Tom Anderson", email: "tom@creativeedge.com.gh", phone: "+233 55 567 8901",
-    bankName: "Fidelity Bank", bankAccountNumber: "****2209", category: "Consulting", subCategory: "Management Consulting",
-    riskLevel: "Low", status: "Pending Onboarding",
-    performance: { quality: 0, timeliness: 0, responsiveness: 0, costManagement: 0, compliance: 0 },
-    totalOrders: 0, totalSpend: 0,
-    documents: ["Certificate of Incorporation", "Tax Clearance Certificate"],
-    documentExpiry: { "Tax Clearance Certificate": "2027-03-10" },
-    dateOnboarded: "2026-03-10",
-  },
-  {
-    id: "f7", vendorId: "VND-1007", type: "Firm", legalBusinessName: "Kwame Construction Ltd",
-    registrationNumber: "CS-2015-89012", taxId: "TIN-GH-7890123", registeredAddress: "Industrial Area, Tema",
-    contactPerson: "Kwame Asante", email: "kwame@kwameconstruction.com", phone: "+233 20 678 9012",
-    bankName: "GCB Bank", bankAccountNumber: "****5567", category: "Works", subCategory: "Construction",
-    riskLevel: "High", status: "Flagged",
-    performance: { quality: 5.2, timeliness: 4.0, responsiveness: 6.0, costManagement: 4.5, compliance: 3.8 },
-    totalOrders: 8, totalSpend: 420000,
-    documents: ["Certificate of Incorporation", "Tax Clearance Certificate", "SSNIT Clearance", "VAT Registration"],
-    documentExpiry: { "Tax Clearance Certificate": "2025-12-01", "SSNIT Clearance": "2026-01-15", "VAT Registration": "2025-11-30" },
-    dateOnboarded: "2020-11-05",
-  },
-  {
-    id: "f8", vendorId: "VND-1008", type: "Firm", legalBusinessName: "ABC Logistics Group",
-    registrationNumber: "CS-2017-34567", taxId: "TIN-GH-8901234", registeredAddress: "3 North Industrial Area, Accra",
-    contactPerson: "Rachel Green", email: "rachel@abclogistics.com.gh", phone: "+233 24 789 0123",
-    bankName: "Zenith Bank", bankAccountNumber: "****1198", category: "Works", subCategory: "Installation",
-    riskLevel: "Medium", status: "Suspended",
-    performance: { quality: 6.5, timeliness: 5.5, responsiveness: 7.0, costManagement: 6.0, compliance: 5.0 },
-    totalOrders: 12, totalSpend: 156000,
-    documents: ["Certificate of Incorporation", "Tax Clearance Certificate", "SSNIT Clearance"],
-    documentExpiry: { "Tax Clearance Certificate": "2026-05-30", "SSNIT Clearance": "2026-06-10" },
-    dateOnboarded: "2021-02-18",
-  },
-];
+const CATEGORY_FILTERS = ["All Categories", ...VENDOR_CATEGORIES];
+const STATUS_FILTERS: string[] = ["All Statuses", ...VENDOR_STATUSES];
 
-const individualVendors: IndividualVendor[] = [
-  {
-    id: "i1", vendorId: "VND-2001", type: "Individual", legalName: "Dr. Kwesi Appiah",
-    contactEmail: "kwesi.appiah@consultant.com", contactPhone: "+233 20 111 2222",
-    idType: "Passport", idNumber: "G****4521", residentialAddress: "15 East Legon, Accra",
-    bankName: "GCB Bank", bankAccountNumber: "****9901", category: "Consulting", subCategory: "Research",
-    riskLevel: "Low", status: "Active",
-    performance: { quality: 9.5, timeliness: 9.0, responsiveness: 9.2, costManagement: 8.8, compliance: 9.6 },
-    totalOrders: 12, totalSpend: 86000,
-    documents: ["CV / Resume", "Passport / National ID Copy", "Proof of Residential Address", "Bank Account Confirmation"],
-    documentExpiry: { "Passport / National ID Copy": "2028-03-15" },
-    dateOnboarded: "2023-06-20",
-    expertAreas: ["Policy Analysis", "Data Science", "Agricultural Economics"],
-    historicalRates: [
-      { assignment: "Agricultural Policy Review", rate: 800, rateType: "Daily", period: "Jan 2025 - Mar 2025" },
-      { assignment: "Food Security Assessment", rate: 12000, rateType: "Monthly", period: "Jun 2024 - Dec 2024" },
-      { assignment: "Climate Impact Study", rate: 750, rateType: "Daily", period: "Feb 2024 - Apr 2024" },
-    ],
-  },
-  {
-    id: "i2", vendorId: "VND-2002", type: "Individual", legalName: "Prof. Ama Benyiwa",
-    contactEmail: "ama.benyiwa@university.edu.gh", contactPhone: "+233 24 222 3333",
-    idType: "National ID", idNumber: "GHA****6789", residentialAddress: "22 Labone, Accra",
-    bankName: "Ecobank Ghana", bankAccountNumber: "****5543", category: "Consulting", subCategory: "Financial Advisory",
-    riskLevel: "Low", status: "Active",
-    performance: { quality: 9.8, timeliness: 9.5, responsiveness: 9.0, costManagement: 9.0, compliance: 9.8 },
-    totalOrders: 8, totalSpend: 52000,
-    documents: ["CV / Resume", "Passport / National ID Copy", "Proof of Residential Address", "Bank Account Confirmation"],
-    documentExpiry: { "Passport / National ID Copy": "2027-09-01" },
-    dateOnboarded: "2023-09-14",
-    expertAreas: ["Financial Analysis", "Gender Studies", "M&E"],
-    historicalRates: [
-      { assignment: "Gender Mainstreaming Workshop", rate: 900, rateType: "Daily", period: "Sep 2025 - Oct 2025" },
-      { assignment: "Financial Inclusion Study", rate: 14000, rateType: "Monthly", period: "Mar 2025 - Aug 2025" },
-    ],
-  },
-  {
-    id: "i3", vendorId: "VND-2003", type: "Individual", legalName: "Nana Yaw Mensah",
-    contactEmail: "nana.yaw@facilitator.com", contactPhone: "+233 55 333 4444",
-    idType: "National ID", idNumber: "GHA****3456", residentialAddress: "7 Airport Residential, Accra",
-    bankName: "Stanbic Bank", bankAccountNumber: "****7782", category: "Consulting", subCategory: "Management Consulting",
-    riskLevel: "Low", status: "Active",
-    performance: { quality: 8.5, timeliness: 8.0, responsiveness: 8.8, costManagement: 8.2, compliance: 8.5 },
-    totalOrders: 6, totalSpend: 34000,
-    documents: ["CV / Resume", "Passport / National ID Copy", "Proof of Residential Address", "Bank Account Confirmation"],
-    documentExpiry: { "Passport / National ID Copy": "2029-05-20" },
-    dateOnboarded: "2024-01-08",
-    expertAreas: ["Project Management", "Governance", "Public Health"],
-    historicalRates: [
-      { assignment: "Health Sector Governance Review", rate: 650, rateType: "Daily", period: "Apr 2025 - Jun 2025" },
-      { assignment: "Public Sector Reform Facilitation", rate: 10000, rateType: "Monthly", period: "Jan 2025 - Mar 2025" },
-    ],
-  },
-  {
-    id: "i4", vendorId: "VND-2004", type: "Individual", legalName: "Akosua Frimpong",
-    contactEmail: "akosua.f@legalconsult.com", contactPhone: "+233 26 444 5555",
-    idType: "Passport", idNumber: "G****7890", residentialAddress: "31 Dzorwulu, Accra",
-    bankName: "Fidelity Bank", bankAccountNumber: "****3301", category: "Consulting", subCategory: "Legal Services",
-    riskLevel: "Low", status: "Active",
-    performance: { quality: 9.0, timeliness: 8.5, responsiveness: 9.5, costManagement: 8.0, compliance: 9.2 },
-    totalOrders: 4, totalSpend: 28000,
-    documents: ["CV / Resume", "Passport / National ID Copy", "Proof of Residential Address", "Bank Account Confirmation"],
-    documentExpiry: { "Passport / National ID Copy": "2028-11-10" },
-    dateOnboarded: "2024-05-22",
-    expertAreas: ["Legal Advisory", "Governance", "Human Resources"],
-    historicalRates: [
-      { assignment: "Employment Law Advisory", rate: 1000, rateType: "Daily", period: "Jul 2025 - Sep 2025" },
-    ],
-  },
-  {
-    id: "i5", vendorId: "VND-2005", type: "Individual", legalName: "Kofi Adu-Gyamfi",
-    contactEmail: "kofi.adu@techconsulting.com", contactPhone: "+233 27 555 6666",
-    idType: "National ID", idNumber: "GHA****1234", residentialAddress: "9 Roman Ridge, Accra",
-    bankName: "Absa Bank", bankAccountNumber: "****6645", category: "Consulting", subCategory: "IT Consulting",
-    riskLevel: "Medium", status: "Pending Onboarding",
-    performance: { quality: 0, timeliness: 0, responsiveness: 0, costManagement: 0, compliance: 0 },
-    totalOrders: 0, totalSpend: 0,
-    documents: ["CV / Resume", "Passport / National ID Copy"],
-    documentExpiry: { "Passport / National ID Copy": "2029-01-05" },
-    dateOnboarded: "2026-03-12",
-    expertAreas: ["IT Systems", "Data Science"],
-    historicalRates: [],
-  },
-  {
-    id: "i6", vendorId: "VND-2006", type: "Individual", legalName: "Efua Mensah-Bonsu",
-    contactEmail: "efua.mb@researcher.org", contactPhone: "+233 50 666 7777",
-    idType: "Passport", idNumber: "G****5678", residentialAddress: "4 Spintex Road, Accra",
-    bankName: "Standard Chartered", bankAccountNumber: "****2234", category: "Consulting", subCategory: "Research",
-    riskLevel: "High", status: "Blacklisted",
-    performance: { quality: 3.0, timeliness: 2.5, responsiveness: 4.0, costManagement: 3.5, compliance: 2.0 },
-    totalOrders: 3, totalSpend: 18000,
-    documents: ["CV / Resume", "Passport / National ID Copy"],
-    documentExpiry: { "Passport / National ID Copy": "2026-02-15" },
-    dateOnboarded: "2024-08-01",
-    expertAreas: ["Statistics", "M&E"],
-    historicalRates: [
-      { assignment: "M&E Framework Design", rate: 500, rateType: "Daily", period: "Aug 2024 - Oct 2024" },
-    ],
-  },
+type TabKey = "firms" | "individuals" | "pending" | "performance" | "blocked" | "expiring";
+type StatusAction = "Flag" | "Suspend" | "Blacklist" | "Reactivate" | "Approve Reactivation";
+
+/** Row shape handed to the export helpers — a type alias so it satisfies Record<string, unknown>. */
+type VendorExportRow = {
+  vendorId: string;
+  name: string;
+  type: string;
+  category: string;
+  subCategory: string;
+  contact: string;
+  email: string;
+  status: string;
+  riskLevel: string;
+  rating: string;
+  totalOrders: number;
+  totalSpend: number;
+  bankValidated: string;
+  outstandingDocuments: string;
+  dateOnboarded: string;
+};
+
+const EXPORT_COLUMNS: ExportColumn<VendorExportRow>[] = [
+  { key: "vendorId", header: "Vendor ID" },
+  { key: "name", header: "Name" },
+  { key: "type", header: "Type" },
+  { key: "category", header: "Category" },
+  { key: "subCategory", header: "Sub-category" },
+  { key: "contact", header: "Contact" },
+  { key: "email", header: "Email" },
+  { key: "status", header: "Status" },
+  { key: "riskLevel", header: "Risk" },
+  { key: "rating", header: "Rating" },
+  { key: "totalOrders", header: "Orders" },
+  { key: "totalSpend", header: "Total Spend (USD)" },
+  { key: "bankValidated", header: "Banking Validated" },
+  { key: "outstandingDocuments", header: "Outstanding Documents" },
+  { key: "dateOnboarded", header: "Date Onboarded" },
 ];
 
 /* ══════════════════════════════════════════════════════════════════════════════
    HELPERS
    ══════════════════════════════════════════════════════════════════════════════ */
-
-function avgScore(p: PerformanceScore) {
-  const vals = [p.quality, p.timeliness, p.responsiveness, p.costManagement, p.compliance];
-  const nonZero = vals.filter(v => v > 0);
-  if (nonZero.length === 0) return 0;
-  return +(nonZero.reduce((a, b) => a + b, 0) / nonZero.length).toFixed(1);
-}
-
-function hasExpiredDocs(v: Vendor): boolean {
-  const now = new Date();
-  return Object.values(v.documentExpiry).some(d => new Date(d) < now);
-}
-
-function hasDocExpiringWithin30Days(v: Vendor): boolean {
-  const now = new Date();
-  const in30 = new Date();
-  in30.setDate(in30.getDate() + 30);
-  return Object.values(v.documentExpiry).some(d => {
-    const exp = new Date(d);
-    return exp >= now && exp <= in30;
-  });
-}
-
-function hasMissingDocs(v: Vendor): boolean {
-  const checklist = v.type === "Firm" ? FIRM_DOC_CHECKLIST : INDIVIDUAL_DOC_CHECKLIST;
-  return checklist.some(doc => !v.documents.includes(doc));
-}
-
-function hasDocWarning(v: Vendor): boolean {
-  return hasExpiredDocs(v) || hasMissingDocs(v);
-}
 
 function getStatusColor(s: VendorStatus) {
   switch (s) {
@@ -386,34 +108,117 @@ function ratingStars(score: number) {
   return `${score}/10`;
 }
 
-const F = "'Montserrat Variable', sans-serif";
+/** Account numbers are never shown in full on a list view. */
+function maskAccount(account: string) {
+  const value = (account ?? "").trim();
+  if (!value) return "—";
+  if (value.startsWith("*") || value.startsWith("•")) return value;
+  return `••••${value.slice(-4)}`;
+}
+
+/** Re-render whenever the vendor register or the signed-in user changes. */
+function useStoreSubscription() {
+  const [, setVersion] = useState(0);
+  useEffect(() => {
+    const bump = () => setVersion((v) => v + 1);
+    const unsubVendors = subscribeVendors(bump);
+    const unsubUser = subscribeUser(bump);
+    return () => { unsubVendors(); unsubUser(); };
+  }, []);
+}
+
+function toExportRow(v: Vendor): VendorExportRow {
+  const flags = getVendorFlags(v);
+  return {
+    vendorId: v.vendorId,
+    name: vendorDisplayName(v),
+    type: v.type,
+    category: v.category,
+    subCategory: v.subCategory,
+    contact: v.type === "Firm" ? v.contactPerson : v.legalName,
+    email: vendorEmail(v),
+    status: v.status,
+    riskLevel: v.riskLevel,
+    rating: avgScore(v.performance) > 0 ? `${avgScore(v.performance)}/10` : "Not rated",
+    totalOrders: v.totalOrders,
+    totalSpend: v.totalSpend,
+    bankValidated: v.bankValidated ? `Yes${v.bankValidatedBy ? ` (${v.bankValidatedBy})` : ""}` : "No",
+    outstandingDocuments: [...flags.missingDocs, ...flags.expiredDocs.map((d) => `${d} (expired)`)].join("; ") || "None",
+    dateOnboarded: v.dateOnboarded,
+  };
+}
+
+/** Inline duplicate / sanctions screening shown while a name is being typed. */
+function NameScreening({ name, excludeId }: { name: string; excludeId?: string }) {
+  const trimmed = name.trim();
+  if (trimmed.length < 3) return null;
+  const duplicates = findPotentialDuplicates(trimmed, excludeId);
+  const sanctioned = isSanctioned(trimmed);
+  if (!sanctioned && duplicates.length === 0) {
+    return (
+      <p className="text-[10px] text-green-600 flex items-center gap-1" style={{ fontFamily: F }}>
+        <CheckCircle2 size={11} /> No duplicate record or sanctions match found.
+      </p>
+    );
+  }
+  return (
+    <div className="flex flex-col gap-1">
+      {sanctioned && (
+        <p className="text-[10px] text-red-600 flex items-start gap-1" style={{ fontFamily: F }}>
+          <ShieldBan size={11} className="mt-px shrink-0" />
+          Sanctions match — this name appears on a donor/statutory debarment list. Registration will be escalated.
+        </p>
+      )}
+      {duplicates.length > 0 && (
+        <p className="text-[10px] text-amber-600 flex items-start gap-1" style={{ fontFamily: F }}>
+          <AlertTriangle size={11} className="mt-px shrink-0" />
+          Possible duplicate of {duplicates.map((d) => `${vendorDisplayName(d)} (${d.vendorId})`).join(", ")}.
+        </p>
+      )}
+    </div>
+  );
+}
 
 /* ══════════════════════════════════════════════════════════════════════════════
    COMPONENT
    ══════════════════════════════════════════════════════════════════════════════ */
 
 export function Suppliers() {
-  const [activeTab, setActiveTab] = useState<"firms" | "individuals">("firms");
+  useStoreSubscription();
+  const user = getCurrentUser();
+
+  const canCreate = can("vendor.create");
+  const canApproveRegistration = can("vendor.approveRegistration");
+  const canSuspend = can("vendor.suspend");
+  const canApproveReactivation = can("vendor.approveReactivation");
+  const canRequestReactivation = hasRole("Procurement") || canApproveReactivation;
+  const canExport = can("report.export");
+
+  const [activeTab, setActiveTab] = useState<TabKey>("firms");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All Categories");
   const [selectedStatus, setSelectedStatus] = useState("All Statuses");
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
   const [openActionMenuId, setOpenActionMenuId] = useState<string | null>(null);
   const [showOnboardModal, setShowOnboardModal] = useState<VendorType | null>(null);
+  const [notice, setNotice] = useState<{ tone: "error" | "success"; text: string } | null>(null);
 
   // Detail view
-  const [showDetailView, setShowDetailView] = useState(false);
-  const [selectedSupplierForDetail, setSelectedSupplierForDetail] = useState<SupplierDetailData | null>(null);
+  const [detailVendorId, setDetailVendorId] = useState<string | null>(null);
 
   // Onboard form states — Firm
   const [firmForm, setFirmForm] = useState({
     legalBusinessName: "", registrationNumber: "", taxId: "", registeredAddress: "",
     contactPerson: "", email: "", phone: "",
     bankName: "", bankAccountNumber: "",
-    category: "", subCategory: "",
+    category: "", subCategory: "", ownershipDetails: "",
   });
-  const [firmDocs, setFirmDocs] = useState<string[]>([]);
+  const [firmSpecializations, setFirmSpecializations] = useState<string[]>([]);
+  const [specializationDraft, setSpecializationDraft] = useState("");
+  const [firmDocFiles, setFirmDocFiles] = useState<Record<string, UploadedFile>>({});
+  const [firmDocExpiry, setFirmDocExpiry] = useState<Record<string, string>>({});
 
   // Onboard form states — Individual
   const [indForm, setIndForm] = useState({
@@ -423,124 +228,461 @@ export function Suppliers() {
     bankName: "", bankAccountNumber: "",
     category: "", subCategory: "",
   });
-  const [indDocs, setIndDocs] = useState<string[]>([]);
-
   const [indExpertAreas, setIndExpertAreas] = useState<string[]>([]);
   const [showExpertDropdown, setShowExpertDropdown] = useState(false);
-
-  // Document expiry fields for onboarding forms
-  const [firmDocExpiry, setFirmDocExpiry] = useState<Record<string, string>>({});
+  const [indDocFiles, setIndDocFiles] = useState<Record<string, UploadedFile>>({});
   const [indDocExpiry, setIndDocExpiry] = useState<Record<string, string>>({});
 
-  // Reactivation confirmation modal
-  const [showReactivateModal, setShowReactivateModal] = useState<Vendor | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [onboardResult, setOnboardResult] = useState<{ vendor: Vendor; flags: VendorFlags } | null>(null);
 
   const [formCategoryDropdown, setFormCategoryDropdown] = useState(false);
   const [formSubCategoryDropdown, setFormSubCategoryDropdown] = useState(false);
 
-  // ── Dashboard Stats ──────────────────────────────────────────────────────
-  const allVendors: Vendor[] = [...firmVendors, ...individualVendors];
-  const activeCount = allVendors.filter(v => v.status === "Active").length;
-  const pendingOnboardingCount = allVendors.filter(v => v.status === "Pending Onboarding").length;
-  const flaggedSuspendedCount = allVendors.filter(v => v.status === "Flagged" || v.status === "Suspended" || v.status === "Blacklisted").length;
-  const expiringDocsCount = allVendors.filter(v => hasDocExpiringWithin30Days(v) || hasExpiredDocs(v)).length;
-  const activeWithScores = allVendors.filter(v => v.status === "Active" && avgScore(v.performance) > 0);
-  const avgPerformanceScore = activeWithScores.length > 0
-    ? +(activeWithScores.reduce((sum, v) => sum + avgScore(v.performance), 0) / activeWithScores.length).toFixed(1)
-    : 0;
+  // Status action modal (Flag / Suspend / Blacklist / Reactivate)
+  const [statusAction, setStatusAction] = useState<{ vendor: Vendor; action: StatusAction } | null>(null);
+  const [actionReason, setActionReason] = useState("");
+  const [actionReasonError, setActionReasonError] = useState(false);
 
-  // ── Filtering ───────────────────────────────────���──────────────────────────
+  // Edit modal
+  const [editVendor, setEditVendor] = useState<Vendor | null>(null);
+  const [editForm, setEditForm] = useState({
+    contactPerson: "", email: "", phone: "", address: "",
+    bankName: "", bankAccountNumber: "", category: "", subCategory: "", ownershipDetails: "",
+  });
+  const [editSpecializations, setEditSpecializations] = useState<string[]>([]);
+  const [editSpecDraft, setEditSpecDraft] = useState("");
+  const [editExpertAreas, setEditExpertAreas] = useState<string[]>([]);
+  const [editExpertDropdown, setEditExpertDropdown] = useState(false);
+  const [editCategoryDropdown, setEditCategoryDropdown] = useState(false);
+  const [editSubCategoryDropdown, setEditSubCategoryDropdown] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
 
-  const filteredFirms = firmVendors.filter(v => {
-    const q = searchQuery.toLowerCase();
-    const matchesSearch = v.legalBusinessName.toLowerCase().includes(q) ||
-      v.vendorId.toLowerCase().includes(q) || v.contactPerson.toLowerCase().includes(q);
+  // ── Store reads ────────────────────────────────────────────────────────────
+  const vendors = getVendors();
+  const stats = getVendorStats();
+  const ranking = getPerformanceRanking();
+  const categoryBreakdown = getVendorsByCategory();
+  const blockedVendors = getBlockedVendors();
+  const documentIssues = getVendorsWithDocumentIssues();
+  const pendingQueue = vendors.filter((v) => v.pendingReview === true || v.status === "Pending Onboarding");
+
+  // ── Filtering ──────────────────────────────────────────────────────────────
+  const matchesFilters = (v: Vendor) => {
+    const q = searchQuery.trim().toLowerCase();
+    const haystack = [
+      vendorDisplayName(v), v.vendorId, vendorEmail(v),
+      v.type === "Firm" ? v.contactPerson : v.idNumber,
+    ].join(" ").toLowerCase();
+    const matchesSearch = !q || haystack.includes(q);
     const matchesCat = selectedCategory === "All Categories" || v.category === selectedCategory;
     const matchesStat = selectedStatus === "All Statuses" || v.status === selectedStatus;
     return matchesSearch && matchesCat && matchesStat;
-  });
-
-  const filteredIndividuals = individualVendors.filter(v => {
-    const q = searchQuery.toLowerCase();
-    const matchesSearch = v.legalName.toLowerCase().includes(q) ||
-      v.vendorId.toLowerCase().includes(q) || v.contactEmail.toLowerCase().includes(q);
-    const matchesCat = selectedCategory === "All Categories" || v.category === selectedCategory;
-    const matchesStat = selectedStatus === "All Statuses" || v.status === selectedStatus;
-    return matchesSearch && matchesCat && matchesStat;
-  });
-
-  // Counts
-  const firmCount = firmVendors.length;
-  const indCount = individualVendors.length;
-
-  const closeAllDropdowns = () => { setShowCategoryDropdown(false); setShowStatusDropdown(false); };
-
-  // ── Detail view adapter ──────────────────────��─────────────────────────────
-  const openDetail = (v: Vendor) => {
-    const base = {
-      id: v.id,
-      vendorId: v.vendorId,
-      type: v.type,
-      name: v.type === "Firm" ? v.legalBusinessName : v.legalName,
-      contactPerson: v.type === "Firm" ? v.contactPerson : v.legalName,
-      email: v.type === "Firm" ? v.email : v.contactEmail,
-      phone: v.type === "Firm" ? v.phone : v.contactPhone,
-      category: v.category,
-      subCategory: v.subCategory,
-      riskLevel: v.riskLevel,
-      status: v.status,
-      performance: v.performance,
-      totalOrders: v.totalOrders,
-      totalSpend: v.totalSpend,
-      documents: v.documents,
-      documentExpiry: v.documentExpiry,
-      dateOnboarded: v.dateOnboarded,
-      bankName: v.bankName,
-    };
-    const extra = v.type === "Firm"
-      ? { registrationNumber: v.registrationNumber, taxId: v.taxId, registeredAddress: v.registeredAddress }
-      : { idType: v.idType, idNumber: v.idNumber, residentialAddress: v.residentialAddress, expertAreas: v.expertAreas, historicalRates: v.historicalRates };
-    setSelectedSupplierForDetail({ ...base, ...extra } as SupplierDetailData);
-    setShowDetailView(true);
   };
 
-  const handleUploadDoc = (type: "firm" | "individual") => {
-    const list = type === "firm" ? FIRM_DOC_CHECKLIST : INDIVIDUAL_DOC_CHECKLIST;
-    const current = type === "firm" ? firmDocs : indDocs;
-    const next = list.find(d => !current.includes(d));
-    if (next) {
-      if (type === "firm") setFirmDocs(prev => [...prev, next]);
-      else setIndDocs(prev => [...prev, next]);
+  const firms = vendors.filter((v): v is FirmVendor => v.type === "Firm");
+  const individuals = vendors.filter((v): v is IndividualVendor => v.type === "Individual");
+  const filteredFirms = firms.filter(matchesFilters);
+  const filteredIndividuals = individuals.filter(matchesFilters);
+
+  /** The list the export buttons act on — always what the current tab is showing. */
+  const visibleVendors: Vendor[] =
+    activeTab === "firms" ? filteredFirms
+      : activeTab === "individuals" ? filteredIndividuals
+        : activeTab === "pending" ? pendingQueue
+          : activeTab === "blocked" ? blockedVendors
+            : activeTab === "expiring" ? documentIssues.map((d) => d.vendor)
+              : ranking.map((r) => r.vendor);
+
+  const exportTitle =
+    activeTab === "firms" ? "Vendor Register — Firms"
+      : activeTab === "individuals" ? "Vendor Register — Individual Consultants"
+        : activeTab === "pending" ? "Vendor Registrations Pending Review"
+          : activeTab === "blocked" ? "Blocked & Restricted Vendors"
+            : activeTab === "expiring" ? "Vendors with Document Issues"
+              : "Vendor Performance Ranking";
+
+  const exportSubtitle = [
+    selectedCategory !== "All Categories" ? `Category: ${selectedCategory}` : null,
+    selectedStatus !== "All Statuses" ? `Status: ${selectedStatus}` : null,
+    searchQuery.trim() ? `Search: "${searchQuery.trim()}"` : null,
+  ].filter(Boolean).join(" · ") || "All records";
+
+  const runExport = (format: "excel" | "pdf" | "csv") => {
+    setShowExportDropdown(false);
+    const rows = visibleVendors.map(toExportRow);
+    const meta = { subtitle: exportSubtitle, generatedBy: user.name };
+    if (format === "excel") exportToExcel(exportTitle, EXPORT_COLUMNS, rows, meta);
+    else if (format === "pdf") exportToPDF(exportTitle, EXPORT_COLUMNS, rows, { ...meta, orientation: "landscape" });
+    else exportToCSV(exportTitle, EXPORT_COLUMNS, rows);
+  };
+
+  // ── Actions ────────────────────────────────────────────────────────────────
+
+  const openStatusAction = (vendor: Vendor, action: StatusAction) => {
+    setOpenActionMenuId(null);
+    setActionReason("");
+    setActionReasonError(false);
+    setStatusAction({ vendor, action });
+  };
+
+  const confirmStatusAction = () => {
+    if (!statusAction) return;
+    const { vendor, action } = statusAction;
+    const actor = getCurrentUser();
+
+    if (action === "Approve Reactivation") {
+      approveReactivation(vendor.id, actor.name);
+      setNotice({ tone: "success", text: `${vendorDisplayName(vendor)} reactivated and returned to the approved vendor list.` });
+      setStatusAction(null);
+      return;
+    }
+
+    if (!actionReason.trim()) {
+      setActionReasonError(true);
+      return;
+    }
+
+    if (action === "Reactivate") {
+      requestReactivation(vendor.id, actionReason.trim(), actor.name);
+      setNotice({ tone: "success", text: `Reactivation requested for ${vendorDisplayName(vendor)} — awaiting Senior Management approval.` });
+    } else {
+      const target: VendorStatus = action === "Flag" ? "Flagged" : action === "Suspend" ? "Suspended" : "Blacklisted";
+      // A Senior Management actor is both the performer and the approver of record.
+      const approver = canApproveReactivation ? actor.name : undefined;
+      changeVendorStatus(vendor.id, target, actionReason.trim(), actor.name, approver);
+      setNotice({ tone: "success", text: `${vendorDisplayName(vendor)} is now ${target}.` });
+    }
+
+    setStatusAction(null);
+    setActionReason("");
+    setActionReasonError(false);
+  };
+
+  const handleApproveRegistration = (vendor: Vendor) => {
+    setOpenActionMenuId(null);
+    const approved = approveVendorRegistration(vendor.id, getCurrentUser().name);
+    if (!approved) {
+      const missing = getVendorFlags(vendor).missingDocs;
+      setNotice({
+        tone: "error",
+        text: `${vendorDisplayName(vendor)} cannot be approved yet — outstanding documents: ${missing.join(", ")}.`,
+      });
+      return;
+    }
+    setNotice({ tone: "success", text: `${vendorDisplayName(approved)} approved and added to the active vendor list.` });
+  };
+
+  const openEdit = (v: Vendor) => {
+    setOpenActionMenuId(null);
+    setEditError(null);
+    setEditVendor(v);
+    setEditForm({
+      contactPerson: v.type === "Firm" ? v.contactPerson : v.legalName,
+      email: vendorEmail(v),
+      phone: v.type === "Firm" ? v.phone : v.contactPhone,
+      address: vendorAddress(v),
+      bankName: v.bankName,
+      bankAccountNumber: v.bankAccountNumber,
+      category: v.category,
+      subCategory: v.subCategory,
+      ownershipDetails: v.type === "Firm" ? v.ownershipDetails ?? "" : "",
+    });
+    setEditSpecializations(v.type === "Firm" ? v.specialization ?? [] : []);
+    setEditExpertAreas(v.type === "Individual" ? v.expertAreas : []);
+    setEditSpecDraft("");
+    setEditCategoryDropdown(false);
+    setEditSubCategoryDropdown(false);
+    setEditExpertDropdown(false);
+  };
+
+  const saveEdit = () => {
+    if (!editVendor) return;
+    const required: [string, string][] = [
+      ["Email", editForm.email],
+      ["Phone", editForm.phone],
+      ["Address", editForm.address],
+      ["Bank name", editForm.bankName],
+      ["Account number", editForm.bankAccountNumber],
+      ["Category", editForm.category],
+    ];
+    if (editVendor.type === "Firm") required.unshift(["Contact person", editForm.contactPerson]);
+    const missing = required.filter(([, value]) => !value.trim()).map(([label]) => label);
+    if (missing.length > 0) {
+      setEditError(`Complete the required fields: ${missing.join(", ")}.`);
+      return;
+    }
+
+    // A changed account number invalidates the Finance confirmation on file.
+    const accountChanged = editForm.bankAccountNumber.trim() !== editVendor.bankAccountNumber;
+    const bankingReset = accountChanged ? { bankValidated: false, bankValidatedBy: undefined } : {};
+
+    if (editVendor.type === "Firm") {
+      updateVendor(editVendor.id, {
+        contactPerson: editForm.contactPerson.trim(),
+        email: editForm.email.trim(),
+        phone: editForm.phone.trim(),
+        registeredAddress: editForm.address.trim(),
+        bankName: editForm.bankName.trim(),
+        bankAccountNumber: editForm.bankAccountNumber.trim(),
+        category: editForm.category,
+        subCategory: editForm.subCategory,
+        ownershipDetails: editForm.ownershipDetails.trim() || undefined,
+        specialization: editSpecializations,
+        ...bankingReset,
+      }, getCurrentUser().name);
+    } else {
+      updateVendor(editVendor.id, {
+        contactEmail: editForm.email.trim(),
+        contactPhone: editForm.phone.trim(),
+        residentialAddress: editForm.address.trim(),
+        bankName: editForm.bankName.trim(),
+        bankAccountNumber: editForm.bankAccountNumber.trim(),
+        category: editForm.category,
+        subCategory: editForm.subCategory,
+        expertAreas: editExpertAreas,
+        ...bankingReset,
+      }, getCurrentUser().name);
+    }
+
+    setNotice({
+      tone: "success",
+      text: `${vendorDisplayName(editVendor)} updated.${accountChanged ? " Banking details must be re-validated by Finance." : ""}`,
+    });
+    setEditVendor(null);
+    setEditError(null);
+  };
+
+  const handlePickDoc = async (kind: "firm" | "individual", doc: string) => {
+    setUploadError(null);
+    try {
+      const files = await pickFiles({ multiple: false, uploadedBy: getCurrentUser().name });
+      if (files.length === 0) return;
+      if (kind === "firm") setFirmDocFiles((prev) => ({ ...prev, [doc]: files[0] }));
+      else setIndDocFiles((prev) => ({ ...prev, [doc]: files[0] }));
+    } catch (err) {
+      setUploadError(err instanceof FileValidationError ? err.message : "The file could not be attached. Try again.");
     }
   };
 
+  const removeDoc = (kind: "firm" | "individual", doc: string) => {
+    const drop = (prev: Record<string, UploadedFile>) => {
+      const next = { ...prev };
+      delete next[doc];
+      return next;
+    };
+    if (kind === "firm") setFirmDocFiles(drop);
+    else setIndDocFiles(drop);
+  };
+
+  const collectDocs = (files: Record<string, UploadedFile>, expiry: Record<string, string>) => {
+    const documents = Object.keys(files);
+    const documentExpiry: Record<string, string> = {};
+    documents.forEach((d) => { if (expiry[d]) documentExpiry[d] = expiry[d]; });
+    return { documents, documentExpiry };
+  };
+
+  const handleCompleteOnboarding = () => {
+    const actor = getCurrentUser();
+    setFormError(null);
+
+    if (showOnboardModal === "Firm") {
+      const required: [string, string][] = [
+        ["Legal business name", firmForm.legalBusinessName],
+        ["Registration number", firmForm.registrationNumber],
+        ["Tax ID", firmForm.taxId],
+        ["Registered address", firmForm.registeredAddress],
+        ["Contact person", firmForm.contactPerson],
+        ["Email", firmForm.email],
+        ["Phone", firmForm.phone],
+        ["Bank name", firmForm.bankName],
+        ["Account number", firmForm.bankAccountNumber],
+        ["Category", firmForm.category],
+      ];
+      const missing = required.filter(([, value]) => !value.trim()).map(([label]) => label);
+      if (missing.length > 0) {
+        setFormError(`Complete the required fields: ${missing.join(", ")}.`);
+        return;
+      }
+      const { documents, documentExpiry } = collectDocs(firmDocFiles, firmDocExpiry);
+      const result = registerVendor("Firm", {
+        legalBusinessName: firmForm.legalBusinessName.trim(),
+        registrationNumber: firmForm.registrationNumber.trim(),
+        taxId: firmForm.taxId.trim(),
+        registeredAddress: firmForm.registeredAddress.trim(),
+        contactPerson: firmForm.contactPerson.trim(),
+        email: firmForm.email.trim(),
+        phone: firmForm.phone.trim(),
+        bankName: firmForm.bankName.trim(),
+        bankAccountNumber: firmForm.bankAccountNumber.trim(),
+        category: firmForm.category,
+        subCategory: firmForm.subCategory,
+        ownershipDetails: firmForm.ownershipDetails.trim() || undefined,
+        specialization: firmSpecializations.length > 0 ? firmSpecializations : undefined,
+        documents,
+        documentExpiry,
+      }, { registeredBy: actor.name, source: "Internal" });
+      setOnboardResult(result);
+      return;
+    }
+
+    const required: [string, string][] = [
+      ["Legal name", indForm.legalName],
+      ["Email", indForm.contactEmail],
+      ["Phone", indForm.contactPhone],
+      ["ID number", indForm.idNumber],
+      ["Residential address", indForm.residentialAddress],
+      ["Bank name", indForm.bankName],
+      ["Account number", indForm.bankAccountNumber],
+      ["Category", indForm.category],
+    ];
+    const missing = required.filter(([, value]) => !value.trim()).map(([label]) => label);
+    if (missing.length > 0) {
+      setFormError(`Complete the required fields: ${missing.join(", ")}.`);
+      return;
+    }
+    if (indExpertAreas.length === 0) {
+      setFormError("Select at least one expert area for an individual consultant.");
+      return;
+    }
+    const { documents, documentExpiry } = collectDocs(indDocFiles, indDocExpiry);
+    const result = registerVendor("Individual", {
+      legalName: indForm.legalName.trim(),
+      contactEmail: indForm.contactEmail.trim(),
+      contactPhone: indForm.contactPhone.trim(),
+      idType: indForm.idType,
+      idNumber: indForm.idNumber.trim(),
+      residentialAddress: indForm.residentialAddress.trim(),
+      bankName: indForm.bankName.trim(),
+      bankAccountNumber: indForm.bankAccountNumber.trim(),
+      category: indForm.category,
+      subCategory: indForm.subCategory,
+      expertAreas: indExpertAreas,
+      historicalRates: [],
+      documents,
+      documentExpiry,
+    }, { registeredBy: actor.name, source: "Internal" });
+    setOnboardResult(result);
+  };
+
   const resetForms = () => {
-    setFirmForm({ legalBusinessName: "", registrationNumber: "", taxId: "", registeredAddress: "", contactPerson: "", email: "", phone: "", bankName: "", bankAccountNumber: "", category: "", subCategory: "" });
-    setIndForm({ legalName: "", contactEmail: "", contactPhone: "", idType: "Passport", idNumber: "", residentialAddress: "", bankName: "", bankAccountNumber: "", category: "", subCategory: "" });
-    setFirmDocs([]);
-    setIndDocs([]);
+    setFirmForm({
+      legalBusinessName: "", registrationNumber: "", taxId: "", registeredAddress: "",
+      contactPerson: "", email: "", phone: "", bankName: "", bankAccountNumber: "",
+      category: "", subCategory: "", ownershipDetails: "",
+    });
+    setIndForm({
+      legalName: "", contactEmail: "", contactPhone: "", idType: "Passport",
+      idNumber: "", residentialAddress: "", bankName: "", bankAccountNumber: "",
+      category: "", subCategory: "",
+    });
+    setFirmSpecializations([]);
+    setSpecializationDraft("");
+    setFirmDocFiles({});
+    setIndDocFiles({});
     setIndExpertAreas([]);
     setFirmDocExpiry({});
     setIndDocExpiry({});
     setFormCategoryDropdown(false);
     setFormSubCategoryDropdown(false);
+    setFormError(null);
+    setUploadError(null);
+    setOnboardResult(null);
   };
+
+  const closeOnboarding = () => { setShowOnboardModal(null); resetForms(); };
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
-  if (showDetailView && selectedSupplierForDetail) {
-    return (
-      <SupplierDetailsView
-        supplier={selectedSupplierForDetail}
-        onBack={() => { setShowDetailView(false); setSelectedSupplierForDetail(null); }}
-      />
-    );
+  if (detailVendorId) {
+    return <SupplierDetailsView vendorId={detailVendorId} onBack={() => setDetailVendorId(null)} />;
   }
 
-  const tabs = [
-    { key: "firms" as const, label: "Firms", icon: <Building2 size={14} />, count: firmCount },
-    { key: "individuals" as const, label: "Individual Consultants", icon: <User size={14} />, count: indCount },
+  const tabs: ProcurementTab<TabKey>[] = [
+    { key: "firms", label: "Firms", count: firms.length },
+    { key: "individuals", label: "Individual Consultants", count: individuals.length },
   ];
+
+  const showFilters = activeTab === "firms" || activeTab === "individuals";
+
+  /** Row action menu shared by the firms and individuals tables. */
+  const renderActionMenu = (v: Vendor) => (
+    <div className="relative">
+      <button onClick={() => setOpenActionMenuId(openActionMenuId === v.id ? null : v.id)} className="inline-flex items-center justify-center w-8 h-8 hover:bg-slate-100 rounded transition-colors">
+        <MoreHorizontal size={16} className="text-slate-600" />
+      </button>
+      {openActionMenuId === v.id && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpenActionMenuId(null)} />
+          <div className="absolute right-0 top-full mt-1 w-52 bg-white border border-slate-200 rounded-lg shadow-lg z-20 overflow-hidden">
+            <button onClick={() => { setDetailVendorId(v.id); setOpenActionMenuId(null); }} className="w-full px-3 py-2 text-left text-[12px] text-slate-700 hover:bg-slate-50 flex items-center gap-2" style={{ fontFamily: F }}><Eye size={13} /> View Details</button>
+
+            <button
+              disabled={!canCreate}
+              title={canCreate ? undefined : denialReason("vendor.create")}
+              onClick={() => openEdit(v)}
+              className="w-full px-3 py-2 text-left text-[12px] text-slate-700 hover:bg-slate-50 flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+              style={{ fontFamily: F }}><Edit2 size={13} /> Edit Vendor</button>
+
+            {(v.status === "Pending Onboarding" || v.pendingReview) && (
+              <button
+                disabled={!canApproveRegistration}
+                title={canApproveRegistration ? undefined : denialReason("vendor.approveRegistration")}
+                onClick={() => handleApproveRegistration(v)}
+                className="w-full px-3 py-2 text-left text-[12px] text-green-700 hover:bg-green-50 flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                style={{ fontFamily: F }}><BadgeCheck size={13} /> Approve Registration</button>
+            )}
+
+            {v.status === "Active" && (
+              <button
+                disabled={!canSuspend}
+                title={canSuspend ? undefined : denialReason("vendor.suspend")}
+                onClick={() => openStatusAction(v, "Flag")}
+                className="w-full px-3 py-2 text-left text-[12px] text-amber-700 hover:bg-amber-50 flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                style={{ fontFamily: F }}><AlertTriangle size={13} /> Flag Vendor</button>
+            )}
+
+            {(v.status === "Active" || v.status === "Flagged") && (
+              <button
+                disabled={!canSuspend}
+                title={canSuspend ? undefined : denialReason("vendor.suspend")}
+                onClick={() => openStatusAction(v, "Suspend")}
+                className="w-full px-3 py-2 text-left text-[12px] text-slate-600 hover:bg-slate-50 flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                style={{ fontFamily: F }}><ShieldAlert size={13} /> Suspend</button>
+            )}
+
+            {(v.status === "Active" || v.status === "Flagged" || v.status === "Suspended") && (
+              <button
+                disabled={!canSuspend}
+                title={canSuspend ? undefined : denialReason("vendor.suspend")}
+                onClick={() => openStatusAction(v, "Blacklist")}
+                className="w-full px-3 py-2 text-left text-[12px] text-red-700 hover:bg-red-50 flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                style={{ fontFamily: F }}><ShieldBan size={13} /> Blacklist</button>
+            )}
+
+            {(v.status === "Suspended" || v.status === "Flagged" || v.status === "Blacklisted") && (
+              <button
+                disabled={!canRequestReactivation}
+                title={canRequestReactivation ? undefined : "Requires Procurement or Senior Management role."}
+                onClick={() => openStatusAction(v, "Reactivate")}
+                className="w-full px-3 py-2 text-left text-[12px] text-green-700 hover:bg-green-50 flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                style={{ fontFamily: F }}><ShieldCheck size={13} /> Request Reactivation</button>
+            )}
+
+            {v.status === "Pending Reactivation" && (
+              <button
+                disabled={!canApproveReactivation}
+                title={canApproveReactivation ? undefined : denialReason("vendor.approveReactivation")}
+                onClick={() => openStatusAction(v, "Approve Reactivation")}
+                className="w-full px-3 py-2 text-left text-[12px] text-green-700 hover:bg-green-50 flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                style={{ fontFamily: F }}><ShieldCheck size={13} /> Approve Reactivation</button>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
 
   return (
     <div className="h-full flex flex-col bg-slate-50 overflow-hidden" style={{ fontFamily: F }}>
@@ -548,38 +690,38 @@ export function Suppliers() {
       <div className="px-6 py-4 border-b border-slate-200 bg-white flex justify-between items-center shrink-0">
         <div>
           <h1 className="text-[18px] font-semibold text-slate-900" style={{ fontFamily: F }}>Supplier Management</h1>
-          <p className="text-[12px] text-slate-500 mt-0.5" style={{ fontFamily: F }}>Vendor registration, onboarding, categorization & performance</p>
+          <p className="text-[12px] text-slate-500 mt-0.5" style={{ fontFamily: F }}>
+            Vendor registration, onboarding, categorization &amp; performance
+            <span className="text-slate-400"> &middot; signed in as {user.name} ({user.roles.join(", ")})</span>
+          </p>
         </div>
         <button
-          onClick={() => setShowOnboardModal(activeTab === "firms" ? "Firm" : "Individual")}
-          className="px-4 py-2 text-white rounded-lg text-[12px] font-medium hover:opacity-90 transition-opacity shadow-sm flex items-center gap-2"
+          onClick={() => { resetForms(); setShowOnboardModal(activeTab === "individuals" ? "Individual" : "Firm"); }}
+          disabled={!canCreate}
+          title={canCreate ? undefined : denialReason("vendor.create")}
+          className="px-4 py-2 text-white rounded-lg text-[12px] font-medium hover:opacity-90 transition-opacity shadow-sm flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
           style={{ backgroundColor: "#0B01D0", fontFamily: F }}
         >
           <Plus size={14} />
-          Onboard {activeTab === "firms" ? "Firm" : "Individual"}
+          Onboard {activeTab === "individuals" ? "Individual" : "Firm"}
         </button>
       </div>
 
-      {/* Tabs — Document Vault style */}
-      <div className="px-6 py-3 bg-white border-b border-slate-200 shrink-0">
-        <div className="bg-slate-100 p-1 rounded-lg inline-flex gap-1">
-          {tabs.map(tab => (
-            <button
-              key={tab.key}
-              onClick={() => { setActiveTab(tab.key); setSearchQuery(""); setSelectedCategory("All Categories"); setSelectedStatus("All Statuses"); }}
-              className={`px-4 py-1.5 rounded-lg text-[12px] transition-colors min-w-[140px] flex items-center justify-center gap-1.5 ${
-                activeTab === tab.key ? "bg-purple-700 text-white shadow-sm" : "text-slate-500 hover:text-slate-700"
-              }`}
-              style={{ fontFamily: F }}
-            >
-              {tab.icon} {tab.label}
-              <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${activeTab === tab.key ? "bg-white/20 text-white" : "bg-slate-200/80 text-slate-500"}`}>
-                {tab.count}
-              </span>
-            </button>
-          ))}
-        </div>
-      </div>
+      {/* ── Dashboard Summary Cards ── */}
+      <ProcurementStatCards
+        stats={[
+          { label: "Active Vendors", value: stats.active, icon: <Users size={14} />, tone: "success" },
+          { label: "Pending Onboarding", value: stats.pending, icon: <Loader size={14} />, tone: "warning" },
+          { label: "Flagged / Suspended", value: stats.flagged, icon: <Flag size={14} />, tone: "danger" },
+          { label: "Expiring Documents", value: stats.expiring, icon: <CalendarClock size={14} />, tone: "warning" },
+          {
+            label: "Avg Performance",
+            value: stats.avgPerformance > 0 ? `${stats.avgPerformance}/10` : "N/A",
+            icon: <TrendingUp size={14} />,
+            tone: "accent",
+          },
+        ]}
+      />
 
       {/* Filters */}
       <div className="px-6 py-3 bg-white border-b border-slate-200 shrink-0">
@@ -587,25 +729,48 @@ export function Suppliers() {
           <div className="relative max-w-[280px] flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input type="text" placeholder="Search by name, ID, email..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-[12px] border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              disabled={!showFilters}
+              className="w-full pl-9 pr-4 py-2 text-[12px] border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:bg-slate-50 disabled:text-slate-400"
               style={{ fontFamily: F }}
             />
           </div>
           <div className="flex items-center gap-2">
-            <button className="flex items-center gap-2 px-3 py-2 border border-slate-200 rounded-lg bg-white hover:bg-slate-50 transition-colors shadow-sm text-[12px] text-slate-900" style={{ fontFamily: F }}>
-              Export <Download size={14} className="text-purple-700" />
-            </button>
+            {/* Export */}
+            <div className="relative">
+              <button
+                onClick={() => { setShowExportDropdown(!showExportDropdown); setShowCategoryDropdown(false); setShowStatusDropdown(false); }}
+                disabled={!canExport}
+                title={canExport ? undefined : denialReason("report.export")}
+                className="flex items-center gap-2 px-3 py-2 border border-slate-200 rounded-lg bg-white hover:bg-slate-50 transition-colors shadow-sm text-[12px] text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{ fontFamily: F }}>
+                Export <Download size={14} className="text-purple-700" />
+              </button>
+              {showExportDropdown && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setShowExportDropdown(false)} />
+                  <div className="absolute right-0 top-full mt-1 w-52 bg-white border border-slate-200 rounded-lg shadow-lg z-20 overflow-hidden">
+                    <p className="px-3 py-2 text-[10px] text-slate-400 border-b border-slate-100" style={{ fontFamily: F }}>
+                      {visibleVendors.length} record{visibleVendors.length === 1 ? "" : "s"} · {exportTitle}
+                    </p>
+                    <button onClick={() => runExport("excel")} className="w-full px-3 py-2 text-left text-[12px] text-slate-700 hover:bg-slate-50 flex items-center gap-2" style={{ fontFamily: F }}><FileSpreadsheet size={13} className="text-green-600" /> Export to Excel</button>
+                    <button onClick={() => runExport("pdf")} className="w-full px-3 py-2 text-left text-[12px] text-slate-700 hover:bg-slate-50 flex items-center gap-2" style={{ fontFamily: F }}><Printer size={13} className="text-red-600" /> Export to PDF</button>
+                    <button onClick={() => runExport("csv")} className="w-full px-3 py-2 text-left text-[12px] text-slate-700 hover:bg-slate-50 flex items-center gap-2" style={{ fontFamily: F }}><FileDown size={13} className="text-blue-600" /> Export to CSV</button>
+                  </div>
+                </>
+              )}
+            </div>
             {/* Category Filter */}
             <div className="relative">
-              <button onClick={() => { setShowCategoryDropdown(!showCategoryDropdown); setShowStatusDropdown(false); }}
-                className="flex items-center gap-2 px-3 py-2 border border-slate-200 rounded-lg bg-white hover:bg-slate-50 transition-colors shadow-sm text-[12px] text-slate-900" style={{ fontFamily: F }}>
+              <button onClick={() => { setShowCategoryDropdown(!showCategoryDropdown); setShowStatusDropdown(false); setShowExportDropdown(false); }}
+                disabled={!showFilters}
+                className="flex items-center gap-2 px-3 py-2 border border-slate-200 rounded-lg bg-white hover:bg-slate-50 transition-colors shadow-sm text-[12px] text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed" style={{ fontFamily: F }}>
                 {selectedCategory} <ChevronDown size={14} className="text-purple-700" />
               </button>
               {showCategoryDropdown && (
                 <>
                   <div className="fixed inset-0 z-10" onClick={() => setShowCategoryDropdown(false)} />
-                  <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-slate-200 rounded-lg shadow-lg z-20 overflow-hidden">
-                    {CATEGORIES.map(c => (
+                  <div className="absolute right-0 top-full mt-1 w-52 bg-white border border-slate-200 rounded-lg shadow-lg z-20 overflow-hidden">
+                    {CATEGORY_FILTERS.map(c => (
                       <button key={c} onClick={() => { setSelectedCategory(c); setShowCategoryDropdown(false); }} className="w-full px-4 py-2 text-left text-[12px] text-slate-900 hover:bg-slate-50" style={{ fontFamily: F }}>{c}</button>
                     ))}
                   </div>
@@ -614,8 +779,9 @@ export function Suppliers() {
             </div>
             {/* Status Filter */}
             <div className="relative">
-              <button onClick={() => { setShowStatusDropdown(!showStatusDropdown); setShowCategoryDropdown(false); }}
-                className="flex items-center gap-2 px-3 py-2 border border-slate-200 rounded-lg bg-white hover:bg-slate-50 transition-colors shadow-sm text-[12px] text-slate-900" style={{ fontFamily: F }}>
+              <button onClick={() => { setShowStatusDropdown(!showStatusDropdown); setShowCategoryDropdown(false); setShowExportDropdown(false); }}
+                disabled={!showFilters}
+                className="flex items-center gap-2 px-3 py-2 border border-slate-200 rounded-lg bg-white hover:bg-slate-50 transition-colors shadow-sm text-[12px] text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed" style={{ fontFamily: F }}>
                 {selectedStatus} <ChevronDown size={14} className="text-purple-700" />
               </button>
               {showStatusDropdown && (
@@ -633,32 +799,29 @@ export function Suppliers() {
         </div>
       </div>
 
-      {/* ── Dashboard Summary Cards ── */}
-      <div className="px-6 py-3 bg-white border-b border-slate-200 shrink-0">
-        <div className="flex items-center gap-3">
-          {[
-            { label: "Active Vendors", value: activeCount, icon: <Users size={16} />, color: "text-green-600", bg: "bg-green-50" },
-            { label: "Pending Onboarding", value: pendingOnboardingCount, icon: <Loader size={16} />, color: "text-amber-600", bg: "bg-amber-50" },
-            { label: "Flagged / Suspended", value: flaggedSuspendedCount, icon: <Flag size={16} />, color: "text-red-600", bg: "bg-red-50" },
-            { label: "Expiring Documents", value: expiringDocsCount, icon: <CalendarClock size={16} />, color: "text-orange-600", bg: "bg-orange-50" },
-            { label: "Avg Performance", value: avgPerformanceScore > 0 ? `${avgPerformanceScore}/10` : "N/A", icon: <TrendingUp size={16} />, color: "text-purple-600", bg: "bg-purple-50" },
-          ].map((card) => (
-            <div key={card.label} className="flex-1 bg-white border border-slate-200 rounded-xl p-3 flex items-center gap-3">
-              <div className={`w-9 h-9 rounded-lg ${card.bg} flex items-center justify-center shrink-0`} style={{ color: "#0B01D0" }}>
-                {card.icon}
-              </div>
-              <div>
-                <p className="text-[18px] font-semibold text-slate-900" style={{ fontFamily: F }}>{card.value}</p>
-                <p className="text-[10px] text-slate-500" style={{ fontFamily: F }}>{card.label}</p>
-              </div>
-            </div>
-          ))}
+      {/* Notice strip */}
+      {notice && (
+        <div className={`px-6 py-2.5 border-b shrink-0 flex items-center justify-between ${notice.tone === "error" ? "bg-red-50 border-red-200" : "bg-green-50 border-green-200"}`}>
+          <p className={`text-[11px] flex items-center gap-1.5 ${notice.tone === "error" ? "text-red-700" : "text-green-700"}`} style={{ fontFamily: F }}>
+            {notice.tone === "error" ? <XCircle size={13} /> : <CheckCircle2 size={13} />} {notice.text}
+          </p>
+          <button onClick={() => setNotice(null)} className="p-1 hover:bg-white/60 rounded"><X size={13} className={notice.tone === "error" ? "text-red-500" : "text-green-600"} /></button>
         </div>
-      </div>
+      )}
 
-      {/* ── Tables ── */}
+      {/* Tabs */}
+      <ProcurementTabBar>
+        <ProcurementTabs
+          tabs={tabs}
+          active={activeTab}
+          onChange={(key) => { setActiveTab(key); setOpenActionMenuId(null); }}
+        />
+      </ProcurementTabBar>
+
+      {/* ── Content ── */}
       <div className="flex-1 overflow-auto">
-        {activeTab === "firms" ? (
+        {/* ───────── FIRMS ───────── */}
+        {activeTab === "firms" && (
           <table className="w-full">
             <thead style={{ backgroundColor: "#0B01D0" }} className="sticky top-0 z-[5]">
               <tr>
@@ -667,6 +830,7 @@ export function Suppliers() {
                 <th className="text-left px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: F }}>Registration #</th>
                 <th className="text-left px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: F }}>Tax ID</th>
                 <th className="text-left px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: F }}>Category</th>
+                <th className="text-left px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: F }}>Bank Account</th>
                 <th className="text-left px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: F }}>Risk</th>
                 <th className="text-left px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: F }}>Rating</th>
                 <th className="text-right px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: F }}>Total Spend</th>
@@ -676,13 +840,13 @@ export function Suppliers() {
             </thead>
             <tbody>
               {filteredFirms.length === 0 ? (
-                <tr><td colSpan={10} className="text-center py-12 text-[13px] text-slate-400" style={{ fontFamily: F }}>No firms found.</td></tr>
+                <tr><td colSpan={11} className="text-center py-12 text-[13px] text-slate-400" style={{ fontFamily: F }}>No firms found.</td></tr>
               ) : filteredFirms.map((v, i) => (
-                <tr key={v.id} className={`border-b border-slate-100 hover:bg-slate-50 transition-colors cursor-pointer ${i % 2 === 0 ? "bg-white" : "bg-slate-50/50"}`} onClick={() => openDetail(v)}>
+                <tr key={v.id} className={`border-b border-slate-100 hover:bg-slate-50 transition-colors cursor-pointer ${i % 2 === 0 ? "bg-white" : "bg-slate-50/50"}`} onClick={() => setDetailVendorId(v.id)}>
                   <td className="px-4 py-3 text-[12px] text-purple-700 font-medium" style={{ fontFamily: F }}>
                     <div className="flex items-center gap-1.5">
                       {v.vendorId}
-                      {hasDocWarning(v) && <AlertTriangle size={12} className="text-amber-500" />}
+                      {hasVendorWarning(v) && <AlertTriangle size={12} className="text-amber-500" />}
                     </div>
                   </td>
                   <td className="px-4 py-3">
@@ -696,6 +860,12 @@ export function Suppliers() {
                     <p className="text-[10px] text-slate-400" style={{ fontFamily: F }}>{v.subCategory}</p>
                   </td>
                   <td className="px-4 py-3">
+                    <p className="text-[12px] text-slate-600" style={{ fontFamily: F }}>{maskAccount(v.bankAccountNumber)}</p>
+                    <p className={`text-[10px] ${v.bankValidated ? "text-green-600" : "text-amber-600"}`} style={{ fontFamily: F }}>
+                      {v.bankValidated ? "Validated" : "Not validated"}
+                    </p>
+                  </td>
+                  <td className="px-4 py-3">
                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${getRiskColor(v.riskLevel)}`}>{v.riskLevel}</span>
                   </td>
                   <td className="px-4 py-3">
@@ -710,32 +880,15 @@ export function Suppliers() {
                   <td className="px-4 py-3 text-center">
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${getStatusColor(v.status)}`}>{v.status}</span>
                   </td>
-                  <td className="px-4 py-3 text-center" onClick={e => e.stopPropagation()}>
-                    <div className="relative">
-                      <button onClick={() => setOpenActionMenuId(openActionMenuId === v.id ? null : v.id)} className="inline-flex items-center justify-center w-8 h-8 hover:bg-slate-100 rounded transition-colors">
-                        <MoreHorizontal size={16} className="text-slate-600" />
-                      </button>
-                      {openActionMenuId === v.id && (
-                        <>
-                          <div className="fixed inset-0 z-10" onClick={() => setOpenActionMenuId(null)} />
-                          <div className="absolute right-0 top-full mt-1 w-44 bg-white border border-slate-200 rounded-lg shadow-lg z-20 overflow-hidden">
-                            <button onClick={() => { openDetail(v); setOpenActionMenuId(null); }} className="w-full px-3 py-2 text-left text-[12px] text-slate-700 hover:bg-slate-50 flex items-center gap-2" style={{ fontFamily: F }}><Eye size={13} /> View Details</button>
-                            <button onClick={() => setOpenActionMenuId(null)} className="w-full px-3 py-2 text-left text-[12px] text-slate-700 hover:bg-slate-50 flex items-center gap-2" style={{ fontFamily: F }}><Edit2 size={13} /> Edit</button>
-                            {v.status === "Active" && <button onClick={() => setOpenActionMenuId(null)} className="w-full px-3 py-2 text-left text-[12px] text-amber-700 hover:bg-amber-50 flex items-center gap-2" style={{ fontFamily: F }}><AlertTriangle size={13} /> Flag Vendor</button>}
-                            {v.status === "Flagged" && <button onClick={() => setOpenActionMenuId(null)} className="w-full px-3 py-2 text-left text-[12px] text-red-700 hover:bg-red-50 flex items-center gap-2" style={{ fontFamily: F }}><ShieldBan size={13} /> Blacklist</button>}
-                            {(v.status === "Active" || v.status === "Flagged") && <button onClick={() => setOpenActionMenuId(null)} className="w-full px-3 py-2 text-left text-[12px] text-slate-600 hover:bg-slate-50 flex items-center gap-2" style={{ fontFamily: F }}><ShieldAlert size={13} /> Suspend</button>}
-                            {(v.status === "Suspended" || v.status === "Flagged" || v.status === "Blacklisted") && <button onClick={() => { setShowReactivateModal(v); setOpenActionMenuId(null); }} className="w-full px-3 py-2 text-left text-[12px] text-green-700 hover:bg-green-50 flex items-center gap-2" style={{ fontFamily: F }}><ShieldCheck size={13} /> Reactivate</button>}
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </td>
+                  <td className="px-4 py-3 text-center" onClick={e => e.stopPropagation()}>{renderActionMenu(v)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
-        ) : (
-          /* ── Individuals Table ── */
+        )}
+
+        {/* ───────── INDIVIDUALS ───────── */}
+        {activeTab === "individuals" && (
           <table className="w-full">
             <thead style={{ backgroundColor: "#0B01D0" }} className="sticky top-0 z-[5]">
               <tr>
@@ -743,7 +896,8 @@ export function Suppliers() {
                 <th className="text-left px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: F }}>Legal Name</th>
                 <th className="text-left px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: F }}>Contact</th>
                 <th className="text-left px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: F }}>ID Type</th>
-                <th className="text-left px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: F }}>Category</th>
+                <th className="text-left px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: F }}>Expert Areas</th>
+                <th className="text-left px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: F }}>Bank Account</th>
                 <th className="text-left px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: F }}>Risk</th>
                 <th className="text-left px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: F }}>Rating</th>
                 <th className="text-right px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: F }}>Total Spend</th>
@@ -753,13 +907,13 @@ export function Suppliers() {
             </thead>
             <tbody>
               {filteredIndividuals.length === 0 ? (
-                <tr><td colSpan={10} className="text-center py-12 text-[13px] text-slate-400" style={{ fontFamily: F }}>No individual consultants found.</td></tr>
+                <tr><td colSpan={11} className="text-center py-12 text-[13px] text-slate-400" style={{ fontFamily: F }}>No individual consultants found.</td></tr>
               ) : filteredIndividuals.map((v, i) => (
-                <tr key={v.id} className={`border-b border-slate-100 hover:bg-slate-50 transition-colors cursor-pointer ${i % 2 === 0 ? "bg-white" : "bg-slate-50/50"}`} onClick={() => openDetail(v)}>
+                <tr key={v.id} className={`border-b border-slate-100 hover:bg-slate-50 transition-colors cursor-pointer ${i % 2 === 0 ? "bg-white" : "bg-slate-50/50"}`} onClick={() => setDetailVendorId(v.id)}>
                   <td className="px-4 py-3 text-[12px] text-purple-700 font-medium" style={{ fontFamily: F }}>
                     <div className="flex items-center gap-1.5">
                       {v.vendorId}
-                      {hasDocWarning(v) && <AlertTriangle size={12} className="text-amber-500" />}
+                      {hasVendorWarning(v) && <AlertTriangle size={12} className="text-amber-500" />}
                     </div>
                   </td>
                   <td className="px-4 py-3 text-[12px] text-slate-900 font-medium" style={{ fontFamily: F }}>{v.legalName}</td>
@@ -772,8 +926,20 @@ export function Suppliers() {
                     <p className="text-[10px] text-slate-400" style={{ fontFamily: F }}>{v.idNumber}</p>
                   </td>
                   <td className="px-4 py-3">
-                    <p className="text-[12px] text-slate-900" style={{ fontFamily: F }}>{v.category}</p>
-                    <p className="text-[10px] text-slate-400" style={{ fontFamily: F }}>{v.subCategory}</p>
+                    <div className="flex flex-wrap gap-1 max-w-[190px]">
+                      {v.expertAreas.slice(0, 2).map(area => (
+                        <span key={area} className="px-1.5 py-0.5 bg-purple-50 text-purple-700 rounded text-[10px]" style={{ fontFamily: F }}>{area}</span>
+                      ))}
+                      {v.expertAreas.length > 2 && (
+                        <span className="px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded text-[10px]" style={{ fontFamily: F }}>+{v.expertAreas.length - 2}</span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <p className="text-[12px] text-slate-600" style={{ fontFamily: F }}>{maskAccount(v.bankAccountNumber)}</p>
+                    <p className={`text-[10px] ${v.bankValidated ? "text-green-600" : "text-amber-600"}`} style={{ fontFamily: F }}>
+                      {v.bankValidated ? "Validated" : "Not validated"}
+                    </p>
                   </td>
                   <td className="px-4 py-3">
                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${getRiskColor(v.riskLevel)}`}>{v.riskLevel}</span>
@@ -790,31 +956,13 @@ export function Suppliers() {
                   <td className="px-4 py-3 text-center">
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${getStatusColor(v.status)}`}>{v.status}</span>
                   </td>
-                  <td className="px-4 py-3 text-center" onClick={e => e.stopPropagation()}>
-                    <div className="relative">
-                      <button onClick={() => setOpenActionMenuId(openActionMenuId === v.id ? null : v.id)} className="inline-flex items-center justify-center w-8 h-8 hover:bg-slate-100 rounded transition-colors">
-                        <MoreHorizontal size={16} className="text-slate-600" />
-                      </button>
-                      {openActionMenuId === v.id && (
-                        <>
-                          <div className="fixed inset-0 z-10" onClick={() => setOpenActionMenuId(null)} />
-                          <div className="absolute right-0 top-full mt-1 w-44 bg-white border border-slate-200 rounded-lg shadow-lg z-20 overflow-hidden">
-                            <button onClick={() => { openDetail(v); setOpenActionMenuId(null); }} className="w-full px-3 py-2 text-left text-[12px] text-slate-700 hover:bg-slate-50 flex items-center gap-2" style={{ fontFamily: F }}><Eye size={13} /> View Details</button>
-                            <button onClick={() => setOpenActionMenuId(null)} className="w-full px-3 py-2 text-left text-[12px] text-slate-700 hover:bg-slate-50 flex items-center gap-2" style={{ fontFamily: F }}><Edit2 size={13} /> Edit</button>
-                            {v.status === "Active" && <button onClick={() => setOpenActionMenuId(null)} className="w-full px-3 py-2 text-left text-[12px] text-amber-700 hover:bg-amber-50 flex items-center gap-2" style={{ fontFamily: F }}><AlertTriangle size={13} /> Flag</button>}
-                            {v.status === "Flagged" && <button onClick={() => setOpenActionMenuId(null)} className="w-full px-3 py-2 text-left text-[12px] text-red-700 hover:bg-red-50 flex items-center gap-2" style={{ fontFamily: F }}><ShieldBan size={13} /> Blacklist</button>}
-                            {(v.status === "Active" || v.status === "Flagged") && <button onClick={() => setOpenActionMenuId(null)} className="w-full px-3 py-2 text-left text-[12px] text-slate-600 hover:bg-slate-50 flex items-center gap-2" style={{ fontFamily: F }}><ShieldAlert size={13} /> Suspend</button>}
-                            {(v.status === "Suspended" || v.status === "Flagged" || v.status === "Blacklisted") && <button onClick={() => { setShowReactivateModal(v); setOpenActionMenuId(null); }} className="w-full px-3 py-2 text-left text-[12px] text-green-700 hover:bg-green-50 flex items-center gap-2" style={{ fontFamily: F }}><ShieldCheck size={13} /> Reactivate</button>}
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </td>
+                  <td className="px-4 py-3 text-center" onClick={e => e.stopPropagation()}>{renderActionMenu(v)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         )}
+
       </div>
 
       {/* ══════════════════════════════════════════════════════════════════════
@@ -827,20 +975,97 @@ export function Suppliers() {
             <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between shrink-0">
               <div>
                 <h2 className="text-[16px] font-semibold text-slate-900" style={{ fontFamily: F }}>
-                  Onboard {showOnboardModal === "Firm" ? "Firm" : "Individual Consultant"}
+                  {onboardResult ? "Registration Recorded" : `Onboard ${showOnboardModal === "Firm" ? "Firm" : "Individual Consultant"}`}
                 </h2>
                 <p className="text-[11px] text-slate-500 mt-0.5" style={{ fontFamily: F }}>
-                  Generated Vendor ID: <span className="font-medium text-purple-700">VND-{showOnboardModal === "Firm" ? "1" : "2"}{String(nextVendorNumber).padStart(3, "0")}</span>
+                  {onboardResult
+                    ? <>Vendor ID <span className="font-medium text-purple-700">{onboardResult.vendor.vendorId}</span> · registered by {user.name}</>
+                    : <>Generated Vendor ID: <span className="font-medium text-purple-700">{peekNextVendorId(showOnboardModal)}</span></>}
                 </p>
               </div>
-              <button onClick={() => { setShowOnboardModal(null); resetForms(); }} className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors">
+              <button onClick={closeOnboarding} className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors">
                 <X size={18} className="text-slate-500" />
               </button>
             </div>
 
             {/* Modal Body */}
             <div className="flex-1 overflow-y-auto px-6 py-5">
-              {showOnboardModal === "Firm" ? (
+              {onboardResult ? (
+                /* ── Screening result panel ── */
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-slate-50 border border-slate-200">
+                    <div className="w-10 h-10 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center shrink-0">
+                      {onboardResult.vendor.type === "Firm" ? <Building2 size={18} /> : <User size={18} />}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-[13px] font-semibold text-slate-900" style={{ fontFamily: F }}>{vendorDisplayName(onboardResult.vendor)}</p>
+                      <p className="text-[11px] text-slate-500" style={{ fontFamily: F }}>
+                        {onboardResult.vendor.category}{onboardResult.vendor.subCategory ? ` — ${onboardResult.vendor.subCategory}` : ""} · {onboardResult.vendor.status}
+                      </p>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${getRiskColor(onboardResult.vendor.riskLevel)}`}>
+                      {onboardResult.vendor.riskLevel} risk
+                    </span>
+                  </div>
+
+                  <p className="text-[12px] font-semibold text-slate-800" style={{ fontFamily: F }}>Screening Results</p>
+
+                  {onboardResult.flags.sanctioned && (
+                    <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-lg">
+                      <p className="text-[12px] font-semibold text-red-700 flex items-center gap-1.5" style={{ fontFamily: F }}>
+                        <ShieldBan size={13} /> Sanctions list match
+                      </p>
+                      <p className="text-[11px] text-red-600 mt-1" style={{ fontFamily: F }}>
+                        This name appears on a donor/statutory debarment list. The record has been created but must be escalated before approval.
+                      </p>
+                    </div>
+                  )}
+
+                  {onboardResult.flags.duplicates.length > 0 && (
+                    <div className="px-4 py-3 bg-amber-50 border border-amber-200 rounded-lg">
+                      <p className="text-[12px] font-semibold text-amber-700 flex items-center gap-1.5" style={{ fontFamily: F }}>
+                        <AlertTriangle size={13} /> Possible duplicate record
+                      </p>
+                      <ul className="mt-1 space-y-0.5">
+                        {onboardResult.flags.duplicates.map(d => (
+                          <li key={d.id} className="text-[11px] text-amber-700" style={{ fontFamily: F }}>
+                            · {vendorDisplayName(d)} ({d.vendorId}) — {d.status}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {onboardResult.flags.missingDocs.length > 0 && (
+                    <div className="px-4 py-3 bg-orange-50 border border-orange-200 rounded-lg">
+                      <p className="text-[12px] font-semibold text-orange-700 flex items-center gap-1.5" style={{ fontFamily: F }}>
+                        <FileText size={13} /> Outstanding documents
+                      </p>
+                      <p className="text-[11px] text-orange-700 mt-1" style={{ fontFamily: F }}>
+                        {onboardResult.flags.missingDocs.join(", ")} — the registration cannot be approved until these are on file.
+                      </p>
+                    </div>
+                  )}
+
+                  {!onboardResult.flags.sanctioned && onboardResult.flags.duplicates.length === 0 && onboardResult.flags.missingDocs.length === 0 && (
+                    <div className="px-4 py-3 bg-green-50 border border-green-200 rounded-lg">
+                      <p className="text-[12px] font-semibold text-green-700 flex items-center gap-1.5" style={{ fontFamily: F }}>
+                        <CheckCircle2 size={13} /> No screening exceptions
+                      </p>
+                      <p className="text-[11px] text-green-700 mt-1" style={{ fontFamily: F }}>
+                        Duplicate and sanctions checks passed and the document checklist is complete.
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg">
+                    <p className="text-[11px] text-slate-600 flex items-start gap-1.5" style={{ fontFamily: F }}>
+                      <Info size={12} className="mt-px shrink-0" />
+                      The vendor is recorded as <span className="font-medium">Pending Onboarding</span> and will not appear in sourcing until Procurement approves the registration. Banking details still require Finance validation.
+                    </p>
+                  </div>
+                </div>
+              ) : showOnboardModal === "Firm" ? (
                 /* ── Firm Form ── */
                 <div className="flex flex-col gap-5">
                   <p className="text-[13px] font-semibold text-slate-800" style={{ fontFamily: F }}>Business Information</p>
@@ -848,6 +1073,7 @@ export function Suppliers() {
                     <div className="flex flex-col gap-1.5">
                       <label className="text-[11px] text-slate-600" style={{ fontFamily: F }}>Legal Business Name *</label>
                       <input type="text" value={firmForm.legalBusinessName} onChange={e => setFirmForm({ ...firmForm, legalBusinessName: e.target.value })} placeholder="e.g., PrintWorks Ghana Ltd" className="bg-slate-50 border border-slate-200 rounded-lg h-[36px] px-3 text-[12px] text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500" style={{ fontFamily: F }} />
+                      <NameScreening name={firmForm.legalBusinessName} />
                     </div>
                     <div className="flex flex-col gap-1.5">
                       <label className="text-[11px] text-slate-600" style={{ fontFamily: F }}>Business Registration Number *</label>
@@ -860,6 +1086,13 @@ export function Suppliers() {
                     <div className="flex flex-col gap-1.5">
                       <label className="text-[11px] text-slate-600" style={{ fontFamily: F }}>Registered Address *</label>
                       <input type="text" value={firmForm.registeredAddress} onChange={e => setFirmForm({ ...firmForm, registeredAddress: e.target.value })} placeholder="e.g., 14 Independence Ave, Accra" className="bg-slate-50 border border-slate-200 rounded-lg h-[36px] px-3 text-[12px] text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500" style={{ fontFamily: F }} />
+                    </div>
+                    <div className="flex flex-col gap-1.5 col-span-2">
+                      <label className="text-[11px] text-slate-600" style={{ fontFamily: F }}>Ownership &amp; Beneficial Ownership</label>
+                      <textarea value={firmForm.ownershipDetails} onChange={e => setFirmForm({ ...firmForm, ownershipDetails: e.target.value })} rows={2}
+                        placeholder="Directors, shareholders holding 25%+ and any politically exposed persons..."
+                        className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-[12px] text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none" style={{ fontFamily: F }} />
+                      <p className="text-[10px] text-slate-400" style={{ fontFamily: F }}>Required for conflict-of-interest and donor due-diligence checks.</p>
                     </div>
                   </div>
 
@@ -888,6 +1121,7 @@ export function Suppliers() {
                     <div className="flex flex-col gap-1.5">
                       <label className="text-[11px] text-slate-600" style={{ fontFamily: F }}>Account Number *</label>
                       <input type="text" value={firmForm.bankAccountNumber} onChange={e => setFirmForm({ ...firmForm, bankAccountNumber: e.target.value })} placeholder="Account number" className="bg-slate-50 border border-slate-200 rounded-lg h-[36px] px-3 text-[12px] text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500" style={{ fontFamily: F }} />
+                      <p className="text-[10px] text-slate-400" style={{ fontFamily: F }}>Masked in all list views; Finance must validate before payment.</p>
                     </div>
                   </div>
 
@@ -904,7 +1138,7 @@ export function Suppliers() {
                           <>
                             <div className="fixed inset-0 z-10" onClick={() => setFormCategoryDropdown(false)} />
                             <div className="absolute top-full mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg z-20">
-                              {["Goods", "Works", "Consulting"].map(c => (
+                              {VENDOR_CATEGORIES.map(c => (
                                 <button key={c} onClick={() => { setFirmForm({ ...firmForm, category: c, subCategory: "" }); setFormCategoryDropdown(false); }} className="w-full px-3 py-2 text-left text-[12px] text-slate-900 hover:bg-slate-50" style={{ fontFamily: F }}>{c}</button>
                               ))}
                             </div>
@@ -933,28 +1167,92 @@ export function Suppliers() {
                     </div>
                   </div>
 
-                  <p className="text-[13px] font-semibold text-slate-800 mt-2" style={{ fontFamily: F }}>Required Documents</p>
-                  <div className="space-y-2">
-                    {FIRM_DOC_CHECKLIST.map(doc => (
-                      <div key={doc} className="space-y-1.5">
-                        <div className={`flex items-center justify-between px-3 py-2 rounded-lg border ${firmDocs.includes(doc) ? "bg-green-50 border-green-200" : "bg-slate-50 border-slate-200"}`}>
-                          <div className="flex items-center gap-2">
-                            {firmDocs.includes(doc) ? <Check size={14} className="text-green-600" /> : <FileText size={14} className="text-slate-400" />}
-                            <span className="text-[12px] text-slate-700" style={{ fontFamily: F }}>{doc}</span>
-                          </div>
-                          {!firmDocs.includes(doc) && (
-                            <button onClick={() => handleUploadDoc("firm")} className="text-[11px] text-purple-700 hover:underline flex items-center gap-1" style={{ fontFamily: F }}>
-                              <Paperclip size={12} /> Upload
-                            </button>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2 pl-6">
-                          <label className="text-[10px] text-slate-500" style={{ fontFamily: F }}>Expiry Date:</label>
-                          <input type="date" value={firmDocExpiry[doc] || ""} onChange={e => setFirmDocExpiry(prev => ({ ...prev, [doc]: e.target.value }))}
-                            className="bg-slate-50 border border-slate-200 rounded h-[28px] px-2 text-[11px] text-slate-700 focus:outline-none focus:ring-1 focus:ring-purple-500" style={{ fontFamily: F }} />
-                        </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[11px] text-slate-600" style={{ fontFamily: F }}>Specialization / Service Lines</label>
+                    {firmSpecializations.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {firmSpecializations.map(s => (
+                          <span key={s} className="inline-flex items-center gap-1 px-2 py-1 bg-purple-50 text-purple-700 border border-purple-200 rounded-full text-[11px]" style={{ fontFamily: F }}>
+                            {s}
+                            <button onClick={() => setFirmSpecializations(prev => prev.filter(x => x !== s))} className="hover:text-red-500"><X size={10} /></button>
+                          </span>
+                        ))}
                       </div>
-                    ))}
+                    )}
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={specializationDraft}
+                        onChange={e => setSpecializationDraft(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            const value = specializationDraft.trim();
+                            if (value && !firmSpecializations.includes(value)) setFirmSpecializations(prev => [...prev, value]);
+                            setSpecializationDraft("");
+                          }
+                        }}
+                        placeholder="e.g., Networking, Civil Works — press Enter to add"
+                        className="flex-1 bg-slate-50 border border-slate-200 rounded-lg h-[36px] px-3 text-[12px] text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        style={{ fontFamily: F }}
+                      />
+                      <button
+                        onClick={() => {
+                          const value = specializationDraft.trim();
+                          if (value && !firmSpecializations.includes(value)) setFirmSpecializations(prev => [...prev, value]);
+                          setSpecializationDraft("");
+                        }}
+                        className="px-3 h-[36px] border border-slate-200 rounded-lg text-[12px] text-slate-700 hover:bg-slate-50" style={{ fontFamily: F }}>
+                        Add
+                      </button>
+                    </div>
+                    {firmForm.category && (SUB_CATEGORIES[firmForm.category] || []).length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mt-1">
+                        {(SUB_CATEGORIES[firmForm.category] || []).filter(s => !firmSpecializations.includes(s)).map(s => (
+                          <button key={s} onClick={() => setFirmSpecializations(prev => [...prev, s])}
+                            className="px-2 py-0.5 border border-slate-200 rounded-full text-[10px] text-slate-500 hover:bg-slate-50" style={{ fontFamily: F }}>
+                            + {s}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <p className="text-[13px] font-semibold text-slate-800 mt-2" style={{ fontFamily: F }}>Required Documents</p>
+                  {uploadError && (
+                    <p className="text-[11px] text-red-600 flex items-center gap-1.5" style={{ fontFamily: F }}><XCircle size={12} /> {uploadError}</p>
+                  )}
+                  <div className="space-y-2">
+                    {FIRM_DOC_CHECKLIST.map(doc => {
+                      const file = firmDocFiles[doc];
+                      return (
+                        <div key={doc} className="space-y-1.5">
+                          <div className={`flex items-center justify-between px-3 py-2 rounded-lg border ${file ? "bg-green-50 border-green-200" : "bg-slate-50 border-slate-200"}`}>
+                            <div className="flex items-center gap-2 min-w-0">
+                              {file ? <Check size={14} className="text-green-600 shrink-0" /> : <FileText size={14} className="text-slate-400 shrink-0" />}
+                              <div className="min-w-0">
+                                <span className="text-[12px] text-slate-700 block truncate" style={{ fontFamily: F }}>{doc}</span>
+                                {file && <span className="text-[10px] text-slate-400 block truncate" style={{ fontFamily: F }}>{file.name} · {file.sizeLabel}</span>}
+                              </div>
+                            </div>
+                            {file ? (
+                              <button onClick={() => removeDoc("firm", doc)} className="text-[11px] text-slate-400 hover:text-red-500 flex items-center gap-1 shrink-0" style={{ fontFamily: F }}>
+                                <X size={12} /> Remove
+                              </button>
+                            ) : (
+                              <button onClick={() => handlePickDoc("firm", doc)} className="text-[11px] text-purple-700 hover:underline flex items-center gap-1 shrink-0" style={{ fontFamily: F }}>
+                                <Paperclip size={12} /> Upload
+                              </button>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 pl-6">
+                            <label className="text-[10px] text-slate-500" style={{ fontFamily: F }}>Expiry Date:</label>
+                            <input type="date" value={firmDocExpiry[doc] || ""} onChange={e => setFirmDocExpiry(prev => ({ ...prev, [doc]: e.target.value }))}
+                              className="bg-slate-50 border border-slate-200 rounded h-[28px] px-2 text-[11px] text-slate-700 focus:outline-none focus:ring-1 focus:ring-purple-500" style={{ fontFamily: F }} />
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               ) : (
@@ -965,6 +1263,7 @@ export function Suppliers() {
                     <div className="flex flex-col gap-1.5 col-span-2">
                       <label className="text-[11px] text-slate-600" style={{ fontFamily: F }}>Legal Name *</label>
                       <input type="text" value={indForm.legalName} onChange={e => setIndForm({ ...indForm, legalName: e.target.value })} placeholder="Full legal name" className="bg-slate-50 border border-slate-200 rounded-lg h-[36px] px-3 text-[12px] text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500" style={{ fontFamily: F }} />
+                      <NameScreening name={indForm.legalName} />
                     </div>
                     <div className="flex flex-col gap-1.5">
                       <label className="text-[11px] text-slate-600" style={{ fontFamily: F }}>Email *</label>
@@ -980,7 +1279,7 @@ export function Suppliers() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="flex flex-col gap-1.5">
                       <label className="text-[11px] text-slate-600" style={{ fontFamily: F }}>ID Type *</label>
-                      <select value={indForm.idType} onChange={e => setIndForm({ ...indForm, idType: e.target.value as any })} className="bg-slate-50 border border-slate-200 rounded-lg h-[36px] px-3 text-[12px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500" style={{ fontFamily: F }}>
+                      <select value={indForm.idType} onChange={e => setIndForm({ ...indForm, idType: e.target.value as typeof indForm.idType })} className="bg-slate-50 border border-slate-200 rounded-lg h-[36px] px-3 text-[12px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500" style={{ fontFamily: F }}>
                         <option value="Passport">Passport</option>
                         <option value="National ID">National ID</option>
                         <option value="Driver's License">Driver's License</option>
@@ -1005,6 +1304,7 @@ export function Suppliers() {
                     <div className="flex flex-col gap-1.5">
                       <label className="text-[11px] text-slate-600" style={{ fontFamily: F }}>Account Number *</label>
                       <input type="text" value={indForm.bankAccountNumber} onChange={e => setIndForm({ ...indForm, bankAccountNumber: e.target.value })} placeholder="Account number" className="bg-slate-50 border border-slate-200 rounded-lg h-[36px] px-3 text-[12px] text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500" style={{ fontFamily: F }} />
+                      <p className="text-[10px] text-slate-400" style={{ fontFamily: F }}>Masked in all list views; Finance must validate before payment.</p>
                     </div>
                   </div>
 
@@ -1021,7 +1321,7 @@ export function Suppliers() {
                           <>
                             <div className="fixed inset-0 z-10" onClick={() => setFormCategoryDropdown(false)} />
                             <div className="absolute top-full mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg z-20">
-                              {["Goods", "Works", "Consulting"].map(c => (
+                              {VENDOR_CATEGORIES.map(c => (
                                 <button key={c} onClick={() => { setIndForm({ ...indForm, category: c, subCategory: "" }); setFormCategoryDropdown(false); }} className="w-full px-3 py-2 text-left text-[12px] text-slate-900 hover:bg-slate-50" style={{ fontFamily: F }}>{c}</button>
                               ))}
                             </div>
@@ -1050,7 +1350,7 @@ export function Suppliers() {
                     </div>
                   </div>
 
-                  <p className="text-[13px] font-semibold text-slate-800 mt-2" style={{ fontFamily: F }}>Expert Areas</p>
+                  <p className="text-[13px] font-semibold text-slate-800 mt-2" style={{ fontFamily: F }}>Expert Areas *</p>
                   <div className="flex flex-wrap gap-1.5 mb-2">
                     {indExpertAreas.map(area => (
                       <span key={area} className="inline-flex items-center gap-1 px-2 py-1 bg-purple-50 text-purple-700 border border-purple-200 rounded-full text-[11px]" style={{ fontFamily: F }}>
@@ -1079,96 +1379,369 @@ export function Suppliers() {
                   </div>
 
                   <p className="text-[13px] font-semibold text-slate-800 mt-4" style={{ fontFamily: F }}>Required Documents</p>
+                  {uploadError && (
+                    <p className="text-[11px] text-red-600 flex items-center gap-1.5" style={{ fontFamily: F }}><XCircle size={12} /> {uploadError}</p>
+                  )}
                   <div className="space-y-2">
-                    {INDIVIDUAL_DOC_CHECKLIST.map(doc => (
-                      <div key={doc} className="space-y-1.5">
-                        <div className={`flex items-center justify-between px-3 py-2 rounded-lg border ${indDocs.includes(doc) ? "bg-green-50 border-green-200" : "bg-slate-50 border-slate-200"}`}>
-                          <div className="flex items-center gap-2">
-                            {indDocs.includes(doc) ? <Check size={14} className="text-green-600" /> : <FileText size={14} className="text-slate-400" />}
-                            <span className="text-[12px] text-slate-700" style={{ fontFamily: F }}>{doc}</span>
+                    {INDIVIDUAL_DOC_CHECKLIST.map(doc => {
+                      const file = indDocFiles[doc];
+                      return (
+                        <div key={doc} className="space-y-1.5">
+                          <div className={`flex items-center justify-between px-3 py-2 rounded-lg border ${file ? "bg-green-50 border-green-200" : "bg-slate-50 border-slate-200"}`}>
+                            <div className="flex items-center gap-2 min-w-0">
+                              {file ? <Check size={14} className="text-green-600 shrink-0" /> : <FileText size={14} className="text-slate-400 shrink-0" />}
+                              <div className="min-w-0">
+                                <span className="text-[12px] text-slate-700 block truncate" style={{ fontFamily: F }}>{doc}</span>
+                                {file && <span className="text-[10px] text-slate-400 block truncate" style={{ fontFamily: F }}>{file.name} · {file.sizeLabel}</span>}
+                              </div>
+                            </div>
+                            {file ? (
+                              <button onClick={() => removeDoc("individual", doc)} className="text-[11px] text-slate-400 hover:text-red-500 flex items-center gap-1 shrink-0" style={{ fontFamily: F }}>
+                                <X size={12} /> Remove
+                              </button>
+                            ) : (
+                              <button onClick={() => handlePickDoc("individual", doc)} className="text-[11px] text-purple-700 hover:underline flex items-center gap-1 shrink-0" style={{ fontFamily: F }}>
+                                <Paperclip size={12} /> Upload
+                              </button>
+                            )}
                           </div>
-                          {!indDocs.includes(doc) && (
-                            <button onClick={() => handleUploadDoc("individual")} className="text-[11px] text-purple-700 hover:underline flex items-center gap-1" style={{ fontFamily: F }}>
-                              <Paperclip size={12} /> Upload
-                            </button>
-                          )}
+                          <div className="flex items-center gap-2 pl-6">
+                            <label className="text-[10px] text-slate-500" style={{ fontFamily: F }}>Expiry Date:</label>
+                            <input type="date" value={indDocExpiry[doc] || ""} onChange={e => setIndDocExpiry(prev => ({ ...prev, [doc]: e.target.value }))}
+                              className="bg-slate-50 border border-slate-200 rounded h-[28px] px-2 text-[11px] text-slate-700 focus:outline-none focus:ring-1 focus:ring-purple-500" style={{ fontFamily: F }} />
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2 pl-6">
-                          <label className="text-[10px] text-slate-500" style={{ fontFamily: F }}>Expiry Date:</label>
-                          <input type="date" value={indDocExpiry[doc] || ""} onChange={e => setIndDocExpiry(prev => ({ ...prev, [doc]: e.target.value }))}
-                            className="bg-slate-50 border border-slate-200 rounded h-[28px] px-2 text-[11px] text-slate-700 focus:outline-none focus:ring-1 focus:ring-purple-500" style={{ fontFamily: F }} />
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
             </div>
 
             {/* Modal Footer */}
-            <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-end gap-3 shrink-0">
-              <button onClick={() => { setShowOnboardModal(null); resetForms(); }} className="px-4 py-2 border border-slate-200 rounded-lg text-[12px] text-slate-700 hover:bg-slate-50 transition-colors" style={{ fontFamily: F }}>Cancel</button>
-              <button
-                onClick={() => { console.log("Onboarding:", showOnboardModal === "Firm" ? firmForm : indForm); setShowOnboardModal(null); resetForms(); }}
-                className="px-4 py-2 text-white rounded-lg text-[12px] font-medium hover:opacity-90 transition-opacity"
-                style={{ backgroundColor: "#0B01D0", fontFamily: F }}
-              >
-                Complete Onboarding
-              </button>
+            <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-between gap-3 shrink-0">
+              <p className="text-[11px] text-red-600 flex-1" style={{ fontFamily: F }}>{formError}</p>
+              {onboardResult ? (
+                <div className="flex items-center gap-3">
+                  <button onClick={() => { const id = onboardResult.vendor.id; closeOnboarding(); setDetailVendorId(id); }}
+                    className="px-4 py-2 border border-slate-200 rounded-lg text-[12px] text-slate-700 hover:bg-slate-50 transition-colors" style={{ fontFamily: F }}>
+                    Open Vendor Profile
+                  </button>
+                  <button onClick={closeOnboarding}
+                    className="px-4 py-2 text-white rounded-lg text-[12px] font-medium hover:opacity-90 transition-opacity"
+                    style={{ backgroundColor: "#0B01D0", fontFamily: F }}>
+                    Done
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <button onClick={closeOnboarding} className="px-4 py-2 border border-slate-200 rounded-lg text-[12px] text-slate-700 hover:bg-slate-50 transition-colors" style={{ fontFamily: F }}>Cancel</button>
+                  <button
+                    onClick={handleCompleteOnboarding}
+                    disabled={!canCreate}
+                    title={canCreate ? undefined : denialReason("vendor.create")}
+                    className="px-4 py-2 text-white rounded-lg text-[12px] font-medium hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+                    style={{ backgroundColor: "#0B01D0", fontFamily: F }}
+                  >
+                    Complete Onboarding
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
       )}
 
       {/* ══════════════════════════════════════════════════════════════════════
-         REACTIVATION CONFIRMATION MODAL
+         EDIT VENDOR MODAL
          ══════════════════════════════════════════════════════════════════════ */}
-      {showReactivateModal && (
+      {editVendor && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-[440px] overflow-hidden">
-            <div className="px-6 py-4 border-b border-blue-200 bg-blue-50">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-[640px] max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between shrink-0">
+              <div>
+                <h2 className="text-[16px] font-semibold text-slate-900" style={{ fontFamily: F }}>Edit Vendor Record</h2>
+                <p className="text-[11px] text-slate-500 mt-0.5" style={{ fontFamily: F }}>
+                  {vendorDisplayName(editVendor)} · <span className="font-medium text-purple-700">{editVendor.vendorId}</span> · legal name and identifiers are fixed after registration
+                </p>
+              </div>
+              <button onClick={() => { setEditVendor(null); setEditError(null); }} className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors">
+                <X size={18} className="text-slate-500" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-5">
+              <p className="text-[13px] font-semibold text-slate-800" style={{ fontFamily: F }}>Contact Information</p>
+              <div className="grid grid-cols-3 gap-4">
+                {editVendor.type === "Firm" && (
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[11px] text-slate-600" style={{ fontFamily: F }}>Contact Person *</label>
+                    <input type="text" value={editForm.contactPerson} onChange={e => setEditForm({ ...editForm, contactPerson: e.target.value })} className="bg-slate-50 border border-slate-200 rounded-lg h-[36px] px-3 text-[12px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500" style={{ fontFamily: F }} />
+                  </div>
+                )}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] text-slate-600" style={{ fontFamily: F }}>Email *</label>
+                  <input type="email" value={editForm.email} onChange={e => setEditForm({ ...editForm, email: e.target.value })} className="bg-slate-50 border border-slate-200 rounded-lg h-[36px] px-3 text-[12px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500" style={{ fontFamily: F }} />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] text-slate-600" style={{ fontFamily: F }}>Phone *</label>
+                  <input type="tel" value={editForm.phone} onChange={e => setEditForm({ ...editForm, phone: e.target.value })} className="bg-slate-50 border border-slate-200 rounded-lg h-[36px] px-3 text-[12px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500" style={{ fontFamily: F }} />
+                </div>
+                <div className={`flex flex-col gap-1.5 ${editVendor.type === "Firm" ? "col-span-3" : "col-span-1"}`}>
+                  <label className="text-[11px] text-slate-600" style={{ fontFamily: F }}>{editVendor.type === "Firm" ? "Registered Address *" : "Residential Address *"}</label>
+                  <input type="text" value={editForm.address} onChange={e => setEditForm({ ...editForm, address: e.target.value })} className="bg-slate-50 border border-slate-200 rounded-lg h-[36px] px-3 text-[12px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500" style={{ fontFamily: F }} />
+                </div>
+              </div>
+
+              <p className="text-[13px] font-semibold text-slate-800" style={{ fontFamily: F }}>Bank Account Information</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] text-slate-600" style={{ fontFamily: F }}>Bank Name *</label>
+                  <input type="text" value={editForm.bankName} onChange={e => setEditForm({ ...editForm, bankName: e.target.value })} className="bg-slate-50 border border-slate-200 rounded-lg h-[36px] px-3 text-[12px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500" style={{ fontFamily: F }} />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] text-slate-600" style={{ fontFamily: F }}>Account Number *</label>
+                  <input type="text" value={editForm.bankAccountNumber} onChange={e => setEditForm({ ...editForm, bankAccountNumber: e.target.value })} className="bg-slate-50 border border-slate-200 rounded-lg h-[36px] px-3 text-[12px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500" style={{ fontFamily: F }} />
+                  {editForm.bankAccountNumber.trim() !== editVendor.bankAccountNumber && (
+                    <p className="text-[10px] text-amber-600 flex items-center gap-1" style={{ fontFamily: F }}>
+                      <AlertTriangle size={11} /> Changing the account clears the Finance validation on file.
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <p className="text-[13px] font-semibold text-slate-800" style={{ fontFamily: F }}>Categorization</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] text-slate-600" style={{ fontFamily: F }}>Category *</label>
+                  <div className="relative">
+                    <button onClick={() => { setEditCategoryDropdown(!editCategoryDropdown); setEditSubCategoryDropdown(false); }} className="w-full bg-slate-50 border border-slate-200 rounded-lg h-[36px] px-3 flex items-center justify-between text-[12px]" style={{ fontFamily: F }}>
+                      <span className={editForm.category ? "text-slate-900" : "text-slate-400"}>{editForm.category || "Select category"}</span>
+                      <ChevronDown size={14} className="text-purple-700" />
+                    </button>
+                    {editCategoryDropdown && (
+                      <>
+                        <div className="fixed inset-0 z-10" onClick={() => setEditCategoryDropdown(false)} />
+                        <div className="absolute top-full mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg z-20">
+                          {VENDOR_CATEGORIES.map(c => (
+                            <button key={c} onClick={() => { setEditForm({ ...editForm, category: c, subCategory: "" }); setEditCategoryDropdown(false); }} className="w-full px-3 py-2 text-left text-[12px] text-slate-900 hover:bg-slate-50" style={{ fontFamily: F }}>{c}</button>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] text-slate-600" style={{ fontFamily: F }}>Sub-category</label>
+                  <div className="relative">
+                    <button onClick={() => { if (editForm.category) { setEditSubCategoryDropdown(!editSubCategoryDropdown); setEditCategoryDropdown(false); } }} className="w-full bg-slate-50 border border-slate-200 rounded-lg h-[36px] px-3 flex items-center justify-between text-[12px]" style={{ fontFamily: F }}>
+                      <span className={editForm.subCategory ? "text-slate-900" : "text-slate-400"}>{editForm.subCategory || "Select sub-category"}</span>
+                      <ChevronDown size={14} className="text-purple-700" />
+                    </button>
+                    {editSubCategoryDropdown && editForm.category && (
+                      <>
+                        <div className="fixed inset-0 z-10" onClick={() => setEditSubCategoryDropdown(false)} />
+                        <div className="absolute top-full mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg z-20 max-h-[160px] overflow-y-auto">
+                          {(SUB_CATEGORIES[editForm.category] || []).map(sc => (
+                            <button key={sc} onClick={() => { setEditForm({ ...editForm, subCategory: sc }); setEditSubCategoryDropdown(false); }} className="w-full px-3 py-2 text-left text-[12px] text-slate-900 hover:bg-slate-50" style={{ fontFamily: F }}>{sc}</button>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {editVendor.type === "Firm" ? (
+                <>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[11px] text-slate-600" style={{ fontFamily: F }}>Ownership &amp; Beneficial Ownership</label>
+                    <textarea value={editForm.ownershipDetails} onChange={e => setEditForm({ ...editForm, ownershipDetails: e.target.value })} rows={2}
+                      placeholder="Directors, shareholders holding 25%+ and any politically exposed persons..."
+                      className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-[12px] text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none" style={{ fontFamily: F }} />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[11px] text-slate-600" style={{ fontFamily: F }}>Specialization / Service Lines</label>
+                    {editSpecializations.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {editSpecializations.map(s => (
+                          <span key={s} className="inline-flex items-center gap-1 px-2 py-1 bg-purple-50 text-purple-700 border border-purple-200 rounded-full text-[11px]" style={{ fontFamily: F }}>
+                            {s}
+                            <button onClick={() => setEditSpecializations(prev => prev.filter(x => x !== s))} className="hover:text-red-500"><X size={10} /></button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2">
+                      <input type="text" value={editSpecDraft} onChange={e => setEditSpecDraft(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            const value = editSpecDraft.trim();
+                            if (value && !editSpecializations.includes(value)) setEditSpecializations(prev => [...prev, value]);
+                            setEditSpecDraft("");
+                          }
+                        }}
+                        placeholder="Add a service line — press Enter"
+                        className="flex-1 bg-slate-50 border border-slate-200 rounded-lg h-[36px] px-3 text-[12px] text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500" style={{ fontFamily: F }} />
+                      <button onClick={() => {
+                        const value = editSpecDraft.trim();
+                        if (value && !editSpecializations.includes(value)) setEditSpecializations(prev => [...prev, value]);
+                        setEditSpecDraft("");
+                      }} className="px-3 h-[36px] border border-slate-200 rounded-lg text-[12px] text-slate-700 hover:bg-slate-50" style={{ fontFamily: F }}>Add</button>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] text-slate-600" style={{ fontFamily: F }}>Expert Areas</label>
+                  {editExpertAreas.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {editExpertAreas.map(area => (
+                        <span key={area} className="inline-flex items-center gap-1 px-2 py-1 bg-purple-50 text-purple-700 border border-purple-200 rounded-full text-[11px]" style={{ fontFamily: F }}>
+                          {area}
+                          <button onClick={() => setEditExpertAreas(prev => prev.filter(a => a !== area))} className="hover:text-red-500"><X size={10} /></button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <div className="relative">
+                    <button onClick={() => setEditExpertDropdown(!editExpertDropdown)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-lg h-[36px] px-3 flex items-center justify-between text-[12px]" style={{ fontFamily: F }}>
+                      <span className="text-slate-400">Add expert areas...</span>
+                      <ChevronDown size={14} className="text-purple-700" />
+                    </button>
+                    {editExpertDropdown && (
+                      <>
+                        <div className="fixed inset-0 z-10" onClick={() => setEditExpertDropdown(false)} />
+                        <div className="absolute top-full mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg z-20 max-h-[180px] overflow-y-auto">
+                          {EXPERT_AREAS_OPTIONS.filter(a => !editExpertAreas.includes(a)).map(area => (
+                            <button key={area} onClick={() => setEditExpertAreas(prev => [...prev, area])}
+                              className="w-full px-3 py-2 text-left text-[12px] text-slate-900 hover:bg-slate-50" style={{ fontFamily: F }}>{area}</button>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-between gap-3 shrink-0">
+              <p className="text-[11px] text-red-600 flex-1" style={{ fontFamily: F }}>{editError}</p>
               <div className="flex items-center gap-3">
-                <ShieldCheck size={20} className="text-blue-600" />
+                <button onClick={() => { setEditVendor(null); setEditError(null); }} className="px-4 py-2 border border-slate-200 rounded-lg text-[12px] text-slate-700 hover:bg-slate-50 transition-colors" style={{ fontFamily: F }}>Cancel</button>
+                <button onClick={saveEdit}
+                  disabled={!canCreate}
+                  title={canCreate ? undefined : denialReason("vendor.create")}
+                  className="px-4 py-2 text-white rounded-lg text-[12px] font-medium hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{ backgroundColor: "#0B01D0", fontFamily: F }}>
+                  Save Changes
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════════════════
+         STATUS ACTION MODAL (Flag / Suspend / Blacklist / Reactivate)
+         ══════════════════════════════════════════════════════════════════════ */}
+      {statusAction && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-[480px] overflow-hidden">
+            <div className={`px-6 py-4 border-b ${
+              statusAction.action === "Reactivate" || statusAction.action === "Approve Reactivation" ? "border-blue-200 bg-blue-50" :
+              statusAction.action === "Flag" ? "border-amber-200 bg-amber-50" :
+              statusAction.action === "Suspend" ? "border-red-200 bg-red-50" :
+              "border-slate-300 bg-slate-100"
+            }`}>
+              <div className="flex items-center gap-3">
+                {statusAction.action === "Flag" && <AlertTriangle size={20} className="text-amber-600" />}
+                {statusAction.action === "Suspend" && <ShieldAlert size={20} className="text-red-600" />}
+                {statusAction.action === "Blacklist" && <ShieldBan size={20} className="text-slate-700" />}
+                {(statusAction.action === "Reactivate" || statusAction.action === "Approve Reactivation") && <ShieldCheck size={20} className="text-blue-600" />}
                 <div>
-                  <h3 className="text-[15px] font-semibold text-slate-900" style={{ fontFamily: F }}>Reactivation Requires Approval</h3>
+                  <h3 className="text-[15px] font-semibold text-slate-900" style={{ fontFamily: F }}>
+                    {statusAction.action === "Reactivate" ? "Reactivation Requires Approval" : `${statusAction.action} Vendor`}
+                  </h3>
                   <p className="text-[11px] text-slate-500" style={{ fontFamily: F }}>
-                    {showReactivateModal.type === "Firm"
-                      ? (showReactivateModal as FirmVendor).legalBusinessName
-                      : (showReactivateModal as IndividualVendor).legalName} ({showReactivateModal.vendorId})
+                    {vendorDisplayName(statusAction.vendor)} ({statusAction.vendor.vendorId})
                   </p>
                 </div>
               </div>
             </div>
+
             <div className="px-6 py-5">
               <p className="text-[12px] text-slate-600" style={{ fontFamily: F }}>
-                Reactivation of blacklisted or suspended vendors requires management approval. Clicking "Request Reactivation" will change the vendor status to <span className="font-semibold text-blue-700">Pending Reactivation</span> and notify the management team for review.
+                {statusAction.action === "Flag" && "Flagging this vendor marks them for monitoring. They remain in the register but shortlisting will require Senior Management approval."}
+                {statusAction.action === "Suspend" && "Suspending this vendor immediately blocks them from all solicitations and awards. This action can be reversed through reactivation."}
+                {statusAction.action === "Blacklist" && "Blacklisting permanently restricts this vendor from all procurement activity. Reserved for fraud, gross misconduct or debarment."}
+                {statusAction.action === "Reactivate" && "Reactivation of blacklisted or suspended vendors requires management approval. Submitting sets the status to Pending Reactivation and notifies Senior Management."}
+                {statusAction.action === "Approve Reactivation" && "Approving returns this vendor to Active status and restores their eligibility for solicitation and award."}
               </p>
-              <div className="mt-3 px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-lg">
-                <p className="text-[11px] text-amber-700 flex items-center gap-1.5" style={{ fontFamily: F }}>
-                  <AlertTriangle size={12} /> The vendor will not be eligible for sourcing until management approves the reactivation.
-                </p>
-              </div>
+
+              {statusAction.action !== "Approve Reactivation" && (
+                <div className="mt-4">
+                  <label className="text-[12px] font-semibold text-slate-700 mb-1.5 flex items-center gap-1" style={{ fontFamily: F }}>
+                    Reason <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    value={actionReason}
+                    onChange={e => { setActionReason(e.target.value); if (e.target.value.trim()) setActionReasonError(false); }}
+                    rows={3}
+                    placeholder={
+                      statusAction.action === "Flag" ? "e.g., Repeated late deliveries on CNT-2025-014..." :
+                      statusAction.action === "Suspend" ? "e.g., Under investigation for invoice irregularities..." :
+                      statusAction.action === "Blacklist" ? "e.g., Confirmed fraudulent documentation submitted..." :
+                      "e.g., Investigation concluded, vendor cleared of allegations..."
+                    }
+                    className={`w-full border rounded-lg px-3 py-2.5 text-[12px] text-slate-900 placeholder:text-slate-400 outline-none resize-none ${
+                      actionReasonError ? "border-red-400 bg-red-50 focus:border-red-500" : "border-slate-200 focus:border-purple-400"
+                    }`}
+                    style={{ fontFamily: F }}
+                  />
+                  {actionReasonError && (
+                    <p className="text-[10px] text-red-500 mt-1 flex items-center gap-1" style={{ fontFamily: F }}>
+                      <XCircle size={10} /> A reason is mandatory before updating vendor status.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {statusAction.action === "Blacklist" && (
+                <div className="mt-3 px-3 py-2.5 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-[11px] text-red-700 flex items-center gap-1.5" style={{ fontFamily: F }}>
+                    <AlertTriangle size={12} /> This action is difficult to reverse and will be audited. Ensure compliance review is complete.
+                  </p>
+                </div>
+              )}
+              {statusAction.action === "Reactivate" && (
+                <div className="mt-3 px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-lg">
+                  <p className="text-[11px] text-amber-700 flex items-center gap-1.5" style={{ fontFamily: F }}>
+                    <AlertTriangle size={12} /> The vendor will not be eligible for sourcing until Senior Management approves the reactivation.
+                  </p>
+                </div>
+              )}
             </div>
+
             <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-end gap-3">
-              <button onClick={() => setShowReactivateModal(null)}
-                className="px-4 py-2 border border-slate-200 rounded-lg text-[12px] text-slate-600 hover:bg-slate-50 transition-colors" style={{ fontFamily: F }}>
+              <button
+                onClick={() => { setStatusAction(null); setActionReason(""); setActionReasonError(false); }}
+                className="px-4 py-2 border border-slate-200 rounded-lg text-[12px] text-slate-600 hover:bg-slate-50 transition-colors"
+                style={{ fontFamily: F }}>
                 Cancel
               </button>
-              <button onClick={() => {
-                // Change status to Pending Reactivation
-                const vendor = showReactivateModal;
-                if (vendor.type === "Firm") {
-                  const idx = firmVendors.findIndex(v => v.id === vendor.id);
-                  if (idx !== -1) firmVendors[idx].status = "Pending Reactivation";
-                } else {
-                  const idx = individualVendors.findIndex(v => v.id === vendor.id);
-                  if (idx !== -1) individualVendors[idx].status = "Pending Reactivation";
-                }
-                console.log(`Reactivation requested for ${vendor.vendorId} — status set to Pending Reactivation`);
-                setShowReactivateModal(null);
-              }}
-                className="px-5 py-2 rounded-lg text-[12px] font-medium text-white transition-opacity hover:opacity-90 bg-blue-600" style={{ fontFamily: F }}>
-                Request Reactivation
+              <button
+                onClick={confirmStatusAction}
+                className={`px-5 py-2 rounded-lg text-[12px] font-medium text-white transition-opacity hover:opacity-90 ${
+                  statusAction.action === "Reactivate" || statusAction.action === "Approve Reactivation" ? "bg-blue-600" :
+                  statusAction.action === "Flag" ? "bg-amber-600" :
+                  statusAction.action === "Suspend" ? "bg-red-600" :
+                  "bg-slate-700"
+                }`}
+                style={{ fontFamily: F }}>
+                {statusAction.action === "Reactivate" ? "Request Reactivation" : `Confirm ${statusAction.action}`}
               </button>
             </div>
           </div>

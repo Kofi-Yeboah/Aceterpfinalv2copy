@@ -1,6 +1,20 @@
 // Shared procurement store for cross-component state
 // When sourcing events are approved, POs are auto-generated here
 // When ESS procurement plan items are initiated, PRs are auto-generated here
+//
+// The plan-review and requisition workflows live here rather than in the
+// components because each is a multi-station chain whose guards — no sourcing
+// without an approved plan item, no payment-bearing approval by the person who
+// raised the request — only hold if every caller passes through one place.
+
+import { notify, scheduleReminder, resolveReminder } from "./notificationStore";
+import {
+  SENIOR_APPROVAL_THRESHOLD,
+  canonicalMethod,
+  isDirect,
+  suggestProcurementMethod,
+  validateMethodAgainstThreshold,
+} from "./procurementThresholds";
 
 export interface POLineItem {
   id: string;
@@ -62,6 +76,23 @@ export interface SourcingApprovalItem {
 
 export type PRApprovalStepStatus = "Pending" | "Approved" | "Rejected" | "N/A";
 
+/**
+ * The full requisition lifecycle from the business requirements. Procurement
+ * and Finance share one state because the requirement calls for them to review
+ * concurrently; the individual `procurementApproval` / `financeApproval` fields
+ * carry each station's own verdict within it.
+ */
+export type PROverallStatus =
+  | "Draft"
+  | "Submitted"
+  | "Pending Dept Approval"
+  | "Pending Procurement & Finance"
+  | "Pending Senior Mgmt"
+  | "Approved"
+  | "Rejected"
+  | "Withdrawn"
+  | "Converted to Sourcing";
+
 export interface PRApprovalHistoryEntry {
   step: number;
   role: string;
@@ -88,7 +119,7 @@ export interface GeneratedPR {
   unit: string;
   // Approval workflow
   currentStep: number; // 1–5
-  overallApprovalStatus: "Draft" | "Pending Dept Approval" | "Pending Procurement & Finance" | "Pending Senior Mgmt" | "Approved" | "Rejected";
+  overallApprovalStatus: PROverallStatus;
   deptApproval: PRApprovalStepStatus;
   procurementApproval: PRApprovalStepStatus;
   financeApproval: PRApprovalStepStatus;
@@ -109,6 +140,25 @@ export interface GeneratedPR {
   linkedPlanItemId?: string; // dropdown-selected plan item
   daysInCurrentStage?: number;
   currentResponsible?: string;
+  /** Date the requisition entered its current stage, so days-in-stage is real. */
+  stageEnteredDate?: string;
+  /** Documented reason from the most recent rejection, shown on resubmission. */
+  rejectionReason?: string;
+  rejectedAtStage?: string;
+  resubmissionCount?: number;
+  withdrawnReason?: string;
+  /** Set when sourcing initiates without an approved plan item. */
+  emergencyOverride?: boolean;
+  emergencyOverrideJustification?: string;
+  emergencyOverrideApprovedBy?: string;
+  /** Justification when the chosen method departs from its value threshold. */
+  methodDeviationJustification?: string;
+  /** Sourcing case created on approval. */
+  convertedToSourcingCase?: string;
+  /** Populated when the estimated cost is materially above the plan item. */
+  planVarianceFlag?: string;
+  planVarianceComment?: string;
+  attachmentFiles?: { name: string; url: string; type: string; size: string; label: string }[];
 }
 
 type Listener = () => void;
@@ -384,44 +434,47 @@ export function createRequisitionFromPlan(opts: {
   shortlistedEntities?: { name: string; address: string; email: string }[];
   attachments?: string[];
   linkedPlanItemId?: string;
+  attachmentFiles?: { name: string; url: string; type: string; size: string; label: string }[];
 }) {
   nextPRNumber++;
   const today = new Date().toISOString().split("T")[0];
 
-  const purchaseTypeMap: Record<string, string> = {
-    Goods: "Competitive Bidding",
-    Services: "Request for Quotation",
-    Consultancy: "Single Source",
-    Works: "Competitive Bidding",
-    Other: "Direct Purchase",
-  };
+  // The plan item's own method wins where it exists; otherwise the value
+  // thresholds decide, rather than a fixed category→method table.
+  const planItem = opts.linkedPlanItemId
+    ? procurementPlanItems.find((p) => p.ppItemId === opts.linkedPlanItemId)
+    : undefined;
+  const resolvedMethod = canonicalMethod(planItem?.procurementMethod) ??
+    suggestProcurementMethod(opts.estimatedCost);
 
   const newPR: GeneratedPR = {
     id: `GPR-${Date.now()}-${nextPRNumber}`,
-    requisitionNumber: `PR-2026-${String(nextPRNumber).padStart(3, "0")}`,
+    requisitionNumber: `PR-${new Date().getFullYear()}-${String(nextPRNumber).padStart(3, "0")}`,
     requestedBy: opts.requestedBy,
     department: opts.department,
     itemDescription: opts.description,
     quantity: opts.quantity,
     estimatedCost: opts.estimatedCost,
     priority: opts.estimatedCost >= 30000 ? "Urgent" : opts.estimatedCost >= 10000 ? "High" : "Medium",
-    status: "Pending",
+    status: "Pending Dept Approval",
     dateRequested: today,
-    purchaseType: purchaseTypeMap[opts.category] || "Direct Purchase",
+    purchaseType: resolvedMethod,
     sourcePlanId: opts.planId,
     sourcePlanItemId: opts.itemId,
     category: opts.category,
     unit: opts.unit,
     // Approval workflow
-    currentStep: 1,
+    currentStep: 2,
     overallApprovalStatus: "Pending Dept Approval",
     deptApproval: "Pending",
     procurementApproval: "N/A",
     financeApproval: "N/A",
     seniorMgmtApproval: "N/A",
-    requiresSeniorApproval: opts.estimatedCost > 10000,
+    requiresSeniorApproval: opts.estimatedCost > SENIOR_APPROVAL_THRESHOLD,
     approvalHistory: [{ step: 1, role: "Requesting Officer", action: "Submitted" as const, date: today, comments: "Purchase requisition submitted from ESS Procurement Plan" }],
     sourceType: "ESS Plan",
+    stageEnteredDate: today,
+    resubmissionCount: 0,
     // Enhanced fields
     requisitionTitle: opts.requisitionTitle,
     entityType: opts.entityType,
@@ -434,181 +487,244 @@ export function createRequisitionFromPlan(opts: {
     attachments: opts.attachments,
     linkedPlanItemId: opts.linkedPlanItemId,
     daysInCurrentStage: 0,
-    currentResponsible: opts.requestedBy,
+    currentResponsible: "Department Head",
+    attachmentFiles: opts.attachmentFiles,
   };
 
+  const variance = checkPlanVariance(newPR);
+  if (variance.flagged) newPR.planVarianceFlag = variance.message;
+
   generatedPRs = [...generatedPRs, newPR];
+  notifyStage(newPR, "Pending Dept Approval", variance.flagged ? `⚠ ${variance.message}` : "");
   notifyListeners();
   return newPR;
 }
 
 // ─── PR Submission (Step 1 → Step 2) ─────────────────────────────────────────
-export function submitPRForApproval(prId: string) {
-  const today = new Date().toISOString().split("T")[0];
-  generatedPRs = generatedPRs.map(pr => {
-    if (pr.id !== prId) return pr;
+/**
+ * Runs the full validation gate before the requisition enters the workflow.
+ * Returns the blocking issues rather than throwing, so the form can show them
+ * against the offending fields.
+ */
+export function submitPRForApproval(
+  prId: string,
+  submittedBy?: string
+): { ok: boolean; issues?: PRValidationIssue[]; error?: string } {
+  const pr = generatedPRs.find(p => p.id === prId);
+  if (!pr) return { ok: false, error: "Requisition not found." };
+
+  const issues = validatePRForSubmission(pr);
+  if (issues.length) return { ok: false, issues, error: "Resolve the validation errors before submitting." };
+
+  const variance = checkPlanVariance(pr);
+  const today = todayISO();
+
+  generatedPRs = generatedPRs.map(p => {
+    if (p.id !== prId) return p;
     return {
-      ...pr,
+      ...advanceStage(p, "Pending Dept Approval"),
       currentStep: 2,
-      status: "Pending Dept Approval",
-      overallApprovalStatus: "Pending Dept Approval" as const,
       deptApproval: "Pending" as const,
-      approvalHistory: [...pr.approvalHistory, { step: 1, role: "Requesting Officer", action: "Submitted" as const, date: today, comments: "PR submitted for department approval" }],
+      requiresSeniorApproval: p.estimatedCost > SENIOR_APPROVAL_THRESHOLD,
+      planVarianceFlag: variance.flagged ? variance.message : undefined,
+      approvalHistory: [
+        ...p.approvalHistory,
+        { step: 1, role: "Requesting Officer", action: "Submitted" as const, date: today, comments: `Submitted for department approval by ${submittedBy ?? p.requestedBy}` },
+      ],
     };
   });
+
+  const updated = generatedPRs.find(p => p.id === prId)!;
+  notifyStage(updated, "Pending Dept Approval", variance.flagged ? `⚠ ${variance.message}` : "");
   notifyListeners();
+  return { ok: true };
 }
 
 // ─── Department Head Approval (Step 2 → Step 3&4) ───────────────────────────
-export function approvePRDept(prId: string, comments: string = "") {
-  const today = new Date().toISOString().split("T")[0];
+export function approvePRDept(prId: string, comments: string = "", approvedBy = "Department Head") {
+  const today = todayISO();
   generatedPRs = generatedPRs.map(pr => {
     if (pr.id !== prId) return pr;
     return {
-      ...pr,
+      ...advanceStage(pr, "Pending Procurement & Finance"),
       currentStep: 3,
-      status: "Pending Procurement & Finance",
-      overallApprovalStatus: "Pending Procurement & Finance" as const,
       deptApproval: "Approved" as const,
       procurementApproval: "Pending" as const,
       financeApproval: "Pending" as const,
-      approvalHistory: [...pr.approvalHistory, { step: 2, role: "Department Head", action: "Approved" as const, date: today, comments: comments || "Approved by department head" }],
+      approvalHistory: [...pr.approvalHistory, { step: 2, role: "Department Head", action: "Approved" as const, date: today, comments: comments || `Approved by ${approvedBy}` }],
     };
   });
+  const updated = generatedPRs.find(p => p.id === prId);
+  if (updated) {
+    resolveReminder(updated.requisitionNumber, "Requisition");
+    notifyStage(updated, "Pending Procurement & Finance");
+  }
   notifyListeners();
 }
 
-export function rejectPRDept(prId: string, comments: string = "") {
-  const today = new Date().toISOString().split("T")[0];
+/** Rejection requires a documented reason — the resubmission route depends on it. */
+export function rejectPRDept(prId: string, comments: string = "", rejectedBy = "Department Head") {
+  return rejectPRAtStage(prId, 2, "Department Head", rejectedBy, comments);
+}
+
+function rejectPRAtStage(
+  prId: string,
+  step: number,
+  role: string,
+  rejectedBy: string,
+  comments: string
+): { ok: boolean; error?: string } {
+  if (!comments.trim()) {
+    return { ok: false, error: "A documented reason is required when rejecting a requisition." };
+  }
+  const today = todayISO();
+  const stageField: Record<number, keyof GeneratedPR> = {
+    2: "deptApproval", 3: "procurementApproval", 4: "financeApproval", 5: "seniorMgmtApproval",
+  };
+
+  let target: GeneratedPR | undefined;
   generatedPRs = generatedPRs.map(pr => {
     if (pr.id !== prId) return pr;
-    return {
-      ...pr,
-      status: "Rejected",
-      overallApprovalStatus: "Rejected" as const,
-      deptApproval: "Rejected" as const,
-      approvalHistory: [...pr.approvalHistory, { step: 2, role: "Department Head", action: "Rejected" as const, date: today, comments: comments || "Rejected by department head" }],
-    };
+    target = {
+      ...advanceStage(pr, "Rejected"),
+      [stageField[step]]: "Rejected" as PRApprovalStepStatus,
+      rejectionReason: comments,
+      rejectedAtStage: role,
+      approvalHistory: [...pr.approvalHistory, { step, role, action: "Rejected" as const, date: today, comments }],
+    } as GeneratedPR;
+    return target;
+  });
+
+  if (!target) return { ok: false, error: "Requisition not found." };
+
+  resolveReminder(target.requisitionNumber, "Requisition");
+  resolveReminder(`${target.requisitionNumber}-FIN`, "Requisition");
+  notify({
+    category: "Alert",
+    module: "Requisitions",
+    subject: `${target.requisitionNumber} rejected at ${role}`,
+    body: `${rejectedBy} rejected "${target.requisitionTitle || target.itemDescription}".\n\nReason: ${comments}\n\nCorrect the issues identified and resubmit — the requisition will re-enter the workflow at department approval.`,
+    recipientName: target.requestedBy,
+    recipientRole: "Requestor",
+    entityRef: target.requisitionNumber,
+    channels: ["In-App", "Email", "SMS"],
+    priority: "High",
   });
   notifyListeners();
+  return { ok: true };
 }
 
 // ─── Procurement Unit Approval (Step 3 — parallel with Finance) ─────────────
-export function approvePRProcurement(prId: string, comments: string = "") {
-  const today = new Date().toISOString().split("T")[0];
+export function approvePRProcurement(prId: string, comments: string = "", approvedBy = "Procurement Unit") {
+  const today = todayISO();
   generatedPRs = generatedPRs.map(pr => {
     if (pr.id !== prId) return pr;
-    const updated = {
+    let updated: GeneratedPR = {
       ...pr,
       procurementApproval: "Approved" as const,
-      approvalHistory: [...pr.approvalHistory, { step: 3, role: "Procurement Unit", action: "Approved" as const, date: today, comments: comments || "Policy and plan alignment verified" }],
+      approvalHistory: [...pr.approvalHistory, { step: 3, role: "Procurement Unit", action: "Approved" as const, date: today, comments: comments || `Policy and plan alignment verified by ${approvedBy}` }],
     };
-    // Check if both parallel approvals are done
+    // Advance only once the parallel Finance review has also cleared.
     if (updated.financeApproval === "Approved") {
-      if (updated.requiresSeniorApproval) {
-        updated.currentStep = 5;
-        updated.status = "Pending Senior Mgmt";
-        updated.overallApprovalStatus = "Pending Senior Mgmt";
-        updated.seniorMgmtApproval = "Pending";
-      } else {
-        updated.currentStep = 5;
-        updated.status = "Approved";
-        updated.overallApprovalStatus = "Approved";
-      }
+      updated = { ...advanceStage(updated, updated.requiresSeniorApproval ? "Pending Senior Mgmt" : "Approved"), currentStep: 5 };
+      if (updated.requiresSeniorApproval) updated.seniorMgmtApproval = "Pending";
     }
     return updated;
   });
+  handleParallelAdvance(prId);
   notifyListeners();
 }
 
-export function rejectPRProcurement(prId: string, comments: string = "") {
-  const today = new Date().toISOString().split("T")[0];
-  generatedPRs = generatedPRs.map(pr => {
-    if (pr.id !== prId) return pr;
-    return {
-      ...pr,
-      status: "Rejected",
-      overallApprovalStatus: "Rejected" as const,
-      procurementApproval: "Rejected" as const,
-      approvalHistory: [...pr.approvalHistory, { step: 3, role: "Procurement Unit", action: "Rejected" as const, date: today, comments: comments || "Rejected by procurement unit" }],
-    };
+export function rejectPRProcurement(prId: string, comments: string = "", rejectedBy = "Procurement Unit") {
+  return rejectPRAtStage(prId, 3, "Procurement Unit", rejectedBy, comments);
+}
+
+/** Fires the next stage's notifications once both parallel reviews have landed. */
+function handleParallelAdvance(prId: string) {
+  const pr = generatedPRs.find(p => p.id === prId);
+  if (!pr) return;
+  if (pr.procurementApproval !== "Approved" || pr.financeApproval !== "Approved") return;
+
+  resolveReminder(pr.requisitionNumber, "Requisition");
+  resolveReminder(`${pr.requisitionNumber}-FIN`, "Requisition");
+
+  if (pr.overallApprovalStatus === "Pending Senior Mgmt") {
+    notifyStage(
+      pr,
+      "Pending Senior Mgmt",
+      `Value of $${pr.estimatedCost.toLocaleString()} exceeds the $${SENIOR_APPROVAL_THRESHOLD.toLocaleString()} threshold, so final approval rests with Senior Management.`
+    );
+  } else if (pr.overallApprovalStatus === "Approved") {
+    notifyApproved(pr);
+  }
+}
+
+function notifyApproved(pr: GeneratedPR) {
+  notify({
+    category: "Info",
+    module: "Requisitions",
+    subject: `${pr.requisitionNumber} approved`,
+    body: `"${pr.requisitionTitle || pr.itemDescription}" ($${pr.estimatedCost.toLocaleString()}) has completed the approval workflow. Procurement will initiate a ${canonicalMethod(pr.purchaseType)} sourcing case.`,
+    recipientName: pr.requestedBy,
+    recipientRole: "Requestor",
+    entityRef: pr.requisitionNumber,
   });
-  notifyListeners();
+  notify({
+    category: "Approval",
+    module: "Requisitions",
+    subject: `${pr.requisitionNumber} ready for sourcing initiation`,
+    body: `The requisition is fully approved. Initiate a ${canonicalMethod(pr.purchaseType)} sourcing case for ${pr.category}.`,
+    recipientRole: "Procurement",
+    entityRef: pr.requisitionNumber,
+  });
 }
 
 // ─── Finance Team Approval (Step 4 — parallel with Procurement) ─────────────
-export function approvePRFinance(prId: string, comments: string = "") {
-  const today = new Date().toISOString().split("T")[0];
+export function approvePRFinance(prId: string, comments: string = "", approvedBy = "Finance Team") {
+  const today = todayISO();
   generatedPRs = generatedPRs.map(pr => {
     if (pr.id !== prId) return pr;
-    const updated = {
+    let updated: GeneratedPR = {
       ...pr,
       financeApproval: "Approved" as const,
-      approvalHistory: [...pr.approvalHistory, { step: 4, role: "Finance Team", action: "Approved" as const, date: today, comments: comments || "Budget availability and funding source verified" }],
+      approvalHistory: [...pr.approvalHistory, { step: 4, role: "Finance Team", action: "Approved" as const, date: today, comments: comments || `Budget availability and funding source verified by ${approvedBy}` }],
     };
-    // Check if both parallel approvals are done
     if (updated.procurementApproval === "Approved") {
-      if (updated.requiresSeniorApproval) {
-        updated.currentStep = 5;
-        updated.status = "Pending Senior Mgmt";
-        updated.overallApprovalStatus = "Pending Senior Mgmt";
-        updated.seniorMgmtApproval = "Pending";
-      } else {
-        updated.currentStep = 5;
-        updated.status = "Approved";
-        updated.overallApprovalStatus = "Approved";
-      }
+      updated = { ...advanceStage(updated, updated.requiresSeniorApproval ? "Pending Senior Mgmt" : "Approved"), currentStep: 5 };
+      if (updated.requiresSeniorApproval) updated.seniorMgmtApproval = "Pending";
     }
     return updated;
   });
+  handleParallelAdvance(prId);
   notifyListeners();
 }
 
-export function rejectPRFinance(prId: string, comments: string = "") {
-  const today = new Date().toISOString().split("T")[0];
-  generatedPRs = generatedPRs.map(pr => {
-    if (pr.id !== prId) return pr;
-    return {
-      ...pr,
-      status: "Rejected",
-      overallApprovalStatus: "Rejected" as const,
-      financeApproval: "Rejected" as const,
-      approvalHistory: [...pr.approvalHistory, { step: 4, role: "Finance Team", action: "Rejected" as const, date: today, comments: comments || "Rejected by finance team" }],
-    };
-  });
-  notifyListeners();
+export function rejectPRFinance(prId: string, comments: string = "", rejectedBy = "Finance Team") {
+  return rejectPRAtStage(prId, 4, "Finance Team", rejectedBy, comments);
 }
 
 // ─── Senior Management Approval (Step 5 — only if > $10,000) ────────────────
-export function approvePRSeniorMgmt(prId: string, comments: string = "") {
-  const today = new Date().toISOString().split("T")[0];
+export function approvePRSeniorMgmt(prId: string, comments: string = "", approvedBy = "Senior Management") {
+  const today = todayISO();
   generatedPRs = generatedPRs.map(pr => {
     if (pr.id !== prId) return pr;
     return {
-      ...pr,
+      ...advanceStage(pr, "Approved"),
       currentStep: 5,
-      status: "Approved",
-      overallApprovalStatus: "Approved" as const,
       seniorMgmtApproval: "Approved" as const,
-      approvalHistory: [...pr.approvalHistory, { step: 5, role: "Senior Management", action: "Approved" as const, date: today, comments: comments || "Final approval granted by senior management" }],
+      approvalHistory: [...pr.approvalHistory, { step: 5, role: "Senior Management", action: "Approved" as const, date: today, comments: comments || `Final approval granted by ${approvedBy}` }],
     };
   });
+  const updated = generatedPRs.find(p => p.id === prId);
+  if (updated) {
+    resolveReminder(updated.requisitionNumber, "Requisition");
+    notifyApproved(updated);
+  }
   notifyListeners();
 }
 
-export function rejectPRSeniorMgmt(prId: string, comments: string = "") {
-  const today = new Date().toISOString().split("T")[0];
-  generatedPRs = generatedPRs.map(pr => {
-    if (pr.id !== prId) return pr;
-    return {
-      ...pr,
-      status: "Rejected",
-      overallApprovalStatus: "Rejected" as const,
-      seniorMgmtApproval: "Rejected" as const,
-      approvalHistory: [...pr.approvalHistory, { step: 5, role: "Senior Management", action: "Rejected" as const, date: today, comments: comments || "Rejected by senior management" }],
-    };
-  });
-  notifyListeners();
+export function rejectPRSeniorMgmt(prId: string, comments: string = "", rejectedBy = "Senior Management") {
+  return rejectPRAtStage(prId, 5, "Senior Management", rejectedBy, comments);
 }
 
 // ─── PO Generation from Sourcing Flow ────────────────────────────────────────
@@ -735,11 +851,45 @@ export interface ProcurementPlanItem {
   status: "Not Started" | "In Progress" | "Under Evaluation" | "Awarded" | "Contracted" | "Completed" | "Delayed";
   linkedBudgetLine?: string;
   linkedWorkPlan?: string;
-  approvalStatus: "Draft" | "Pending Review" | "Approved" | "Rejected";
+  /**
+   * "For an entry to be accepted, it should have been reviewed by procurement
+   * and finance for compliance before appearing on portal" — hence two review
+   * stations rather than a single Approved flag.
+   */
+  approvalStatus: PlanApprovalStatus;
+  procurementReview?: PRApprovalStepStatus;
+  procurementReviewedBy?: string;
+  financeReview?: PRApprovalStepStatus;
+  financeReviewedBy?: string;
+  rejectionReason?: string;
+  submittedBy?: string;
+  submittedDate?: string;
+  /** Recorded when Procurement overrides the threshold-suggested method. */
+  methodDeviationJustification?: string;
+  /** Pending amendment awaiting approval, so edits are not applied silently. */
+  pendingChange?: PendingPlanChange;
   version: number;
   changeHistory: PlanItemChange[];
   createdDate: string;
   lastModified: string;
+}
+
+export type PlanApprovalStatus =
+  | "Draft"
+  | "Pending Procurement Review"
+  | "Pending Finance Review"
+  | "Approved"
+  | "Rejected";
+
+/** A requested amendment held until it clears review. */
+export interface PendingPlanChange {
+  id: string;
+  requestedBy: string;
+  requestedDate: string;
+  reason: string;
+  updates: Partial<ProcurementPlanItem>;
+  status: "Pending Procurement Review" | "Pending Finance Review";
+  procurementApprovedBy?: string;
 }
 
 let nextPlanItemSeq = 9; // seed uses 1–8
@@ -897,4 +1047,894 @@ export function approvePlanItem(id: string, approvedBy: string): ProcurementPlan
 
 export function getApprovedPlanItems(): ProcurementPlanItem[] {
   return procurementPlanItems.filter((item) => item.approvalStatus === "Approved");
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// PLAN REVIEW WORKFLOW
+// ══════════════════════════════════════════════════════════════════════════════
+
+const todayISO = () => new Date().toISOString().split("T")[0];
+
+function daysBetween(from: string, to: string = todayISO()): number {
+  return Math.round((new Date(to).getTime() - new Date(from).getTime()) / 86_400_000);
+}
+
+/** Draft → Procurement review. Nothing reaches the portal without this. */
+export function submitPlanItemForReview(id: string, submittedBy: string): ProcurementPlanItem | undefined {
+  const item = procurementPlanItems.find((p) => p.id === id);
+  if (!item) return undefined;
+  if (item.approvalStatus !== "Draft" && item.approvalStatus !== "Rejected") return item;
+
+  const updated = updateProcurementPlanItem(
+    id,
+    {
+      approvalStatus: "Pending Procurement Review",
+      procurementReview: "Pending",
+      financeReview: "N/A",
+      submittedBy,
+      submittedDate: todayISO(),
+      rejectionReason: undefined,
+    },
+    submittedBy
+  );
+
+  if (updated) {
+    notify({
+      category: "Approval",
+      module: "Procurement Planning",
+      subject: `Plan item ${updated.ppItemId} submitted for compliance review`,
+      body: `${submittedBy} submitted "${updated.activityDescription}" (${updated.category}, $${updated.estimatedValue.toLocaleString()}, ${updated.procurementMethod}) for review. Procurement must confirm policy and plan compliance before Finance verifies the budget line.`,
+      recipientRole: "Procurement",
+      entityRef: updated.ppItemId,
+    });
+    scheduleReminder({
+      entityRef: updated.ppItemId,
+      entityType: "Plan Item",
+      module: "Procurement Planning",
+      subject: `Plan item ${updated.ppItemId} awaiting Procurement review`,
+      body: `"${updated.activityDescription}" has been awaiting compliance review since ${todayISO()}.`,
+      recipientRole: "Procurement",
+      dueDate: todayISO(),
+      reminderAfterHours: 48,
+      escalateAfterHours: 72,
+      escalateToRole: "Senior Management",
+    });
+  }
+  return updated;
+}
+
+/** Procurement compliance review → hands to Finance. */
+export function reviewPlanItemProcurement(
+  id: string,
+  reviewedBy: string,
+  comments = ""
+): ProcurementPlanItem | undefined {
+  const item = procurementPlanItems.find((p) => p.id === id);
+  if (!item || item.approvalStatus !== "Pending Procurement Review") return undefined;
+
+  const updated = updateProcurementPlanItem(
+    id,
+    {
+      approvalStatus: "Pending Finance Review",
+      procurementReview: "Approved",
+      procurementReviewedBy: reviewedBy,
+      financeReview: "Pending",
+    },
+    reviewedBy
+  );
+
+  if (updated) {
+    resolveReminder(updated.ppItemId, "Plan Item");
+    notify({
+      category: "Approval",
+      module: "Procurement Planning",
+      subject: `Plan item ${updated.ppItemId} awaiting Finance verification`,
+      body: `Procurement cleared "${updated.activityDescription}" for policy compliance${comments ? `: ${comments}` : "."} Finance must now confirm the budget line ${updated.linkedBudgetLine || "(not set)"} and funding source ${updated.fundingSource}.`,
+      recipientRole: "Finance",
+      entityRef: updated.ppItemId,
+    });
+    scheduleReminder({
+      entityRef: updated.ppItemId,
+      entityType: "Plan Item",
+      module: "Procurement Planning",
+      subject: `Plan item ${updated.ppItemId} awaiting Finance verification`,
+      body: `"${updated.activityDescription}" is awaiting budget confirmation.`,
+      recipientRole: "Finance",
+      dueDate: todayISO(),
+      reminderAfterHours: 48,
+      escalateAfterHours: 72,
+      escalateToRole: "Senior Management",
+    });
+  }
+  return updated;
+}
+
+/** Finance budget verification → the item goes live on the plan. */
+export function reviewPlanItemFinance(
+  id: string,
+  reviewedBy: string,
+  comments = ""
+): ProcurementPlanItem | undefined {
+  const item = procurementPlanItems.find((p) => p.id === id);
+  if (!item || item.approvalStatus !== "Pending Finance Review") return undefined;
+
+  const updated = updateProcurementPlanItem(
+    id,
+    { approvalStatus: "Approved", financeReview: "Approved", financeReviewedBy: reviewedBy },
+    reviewedBy
+  );
+
+  if (updated) {
+    resolveReminder(updated.ppItemId, "Plan Item");
+    notify({
+      category: "Info",
+      module: "Procurement Planning",
+      subject: `Plan item ${updated.ppItemId} approved and live`,
+      body: `"${updated.activityDescription}" has cleared Procurement and Finance review${comments ? `: ${comments}` : "."} It is now available for requisition and sourcing initiation.`,
+      recipientName: updated.responsiblePerson,
+      recipientRole: "Requestor",
+      entityRef: updated.ppItemId,
+    });
+  }
+  return updated;
+}
+
+export function rejectPlanItem(
+  id: string,
+  rejectedBy: string,
+  reason: string,
+  stage: "Procurement" | "Finance"
+): ProcurementPlanItem | undefined {
+  if (!reason.trim()) return undefined;
+  const item = procurementPlanItems.find((p) => p.id === id);
+  if (!item) return undefined;
+
+  const updated = updateProcurementPlanItem(
+    id,
+    {
+      approvalStatus: "Rejected",
+      rejectionReason: reason,
+      ...(stage === "Procurement"
+        ? { procurementReview: "Rejected" as PRApprovalStepStatus, procurementReviewedBy: rejectedBy }
+        : { financeReview: "Rejected" as PRApprovalStepStatus, financeReviewedBy: rejectedBy }),
+    },
+    rejectedBy
+  );
+
+  if (updated) {
+    resolveReminder(updated.ppItemId, "Plan Item");
+    notify({
+      category: "Alert",
+      module: "Procurement Planning",
+      subject: `Plan item ${updated.ppItemId} rejected at ${stage} review`,
+      body: `"${updated.activityDescription}" was rejected by ${rejectedBy}.\n\nReason: ${reason}\n\nCorrect the entry and resubmit for review.`,
+      recipientName: updated.submittedBy ?? updated.responsiblePerson,
+      recipientRole: "Requestor",
+      entityRef: updated.ppItemId,
+      priority: "High",
+    });
+  }
+  return updated;
+}
+
+// ── Plan change management ──────────────────────────────────────────────────
+
+/**
+ * Amendments to an approved plan item are held until reviewed rather than
+ * applied straight away, which is what "tracks all changes with version control
+ * and approval workflow" requires.
+ */
+export function requestPlanItemChange(
+  id: string,
+  updates: Partial<ProcurementPlanItem>,
+  reason: string,
+  requestedBy: string
+): { ok: boolean; error?: string } {
+  const item = procurementPlanItems.find((p) => p.id === id);
+  if (!item) return { ok: false, error: "Plan item not found." };
+  if (!reason.trim()) return { ok: false, error: "A reason for the change is required." };
+  if (item.pendingChange) return { ok: false, error: "An amendment is already awaiting review on this item." };
+
+  // A draft or rejected item is not yet live, so it can simply be edited.
+  if (item.approvalStatus !== "Approved") {
+    updateProcurementPlanItem(id, updates, requestedBy);
+    return { ok: true };
+  }
+
+  const change: PendingPlanChange = {
+    id: `pc-${Date.now()}`,
+    requestedBy,
+    requestedDate: todayISO(),
+    reason,
+    updates,
+    status: "Pending Procurement Review",
+  };
+
+  procurementPlanItems = procurementPlanItems.map((p) => (p.id === id ? { ...p, pendingChange: change } : p));
+
+  notify({
+    category: "Approval",
+    module: "Procurement Planning",
+    subject: `Amendment requested on plan item ${item.ppItemId}`,
+    body: `${requestedBy} requested changes to "${item.activityDescription}".\n\nReason: ${reason}\nFields: ${Object.keys(updates).join(", ")}\n\nProcurement and Finance must approve before the plan is revised.`,
+    recipientRole: "Procurement",
+    entityRef: item.ppItemId,
+  });
+  notifyListeners();
+  return { ok: true };
+}
+
+export function approvePlanItemChange(
+  id: string,
+  approvedBy: string,
+  stage: "Procurement" | "Finance"
+): { ok: boolean; error?: string } {
+  const item = procurementPlanItems.find((p) => p.id === id);
+  if (!item?.pendingChange) return { ok: false, error: "No amendment is awaiting review." };
+  const change = item.pendingChange;
+
+  if (stage === "Procurement") {
+    if (change.status !== "Pending Procurement Review") {
+      return { ok: false, error: "This amendment has already cleared Procurement review." };
+    }
+    procurementPlanItems = procurementPlanItems.map((p) =>
+      p.id === id
+        ? { ...p, pendingChange: { ...change, status: "Pending Finance Review", procurementApprovedBy: approvedBy } }
+        : p
+    );
+    notify({
+      category: "Approval",
+      module: "Procurement Planning",
+      subject: `Amendment on ${item.ppItemId} awaiting Finance approval`,
+      body: `Procurement approved the amendment to "${item.activityDescription}". Finance must confirm the budget impact.`,
+      recipientRole: "Finance",
+      entityRef: item.ppItemId,
+    });
+    notifyListeners();
+    return { ok: true };
+  }
+
+  if (change.status !== "Pending Finance Review") {
+    return { ok: false, error: "Procurement must approve the amendment first." };
+  }
+
+  // Clear the holder before applying, so the change history records the real edit.
+  procurementPlanItems = procurementPlanItems.map((p) => (p.id === id ? { ...p, pendingChange: undefined } : p));
+  updateProcurementPlanItem(id, change.updates, change.requestedBy);
+
+  // Stamp the approver onto the entries this amendment produced.
+  procurementPlanItems = procurementPlanItems.map((p) => {
+    if (p.id !== id) return p;
+    const changedFields = new Set(Object.keys(change.updates));
+    return {
+      ...p,
+      changeHistory: p.changeHistory.map((h) =>
+        h.date === todayISO() && changedFields.has(h.field) && !h.approvedBy
+          ? { ...h, approvedBy: `${change.procurementApprovedBy} / ${approvedBy}` }
+          : h
+      ),
+    };
+  });
+
+  notify({
+    category: "Info",
+    module: "Procurement Planning",
+    subject: `Amendment approved on plan item ${item.ppItemId}`,
+    body: `The amendment requested by ${change.requestedBy} has been applied.\n\nReason: ${change.reason}\nApproved by ${change.procurementApprovedBy} (Procurement) and ${approvedBy} (Finance).`,
+    recipientName: change.requestedBy,
+    recipientRole: "Requestor",
+    entityRef: item.ppItemId,
+  });
+  notifyListeners();
+  return { ok: true };
+}
+
+export function rejectPlanItemChange(id: string, rejectedBy: string, reason: string): { ok: boolean; error?: string } {
+  const item = procurementPlanItems.find((p) => p.id === id);
+  if (!item?.pendingChange) return { ok: false, error: "No amendment is awaiting review." };
+  if (!reason.trim()) return { ok: false, error: "A reason is required when rejecting an amendment." };
+
+  const requester = item.pendingChange.requestedBy;
+  procurementPlanItems = procurementPlanItems.map((p) => (p.id === id ? { ...p, pendingChange: undefined } : p));
+
+  notify({
+    category: "Alert",
+    module: "Procurement Planning",
+    subject: `Amendment rejected on plan item ${item.ppItemId}`,
+    body: `${rejectedBy} rejected the amendment to "${item.activityDescription}".\n\nReason: ${reason}`,
+    recipientName: requester,
+    recipientRole: "Requestor",
+    entityRef: item.ppItemId,
+    priority: "High",
+  });
+  notifyListeners();
+  return { ok: true };
+}
+
+// ── Schedule monitoring ─────────────────────────────────────────────────────
+
+/**
+ * Marks approved items as Delayed when their completion date has passed without
+ * reaching a terminal state, and raises the alert the dashboard needs. Nothing
+ * previously compared plan dates to the calendar, so "Delayed" only ever
+ * appeared if a user set it by hand.
+ */
+export function detectOverduePlanItems(): ProcurementPlanItem[] {
+  const terminal: ProcurementPlanItem["status"][] = ["Completed", "Contracted", "Awarded"];
+  const overdue: ProcurementPlanItem[] = [];
+
+  procurementPlanItems = procurementPlanItems.map((item) => {
+    if (item.approvalStatus !== "Approved") return item;
+    if (terminal.includes(item.status) || item.status === "Delayed") return item;
+    if (item.completionDate >= todayISO()) return item;
+
+    overdue.push(item);
+    return { ...item, status: "Delayed" as const, lastModified: todayISO() };
+  });
+
+  overdue.forEach((item) => {
+    notify({
+      category: "Alert",
+      module: "Procurement Planning",
+      subject: `Plan item ${item.ppItemId} is overdue`,
+      body: `"${item.activityDescription}" was due to complete on ${item.completionDate} — ${daysBetween(item.completionDate)} days ago — and is still ${item.status}. It has been marked Delayed.`,
+      recipientName: item.responsiblePerson,
+      recipientRole: "Procurement",
+      entityRef: item.ppItemId,
+      priority: "High",
+    });
+    scheduleReminder({
+      entityRef: item.ppItemId,
+      entityType: "Plan Item",
+      module: "Procurement Planning",
+      subject: `Overdue plan item ${item.ppItemId}`,
+      body: `"${item.activityDescription}" is past its completion date of ${item.completionDate}.`,
+      recipientName: item.responsiblePerson,
+      recipientRole: "Procurement",
+      dueDate: item.completionDate,
+      reminderAfterHours: 24 * 7,
+      escalateAfterHours: 24 * 14,
+    });
+  });
+
+  if (overdue.length) notifyListeners();
+  return overdue;
+}
+
+/** Items whose initiation date falls inside the next N days. */
+export function getPlanPipeline(days: number): ProcurementPlanItem[] {
+  return procurementPlanItems
+    .filter((i) => i.approvalStatus === "Approved")
+    .filter((i) => {
+      const d = daysBetween(todayISO(), i.initiationDate);
+      return d >= 0 && d <= days;
+    })
+    .sort((a, b) => a.initiationDate.localeCompare(b.initiationDate));
+}
+
+export function getPlanBottlenecks(): { item: ProcurementPlanItem; stage: string; daysStuck: number; responsible: string }[] {
+  return procurementPlanItems
+    .filter((i) => i.approvalStatus !== "Approved" || i.status === "Delayed")
+    .map((i) => {
+      const stage =
+        i.approvalStatus !== "Approved" ? i.approvalStatus : `${i.status} since ${i.lastModified}`;
+      const responsible =
+        i.approvalStatus === "Pending Procurement Review"
+          ? "Procurement Unit"
+          : i.approvalStatus === "Pending Finance Review"
+            ? "Finance Team"
+            : i.responsiblePerson;
+      return { item: i, stage, daysStuck: daysBetween(i.lastModified), responsible };
+    })
+    .filter((r) => r.daysStuck > 0)
+    .sort((a, b) => b.daysStuck - a.daysStuck);
+}
+
+export function getPlanStats() {
+  const approved = procurementPlanItems.filter((i) => i.approvalStatus === "Approved");
+  const byCategory = new Map<string, { count: number; value: number }>();
+  const byDonor = new Map<string, { count: number; value: number }>();
+
+  approved.forEach((i) => {
+    const cat = byCategory.get(i.category) ?? { count: 0, value: 0 };
+    byCategory.set(i.category, { count: cat.count + 1, value: cat.value + i.estimatedValue });
+    const don = byDonor.get(i.fundingSource) ?? { count: 0, value: 0 };
+    byDonor.set(i.fundingSource, { count: don.count + 1, value: don.value + i.estimatedValue });
+  });
+
+  return {
+    total: procurementPlanItems.length,
+    approved: approved.length,
+    pendingApproval: procurementPlanItems.filter(
+      (i) => i.approvalStatus === "Pending Procurement Review" || i.approvalStatus === "Pending Finance Review"
+    ).length,
+    pendingAmendments: procurementPlanItems.filter((i) => i.pendingChange).length,
+    draft: procurementPlanItems.filter((i) => i.approvalStatus === "Draft").length,
+    delayed: approved.filter((i) => i.status === "Delayed").length,
+    completed: approved.filter((i) => i.status === "Completed").length,
+    active: approved.filter((i) => !["Completed", "Delayed"].includes(i.status)).length,
+    totalValue: approved.reduce((s, i) => s + i.estimatedValue, 0),
+    byCategory: Array.from(byCategory, ([category, v]) => ({ category, ...v })),
+    byDonor: Array.from(byDonor, ([donor, v]) => ({ donor, ...v })),
+    pipeline30: getPlanPipeline(30).length,
+    pipeline60: getPlanPipeline(60).length,
+    pipeline90: getPlanPipeline(90).length,
+  };
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// REQUISITION LIFECYCLE
+// ══════════════════════════════════════════════════════════════════════════════
+
+export interface PRValidationIssue {
+  field: string;
+  message: string;
+}
+
+/**
+ * The pre-submission gate. Every rule here comes from the requirement that the
+ * system "shall block submission and display clear error messages" when the
+ * requisition is not linked to an approved plan activity, the method does not
+ * match the threshold, mandatory documents are absent, or funding rules are
+ * unmet.
+ */
+export function validatePRForSubmission(pr: GeneratedPR): PRValidationIssue[] {
+  const issues: PRValidationIssue[] = [];
+
+  if (!pr.requisitionTitle?.trim()) issues.push({ field: "requisitionTitle", message: "A requisition title is required." });
+  if (!pr.itemDescription?.trim()) issues.push({ field: "itemDescription", message: "A detailed description of the need is required." });
+  if (!pr.department?.trim()) issues.push({ field: "department", message: "The requesting department or project is required." });
+  if (!pr.estimatedCost || pr.estimatedCost <= 0) issues.push({ field: "estimatedCost", message: "An estimated cost greater than zero is required." });
+  if (!pr.fundingSource?.trim()) issues.push({ field: "fundingSource", message: "A funding source must be selected." });
+  if (!pr.category?.trim()) issues.push({ field: "category", message: "A procurement category must be selected." });
+
+  // Category-specific timing
+  if (pr.category === "Goods" && !pr.deliveryTimeline?.trim()) {
+    issues.push({ field: "deliveryTimeline", message: "Goods requisitions require a desired delivery timeline." });
+  }
+  if ((pr.category === "Services" || pr.category === "Consultancy" || pr.category === "Works") &&
+      (!pr.serviceStartDate || !pr.serviceEndDate)) {
+    issues.push({ field: "serviceDates", message: `${pr.category} requisitions require estimated start and end dates.` });
+  }
+  if (pr.serviceStartDate && pr.serviceEndDate && pr.serviceEndDate < pr.serviceStartDate) {
+    issues.push({ field: "serviceDates", message: "The service end date cannot fall before the start date." });
+  }
+
+  // Plan linkage — waived only by an approved emergency override
+  const planItem = pr.linkedPlanItemId
+    ? procurementPlanItems.find((p) => p.ppItemId === pr.linkedPlanItemId)
+    : undefined;
+  if (!planItem && !pr.emergencyOverride) {
+    issues.push({
+      field: "linkedPlanItemId",
+      message: "The requisition must be linked to an approved procurement plan activity, or carry an approved emergency override.",
+    });
+  }
+  if (planItem && planItem.approvalStatus !== "Approved") {
+    issues.push({
+      field: "linkedPlanItemId",
+      message: `Plan item ${planItem.ppItemId} is "${planItem.approvalStatus}". Only approved plan activities can be requisitioned against.`,
+    });
+  }
+  if (pr.emergencyOverride && !pr.emergencyOverrideJustification?.trim()) {
+    issues.push({ field: "emergencyOverride", message: "An emergency override requires a written justification." });
+  }
+
+  // Method vs threshold
+  const methodCheck = validateMethodAgainstThreshold(pr.purchaseType, pr.estimatedCost);
+  if (!methodCheck.compliant && !pr.methodDeviationJustification?.trim()) {
+    issues.push({ field: "purchaseType", message: `${methodCheck.message} Record a justification for the deviation to proceed.` });
+  }
+
+  // Direct selection justification and shortlist details
+  if (isDirect(pr.purchaseType)) {
+    if (!pr.directSelectionJustification?.trim()) {
+      issues.push({ field: "directSelectionJustification", message: "Direct selection requires a written justification." });
+    }
+    if (!pr.shortlistedEntities?.length) {
+      issues.push({ field: "shortlistedEntities", message: "Direct selection requires the supplier or individual to be identified." });
+    } else {
+      const incomplete = pr.shortlistedEntities.filter((e) => !e.name?.trim() || !e.address?.trim() || !e.email?.trim());
+      if (incomplete.length) {
+        issues.push({ field: "shortlistedEntities", message: "Each identified supplier needs a full legal name, registered address and email." });
+      }
+    }
+  }
+  if (canonicalMethod(pr.purchaseType) === "Limited Competition" && !pr.shortlistedEntities?.length) {
+    issues.push({ field: "shortlistedEntities", message: "Limited competition requires the shortlisted firms or individuals to be entered." });
+  }
+
+  // Mandatory supporting documents
+  const attachmentCount = (pr.attachments?.length ?? 0) + (pr.attachmentFiles?.length ?? 0);
+  if (attachmentCount === 0) {
+    issues.push({
+      field: "attachments",
+      message: pr.category === "Goods"
+        ? "Technical Specifications must be uploaded before submission."
+        : "Terms of Reference (TOR) must be uploaded before submission.",
+    });
+  }
+
+  // Funding source rules against the plan item
+  if (planItem && pr.fundingSource && planItem.fundingSource !== pr.fundingSource) {
+    issues.push({
+      field: "fundingSource",
+      message: `Funding source "${pr.fundingSource}" does not match plan item ${planItem.ppItemId}, which is funded by "${planItem.fundingSource}".`,
+    });
+  }
+
+  return issues;
+}
+
+/** Flags a requisition whose cost materially exceeds its plan item. */
+export function checkPlanVariance(pr: GeneratedPR): { flagged: boolean; message?: string; variancePct?: number } {
+  if (!pr.linkedPlanItemId) return { flagged: false };
+  const planItem = procurementPlanItems.find((p) => p.ppItemId === pr.linkedPlanItemId);
+  if (!planItem || planItem.estimatedValue <= 0) return { flagged: false };
+
+  const variancePct = ((pr.estimatedCost - planItem.estimatedValue) / planItem.estimatedValue) * 100;
+  if (variancePct <= 10) return { flagged: false, variancePct };
+
+  return {
+    flagged: true,
+    variancePct,
+    message: `Estimated cost of $${pr.estimatedCost.toLocaleString()} is ${variancePct.toFixed(0)}% above plan item ${planItem.ppItemId} ($${planItem.estimatedValue.toLocaleString()}). A comment is required, and the plan item may need revision.`,
+  };
+}
+
+function stageResponsible(status: PROverallStatus): string {
+  switch (status) {
+    case "Pending Dept Approval": return "Department Head";
+    case "Pending Procurement & Finance": return "Procurement Unit / Finance Team";
+    case "Pending Senior Mgmt": return "Senior Management";
+    case "Approved": return "Procurement Unit";
+    default: return "Requesting Officer";
+  }
+}
+
+/** Real days-in-stage, computed from when the requisition entered it. */
+export function computeDaysInStage(pr: GeneratedPR): number {
+  if (!pr.stageEnteredDate) return pr.daysInCurrentStage ?? 0;
+  return Math.max(0, daysBetween(pr.stageEnteredDate));
+}
+
+function advanceStage(pr: GeneratedPR, status: PROverallStatus): GeneratedPR {
+  return {
+    ...pr,
+    overallApprovalStatus: status,
+    status,
+    stageEnteredDate: todayISO(),
+    daysInCurrentStage: 0,
+    currentResponsible: stageResponsible(status),
+  };
+}
+
+function notifyStage(pr: GeneratedPR, status: PROverallStatus, extra = "") {
+  const roleMap: Record<string, "Department Head" | "Procurement" | "Finance" | "Senior Management" | "Requestor"> = {
+    "Pending Dept Approval": "Department Head",
+    "Pending Procurement & Finance": "Procurement",
+    "Pending Senior Mgmt": "Senior Management",
+  };
+  const role = roleMap[status];
+  if (!role) return;
+
+  notify({
+    category: "Approval",
+    module: "Requisitions",
+    subject: `${pr.requisitionNumber} awaiting your approval`,
+    body: `${pr.requisitionTitle || pr.itemDescription} — $${pr.estimatedCost.toLocaleString()}, ${pr.category}, funded by ${pr.fundingSource || "unspecified"}. Raised by ${pr.requestedBy} (${pr.department}).${extra ? `\n\n${extra}` : ""}`,
+    recipientRole: role,
+    entityRef: pr.requisitionNumber,
+    channels: ["In-App", "Email", "SMS"],
+    priority: pr.estimatedCost > SENIOR_APPROVAL_THRESHOLD ? "High" : "Normal",
+  });
+
+  scheduleReminder({
+    entityRef: pr.requisitionNumber,
+    entityType: "Requisition",
+    module: "Requisitions",
+    subject: `${pr.requisitionNumber} awaiting ${stageResponsible(status)}`,
+    body: `${pr.requisitionTitle || pr.itemDescription} ($${pr.estimatedCost.toLocaleString()}) has been awaiting action since ${todayISO()}.`,
+    recipientRole: role,
+    dueDate: todayISO(),
+    reminderAfterHours: 48,
+    escalateAfterHours: 72,
+    escalateToRole: "Senior Management",
+  });
+
+  // Parallel stage: Finance is a second, independent station.
+  if (status === "Pending Procurement & Finance") {
+    notify({
+      category: "Approval",
+      module: "Requisitions",
+      subject: `${pr.requisitionNumber} awaiting budget verification`,
+      body: `${pr.requisitionTitle || pr.itemDescription} — $${pr.estimatedCost.toLocaleString()} against ${pr.fundingSource || "unspecified funding"}. Procurement is reviewing in parallel.`,
+      recipientRole: "Finance",
+      entityRef: pr.requisitionNumber,
+      channels: ["In-App", "Email"],
+    });
+    scheduleReminder({
+      entityRef: `${pr.requisitionNumber}-FIN`,
+      entityType: "Requisition",
+      module: "Requisitions",
+      subject: `${pr.requisitionNumber} awaiting Finance budget verification`,
+      body: `Budget availability has not yet been confirmed for ${pr.requisitionNumber}.`,
+      recipientRole: "Finance",
+      dueDate: todayISO(),
+      reminderAfterHours: 48,
+      escalateAfterHours: 72,
+      escalateToRole: "Senior Management",
+    });
+  }
+}
+
+/** Requestor withdraws a requisition that has not yet been approved. */
+export function withdrawPR(prId: string, withdrawnBy: string, reason: string): { ok: boolean; error?: string } {
+  const pr = generatedPRs.find((p) => p.id === prId);
+  if (!pr) return { ok: false, error: "Requisition not found." };
+  if (pr.overallApprovalStatus === "Approved" || pr.overallApprovalStatus === "Converted to Sourcing") {
+    return { ok: false, error: "An approved requisition cannot be withdrawn. Raise a cancellation with Procurement instead." };
+  }
+  if (pr.overallApprovalStatus === "Withdrawn") return { ok: false, error: "This requisition is already withdrawn." };
+  if (!reason.trim()) return { ok: false, error: "A reason is required when withdrawing a requisition." };
+
+  generatedPRs = generatedPRs.map((p) =>
+    p.id !== prId
+      ? p
+      : {
+          ...advanceStage(p, "Withdrawn"),
+          withdrawnReason: reason,
+          deptApproval: "N/A" as const,
+          procurementApproval: "N/A" as const,
+          financeApproval: "N/A" as const,
+          seniorMgmtApproval: "N/A" as const,
+          approvalHistory: [
+            ...p.approvalHistory,
+            { step: p.currentStep, role: "Requesting Officer", action: "Rejected" as const, date: todayISO(), comments: `Withdrawn by ${withdrawnBy}: ${reason}` },
+          ],
+        }
+  );
+
+  resolveReminder(pr.requisitionNumber, "Requisition");
+  resolveReminder(`${pr.requisitionNumber}-FIN`, "Requisition");
+  notify({
+    category: "Info",
+    module: "Requisitions",
+    subject: `${pr.requisitionNumber} withdrawn`,
+    body: `${withdrawnBy} withdrew this requisition.\n\nReason: ${reason}`,
+    recipientRole: "Procurement",
+    entityRef: pr.requisitionNumber,
+  });
+  notifyListeners();
+  return { ok: true };
+}
+
+/**
+ * Returns a rejected requisition to the start of the chain after correction.
+ * Rejection was previously terminal, which left the requester with no route
+ * back despite the requirement to "correct the identified issues and resubmit".
+ */
+export function resubmitPR(
+  prId: string,
+  resubmittedBy: string,
+  corrections: Partial<GeneratedPR>,
+  comments: string
+): { ok: boolean; error?: string; issues?: PRValidationIssue[] } {
+  const pr = generatedPRs.find((p) => p.id === prId);
+  if (!pr) return { ok: false, error: "Requisition not found." };
+  if (pr.overallApprovalStatus !== "Rejected" && pr.overallApprovalStatus !== "Withdrawn") {
+    return { ok: false, error: "Only a rejected or withdrawn requisition can be resubmitted." };
+  }
+
+  const candidate: GeneratedPR = { ...pr, ...corrections };
+  const issues = validatePRForSubmission(candidate);
+  if (issues.length) return { ok: false, error: "The requisition still has validation errors.", issues };
+
+  generatedPRs = generatedPRs.map((p) =>
+    p.id !== prId
+      ? p
+      : {
+          ...advanceStage(candidate, "Pending Dept Approval"),
+          currentStep: 2,
+          deptApproval: "Pending" as const,
+          procurementApproval: "N/A" as const,
+          financeApproval: "N/A" as const,
+          seniorMgmtApproval: "N/A" as const,
+          rejectionReason: undefined,
+          rejectedAtStage: undefined,
+          resubmissionCount: (p.resubmissionCount ?? 0) + 1,
+          requiresSeniorApproval: candidate.estimatedCost > SENIOR_APPROVAL_THRESHOLD,
+          approvalHistory: [
+            ...p.approvalHistory,
+            { step: 1, role: "Requesting Officer", action: "Submitted" as const, date: todayISO(), comments: `Resubmitted by ${resubmittedBy} (attempt ${(p.resubmissionCount ?? 0) + 2}): ${comments}` },
+          ],
+        }
+  );
+
+  const updated = generatedPRs.find((p) => p.id === prId)!;
+  notifyStage(updated, "Pending Dept Approval", `Resubmitted after rejection. Requester's note: ${comments}`);
+  notifyListeners();
+  return { ok: true };
+}
+
+/** Records that an approved requisition has become a sourcing case. */
+export function markPRConvertedToSourcing(prNumber: string, sourcingCaseNumber: string) {
+  let changed = false;
+  generatedPRs = generatedPRs.map((p) => {
+    if (p.requisitionNumber !== prNumber || p.overallApprovalStatus !== "Approved") return p;
+    changed = true;
+    return {
+      ...advanceStage(p, "Converted to Sourcing"),
+      convertedToSourcingCase: sourcingCaseNumber,
+      approvalHistory: [
+        ...p.approvalHistory,
+        { step: 5, role: "Procurement Unit", action: "Approved" as const, date: todayISO(), comments: `Converted to sourcing case ${sourcingCaseNumber}` },
+      ],
+    };
+  });
+  if (changed) {
+    resolveReminder(prNumber, "Requisition");
+    notifyListeners();
+  }
+}
+
+/** Grants the emergency override that lets sourcing proceed off-plan. */
+export function grantEmergencyOverride(
+  prId: string,
+  justification: string,
+  approvedBy: string
+): { ok: boolean; error?: string } {
+  if (!justification.trim()) return { ok: false, error: "An emergency override requires a written justification." };
+  const pr = generatedPRs.find((p) => p.id === prId);
+  if (!pr) return { ok: false, error: "Requisition not found." };
+
+  generatedPRs = generatedPRs.map((p) =>
+    p.id !== prId
+      ? p
+      : {
+          ...p,
+          emergencyOverride: true,
+          emergencyOverrideJustification: justification,
+          emergencyOverrideApprovedBy: approvedBy,
+          approvalHistory: [
+            ...p.approvalHistory,
+            { step: p.currentStep, role: "Senior Management", action: "Approved" as const, date: todayISO(), comments: `Emergency override granted by ${approvedBy}: ${justification}` },
+          ],
+        }
+  );
+
+  notify({
+    category: "Alert",
+    module: "Requisitions",
+    subject: `Emergency override granted on ${pr.requisitionNumber}`,
+    body: `${approvedBy} authorised this requisition to proceed without an approved plan item.\n\nJustification: ${justification}\n\nThis is an exception to the standard control and will appear in the audit trail.`,
+    recipientRole: "Audit",
+    entityRef: pr.requisitionNumber,
+    priority: "High",
+  });
+  notifyListeners();
+  return { ok: true };
+}
+
+/** Records the requester's comment on a flagged cost variance against plan. */
+export function recordPlanVarianceComment(prId: string, comment: string, by: string) {
+  generatedPRs = generatedPRs.map((p) =>
+    p.id !== prId
+      ? p
+      : {
+          ...p,
+          planVarianceComment: comment,
+          approvalHistory: [
+            ...p.approvalHistory,
+            { step: p.currentStep, role: "Requesting Officer", action: "Submitted" as const, date: todayISO(), comments: `Plan variance explained by ${by}: ${comment}` },
+          ],
+        }
+  );
+  notifyListeners();
+}
+
+/** Requisitions awaiting a given station, for the role dashboards. */
+export function getPRsAwaiting(role: "Department Head" | "Procurement" | "Finance" | "Senior Management"): GeneratedPR[] {
+  return generatedPRs.filter((pr) => {
+    switch (role) {
+      case "Department Head":
+        return pr.overallApprovalStatus === "Pending Dept Approval" && pr.deptApproval === "Pending";
+      case "Procurement":
+        return pr.overallApprovalStatus === "Pending Procurement & Finance" && pr.procurementApproval === "Pending";
+      case "Finance":
+        return pr.overallApprovalStatus === "Pending Procurement & Finance" && pr.financeApproval === "Pending";
+      case "Senior Management":
+        return pr.overallApprovalStatus === "Pending Senior Mgmt" && pr.seniorMgmtApproval === "Pending";
+    }
+  });
+}
+
+export function getPRStats() {
+  const byStatus = new Map<string, number>();
+  generatedPRs.forEach((pr) => byStatus.set(pr.overallApprovalStatus, (byStatus.get(pr.overallApprovalStatus) ?? 0) + 1));
+
+  const approved = generatedPRs.filter((p) => p.overallApprovalStatus === "Approved" || p.overallApprovalStatus === "Converted to Sourcing");
+  const cycleTimes = approved
+    .map((p) => {
+      const submitted = p.approvalHistory.find((h) => h.action === "Submitted")?.date;
+      const finalStep = [...p.approvalHistory].reverse().find((h) => h.action === "Approved")?.date;
+      return submitted && finalStep ? daysBetween(submitted, finalStep) : null;
+    })
+    .filter((d): d is number => d !== null && d >= 0);
+
+  return {
+    total: generatedPRs.length,
+    draft: byStatus.get("Draft") ?? 0,
+    pendingDept: byStatus.get("Pending Dept Approval") ?? 0,
+    pendingProcFin: byStatus.get("Pending Procurement & Finance") ?? 0,
+    pendingSenior: byStatus.get("Pending Senior Mgmt") ?? 0,
+    approved: byStatus.get("Approved") ?? 0,
+    rejected: byStatus.get("Rejected") ?? 0,
+    withdrawn: byStatus.get("Withdrawn") ?? 0,
+    converted: byStatus.get("Converted to Sourcing") ?? 0,
+    totalValue: generatedPRs.reduce((s, p) => s + p.estimatedCost, 0),
+    avgCycleTimeDays: cycleTimes.length ? +(cycleTimes.reduce((a, b) => a + b, 0) / cycleTimes.length).toFixed(1) : 0,
+    awaitingAction: generatedPRs.filter((p) =>
+      ["Pending Dept Approval", "Pending Procurement & Finance", "Pending Senior Mgmt"].includes(p.overallApprovalStatus)
+    ).length,
+  };
+}
+
+/** Adds a requisition raised directly (not from the ESS plan). */
+export function createDirectRequisition(opts: Partial<GeneratedPR> & {
+  requisitionTitle: string;
+  itemDescription: string;
+  requestedBy: string;
+  department: string;
+  estimatedCost: number;
+  category: string;
+}): GeneratedPR {
+  nextPRNumber++;
+  const today = todayISO();
+  const method = opts.purchaseType || suggestProcurementMethod(opts.estimatedCost);
+
+  const newPR: GeneratedPR = {
+    // Caller-supplied fields first; the identity and workflow fields below are
+    // system-owned and must not be overridable.
+    quantity: 1,
+    unit: "unit",
+    sourcePlanId: "",
+    sourcePlanItemId: "",
+    priority: opts.estimatedCost >= 30000 ? "Urgent" : opts.estimatedCost >= 10000 ? "High" : "Medium",
+    ...opts,
+    id: `GPR-${Date.now()}-${nextPRNumber}`,
+    requisitionNumber: `PR-${new Date().getFullYear()}-${String(nextPRNumber).padStart(3, "0")}`,
+    status: "Draft",
+    dateRequested: today,
+    purchaseType: method,
+    currentStep: 1,
+    overallApprovalStatus: "Draft",
+    deptApproval: "N/A",
+    procurementApproval: "N/A",
+    financeApproval: "N/A",
+    seniorMgmtApproval: "N/A",
+    requiresSeniorApproval: opts.estimatedCost > SENIOR_APPROVAL_THRESHOLD,
+    approvalHistory: [],
+    sourceType: "Direct",
+    stageEnteredDate: today,
+    daysInCurrentStage: 0,
+    currentResponsible: opts.requestedBy,
+    resubmissionCount: 0,
+  };
+
+  generatedPRs = [...generatedPRs, newPR];
+  notifyListeners();
+  return newPR;
+}
+
+/** Persists edits to a draft requisition. */
+export function updatePR(prId: string, updates: Partial<GeneratedPR>): GeneratedPR | undefined {
+  let updated: GeneratedPR | undefined;
+  generatedPRs = generatedPRs.map((p) => {
+    if (p.id !== prId) return p;
+    updated = { ...p, ...updates };
+    return updated;
+  });
+  if (updated) notifyListeners();
+  return updated;
 }

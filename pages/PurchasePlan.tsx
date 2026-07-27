@@ -16,6 +16,7 @@ import {
   Trash2,
   Download,
 } from "lucide-react";
+import { ProcurementTabs, ProcurementTabBar } from "../components/procurement/ProcurementTabs";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -327,30 +328,18 @@ export function PurchasePlan() {
     <div className="flex flex-col h-full bg-slate-50">
       {/* Header */}
       <div className="px-6 py-4 bg-white border-b border-slate-200 shrink-0">
-        <h1 className="text-[18px] font-semibold text-slate-900">Purchase Plans</h1>
+        <h1 className="text-[18px] font-semibold text-slate-900">Departmental Purchase Plans</h1>
         <p className="text-[12px] text-slate-500 mt-1">Annual purchase plans submitted by departments at the beginning of each fiscal year</p>
       </div>
 
       {/* Tabs */}
-      <div className="px-6 py-3 bg-white border-b border-slate-200 shrink-0">
-        <div className="bg-slate-100 p-1 rounded-lg inline-flex gap-1">
-          {departments.map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-4 py-1.5 rounded-lg text-[12px] transition-colors min-w-[80px] flex items-center justify-center gap-1.5 ${
-                activeTab === tab ? "bg-purple-700 text-white shadow-sm" : "text-slate-500 hover:text-slate-700"
-              }`}
-             
-            >
-              {tab}
-              <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${activeTab === tab ? "bg-white/20 text-white" : "bg-slate-200/80 text-slate-500"}`}>
-                {tabCounts[tab]}
-              </span>
-            </button>
-          ))}
-        </div>
-      </div>
+      <ProcurementTabBar>
+        <ProcurementTabs
+          tabs={departments.map((d) => ({ key: d, label: d, count: tabCounts[d] }))}
+          active={activeTab}
+          onChange={setActiveTab}
+        />
+      </ProcurementTabBar>
 
       {/* Search */}
       <div className="px-6 py-3 bg-white border-b border-slate-200 shrink-0">

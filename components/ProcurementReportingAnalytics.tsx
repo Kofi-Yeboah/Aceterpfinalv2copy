@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import type { ReactNode } from "react";
 import {
-  Search, Download, ChevronDown, TrendingUp,
+  Search, Download, TrendingUp,
   FileText, Clock, CheckCircle2, AlertTriangle,
   Users, Package, DollarSign,
-  CalendarClock, ShieldCheck,
-  ArrowUpRight, ArrowDownRight
+  CalendarClock, ShieldCheck, Inbox
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -13,16 +13,46 @@ import {
   ComposedChart
 } from "recharts";
 
+import {
+  getProcurementPlanItems, getPlanPipeline, getPlanBottlenecks,
+  getGeneratedPRs, getPRStats, computeDaysInStage, getGeneratedPOs, getSourcingApprovals,
+  subscribe as subscribeProcurement,
+  type ProcurementPlanItem, type GeneratedPR,
+} from "../lib/procurementStore";
+import {
+  getContracts, getAllInvoices, getAllChangeRequests, getContractRisks,
+  getExpiringContracts, getOverdueDeliverables, getUpcomingDeliverables,
+  getContractFinancials, verifyCloseOutReadiness, daysUntil,
+  subscribe as subscribeContracts,
+  type AwardedContract, type ContractInvoice, type ContractDeliverable,
+  type ContractChangeRequest, type PerformanceEvaluation,
+} from "../lib/contractStore";
+import {
+  getVendors, getVendorsByCategory, getBlockedVendors, getVendorsWithDocumentIssues,
+  getExpiredDocs, getMissingDocs, checkSourcingEligibility, getVendorFlags,
+  avgScore, vendorDisplayName,
+  subscribe as subscribeVendors,
+  type Vendor,
+} from "../lib/vendorStore";
+import { exportToCSV, exportToExcel, exportToPDF, type ExportColumn } from "../lib/exportUtils";
+import { getCurrentUser, can, denialReason, subscribe as subscribeUser } from "../lib/currentUser";
+import { ProcurementTabs, ProcurementTabBar, type ProcurementTab } from "./procurement/ProcurementTabs";
+import { ProcurementStatCards, type ProcurementStat } from "./procurement/ProcurementStatCards";
+
 /* ══════════════════════════════════════════════════════════════════════════════
    CONSTANTS
    ══════════════════════════════════════════════════════════════════════════════ */
 
 const F = "'Montserrat Variable', sans-serif";
 const BLUE = "#0B01D0";
-const TIME_PERIODS = ["Last 30 Days", "Last 3 Months", "Last 6 Months", "Last Year", "All Time"];
-const PERIOD_FILTERS = ["Monthly", "Quarterly", "Annually", "Custom Range"] as const;
+const TIME_PERIODS = ["Last 30 Days", "Last 3 Months", "Last 6 Months", "Last Year", "All Time"] as const;
+const PERIOD_FILTERS = ["Monthly", "Quarterly", "Annually", "Custom Range", "All Time"] as const;
+const EXPIRY_WINDOWS = [30, 60, 90] as const;
 
 type TabKey = "planning" | "sourcing" | "vendors" | "contracts" | "donors" | "combined";
+type PeriodFilter = (typeof PERIOD_FILTERS)[number];
+type Lookback = (typeof TIME_PERIODS)[number];
+type ExpiryWindow = (typeof EXPIRY_WINDOWS)[number];
 
 const TAB_LABELS: Record<TabKey, string> = {
   planning: "Planning & Orders",
@@ -33,435 +63,332 @@ const TAB_LABELS: Record<TabKey, string> = {
   combined: "Combined Analysis",
 };
 
-const fmt = (n: number) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0 }).format(n);
+/** The report tab bar, in reading order. No counts — a report has none. */
+const REPORT_TABS: ProcurementTab<TabKey>[] =
+  (Object.keys(TAB_LABELS) as TabKey[]).map(key => ({ key, label: TAB_LABELS[key] }));
 
-const fmtPct = (n: number) => `${n.toFixed(1)}%`;
+/** Chart palette, reused wherever a series count is data-driven. */
+const PALETTE = ["#6366f1", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#0ea5e9", "#ec4899", "#14b8a6", "#f97316", "#64748b"];
 
-/* ══════════════════════════════════════════════════════════════════════════════
-   MOCK DATA — PLANNING & ORDERS
-   ══════════════════════════════════════════════════════════════════════════════ */
+/**
+ * The shared metric-card row is chromed as a full-bleed band — white, padded,
+ * ruled underneath — because that is how it sits directly beneath a screen
+ * header. Here the rows appear part-way down an already-padded report body on
+ * the slate page, so the band chrome comes off and only the cards remain.
+ */
 
-const pipelineData = [
-  { month: "Oct", planned: 12, initiated: 10, completed: 7 },
-  { month: "Nov", planned: 15, initiated: 13, completed: 10 },
-  { month: "Dec", planned: 9, initiated: 8, completed: 6 },
-  { month: "Jan", planned: 18, initiated: 16, completed: 12 },
-  { month: "Feb", planned: 14, initiated: 12, completed: 9 },
-  { month: "Mar", planned: 20, initiated: 17, completed: 11 },
-];
-
-const budgetUtilization = [
-  { department: "IT", allocated: 450000, utilized: 382000, committed: 45000 },
-  { department: "Operations", allocated: 320000, utilized: 275000, committed: 30000 },
-  { department: "Health", allocated: 280000, utilized: 210000, committed: 55000 },
-  { department: "Admin", allocated: 180000, utilized: 158000, committed: 12000 },
-  { department: "Education", allocated: 220000, utilized: 195000, committed: 18000 },
-  { department: "Finance", allocated: 150000, utilized: 120000, committed: 20000 },
-];
-
-const requisitionStatus = [
-  { name: "Approved", value: 48, color: "#10b981" },
-  { name: "Pending", value: 23, color: "#f59e0b" },
-  { name: "Rejected", value: 7, color: "#ef4444" },
-  { name: "Draft", value: 12, color: "#94a3b8" },
-];
-
-const requisitionTable = [
-  { id: "PR-2026-001", title: "IT Equipment – Q1 Laptops", dept: "IT", value: 45000, status: "Approved", date: "2026-01-12", approver: "Kofi Asante" },
-  { id: "PR-2026-002", title: "Office Furniture Replacement", dept: "Admin", value: 28500, status: "Pending", date: "2026-01-18", approver: "—" },
-  { id: "PR-2026-003", title: "Medical Supplies – Korle-Bu", dept: "Health", value: 62000, status: "Approved", date: "2026-01-25", approver: "Dr. Nana Akufo-Mensah" },
-  { id: "PR-2026-004", title: "Training Materials Printing", dept: "Education", value: 8500, status: "Rejected", date: "2026-02-02", approver: "Kofi Asante" },
-  { id: "PR-2026-005", title: "Vehicle Maintenance – Fleet", dept: "Operations", value: 35000, status: "Approved", date: "2026-02-10", approver: "Kofi Asante" },
-  { id: "PR-2026-006", title: "Consultancy – M&E Framework", dept: "Education", value: 55000, status: "Pending", date: "2026-02-15", approver: "—" },
-  { id: "PR-2026-007", title: "Server Infrastructure Upgrade", dept: "IT", value: 120000, status: "Pending", date: "2026-02-20", approver: "—" },
-  { id: "PR-2026-008", title: "Catering – Annual Conference", dept: "Admin", value: 18000, status: "Draft", date: "2026-03-01", approver: "—" },
-];
-
-const poTrendData = [
-  { month: "Oct", orders: 42, value: 165000 },
-  { month: "Nov", orders: 38, value: 142000 },
-  { month: "Dec", orders: 51, value: 189000 },
-  { month: "Jan", orders: 47, value: 175000 },
-  { month: "Feb", orders: 55, value: 203000 },
-  { month: "Mar", orders: 48, value: 181000 },
-];
-
-/* ══════════════════════════════════════════════════════════════════════════════
-   MOCK DATA — SOURCING & CONTRACTS
-   ══════════════════════════════════════════════════════════════════════════════ */
-
-const bidSubmissionData = [
-  { rfq: "RFQ-001", title: "IT Equipment", invited: 8, submitted: 6, rate: 75 },
-  { rfq: "RFQ-002", title: "Office Supplies", invited: 12, submitted: 9, rate: 75 },
-  { rfq: "RFQ-003", title: "Consulting Services", invited: 5, submitted: 4, rate: 80 },
-  { rfq: "RFQ-004", title: "Medical Supplies", invited: 10, submitted: 7, rate: 70 },
-  { rfq: "RFQ-005", title: "Construction Works", invited: 6, submitted: 3, rate: 50 },
-  { rfq: "RFQ-006", title: "Vehicle Leasing", invited: 4, submitted: 4, rate: 100 },
-];
-
-const rfqStatusData = [
-  { name: "Awarded", value: 12, color: "#10b981" },
-  { name: "In Review", value: 8, color: "#a855f7" },
-  { name: "Sent", value: 15, color: "#3b82f6" },
-  { name: "Closed", value: 22, color: "#6b7280" },
-  { name: "Cancelled", value: 3, color: "#ef4444" },
-];
-
-const activeContracts = [
-  { id: "CNT-2025-018", vendor: "Tech Solutions Inc.", value: 285000, startDate: "2025-06-15", endDate: "2026-06-14", status: "Active", deliverables: 8, completed: 6 },
-  { id: "CNT-2025-022", vendor: "MedSupply GH", value: 145000, startDate: "2025-09-01", endDate: "2026-08-31", status: "Active", deliverables: 12, completed: 9 },
-  { id: "CNT-2025-030", vendor: "PrintWorks Ghana Ltd", value: 52000, startDate: "2025-11-01", endDate: "2026-04-30", status: "Expiring", deliverables: 4, completed: 3 },
-  { id: "CNT-2026-001", vendor: "Kwame Construction Ltd", value: 480000, startDate: "2026-01-10", endDate: "2027-01-09", status: "Active", deliverables: 6, completed: 1 },
-  { id: "CNT-2026-005", vendor: "CreativeEdge Designs", value: 38000, startDate: "2026-02-01", endDate: "2026-07-31", status: "Active", deliverables: 5, completed: 2 },
-];
-
-const invoicePaymentData = [
-  { month: "Oct", invoiced: 185000, paid: 165000, outstanding: 20000 },
-  { month: "Nov", invoiced: 220000, paid: 195000, outstanding: 45000 },
-  { month: "Dec", invoiced: 145000, paid: 130000, outstanding: 60000 },
-  { month: "Jan", invoiced: 275000, paid: 240000, outstanding: 95000 },
-  { month: "Feb", invoiced: 198000, paid: 175000, outstanding: 118000 },
-  { month: "Mar", invoiced: 310000, paid: 250000, outstanding: 178000 },
-];
-
-const expiryAlerts = [
-  { contract: "CNT-2025-030", vendor: "PrintWorks Ghana Ltd", endDate: "2026-04-30", daysLeft: 45, value: 52000, action: "Renew" },
-  { contract: "CNT-2025-015", vendor: "La Palm Royal Beach Hotel", endDate: "2026-05-15", daysLeft: 60, value: 28000, action: "Review" },
-  { contract: "CNT-2025-012", vendor: "Ghana Research Associates", endDate: "2026-06-14", daysLeft: 90, value: 95000, action: "Renew" },
-  { contract: "CNT-2025-009", vendor: "Office Depot Ltd.", endDate: "2026-04-10", daysLeft: 25, value: 145000, action: "Urgent Renewal" },
-];
-
-/* ══════════════════════════════════════════════════════════════════════════════
-   MOCK DATA — VENDORS & KPIs
-   ══════════════════════════════════════════════════════════════════════════════ */
-
-const vendorMasterList = [
-  { name: "Tech Solutions Inc.", category: "IT", status: "Prequalified", contracts: 5, totalValue: 685000, rating: 4.8, lastEngaged: "2026-03-10", onTimeDelivery: 95, avgResponseDays: 2.1 },
-  { name: "MedSupply GH", category: "Medical", status: "Prequalified", contracts: 3, totalValue: 320000, rating: 4.5, lastEngaged: "2026-02-28", onTimeDelivery: 88, avgResponseDays: 3.5 },
-  { name: "PrintWorks Ghana Ltd", category: "Printing", status: "Prequalified", contracts: 4, totalValue: 195000, rating: 4.2, lastEngaged: "2026-03-05", onTimeDelivery: 92, avgResponseDays: 1.8 },
-  { name: "Kwame Construction Ltd", category: "Construction", status: "Prequalified", contracts: 2, totalValue: 960000, rating: 4.6, lastEngaged: "2026-01-10", onTimeDelivery: 82, avgResponseDays: 4.2 },
-  { name: "CreativeEdge Designs", category: "Marketing", status: "Pending Review", contracts: 1, totalValue: 38000, rating: 4.0, lastEngaged: "2026-02-01", onTimeDelivery: 90, avgResponseDays: 2.5 },
-  { name: "La Palm Royal Beach Hotel", category: "Hospitality", status: "Prequalified", contracts: 3, totalValue: 85000, rating: 4.7, lastEngaged: "2025-12-20", onTimeDelivery: 96, avgResponseDays: 1.5 },
-  { name: "Ghana Research Associates", category: "Consultancy", status: "Prequalified", contracts: 2, totalValue: 190000, rating: 4.9, lastEngaged: "2026-01-15", onTimeDelivery: 97, avgResponseDays: 3.0 },
-  { name: "Dell Inc. (via Telefonika)", category: "IT", status: "Prequalified", contracts: 4, totalValue: 520000, rating: 4.4, lastEngaged: "2026-03-12", onTimeDelivery: 91, avgResponseDays: 2.8 },
-  { name: "Office Depot Ltd.", category: "Supplies", status: "Expired", contracts: 6, totalValue: 410000, rating: 4.1, lastEngaged: "2026-02-18", onTimeDelivery: 85, avgResponseDays: 3.2 },
-];
-
-const prequalStatus = [
-  { name: "Prequalified", value: 24, color: "#10b981" },
-  { name: "Pending Review", value: 8, color: "#f59e0b" },
-  { name: "Expired", value: 5, color: "#ef4444" },
-  { name: "Suspended", value: 2, color: "#6b7280" },
-];
-
-const donorProcurementSummary = [
-  { donor: "World Bank", projects: 4, totalProcured: 850000, methods: { ICB: 2, NCB: 3, Shopping: 5 }, compliance: 98 },
-  { donor: "USAID", projects: 3, totalProcured: 620000, methods: { ICB: 1, NCB: 2, Shopping: 4 }, compliance: 95 },
-  { donor: "EU", projects: 2, totalProcured: 430000, methods: { ICB: 1, NCB: 2, Shopping: 3 }, compliance: 100 },
-  { donor: "DFID", projects: 2, totalProcured: 280000, methods: { ICB: 0, NCB: 1, Shopping: 6 }, compliance: 92 },
-  { donor: "AfDB", projects: 1, totalProcured: 190000, methods: { ICB: 1, NCB: 1, Shopping: 2 }, compliance: 97 },
-];
-
-const cycleTimeData = [
-  { month: "Oct", reqToApproval: 5.2, approvalToSourcing: 8.5, sourcingToContract: 12.3, total: 26 },
-  { month: "Nov", reqToApproval: 4.8, approvalToSourcing: 7.2, sourcingToContract: 11.1, total: 23.1 },
-  { month: "Dec", reqToApproval: 6.1, approvalToSourcing: 9.8, sourcingToContract: 14.5, total: 30.4 },
-  { month: "Jan", reqToApproval: 4.3, approvalToSourcing: 6.5, sourcingToContract: 10.2, total: 21 },
-  { month: "Feb", reqToApproval: 3.9, approvalToSourcing: 5.8, sourcingToContract: 9.8, total: 19.5 },
-  { month: "Mar", reqToApproval: 3.5, approvalToSourcing: 5.2, sourcingToContract: 8.9, total: 17.6 },
-];
-
-const radarKPI = [
-  { metric: "Cycle Time", score: 82, target: 90 },
-  { metric: "Cost Savings", score: 78, target: 85 },
-  { metric: "Vendor Quality", score: 91, target: 88 },
-  { metric: "On-Time Delivery", score: 88, target: 92 },
-  { metric: "Compliance", score: 96, target: 95 },
-  { metric: "Payment Timeliness", score: 85, target: 90 },
-];
-
-const paymentTimeliness = [
-  { month: "Oct", onTime: 85, late: 12, overdue: 3 },
-  { month: "Nov", onTime: 88, late: 10, overdue: 2 },
-  { month: "Dec", onTime: 78, late: 18, overdue: 4 },
-  { month: "Jan", onTime: 92, late: 6, overdue: 2 },
-  { month: "Feb", onTime: 90, late: 8, overdue: 2 },
-  { month: "Mar", onTime: 94, late: 5, overdue: 1 },
-];
-
-/* ══════════════════════════════════════════════════════════════════════════════
-   MOCK DATA — CONTRACT REPORTS (Tab 4)
-   ══════════════════════════════════════════════════════════════════════════════ */
-
-const contractDetailData = [
-  { id: "CNT-2025-018", vendor: "Tech Solutions Inc.", value: 285000, startDate: "2025-06-15", endDate: "2026-06-14", status: "Active", deliverablesTotal: 8, deliverablesCompleted: 6, paymentStatus: "On Track", paidAmount: 213750 },
-  { id: "CNT-2025-022", vendor: "MedSupply GH", value: 145000, startDate: "2025-09-01", endDate: "2026-08-31", status: "Active", deliverablesTotal: 12, deliverablesCompleted: 9, paymentStatus: "On Track", paidAmount: 108750 },
-  { id: "CNT-2025-030", vendor: "PrintWorks Ghana Ltd", value: 52000, startDate: "2025-11-01", endDate: "2026-04-30", status: "Expiring", deliverablesTotal: 4, deliverablesCompleted: 3, paymentStatus: "Pending Final", paidAmount: 39000 },
-  { id: "CNT-2026-001", vendor: "Kwame Construction Ltd", value: 480000, startDate: "2026-01-10", endDate: "2027-01-09", status: "Active", deliverablesTotal: 6, deliverablesCompleted: 1, paymentStatus: "On Track", paidAmount: 80000 },
-  { id: "CNT-2026-005", vendor: "CreativeEdge Designs", value: 38000, startDate: "2026-02-01", endDate: "2026-07-31", status: "Active", deliverablesTotal: 5, deliverablesCompleted: 2, paymentStatus: "On Track", paidAmount: 15200 },
-  { id: "CNT-2026-008", vendor: "Ghana Research Associates", value: 95000, startDate: "2026-01-15", endDate: "2026-12-31", status: "Active", deliverablesTotal: 10, deliverablesCompleted: 3, paymentStatus: "On Track", paidAmount: 28500 },
-  { id: "CNT-2025-009", vendor: "Office Depot Ltd.", value: 145000, startDate: "2025-04-01", endDate: "2026-04-10", status: "Expiring", deliverablesTotal: 8, deliverablesCompleted: 7, paymentStatus: "Overdue", paidAmount: 126875 },
-];
-
-const deliverablesStatusData = [
-  { contract: "CNT-2025-018", deliverable: "Phase 1 – Hardware Delivery", dueDate: "2025-09-30", status: "Accepted" },
-  { contract: "CNT-2025-018", deliverable: "Phase 2 – Software Installation", dueDate: "2025-12-15", status: "Accepted" },
-  { contract: "CNT-2025-018", deliverable: "Phase 3 – Network Configuration", dueDate: "2026-02-28", status: "Accepted" },
-  { contract: "CNT-2025-018", deliverable: "Phase 4 – Testing & QA", dueDate: "2026-04-15", status: "Submitted" },
-  { contract: "CNT-2025-018", deliverable: "Phase 5 – User Training", dueDate: "2026-05-30", status: "Pending" },
-  { contract: "CNT-2025-022", deliverable: "Batch 1 – Surgical Supplies", dueDate: "2025-11-01", status: "Accepted" },
-  { contract: "CNT-2025-022", deliverable: "Batch 2 – Pharmaceuticals", dueDate: "2025-12-15", status: "Accepted" },
-  { contract: "CNT-2025-022", deliverable: "Batch 3 – Lab Equipment", dueDate: "2026-01-30", status: "Accepted" },
-  { contract: "CNT-2025-022", deliverable: "Batch 4 – PPE Supplies", dueDate: "2026-03-15", status: "Overdue" },
-  { contract: "CNT-2026-001", deliverable: "Foundation Works", dueDate: "2026-04-10", status: "Submitted" },
-  { contract: "CNT-2026-001", deliverable: "Structural Frame", dueDate: "2026-07-15", status: "Pending" },
-  { contract: "CNT-2026-001", deliverable: "MEP Installation", dueDate: "2026-10-01", status: "Pending" },
-];
-
-const contractInvoiceData = [
-  { invoiceNo: "INV-2026-0041", contract: "CNT-2025-018", vendor: "Tech Solutions Inc.", amount: 71250, status: "Paid", date: "2026-01-15" },
-  { invoiceNo: "INV-2026-0042", contract: "CNT-2025-018", vendor: "Tech Solutions Inc.", amount: 71250, status: "Paid", date: "2026-02-15" },
-  { invoiceNo: "INV-2026-0043", contract: "CNT-2025-018", vendor: "Tech Solutions Inc.", amount: 71250, status: "Pending", date: "2026-03-15" },
-  { invoiceNo: "INV-2026-0055", contract: "CNT-2025-022", vendor: "MedSupply GH", amount: 36250, status: "Paid", date: "2026-01-30" },
-  { invoiceNo: "INV-2026-0056", contract: "CNT-2025-022", vendor: "MedSupply GH", amount: 36250, status: "Paid", date: "2026-03-01" },
-  { invoiceNo: "INV-2026-0070", contract: "CNT-2026-001", vendor: "Kwame Construction Ltd", amount: 80000, status: "Paid", date: "2026-02-10" },
-  { invoiceNo: "INV-2026-0071", contract: "CNT-2026-001", vendor: "Kwame Construction Ltd", amount: 80000, status: "Pending", date: "2026-04-10" },
-  { invoiceNo: "INV-2026-0080", contract: "CNT-2025-009", vendor: "Office Depot Ltd.", amount: 18125, status: "Overdue", date: "2026-03-01" },
-  { invoiceNo: "INV-2026-0090", contract: "CNT-2026-005", vendor: "CreativeEdge Designs", amount: 7600, status: "Paid", date: "2026-03-01" },
-  { invoiceNo: "INV-2026-0091", contract: "CNT-2026-005", vendor: "CreativeEdge Designs", amount: 7600, status: "Pending", date: "2026-04-01" },
-];
-
-const contractVariationData = [
-  { contract: "CNT-2025-018", changeNo: "VO-001", type: "Scope Extension", costImpact: 25000, status: "Approved" },
-  { contract: "CNT-2025-018", changeNo: "VO-002", type: "Timeline Extension", costImpact: 0, status: "Approved" },
-  { contract: "CNT-2026-001", changeNo: "VO-001", type: "Design Change", costImpact: 45000, status: "Pending" },
-  { contract: "CNT-2026-001", changeNo: "VO-002", type: "Material Substitution", costImpact: -12000, status: "Approved" },
-  { contract: "CNT-2025-022", changeNo: "VO-001", type: "Quantity Increase", costImpact: 18500, status: "Approved" },
-  { contract: "CNT-2026-005", changeNo: "VO-001", type: "Additional Deliverable", costImpact: 5000, status: "Under Review" },
-];
-
-const contractCloseOutData = [
-  { contract: "CNT-2025-005", vendor: "ABC Logistics Ltd.", deliverablesDone: true, paymentsDone: true, performanceDone: true, status: "Closed" },
-  { contract: "CNT-2025-008", vendor: "Green Energy Solutions", deliverablesDone: true, paymentsDone: true, performanceDone: false, status: "Pending Review" },
-  { contract: "CNT-2025-011", vendor: "Rapid Builders Co.", deliverablesDone: true, paymentsDone: false, performanceDone: false, status: "Pending Payment" },
-  { contract: "CNT-2025-014", vendor: "DataTech Services", deliverablesDone: false, paymentsDone: false, performanceDone: false, status: "In Progress" },
-  { contract: "CNT-2025-030", vendor: "PrintWorks Ghana Ltd", deliverablesDone: false, paymentsDone: false, performanceDone: false, status: "In Progress" },
-];
-
-const contractValueByStatus = [
-  { status: "Active", goods: 320000, services: 180000, works: 480000 },
-  { status: "Expiring", goods: 145000, services: 52000, works: 0 },
-  { status: "Closed", goods: 95000, services: 120000, works: 350000 },
-  { status: "Pending", goods: 45000, services: 38000, works: 0 },
-];
-
-/* ══════════════════════════════════════════════════════════════════════════════
-   MOCK DATA — DONOR REPORTS (Tab 5)
-   ══════════════════════════════════════════════════════════════════════════════ */
-
-const donorDetailSummary = [
-  { donor: "World Bank", goods: 6, services: 3, works: 2, totalValue: 850000, approved: 9, pending: 2, rejected: 0, pendingApprovals: 1 },
-  { donor: "USAID", goods: 4, services: 4, works: 1, totalValue: 620000, approved: 7, pending: 1, rejected: 1, pendingApprovals: 0 },
-  { donor: "EU", goods: 3, services: 2, works: 1, totalValue: 430000, approved: 5, pending: 1, rejected: 0, pendingApprovals: 1 },
-  { donor: "DFID", goods: 5, services: 1, works: 0, totalValue: 280000, approved: 4, pending: 2, rejected: 0, pendingApprovals: 2 },
-  { donor: "AfDB", goods: 2, services: 1, works: 1, totalValue: 190000, approved: 3, pending: 1, rejected: 0, pendingApprovals: 1 },
-];
-
-const donorBudgetUtilization = [
-  { donor: "World Bank", planned: 1000000, committed: 850000, spent: 720000 },
-  { donor: "USAID", planned: 750000, committed: 620000, spent: 510000 },
-  { donor: "EU", planned: 500000, committed: 430000, spent: 380000 },
-  { donor: "DFID", planned: 350000, committed: 280000, spent: 215000 },
-  { donor: "AfDB", planned: 250000, committed: 190000, spent: 155000 },
-];
-
-const donorSpendChart = [
-  { donor: "World Bank", spend: 720000, color: "#6366f1" },
-  { donor: "USAID", spend: 510000, color: "#10b981" },
-  { donor: "EU", spend: 380000, color: "#f59e0b" },
-  { donor: "DFID", spend: 215000, color: "#ef4444" },
-  { donor: "AfDB", spend: 155000, color: "#8b5cf6" },
-];
-
-const donorCountChart = [
-  { name: "World Bank", value: 11, color: "#6366f1" },
-  { name: "USAID", value: 9, color: "#10b981" },
-  { name: "EU", value: 6, color: "#f59e0b" },
-  { name: "DFID", value: 6, color: "#ef4444" },
-  { name: "AfDB", value: 4, color: "#8b5cf6" },
-];
-
-/* ══════════════════════════════════════════════════════════════════════════════
-   MOCK DATA — COMBINED ANALYSIS (Tab 6)
-   ══════════════════════════════════════════════════════════════════════════════ */
-
-const vendorDonorPerformance = [
-  { vendor: "Tech Solutions Inc.", donor: "World Bank", contract: "CNT-2025-018", performanceScore: 92, status: "Active" },
-  { vendor: "MedSupply GH", donor: "USAID", contract: "CNT-2025-022", performanceScore: 87, status: "Active" },
-  { vendor: "Kwame Construction Ltd", donor: "World Bank", contract: "CNT-2026-001", performanceScore: 78, status: "Active" },
-  { vendor: "Ghana Research Associates", donor: "EU", contract: "CNT-2026-008", performanceScore: 95, status: "Active" },
-  { vendor: "PrintWorks Ghana Ltd", donor: "DFID", contract: "CNT-2025-030", performanceScore: 84, status: "Expiring" },
-  { vendor: "CreativeEdge Designs", donor: "AfDB", contract: "CNT-2026-005", performanceScore: 80, status: "Active" },
-  { vendor: "Dell Inc. (via Telefonika)", donor: "USAID", contract: "CNT-2025-035", performanceScore: 89, status: "Active" },
-  { vendor: "Office Depot Ltd.", donor: "DFID", contract: "CNT-2025-009", performanceScore: 72, status: "Expiring" },
-];
-
-const topPerformers = [
-  { vendor: "Ghana Research Associates", contractsWon: 4, totalValue: 380000, avgRating: 4.9 },
-  { vendor: "Tech Solutions Inc.", contractsWon: 7, totalValue: 1250000, avgRating: 4.8 },
-  { vendor: "La Palm Royal Beach Hotel", contractsWon: 5, totalValue: 175000, avgRating: 4.7 },
-  { vendor: "Kwame Construction Ltd", contractsWon: 3, totalValue: 1440000, avgRating: 4.6 },
-  { vendor: "MedSupply GH", contractsWon: 5, totalValue: 580000, avgRating: 4.5 },
-];
-
-const donorComplianceData = [
-  { donor: "World Bank", compliancePct: 98, issues: 1 },
-  { donor: "USAID", compliancePct: 95, issues: 2 },
-  { donor: "EU", compliancePct: 100, issues: 0 },
-  { donor: "DFID", compliancePct: 92, issues: 3 },
-  { donor: "AfDB", compliancePct: 97, issues: 1 },
-];
-
-const donorComplianceRadar = [
-  { metric: "Documentation", "World Bank": 98, USAID: 94, EU: 100, DFID: 90, AfDB: 96 },
-  { metric: "Procurement Method", "World Bank": 100, USAID: 96, EU: 100, DFID: 88, AfDB: 98 },
-  { metric: "Evaluation Process", "World Bank": 96, USAID: 92, EU: 100, DFID: 94, AfDB: 95 },
-  { metric: "Reporting", "World Bank": 98, USAID: 97, EU: 100, DFID: 93, AfDB: 98 },
-  { metric: "Contract Mgmt", "World Bank": 97, USAID: 95, EU: 100, DFID: 91, AfDB: 96 },
-  { metric: "Audit Readiness", "World Bank": 99, USAID: 96, EU: 100, DFID: 92, AfDB: 97 },
-];
-
-/* ══════════════════════════════════════════════════════════════════════════════
-   MOCK DATA — GAP FILLS
-   ══════════════════════════════════════════════════════════════════════════════ */
-
-// Gap 1: Annual Procurement Plan Status Report
-const procurementPlanItems = [
-  { id: "PP-2026-001", activity: "IT Equipment Procurement Q1", budget: 250000, funding: "Core Program", method: "Open Competition", initiation: "2026-01-15", completion: "2026-04-30", dept: "IT", status: "Completed" },
-  { id: "PP-2026-002", activity: "Office Supplies Annual Contract", budget: 85000, funding: "Core Program", method: "RFQ", initiation: "2026-01-20", completion: "2026-03-15", dept: "Admin", status: "Completed" },
-  { id: "PP-2026-003", activity: "M&E Consultancy – Baseline Study", budget: 120000, funding: "World Bank", method: "Limited Competition", initiation: "2026-02-01", completion: "2026-08-31", dept: "M&E", status: "In Progress" },
-  { id: "PP-2026-004", activity: "Vehicle Fleet Maintenance", budget: 65000, funding: "USAID", method: "Direct Selection", initiation: "2026-03-01", completion: "2026-06-30", dept: "Operations", status: "In Progress" },
-  { id: "PP-2026-005", activity: "Conference Venue & Catering", budget: 45000, funding: "EU", method: "RFQ", initiation: "2026-04-01", completion: "2026-05-15", dept: "Communications", status: "Not Started" },
-  { id: "PP-2026-006", activity: "Server Room Upgrade Phase 2", budget: 180000, funding: "Capital Expenditure", method: "Open Competition", initiation: "2026-04-15", completion: "2026-10-31", dept: "IT", status: "Not Started" },
-  { id: "PP-2026-007", activity: "Legal Advisory Services", budget: 95000, funding: "DFID", method: "Direct Selection", initiation: "2026-02-15", completion: "2026-12-31", dept: "Legal", status: "In Progress" },
-  { id: "PP-2026-008", activity: "Office Renovation Phase 2", budget: 320000, funding: "Capital Expenditure", method: "Open Competition", initiation: "2026-05-01", completion: "2027-02-28", dept: "Admin", status: "Not Started" },
-];
-
-// Gap 2: Vendor Procurement Participation
-const vendorParticipation = [
-  { vendor: "Tech Solutions Inc.", bidsSubmitted: 12, awardsWon: 7, totalContractValue: 1250000, activeContracts: 3, completedContracts: 4, winRate: 58 },
-  { vendor: "MedSupply GH", bidsSubmitted: 8, awardsWon: 5, totalContractValue: 580000, activeContracts: 2, completedContracts: 3, winRate: 63 },
-  { vendor: "PrintWorks Ghana Ltd", bidsSubmitted: 10, awardsWon: 4, totalContractValue: 195000, activeContracts: 1, completedContracts: 3, winRate: 40 },
-  { vendor: "Kwame Construction Ltd", bidsSubmitted: 5, awardsWon: 3, totalContractValue: 1440000, activeContracts: 2, completedContracts: 1, winRate: 60 },
-  { vendor: "Ghana Research Associates", bidsSubmitted: 6, awardsWon: 4, totalContractValue: 380000, activeContracts: 2, completedContracts: 2, winRate: 67 },
-  { vendor: "La Palm Royal Beach Hotel", bidsSubmitted: 7, awardsWon: 5, totalContractValue: 175000, activeContracts: 1, completedContracts: 4, winRate: 71 },
-  { vendor: "Office Depot Ltd.", bidsSubmitted: 14, awardsWon: 6, totalContractValue: 410000, activeContracts: 1, completedContracts: 5, winRate: 43 },
-  { vendor: "Dell Inc. (via Telefonika)", bidsSubmitted: 9, awardsWon: 4, totalContractValue: 520000, activeContracts: 2, completedContracts: 2, winRate: 44 },
-];
-
-// Gap 3: Vendor Payment & Invoice Report
-const vendorPaymentReport = [
-  { vendor: "Tech Solutions Inc.", invoicesSubmitted: 8, paid: 6, pending: 1, overdue: 1, totalInvoiced: 570000, totalPaid: 427500, outstanding: 142500 },
-  { vendor: "MedSupply GH", invoicesSubmitted: 5, paid: 4, pending: 1, overdue: 0, totalInvoiced: 290000, totalPaid: 232000, outstanding: 58000 },
-  { vendor: "Kwame Construction Ltd", invoicesSubmitted: 4, paid: 2, pending: 1, overdue: 1, totalInvoiced: 480000, totalPaid: 240000, outstanding: 240000 },
-  { vendor: "Ghana Research Associates", invoicesSubmitted: 3, paid: 3, pending: 0, overdue: 0, totalInvoiced: 190000, totalPaid: 190000, outstanding: 0 },
-  { vendor: "PrintWorks Ghana Ltd", invoicesSubmitted: 4, paid: 3, pending: 1, overdue: 0, totalInvoiced: 156000, totalPaid: 117000, outstanding: 39000 },
-  { vendor: "Office Depot Ltd.", invoicesSubmitted: 7, paid: 5, pending: 0, overdue: 2, totalInvoiced: 328000, totalPaid: 234300, outstanding: 93700 },
-];
-
-// Gap 4: Vendor Engagement by Funding Source
-const vendorDonorEngagement = [
-  { vendor: "Tech Solutions Inc.", donor: "World Bank", contracts: 3, totalValue: 685000, avgPerformance: 92 },
-  { vendor: "Tech Solutions Inc.", donor: "USAID", contracts: 2, totalValue: 340000, avgPerformance: 88 },
-  { vendor: "MedSupply GH", donor: "USAID", contracts: 3, totalValue: 320000, avgPerformance: 87 },
-  { vendor: "MedSupply GH", donor: "World Bank", contracts: 1, totalValue: 145000, avgPerformance: 90 },
-  { vendor: "Kwame Construction Ltd", donor: "World Bank", contracts: 2, totalValue: 960000, avgPerformance: 78 },
-  { vendor: "Ghana Research Associates", donor: "EU", contracts: 2, totalValue: 190000, avgPerformance: 95 },
-  { vendor: "PrintWorks Ghana Ltd", donor: "DFID", contracts: 2, totalValue: 105000, avgPerformance: 84 },
-  { vendor: "PrintWorks Ghana Ltd", donor: "Core Program", contracts: 2, totalValue: 90000, avgPerformance: 86 },
-  { vendor: "Office Depot Ltd.", donor: "DFID", contracts: 3, totalValue: 245000, avgPerformance: 72 },
-  { vendor: "La Palm Royal Beach Hotel", donor: "AfDB", contracts: 2, totalValue: 85000, avgPerformance: 94 },
-];
-
-// Gap 5: Contract Summary Report data (reuses contractDetailData + extended)
-const contractSummaryData = [
-  { id: "CNT-2025-018", vendor: "Tech Solutions Inc.", value: 285000, funding: "World Bank", method: "Open Competition", start: "2025-06-15", end: "2026-06-14", milestones: 5, deliverables: 8, category: "Goods" },
-  { id: "CNT-2025-022", vendor: "MedSupply GH", value: 145000, funding: "USAID", method: "Limited Competition", start: "2025-09-01", end: "2026-08-31", milestones: 4, deliverables: 12, category: "Goods" },
-  { id: "CNT-2026-001", vendor: "Kwame Construction Ltd", value: 480000, funding: "World Bank", method: "Open Competition", start: "2026-01-10", end: "2027-01-09", milestones: 3, deliverables: 6, category: "Works" },
-  { id: "CNT-2026-005", vendor: "CreativeEdge Designs", value: 38000, funding: "AfDB", method: "Direct Selection", start: "2026-02-01", end: "2026-07-31", milestones: 3, deliverables: 5, category: "Services" },
-  { id: "CNT-2026-008", vendor: "Ghana Research Associates", value: 95000, funding: "EU", method: "Limited Competition", start: "2026-01-15", end: "2026-12-31", milestones: 4, deliverables: 10, category: "Consultancy" },
-  { id: "CNT-2025-009", vendor: "Office Depot Ltd.", value: 145000, funding: "DFID", method: "RFQ", start: "2025-04-01", end: "2026-04-10", milestones: 3, deliverables: 8, category: "Goods" },
-];
-
-// Gap 6: Contract Performance Scorecard
-const contractPerformanceData = [
-  { contract: "CNT-2025-018", vendor: "Tech Solutions Inc.", quality: 9.2, timeliness: 8.8, cost: 9.0, compliance: 9.5, overall: 9.1 },
-  { contract: "CNT-2025-022", vendor: "MedSupply GH", quality: 8.5, timeliness: 7.8, cost: 8.2, compliance: 8.8, overall: 8.3 },
-  { contract: "CNT-2026-001", vendor: "Kwame Construction Ltd", quality: 7.5, timeliness: 6.8, cost: 7.0, compliance: 8.0, overall: 7.3 },
-  { contract: "CNT-2026-005", vendor: "CreativeEdge Designs", quality: 8.0, timeliness: 8.2, cost: 8.5, compliance: 7.8, overall: 8.1 },
-  { contract: "CNT-2026-008", vendor: "Ghana Research Associates", quality: 9.5, timeliness: 9.2, cost: 9.0, compliance: 9.8, overall: 9.4 },
-  { contract: "CNT-2025-009", vendor: "Office Depot Ltd.", quality: 6.5, timeliness: 5.8, cost: 7.2, compliance: 6.0, overall: 6.4 },
-];
-
-// Gap 7: Contract Risk Report
-const contractRiskData = [
-  { contract: "CNT-2026-001", vendor: "Kwame Construction Ltd", risk: "Delayed Milestones", severity: "High", details: "2 milestones overdue by 15+ days", milestonesOverdue: 2, invoiceQueries: 0, variations: 2 },
-  { contract: "CNT-2025-009", vendor: "Office Depot Ltd.", risk: "Repeated Invoice Queries", severity: "High", details: "3 invoices returned for correction in last 90 days", milestonesOverdue: 1, invoiceQueries: 3, variations: 0 },
-  { contract: "CNT-2025-022", vendor: "MedSupply GH", risk: "Scope Creep", severity: "Medium", details: "1 variation adding new deliverables beyond original scope", milestonesOverdue: 1, invoiceQueries: 0, variations: 1 },
-  { contract: "CNT-2025-018", vendor: "Tech Solutions Inc.", risk: "Excessive Variations", severity: "Medium", details: "2 approved variations totalling $25,000 additional cost", milestonesOverdue: 0, invoiceQueries: 0, variations: 2 },
-  { contract: "CNT-2026-005", vendor: "CreativeEdge Designs", risk: "Delayed Milestones", severity: "Low", details: "1 milestone submitted 3 days late", milestonesOverdue: 1, invoiceQueries: 0, variations: 1 },
-];
-
-// Gap 8: Procurement Efficiency Metrics
-const efficiencyMetrics = {
-  plannedProcurements: 45,
-  executedProcurements: 38,
-  executionRate: 84.4,
-  avgCostSavings: 7.2,
-  totalSavings: 142000,
-  tendersThisMonth: 6,
-  avgTendersPerMonth: 5.3,
-  plannedVsBudget: 92,
-  avgReqToAward: 22.5,
-  avgAwardToContract: 5.2,
-  avgContractToPayment: 18.3,
+/**
+ * KPI targets. These are the only fixed numbers in the module: they are the
+ * organisation's service standards, not observations, and everything measured
+ * against them is derived from the stores.
+ */
+const KPI_TARGETS = {
+  reqToAwardDays: 20,
+  awardToContractDays: 5,
+  contractToPaymentDays: 15,
+  paymentWithinDays: 30,
+  cycleTime: 90,
+  costSavings: 85,
+  vendorQuality: 88,
+  onTimeDelivery: 92,
+  compliance: 95,
+  paymentTimeliness: 90,
 };
 
+const MONTHS_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
 /* ══════════════════════════════════════════════════════════════════════════════
-   HELPER — STAT CARD
+   FORMATTING
    ══════════════════════════════════════════════════════════════════════════════ */
 
-function StatCard({ label, value, sub, trend, trendDir, icon, color }: {
-  label: string; value: string; sub?: string; trend?: string; trendDir?: "up" | "down";
-  icon: React.ReactNode; color: string;
-}) {
-  return (
-    <div className="bg-white border border-slate-200 rounded-xl p-4 flex items-start gap-3">
-      <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: color + "18" }}>
-        <span style={{ color }}>{icon}</span>
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-[10px] text-slate-500 uppercase tracking-wider" style={{ fontFamily: F }}>{label}</p>
-        <p className="text-[18px] text-slate-900" style={{ fontFamily: F, fontWeight: 700 }}>{value}</p>
-        {(sub || trend) && (
-          <div className="flex items-center gap-1.5 mt-0.5">
-            {trend && (
-              <span className={`flex items-center gap-0.5 text-[10px] ${trendDir === "up" ? "text-green-600" : "text-red-500"}`} style={{ fontFamily: F, fontWeight: 600 }}>
-                {trendDir === "up" ? <ArrowUpRight size={10} /> : <ArrowDownRight size={10} />}
-                {trend}
-              </span>
-            )}
-            {sub && <span className="text-[10px] text-slate-400" style={{ fontFamily: F }}>{sub}</span>}
-          </div>
-        )}
-      </div>
-    </div>
+const fmt = (n: number) =>
+  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0 }).format(
+    Number.isFinite(n) ? n : 0
   );
+
+const fmtPct = (n: number) => `${(Number.isFinite(n) ? n : 0).toFixed(1)}%`;
+
+const fmtDays = (n: number | null) => (n === null ? "—" : `${n.toFixed(1)} days`);
+
+const fmtNum = (n: number) => new Intl.NumberFormat("en-US").format(Number.isFinite(n) ? n : 0);
+
+function prettyDate(d: string): string {
+  if (!d) return "—";
+  const [y, m, day] = d.slice(0, 10).split("-");
+  const mi = Number(m) - 1;
+  if (!y || Number.isNaN(mi) || !MONTHS_SHORT[mi]) return d;
+  return `${Number(day)} ${MONTHS_SHORT[mi]} ${y}`;
+}
+
+/** Share of `part` in `total`, guarding the empty-denominator case. */
+const pct = (part: number, total: number) => (total > 0 ? (part / total) * 100 : 0);
+
+const average = (values: number[]): number | null =>
+  values.length ? values.reduce((a, b) => a + b, 0) / values.length : null;
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   DATE RANGE RESOLUTION — drives every period-aware report
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+const isoDay = (d: Date) => d.toISOString().slice(0, 10);
+const todayISO = () => isoDay(new Date());
+
+interface ResolvedRange {
+  from: string | null;
+  to: string | null;
+  label: string;
+}
+
+/** The calendar window implied by the period basis. */
+function basisWindow(period: PeriodFilter, customFrom: string, customTo: string): { from: string | null; to: string | null } {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = now.getMonth();
+  switch (period) {
+    case "Monthly":
+      return { from: isoDay(new Date(Date.UTC(y, m, 1))), to: isoDay(new Date(Date.UTC(y, m + 1, 0))) };
+    case "Quarterly": {
+      const q = Math.floor(m / 3);
+      return { from: isoDay(new Date(Date.UTC(y, q * 3, 1))), to: isoDay(new Date(Date.UTC(y, q * 3 + 3, 0))) };
+    }
+    case "Annually":
+      return { from: isoDay(new Date(Date.UTC(y, 0, 1))), to: isoDay(new Date(Date.UTC(y, 11, 31))) };
+    case "Custom Range":
+      return { from: customFrom || null, to: customTo || null };
+    case "All Time":
+      return { from: null, to: null };
+  }
+}
+
+/** The rolling lookback chosen in the page header. */
+function lookbackWindow(lookback: Lookback): { from: string | null; to: string | null } {
+  const days: Record<Lookback, number | null> = {
+    "Last 30 Days": 30,
+    "Last 3 Months": 90,
+    "Last 6 Months": 180,
+    "Last Year": 365,
+    "All Time": null,
+  };
+  const span = days[lookback];
+  if (span === null) return { from: null, to: null };
+  return { from: isoDay(new Date(Date.now() - span * 86_400_000)), to: todayISO() };
+}
+
+/** Records must satisfy the basis window and the lookback, so the two compose. */
+function resolveRange(
+  period: PeriodFilter,
+  customFrom: string,
+  customTo: string,
+  lookback: Lookback
+): ResolvedRange {
+  const a = basisWindow(period, customFrom, customTo);
+  const b = lookbackWindow(lookback);
+  const from = [a.from, b.from].filter((v): v is string => !!v).sort().pop() ?? null;
+  const to = [a.to, b.to].filter((v): v is string => !!v).sort().shift() ?? null;
+  const label =
+    !from && !to
+      ? "All time"
+      : from && to
+        ? `${prettyDate(from)} – ${prettyDate(to)}`
+        : from
+          ? `From ${prettyDate(from)}`
+          : `Up to ${prettyDate(to as string)}`;
+  return { from, to, label };
+}
+
+function withinRange(date: string | undefined | null, range: ResolvedRange): boolean {
+  if (!range.from && !range.to) return true;
+  if (!date) return false;
+  const d = date.slice(0, 10);
+  if (range.from && d < range.from) return false;
+  if (range.to && d > range.to) return false;
+  return true;
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   STATUS BADGE
+   GENERIC DERIVATION HELPERS
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+function groupBy<T>(items: T[], keyOf: (item: T) => string | undefined | null): Map<string, T[]> {
+  const map = new Map<string, T[]>();
+  for (const item of items) {
+    const key = keyOf(item);
+    if (!key) continue;
+    const bucket = map.get(key);
+    if (bucket) bucket.push(item);
+    else map.set(key, [item]);
+  }
+  return map;
+}
+
+/** The month buckets actually present in the supplied dates, most recent last. */
+function monthAxis(dateSets: (string | undefined | null)[][], max = 12): string[] {
+  const keys = new Set<string>();
+  dateSets.forEach(set =>
+    set.forEach(d => {
+      if (d) keys.add(d.slice(0, 7));
+    })
+  );
+  return Array.from(keys).sort().slice(-max);
+}
+
+function monthLabel(key: string): string {
+  const [y, m] = key.split("-");
+  const mi = Number(m) - 1;
+  return MONTHS_SHORT[mi] ? `${MONTHS_SHORT[mi]} ${y.slice(2)}` : key;
+}
+
+const inMonth = (date: string | undefined | null, key: string) => !!date && date.slice(0, 7) === key;
+
+function daysBetween(from: string | undefined, to: string | undefined): number | null {
+  if (!from || !to) return null;
+  const ms = new Date(to.slice(0, 10)).getTime() - new Date(from.slice(0, 10)).getTime();
+  if (!Number.isFinite(ms)) return null;
+  return Math.round(ms / 86_400_000);
+}
+
+/** Loose name match so contracts, invoices and vendor records line up. */
+function normaliseName(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/\b(ltd|limited|inc|llc|plc|co|company|group|gh|ghana)\b/g, "")
+    .replace(/[^a-z0-9]/g, "");
+}
+
+/** Procurement methods collapsed into the three families donors report against. */
+function methodFamily(method: string): "Open Competition" | "Limited / RFQ" | "Direct" {
+  const m = (method || "").toLowerCase();
+  if (/(single source|direct|sole)/.test(m)) return "Direct";
+  if (/(limited|quotation|rfq|shopping)/.test(m)) return "Limited / RFQ";
+  return "Open Competition";
+}
+
+function categoryFamily(category: string): "goods" | "services" | "works" {
+  const c = (category || "").toLowerCase();
+  if (c.includes("work")) return "works";
+  if (c.includes("good")) return "goods";
+  return "services";
+}
+
+const isCompetitive = (method: string) => methodFamily(method) !== "Direct";
+
+/** The point a requisition is considered committed spend. */
+const PR_APPROVED_STATES = ["Approved", "Converted to Sourcing"];
+const PR_PENDING_STATES = ["Submitted", "Pending Dept Approval", "Pending Procurement & Finance", "Pending Senior Mgmt"];
+
+function prBucket(pr: GeneratedPR): "Approved" | "Pending" | "Rejected" | "Draft" {
+  if (PR_APPROVED_STATES.includes(pr.overallApprovalStatus)) return "Approved";
+  if (PR_PENDING_STATES.includes(pr.overallApprovalStatus)) return "Pending";
+  if (pr.overallApprovalStatus === "Rejected") return "Rejected";
+  return "Draft";
+}
+
+function prApprover(pr: GeneratedPR): string {
+  const last = [...pr.approvalHistory].reverse().find(h => h.action === "Approved" || h.action === "Rejected");
+  return last ? `${last.role}${last.action === "Rejected" ? " (rejected)" : ""}` : pr.currentResponsible || "—";
+}
+
+/** Invoice submitted / paid dates, preferring the audited approval chain. */
+function invoiceSubmittedDate(inv: ContractInvoice): string {
+  return inv.approvalHistory?.find(h => h.action === "Submitted")?.date ?? inv.dateSubmitted;
+}
+
+function invoicePaidDate(inv: ContractInvoice): string | undefined {
+  return inv.approvalHistory?.find(h => h.action === "Paid")?.date ?? inv.datePaid;
+}
+
+function invoiceDaysToPay(inv: ContractInvoice): number | null {
+  const paid = invoicePaidDate(inv);
+  if (!paid) return null;
+  return daysBetween(invoiceSubmittedDate(inv), paid);
+}
+
+/** Deliverable state as reported, with overdue derived from the due date. */
+function deliverableState(d: ContractDeliverable): { label: string; daysLate: number } {
+  const left = daysUntil(d.dueDate);
+  if (d.status === "Accepted") {
+    const late = d.actualDate ? (daysBetween(d.dueDate, d.actualDate) ?? 0) : 0;
+    return { label: "Accepted", daysLate: Math.max(0, late) };
+  }
+  if (left < 0) return { label: "Overdue", daysLate: -left };
+  return { label: d.status, daysLate: 0 };
+}
+
+function latestEvaluation(c: AwardedContract): PerformanceEvaluation | undefined {
+  const evals = c.performanceEvaluations ?? [];
+  if (!evals.length) return undefined;
+  return [...evals].sort((a, b) => a.evaluationDate.localeCompare(b.evaluationDate))[evals.length - 1];
+}
+
+function criterionScore(ev: PerformanceEvaluation | undefined, matcher: RegExp): number | null {
+  if (!ev) return null;
+  const c = ev.criteria.find(x => matcher.test(x.name));
+  if (!c || !c.maxScore) return null;
+  return +((c.score / c.maxScore) * 10).toFixed(1);
+}
+
+/** Per-contract compliance checks used by every donor compliance figure. */
+const COMPLIANCE_METRICS = [
+  "Documentation",
+  "Procurement Method",
+  "Evaluation Process",
+  "Reporting",
+  "Contract Mgmt",
+  "Audit Readiness",
+] as const;
+type ComplianceMetric = (typeof COMPLIANCE_METRICS)[number];
+
+function complianceChecks(c: AwardedContract): Record<ComplianceMetric, boolean> {
+  const deliverables = c.deliverables ?? [];
+  return {
+    Documentation: c.documents.some(d => /signed contract|purchase order/i.test(d.label)),
+    "Procurement Method": isCompetitive(c.method),
+    "Evaluation Process": (c.performanceEvaluations ?? []).length > 0,
+    Reporting: c.milestones.length > 0,
+    "Contract Mgmt": deliverables.every(d => d.status === "Accepted" || daysUntil(d.dueDate) >= 0),
+    "Audit Readiness": (c.auditLog?.length ?? 0) > 0 || !!c.closeOut?.closedDate,
+  };
+}
+
+/** Prequalification standing, derived from status and document currency. */
+function prequalBucket(v: Vendor): "Prequalified" | "Pending Review" | "Expired" | "Suspended" | "Flagged" {
+  if (v.status === "Blacklisted" || v.status === "Suspended") return "Suspended";
+  if (v.status === "Pending Onboarding" || v.status === "Pending Reactivation" || v.pendingReview) return "Pending Review";
+  if (getExpiredDocs(v).length > 0) return "Expired";
+  if (v.status === "Flagged") return "Flagged";
+  return "Prequalified";
+}
+
+const PREQUAL_COLORS: Record<string, string> = {
+  Prequalified: "#10b981",
+  "Pending Review": "#f59e0b",
+  Expired: "#ef4444",
+  Suspended: "#6b7280",
+  Flagged: "#f97316",
+};
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   LIVE STORE SUBSCRIPTION
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/** Re-renders the reports whenever any upstream module mutates its store. */
+function useStoreVersion(): number {
+  const [version, setVersion] = useState(0);
+  useEffect(() => {
+    const bump = () => setVersion(v => v + 1);
+    const unsubscribers = [
+      subscribeProcurement(bump),
+      subscribeContracts(bump),
+      subscribeVendors(bump),
+      subscribeUser(bump),
+    ];
+    return () => unsubscribers.forEach(u => u());
+  }, []);
+  return version;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   PRESENTATION PRIMITIVES
    ══════════════════════════════════════════════════════════════════════════════ */
 
 function StatusBadge({ status }: { status: string }) {
@@ -471,34 +398,56 @@ function StatusBadge({ status }: { status: string }) {
     Prequalified: { bg: "#dcfce7", text: "#166534" },
     Accepted: { bg: "#dcfce7", text: "#166534" },
     Paid: { bg: "#dcfce7", text: "#166534" },
+    Completed: { bg: "#dcfce7", text: "#166534" },
+    Contracted: { bg: "#dcfce7", text: "#166534" },
+    Implemented: { bg: "#dcfce7", text: "#166534" },
     Closed: { bg: "#f1f5f9", text: "#475569" },
     Pending: { bg: "#fef3c7", text: "#92400e" },
     "Pending Review": { bg: "#fef3c7", text: "#92400e" },
     "Pending Payment": { bg: "#fef3c7", text: "#92400e" },
     "Pending Final": { bg: "#fef3c7", text: "#92400e" },
+    "Pending Approval": { bg: "#fef3c7", text: "#92400e" },
+    "Pending Onboarding": { bg: "#fef3c7", text: "#92400e" },
+    "Pending Reactivation": { bg: "#fef3c7", text: "#92400e" },
+    "Pending Dept Approval": { bg: "#fef3c7", text: "#92400e" },
+    "Pending Procurement & Finance": { bg: "#fef3c7", text: "#92400e" },
+    "Pending Senior Mgmt": { bg: "#fef3c7", text: "#92400e" },
     "Under Review": { bg: "#fef3c7", text: "#92400e" },
+    "Under Evaluation": { bg: "#fef3c7", text: "#92400e" },
     Submitted: { bg: "#eff6ff", text: "#1e40af" },
+    "CC Reviewed": { bg: "#eff6ff", text: "#1e40af" },
+    "Procurement Approved": { bg: "#e0e7ff", text: "#3730a3" },
+    "Supervisor Approved": { bg: "#ddd6fe", text: "#5b21b6" },
+    Queried: { bg: "#fee2e2", text: "#991b1b" },
     Rejected: { bg: "#fee2e2", text: "#991b1b" },
     Expired: { bg: "#fee2e2", text: "#991b1b" },
     Overdue: { bg: "#fee2e2", text: "#991b1b" },
+    Blacklisted: { bg: "#fee2e2", text: "#991b1b" },
+    Terminated: { bg: "#fee2e2", text: "#991b1b" },
+    Delayed: { bg: "#fee2e2", text: "#991b1b" },
     Expiring: { bg: "#fff7ed", text: "#9a3412" },
+    "Expiring Soon": { bg: "#fff7ed", text: "#9a3412" },
+    Flagged: { bg: "#fff7ed", text: "#9a3412" },
+    "Under Variation": { bg: "#fff7ed", text: "#9a3412" },
     Draft: { bg: "#f1f5f9", text: "#475569" },
     Suspended: { bg: "#f1f5f9", text: "#475569" },
+    Withdrawn: { bg: "#f1f5f9", text: "#475569" },
+    "Not Started": { bg: "#f1f5f9", text: "#475569" },
     "In Progress": { bg: "#eff6ff", text: "#1e40af" },
     Renew: { bg: "#eff6ff", text: "#1e40af" },
+    Renewed: { bg: "#eff6ff", text: "#1e40af" },
     Review: { bg: "#fef3c7", text: "#92400e" },
     "Urgent Renewal": { bg: "#fee2e2", text: "#991b1b" },
     Awarded: { bg: "#dcfce7", text: "#166534" },
+    "Converted to Sourcing": { bg: "#dcfce7", text: "#166534" },
     "In Review": { bg: "#fef3c7", text: "#92400e" },
     Sent: { bg: "#eff6ff", text: "#1e40af" },
     Cancelled: { bg: "#fee2e2", text: "#991b1b" },
     "On Track": { bg: "#dcfce7", text: "#166534" },
-    "Scope Extension": { bg: "#eff6ff", text: "#1e40af" },
-    "Timeline Extension": { bg: "#fef3c7", text: "#92400e" },
-    "Design Change": { bg: "#fef3c7", text: "#92400e" },
-    "Material Substitution": { bg: "#dcfce7", text: "#166534" },
-    "Quantity Increase": { bg: "#eff6ff", text: "#1e40af" },
-    "Additional Deliverable": { bg: "#eff6ff", text: "#1e40af" },
+    Goods: { bg: "#eff6ff", text: "#1e40af" },
+    Services: { bg: "#f0fdf4", text: "#166534" },
+    Works: { bg: "#fff7ed", text: "#9a3412" },
+    Consultancy: { bg: "#faf5ff", text: "#6b21a8" },
   };
   const s = map[status] || { bg: "#f1f5f9", text: "#475569" };
   return (
@@ -508,95 +457,1155 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-/* ══════════════════════════════════════════════════════════════════════════════
-   PERIOD FILTER & EXPORT BAR (shared across all tabs)
-   ══════════════════════════════════════════════════════════════════════════════ */
-
-function PeriodFilterBar({ periodFilter, setPeriodFilter }: {
-  periodFilter: string;
-  setPeriodFilter: (v: string) => void;
-}) {
-  const [open, setOpen] = useState(false);
+function EmptyState({ message, hint }: { message: string; hint?: string }) {
   return (
-    <div className="flex items-center justify-between bg-white border border-slate-200 rounded-xl px-4 py-2.5">
-      <div className="flex items-center gap-2">
-        <span className="text-[11px] text-slate-500" style={{ fontFamily: F, fontWeight: 600 }}>Period:</span>
-        <div className="relative">
-          <button onClick={() => setOpen(!open)}
-            className="flex items-center gap-2 px-3 py-1.5 border border-slate-200 rounded-lg bg-white hover:bg-slate-50 transition-colors text-[11px] text-slate-700 shadow-sm"
-            style={{ fontFamily: F, fontWeight: 500 }}>
-            <CalendarClock size={13} className="text-purple-700" />
-            {periodFilter}
-            <ChevronDown size={13} className="text-purple-700" />
-          </button>
-          {open && (
-            <>
-              <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-              <div className="absolute left-0 top-full mt-1 w-48 bg-white border border-slate-200 rounded-lg shadow-lg z-20 overflow-hidden">
-                {PERIOD_FILTERS.map(p => (
-                  <button key={p} onClick={() => { setPeriodFilter(p); setOpen(false); }}
-                    className={`w-full px-4 py-2 text-left text-[11px] hover:bg-slate-50 transition-colors ${p === periodFilter ? "bg-indigo-50 text-indigo-700" : "text-slate-700"}`}
-                    style={{ fontFamily: F, fontWeight: p === periodFilter ? 600 : 400 }}>
-                    {p}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
+    <div className="flex flex-col items-center justify-center py-10 px-6 text-center">
+      <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center mb-2">
+        <Inbox size={18} className="text-slate-400" />
       </div>
+      <p className="text-[12px] text-slate-600" style={{ fontFamily: F, fontWeight: 600 }}>{message}</p>
+      {hint && <p className="text-[11px] text-slate-400 mt-1 max-w-md" style={{ fontFamily: F }}>{hint}</p>}
     </div>
   );
 }
 
-/* ══════════════════════════════════════════════════════════════════════════════
-   SUB-TAB BAR (reusable within each report page)
-   ══════════════════════════════════════════════════════════════════════════════ */
+/** A chart panel that swaps to an empty state instead of drawing empty axes. */
+function ChartCard({ title, subtitle, height = 220, isEmpty, emptyMessage, emptyHint, className, children }: {
+  title: string;
+  subtitle?: string;
+  height?: number;
+  isEmpty: boolean;
+  emptyMessage: string;
+  emptyHint?: string;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className={`bg-white border border-slate-200 rounded-xl p-4 ${className ?? ""}`}>
+      <h3 className="text-[13px] text-slate-900" style={{ fontFamily: F, fontWeight: 700 }}>{title}</h3>
+      {subtitle && <p className="text-[10px] text-slate-500 mt-0.5 mb-3" style={{ fontFamily: F }}>{subtitle}</p>}
+      {!subtitle && <div className="mb-4" />}
+      {isEmpty ? (
+        <div style={{ height }} className="flex items-center justify-center">
+          <EmptyState message={emptyMessage} hint={emptyHint} />
+        </div>
+      ) : (
+        <ResponsiveContainer width="100%" height={height}>
+          {children}
+        </ResponsiveContainer>
+      )}
+    </div>
+  );
+}
 
+/**
+ * The per-report sub-tabs. The six render functions address these by index, so
+ * the index stays the public contract and the module-standard tab control is
+ * driven with the index rendered as its key.
+ */
 function SubTabBar({ tabs, active, onChange }: { tabs: string[]; active: number; onChange: (i: number) => void }) {
   return (
-    <div className="flex gap-1 px-6 pt-3 pb-0 bg-white border-b border-slate-200">
-      {tabs.map((t, i) => (
-        <button key={t} onClick={() => onChange(i)}
-          className={`px-4 py-2 rounded-t-lg text-[11px] transition-colors border-b-2 ${active === i ? "bg-indigo-50 text-indigo-700 border-indigo-600" : "text-slate-500 hover:text-slate-700 hover:bg-slate-50 border-transparent"}`}
-          style={{ fontFamily: F, fontWeight: active === i ? 700 : 500 }}>
-          {t}
-        </button>
-      ))}
+    <ProcurementTabBar>
+      <ProcurementTabs
+        tabs={tabs.map((label, i) => ({ key: String(i), label }))}
+        active={String(active)}
+        onChange={key => onChange(Number(key))}
+      />
+    </ProcurementTabBar>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   PERIOD FILTER
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+function PeriodFilterBar({
+  periodFilter, setPeriodFilter, customFrom, setCustomFrom, customTo, setCustomTo, range, scopeNote,
+}: {
+  periodFilter: PeriodFilter;
+  setPeriodFilter: (v: PeriodFilter) => void;
+  customFrom: string;
+  setCustomFrom: (v: string) => void;
+  customTo: string;
+  setCustomTo: (v: string) => void;
+  range: ResolvedRange;
+  scopeNote: string;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4 flex-wrap bg-white border border-slate-200 rounded-xl px-4 py-2.5">
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-[11px] text-slate-500" style={{ fontFamily: F, fontWeight: 600 }}>Period:</span>
+        <ProcurementTabs
+          tabs={PERIOD_FILTERS.map(p => ({ key: p, label: p }))}
+          active={periodFilter}
+          onChange={setPeriodFilter}
+          minWidth={72}
+        />
+
+        {periodFilter === "Custom Range" && (
+          <div className="flex items-center gap-1.5">
+            <input
+              type="date"
+              value={customFrom}
+              max={customTo || undefined}
+              onChange={e => setCustomFrom(e.target.value)}
+              aria-label="Custom range start date"
+              className="px-2 py-1.5 border border-slate-200 rounded-lg text-[11px] text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              style={{ fontFamily: F }}
+            />
+            <span className="text-[11px] text-slate-400" style={{ fontFamily: F }}>to</span>
+            <input
+              type="date"
+              value={customTo}
+              min={customFrom || undefined}
+              onChange={e => setCustomTo(e.target.value)}
+              aria-label="Custom range end date"
+              className="px-2 py-1.5 border border-slate-200 rounded-lg text-[11px] text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              style={{ fontFamily: F }}
+            />
+          </div>
+        )}
+
+        <span className="px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 text-[10px]" style={{ fontFamily: F, fontWeight: 600 }}>
+          {range.label}
+        </span>
+      </div>
+      <span className="text-[10px] text-slate-400" style={{ fontFamily: F }}>{scopeNote}</span>
     </div>
   );
 }
 
-function ExportBar({ tableName }: { tableName: string }) {
+/* ══════════════════════════════════════════════════════════════════════════════
+   TABLES & EXPORT — one column definition drives the screen and every export
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+type ReportRow = Record<string, unknown>;
+
+interface TableColumn {
+  key: string;
+  header: string;
+  /** Plain-text value used by every export; falls back to String(value). */
+  format?: (value: unknown, row: ReportRow) => string;
+  /** Rich on-screen cell. Exports always use `format`, never this. */
+  cell?: (row: ReportRow) => ReactNode;
+  align?: "left" | "center" | "right";
+}
+
+interface ExportMeta {
+  subtitle: string;
+  generatedBy: string;
+}
+
+function cellText(row: ReportRow, col: TableColumn): string {
+  const raw = row[col.key];
+  if (col.format) return col.format(raw, row);
+  if (raw === null || raw === undefined) return "";
+  if (Array.isArray(raw)) return raw.join("; ");
+  return String(raw);
+}
+
+function toExportColumns(columns: TableColumn[]): ExportColumn<ReportRow>[] {
+  return columns.map(({ key, header, format }) => ({ key, header, format }));
+}
+
+function filterRows(rows: ReportRow[], columns: TableColumn[], query: string): ReportRow[] {
+  const q = query.trim().toLowerCase();
+  if (!q) return rows;
+  return rows.filter(row => columns.some(col => cellText(row, col).toLowerCase().includes(q)));
+}
+
+/** Excel / PDF / CSV for the exact rows currently on screen. */
+function ExportBar({ title, columns, rows, meta }: {
+  title: string;
+  columns: TableColumn[];
+  rows: ReportRow[];
+  meta: ExportMeta;
+}) {
+  const allowed = can("report.export");
+  const exportColumns = toExportColumns(columns);
+  const reason = allowed ? undefined : denialReason("report.export");
+
+  const buttons: { label: string; run: () => void }[] = [
+    { label: "Export to Excel", run: () => exportToExcel(title, exportColumns, rows, meta) },
+    { label: "Export to PDF", run: () => exportToPDF(title, exportColumns, rows, meta) },
+    { label: "Export to CSV", run: () => exportToCSV(title, exportColumns, rows) },
+  ];
+
   return (
-    <div className="flex items-center justify-between mb-3">
-      <h3 className="text-[13px] text-slate-900" style={{ fontFamily: F, fontWeight: 700 }}>{tableName}</h3>
+    <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
+      <div>
+        <h3 className="text-[13px] text-slate-900" style={{ fontFamily: F, fontWeight: 700 }}>{title}</h3>
+        <p className="text-[10px] text-slate-500 mt-0.5" style={{ fontFamily: F }}>
+          {fmtNum(rows.length)} record{rows.length === 1 ? "" : "s"} · {meta.subtitle}
+        </p>
+      </div>
       <div className="flex items-center gap-2">
-        <button className="flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 rounded-lg bg-white hover:bg-slate-50 transition-colors text-[11px] text-slate-700" style={{ fontFamily: F, fontWeight: 500 }}>
-          <Download size={12} /> Export to Excel
-        </button>
-        <button className="flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 rounded-lg bg-white hover:bg-slate-50 transition-colors text-[11px] text-slate-700" style={{ fontFamily: F, fontWeight: 500 }}>
-          <Download size={12} /> Export to PDF
-        </button>
+        {buttons.map(b => (
+          <button
+            key={b.label}
+            onClick={allowed ? b.run : undefined}
+            disabled={!allowed}
+            title={reason}
+            className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-lg text-[11px] transition-colors ${allowed
+              ? "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+              : "border-slate-100 bg-slate-50 text-slate-300 cursor-not-allowed"}`}
+            style={{ fontFamily: F, fontWeight: 500 }}>
+            <Download size={12} /> {b.label}
+          </button>
+        ))}
       </div>
     </div>
   );
 }
 
+function ReportTable({ columns, rows, emptyMessage, emptyHint }: {
+  columns: TableColumn[];
+  rows: ReportRow[];
+  emptyMessage: string;
+  emptyHint?: string;
+}) {
+  if (rows.length === 0) {
+    return (
+      <div className="bg-white border border-slate-200 rounded-xl">
+        <EmptyState message={emptyMessage} hint={emptyHint} />
+      </div>
+    );
+  }
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-[11px]" style={{ fontFamily: F }}>
+        <thead>
+          <tr style={{ backgroundColor: BLUE }}>
+            {columns.map(c => (
+              <th key={c.key}
+                className={`px-3 py-2.5 text-white ${c.align === "center" ? "text-center" : c.align === "right" ? "text-right" : "text-left"}`}
+                style={{ fontWeight: 600, fontSize: 11 }}>
+                {c.header}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, i) => (
+            <tr key={String(row.__key ?? i)} className={`border-b border-slate-100 ${i % 2 === 1 ? "bg-slate-50/60" : "bg-white"}`}>
+              {columns.map(c => (
+                <td key={c.key}
+                  className={`px-3 py-2 text-slate-700 ${c.align === "center" ? "text-center" : c.align === "right" ? "text-right" : "text-left"}`}>
+                  {c.cell ? c.cell(row) : cellText(row, c)}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/**
+ * A complete register: export bar, optional inline controls, and the table.
+ * Search is applied here so what is exported is exactly what is displayed.
+ */
+function ReportSection({ title, columns, rows, meta, search, controls, emptyMessage, emptyHint }: {
+  title: string;
+  columns: TableColumn[];
+  rows: ReportRow[];
+  meta: ExportMeta;
+  search: string;
+  controls?: ReactNode;
+  emptyMessage: string;
+  emptyHint?: string;
+}) {
+  const visible = useMemo(() => filterRows(rows, columns, search), [rows, columns, search]);
+  return (
+    <div>
+      <ExportBar title={title} columns={columns} rows={visible} meta={meta} />
+      {controls && <div className="mb-3">{controls}</div>}
+      <ReportTable columns={columns} rows={visible} emptyMessage={emptyMessage} emptyHint={emptyHint} />
+    </div>
+  );
+}
+
+/* ── Reusable cell renderers ──────────────────────────────────────────────── */
+
+const badgeCell = (key: string) => (row: ReportRow) => <StatusBadge status={String(row[key] ?? "—")} />;
+
+const moneyCell = (key: string) => (row: ReportRow) => (
+  <span className="text-slate-900" style={{ fontWeight: 600 }}>{fmt(Number(row[key] ?? 0))}</span>
+);
+
+const refCell = (key: string) => (row: ReportRow) => (
+  <span className="text-indigo-700" style={{ fontWeight: 600 }}>{String(row[key] ?? "—")}</span>
+);
+
+function progressCell(valueKey: string, totalKey: string) {
+  return (row: ReportRow) => {
+    const done = Number(row[valueKey] ?? 0);
+    const total = Number(row[totalKey] ?? 0);
+    const p = pct(done, total);
+    return (
+      <div className="flex items-center gap-2 min-w-[110px]">
+        <div className="flex-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+          <div className="h-full rounded-full" style={{ width: `${Math.min(100, p)}%`, backgroundColor: total > 0 && done === total ? "#10b981" : BLUE }} />
+        </div>
+        <span className="text-[10px] text-slate-500" style={{ fontWeight: 600 }}>{done}/{total}</span>
+      </div>
+    );
+  };
+}
+
+function scoreCell(key: string, good: number, fair: number, suffix = "") {
+  return (row: ReportRow) => {
+    const raw = row[key];
+    if (raw === null || raw === undefined || raw === "") return <span className="text-slate-400">—</span>;
+    const v = Number(raw);
+    return (
+      <span className={v >= good ? "text-green-600" : v >= fair ? "text-amber-600" : "text-red-500"} style={{ fontWeight: 700 }}>
+        {v.toFixed(1)}{suffix}
+      </span>
+    );
+  };
+}
+
+function countCell(key: string, warnAbove = 0) {
+  return (row: ReportRow) => {
+    const v = Number(row[key] ?? 0);
+    return <span className={v > warnAbove ? "text-red-600" : "text-slate-500"} style={{ fontWeight: v > warnAbove ? 700 : 500 }}>{fmtNum(v)}</span>;
+  };
+}
+
+const yesNoCell = (key: string) => (row: ReportRow) => (
+  <span className={row[key] ? "text-green-600" : "text-amber-600"} style={{ fontWeight: 600 }}>{row[key] ? "Yes" : "No"}</span>
+);
+
+const moneyFormat = (v: unknown) => fmt(Number(v ?? 0));
+const pctFormat = (v: unknown) => (v === null || v === undefined || v === "" ? "—" : fmtPct(Number(v)));
+const scoreFormat = (v: unknown) => (v === null || v === undefined || v === "" ? "—" : Number(v).toFixed(1));
+const yesNoFormat = (v: unknown) => (v ? "Yes" : "No");
 /* ══════════════════════════════════════════════════════════════════════════════
    COMPONENT
    ══════════════════════════════════════════════════════════════════════════════ */
 
 export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: TabKey }) {
+  const version = useStoreVersion();
+
   const [activeTab, setActiveTab] = useState<TabKey>(initialTab || "planning");
   useEffect(() => { if (initialTab) setActiveTab(initialTab); }, [initialTab]);
-  const [selectedPeriod, setSelectedPeriod] = useState("Last 3 Months");
+
+  const [selectedPeriod, setSelectedPeriod] = useState<Lookback>("All Time");
   const [showPeriodDropdown, setShowPeriodDropdown] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [reqFilter, setReqFilter] = useState<"All" | "Approved" | "Pending" | "Rejected" | "Draft">("All");
-  const [periodFilter, setPeriodFilter] = useState<string>("Quarterly");
+  const [periodFilter, setPeriodFilter] = useState<PeriodFilter>("All Time");
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo, setCustomTo] = useState(todayISO());
+  const [expiryWindow, setExpiryWindow] = useState<ExpiryWindow>(90);
   const [subTab, setSubTab] = useState(0);
   useEffect(() => { setSubTab(0); }, [activeTab]);
+
+  const range = useMemo(
+    () => resolveRange(periodFilter, customFrom, customTo, selectedPeriod),
+    [periodFilter, customFrom, customTo, selectedPeriod]
+  );
+
+  const currentUser = getCurrentUser();
+  const exportMeta: ExportMeta = useMemo(
+    () => ({ subtitle: `${TAB_LABELS[activeTab]} · ${range.label}`, generatedBy: currentUser.name }),
+    [activeTab, range.label, currentUser.name]
+  );
+
+  /* ── Period-scoped source data ─────────────────────────────────────────── */
+
+  const base = useMemo(() => {
+    void version; // re-derive whenever any store notifies
+
+    const allPlanItems = getProcurementPlanItems();
+    const planItems = allPlanItems.filter(p => withinRange(p.initiationDate, range));
+    const approvedPlanItems = planItems.filter(p => p.approvalStatus === "Approved");
+
+    const allPRs = getGeneratedPRs();
+    const prs = allPRs.filter(p => withinRange(p.dateRequested, range));
+    const pos = getGeneratedPOs().filter(p => withinRange(p.orderDate, range));
+    const sourcing = getSourcingApprovals().filter(s => withinRange(s.dateSubmitted, range));
+
+    const allContracts = getContracts();
+    const contracts = allContracts.filter(c => withinRange(c.startDate || c.awardDate, range));
+    const contractIds = new Set(contracts.map(c => c.id));
+
+    const invoices = getAllInvoices().filter(r => withinRange(invoiceSubmittedDate(r.invoice), range));
+    const changeRequests = getAllChangeRequests().filter(r => withinRange(r.changeRequest.requestedDate, range));
+    const risks = getContractRisks().filter(r => contractIds.has(r.contract.id));
+
+    const deliverables = contracts.flatMap(c => (c.deliverables ?? []).map(deliverable => ({ contract: c, deliverable })));
+
+    const vendors = getVendors();
+    const vendorByName = new Map<string, Vendor>();
+    vendors.forEach(v => vendorByName.set(normaliseName(vendorDisplayName(v)), v));
+    const lookupVendor = (name: string) => vendorByName.get(normaliseName(name || ""));
+
+    // Cross-module links: contract → requisition → plan item.
+    const contractBySourcePR = new Map<string, AwardedContract>();
+    allContracts.forEach(c => { if (c.sourcePR) contractBySourcePR.set(c.sourcePR, c); });
+    const planByPPId = new Map<string, ProcurementPlanItem>();
+    allPlanItems.forEach(p => planByPPId.set(p.ppItemId, p));
+    const prByNumber = new Map<string, GeneratedPR>();
+    allPRs.forEach(p => prByNumber.set(p.requisitionNumber, p));
+
+    /** The funding source a contract is charged to, falling back to its requisition. */
+    const contractFunding = (c: AwardedContract): string => {
+      if (c.fundingSource) return c.fundingSource;
+      const pr = c.sourcePR ? prByNumber.get(c.sourcePR) : undefined;
+      return pr?.fundingSource || "Unattributed";
+    };
+
+    return {
+      allPlanItems, planItems, approvedPlanItems,
+      allPRs, prs, pos, sourcing,
+      allContracts, contracts, invoices, changeRequests, risks, deliverables,
+      vendors, lookupVendor,
+      contractBySourcePR, planByPPId, prByNumber, contractFunding,
+    };
+  }, [version, range]);
+
+  const scopeNote = `${fmtNum(base.prs.length)} requisitions · ${fmtNum(base.contracts.length)} contracts · ${fmtNum(base.invoices.length)} invoices in scope`;
+
+  /* ── Cross-cutting KPI derivations ─────────────────────────────────────── */
+
+  const kpis = useMemo(() => {
+    const prStats = getPRStats();
+
+    const awardToContract = average(
+      base.contracts
+        .map(c => daysBetween(c.awardDate, c.startDate))
+        .filter((d): d is number => d !== null && d >= 0)
+    );
+
+    const contractToPayment = average(
+      base.invoices
+        .map(({ contract, invoice }) => {
+          const paid = invoicePaidDate(invoice);
+          return paid ? daysBetween(contract.startDate, paid) : null;
+        })
+        .filter((d): d is number => d !== null && d >= 0)
+    );
+
+    const paymentDurations = base.invoices
+      .map(r => invoiceDaysToPay(r.invoice))
+      .filter((d): d is number => d !== null && d >= 0);
+    const onTimePayments = paymentDurations.filter(d => d <= KPI_TARGETS.paymentWithinDays).length;
+    const paymentTimeliness = pct(onTimePayments, paymentDurations.length);
+
+    const allDeliverables = base.deliverables.map(d => d.deliverable);
+    const settledDeliverables = allDeliverables.filter(d => d.status === "Accepted" && d.actualDate);
+    const onTimeDeliveries = settledDeliverables.filter(d => (daysBetween(d.dueDate, d.actualDate) ?? 0) <= 0).length;
+    const onTimeDelivery = pct(onTimeDeliveries, settledDeliverables.length);
+
+    const scoredVendors = base.vendors.filter(v => avgScore(v.performance) > 0);
+    const vendorQuality = scoredVendors.length
+      ? (scoredVendors.reduce((s, v) => s + avgScore(v.performance), 0) / scoredVendors.length) * 10
+      : 0;
+    const responsiveness = scoredVendors.length
+      ? (scoredVendors.reduce((s, v) => s + v.performance.responsiveness, 0) / scoredVendors.length) * 10
+      : 0;
+
+    const complianceTotals = base.contracts.reduce(
+      (acc, c) => {
+        const checks = complianceChecks(c);
+        COMPLIANCE_METRICS.forEach(m => { acc.total += 1; if (checks[m]) acc.passed += 1; });
+        return acc;
+      },
+      { passed: 0, total: 0 }
+    );
+    const compliance = pct(complianceTotals.passed, complianceTotals.total);
+
+    // Procurement efficiency: approved plan lines that reached award or beyond.
+    const executedStates = ["Awarded", "Contracted", "Completed"];
+    const executed = base.approvedPlanItems.filter(p => executedStates.includes(p.status)).length;
+    const executionRate = pct(executed, base.approvedPlanItems.length);
+
+    // Cost savings, only where a plan line can be traced through to an award.
+    const savingsPairs = base.approvedPlanItems
+      .map(item => {
+        const pr = base.allPRs.find(p => p.linkedPlanItemId === item.ppItemId);
+        const contract = pr ? base.contractBySourcePR.get(pr.requisitionNumber) : undefined;
+        return contract ? { planned: item.estimatedValue, awarded: contract.value } : null;
+      })
+      .filter((p): p is { planned: number; awarded: number } => p !== null);
+    const plannedTotal = savingsPairs.reduce((s, p) => s + p.planned, 0);
+    const awardedTotal = savingsPairs.reduce((s, p) => s + p.awarded, 0);
+    const totalSavings = plannedTotal - awardedTotal;
+    const avgCostSavings = plannedTotal > 0 ? pct(totalSavings, plannedTotal) : null;
+
+    const cycleScore = prStats.avgCycleTimeDays > 0
+      ? Math.min(100, pct(KPI_TARGETS.reqToAwardDays, prStats.avgCycleTimeDays))
+      : 0;
+    const savingsScore = avgCostSavings === null ? 0 : Math.max(0, Math.min(100, avgCostSavings * 10));
+
+    const radar = [
+      { metric: "Cycle Time", score: +cycleScore.toFixed(1), target: KPI_TARGETS.cycleTime },
+      { metric: "Cost Savings", score: +savingsScore.toFixed(1), target: KPI_TARGETS.costSavings },
+      { metric: "Vendor Quality", score: +vendorQuality.toFixed(1), target: KPI_TARGETS.vendorQuality },
+      { metric: "On-Time Delivery", score: +onTimeDelivery.toFixed(1), target: KPI_TARGETS.onTimeDelivery },
+      { metric: "Compliance", score: +compliance.toFixed(1), target: KPI_TARGETS.compliance },
+      { metric: "Payment Timeliness", score: +paymentTimeliness.toFixed(1), target: KPI_TARGETS.paymentTimeliness },
+    ];
+
+    return {
+      prStats,
+      reqToAward: prStats.avgCycleTimeDays > 0 ? prStats.avgCycleTimeDays : null,
+      awardToContract,
+      contractToPayment,
+      paymentTimeliness,
+      paidInvoiceCount: paymentDurations.length,
+      onTimeDelivery,
+      settledDeliverableCount: settledDeliverables.length,
+      vendorQuality,
+      responsiveness,
+      compliance,
+      executed,
+      plannedCount: base.approvedPlanItems.length,
+      executionRate,
+      totalSavings,
+      avgCostSavings,
+      savingsSampleSize: savingsPairs.length,
+      radar,
+    };
+  }, [base]);
+  /* ── Planning & Orders derivations ─────────────────────────────────────── */
+
+  const planning = useMemo(() => {
+    const months = monthAxis([
+      base.planItems.map(p => p.initiationDate),
+      base.prs.map(p => p.dateRequested),
+      base.pos.map(p => p.orderDate),
+    ]);
+
+    const pipelineSeries = months.map(key => ({
+      month: monthLabel(key),
+      planned: base.planItems.filter(p => inMonth(p.initiationDate, key)).length,
+      initiated: base.prs.filter(p => inMonth(p.dateRequested, key)).length,
+      completed: base.pos.filter(p => inMonth(p.orderDate, key)).length,
+    }));
+
+    const poTrend = months.map(key => {
+      const inBucket = base.pos.filter(p => inMonth(p.orderDate, key));
+      return {
+        month: monthLabel(key),
+        orders: inBucket.length,
+        value: inBucket.reduce((s, p) => s + p.amount, 0),
+      };
+    });
+
+    const statusColors: Record<string, string> = {
+      Approved: "#10b981", Pending: "#f59e0b", Rejected: "#ef4444", Draft: "#94a3b8",
+    };
+    const requisitionStatus = (["Approved", "Pending", "Rejected", "Draft"] as const)
+      .map(name => ({ name, value: base.prs.filter(p => prBucket(p) === name).length, color: statusColors[name] }))
+      .filter(d => d.value > 0);
+
+    // Planned vs committed vs spent. Committed counts awarded contracts plus
+    // approved requisitions that have not yet converted into one.
+    const departments = new Set<string>();
+    base.approvedPlanItems.forEach(p => departments.add(p.department || "Unassigned"));
+    base.contracts.forEach(c => departments.add(c.department || "Unassigned"));
+    base.prs.forEach(p => departments.add(p.department || "Unassigned"));
+
+    const budgetUtilization = Array.from(departments)
+      .map(department => {
+        const planned = base.approvedPlanItems
+          .filter(p => (p.department || "Unassigned") === department)
+          .reduce((s, p) => s + p.estimatedValue, 0);
+        const deptContracts = base.contracts.filter(c => (c.department || "Unassigned") === department);
+        const contractCommitted = deptContracts.reduce((s, c) => s + c.value, 0);
+        const uncontractedPRs = base.prs
+          .filter(p => (p.department || "Unassigned") === department)
+          .filter(p => prBucket(p) === "Approved" && !base.contractBySourcePR.has(p.requisitionNumber));
+        const committed = contractCommitted + uncontractedPRs.reduce((s, p) => s + p.estimatedCost, 0);
+        const spent = deptContracts.reduce((s, c) => s + getContractFinancials(c).totalPaid, 0);
+        return { department, planned, committed, spent };
+      })
+      .filter(d => d.planned > 0 || d.committed > 0 || d.spent > 0)
+      .sort((a, b) => b.planned + b.committed - (a.planned + a.committed));
+
+    const totalPlanned = budgetUtilization.reduce((s, d) => s + d.planned, 0);
+    const totalCommitted = budgetUtilization.reduce((s, d) => s + d.committed, 0);
+    const totalSpent = budgetUtilization.reduce((s, d) => s + d.spent, 0);
+
+    const planStatusOrder = ["Not Started", "In Progress", "Under Evaluation", "Awarded", "Contracted", "Completed", "Delayed"];
+    const planStatusBreakdown = planStatusOrder
+      .map((name, i) => ({ name, value: base.planItems.filter(p => p.status === name).length, color: PALETTE[i % PALETTE.length] }))
+      .filter(d => d.value > 0);
+
+    const methodBreakdown = Array.from(groupBy(base.planItems, p => p.procurementMethod))
+      .map(([name, items]) => ({ name, count: items.length, value: items.reduce((s, p) => s + p.estimatedValue, 0) }))
+      .sort((a, b) => b.count - a.count);
+
+    const cycleStages = [
+      { stage: "Requisition to Award", avg: kpis.reqToAward ?? 0, target: KPI_TARGETS.reqToAwardDays, measured: kpis.reqToAward !== null },
+      { stage: "Award to Contract", avg: kpis.awardToContract ?? 0, target: KPI_TARGETS.awardToContractDays, measured: kpis.awardToContract !== null },
+      { stage: "Contract to Payment", avg: kpis.contractToPayment ?? 0, target: KPI_TARGETS.contractToPaymentDays, measured: kpis.contractToPayment !== null },
+    ];
+
+    const poValue = base.pos.reduce((s, p) => s + p.amount, 0);
+
+    return {
+      pipelineSeries, poTrend, requisitionStatus, budgetUtilization,
+      totalPlanned, totalCommitted, totalSpent,
+      planStatusBreakdown, methodBreakdown, cycleStages, poValue,
+    };
+  }, [base, kpis]);
+
+  /** Forward-looking plan pipeline; anchored on today, not the report period. */
+  const pipeline = useMemo(() => {
+    void version;
+    const buckets = EXPIRY_WINDOWS.map(days => ({ days, items: getPlanPipeline(days) }));
+    const bottlenecks = getPlanBottlenecks();
+    return {
+      buckets,
+      upcoming: buckets[buckets.length - 1].items,
+      bottlenecks,
+    };
+  }, [version]);
+
+  /* ── Sourcing derivations ──────────────────────────────────────────────── */
+
+  const sourcingData = useMemo(() => {
+    const statusColors: Record<string, string> = { Approved: "#10b981", Pending: "#f59e0b", Rejected: "#ef4444" };
+    const rfqStatus = (["Approved", "Pending", "Rejected"] as const)
+      .map(name => ({ name, value: base.sourcing.filter(s => s.approvalStatus === name).length, color: statusColors[name] }))
+      .filter(d => d.value > 0);
+
+    // Bid submission by sourcing project: cases run vs cases carried to award.
+    const byProject = Array.from(groupBy(base.sourcing, s => s.projectName || "Unassigned"))
+      .map(([project, rows]) => {
+        const submitted = rows.length;
+        const awarded = rows.filter(r => r.approvalStatus === "Approved").length;
+        return {
+          project,
+          shortLabel: project.length > 18 ? `${project.slice(0, 18)}…` : project,
+          invited: submitted,
+          submitted: awarded,
+          value: rows.reduce((s, r) => s + r.estimatedValue, 0),
+          rate: pct(awarded, submitted),
+        };
+      })
+      .sort((a, b) => b.invited - a.invited);
+
+    const months = monthAxis([base.invoices.map(r => invoiceSubmittedDate(r.invoice))]);
+    let runningOutstanding = 0;
+    const invoiceTrend = months.map(key => {
+      const bucket = base.invoices.filter(r => inMonth(invoiceSubmittedDate(r.invoice), key));
+      const invoiced = bucket.reduce((s, r) => s + r.invoice.amount, 0);
+      const paid = base.invoices
+        .filter(r => inMonth(invoicePaidDate(r.invoice), key))
+        .reduce((s, r) => s + (r.invoice.amountPaid ?? r.invoice.amount), 0);
+      runningOutstanding += invoiced - paid;
+      return { month: monthLabel(key), invoiced, paid, outstanding: Math.max(0, runningOutstanding) };
+    });
+
+    const totalInvoiced = base.invoices.reduce((s, r) => s + r.invoice.amount, 0);
+    const avgAwardRate = average(byProject.map(p => p.rate));
+
+    return { rfqStatus, byProject, invoiceTrend, totalInvoiced, avgAwardRate };
+  }, [base]);
+
+  /** Contracts approaching — or past — their end date, with the window control. */
+  const expiry = useMemo(() => {
+    void version;
+    const rows = base.allContracts
+      .filter(c => c.status !== "Closed")
+      .map(c => ({ contract: c, daysLeft: daysUntil(c.endDate) }))
+      .filter(r => r.daysLeft <= expiryWindow)
+      .sort((a, b) => a.daysLeft - b.daysLeft);
+    return {
+      rows,
+      expiringSoon: getExpiringContracts(expiryWindow),
+      overdue: rows.filter(r => r.daysLeft < 0).length,
+    };
+  }, [base.allContracts, expiryWindow, version]);
+  /* ── Vendor & KPI derivations ──────────────────────────────────────────── */
+
+  const vendorData = useMemo(() => {
+    const prequalCounts = Array.from(groupBy(base.vendors, v => prequalBucket(v)))
+      .map(([name, list]) => ({ name, value: list.length, color: PREQUAL_COLORS[name] ?? "#94a3b8" }))
+      .sort((a, b) => b.value - a.value);
+
+    const byCategory = getVendorsByCategory().map((c, i) => ({ ...c, color: PALETTE[i % PALETTE.length] }));
+    const blocked = getBlockedVendors();
+    const docIssues = getVendorsWithDocumentIssues();
+    const docIssueIds = new Set(docIssues.map(d => d.vendor.id));
+
+    /** Every counterparty seen on a contract, invoice or sourcing case. */
+    interface Party {
+      name: string;
+      vendor?: Vendor;
+      contracts: AwardedContract[];
+      invoices: ContractInvoice[];
+      sourcingCases: number;
+      sourcingWins: number;
+    }
+    const parties = new Map<string, Party>();
+    const partyFor = (name: string): Party => {
+      const key = normaliseName(name) || name.toLowerCase();
+      let entry = parties.get(key);
+      if (!entry) {
+        entry = { name, vendor: base.lookupVendor(name), contracts: [], invoices: [], sourcingCases: 0, sourcingWins: 0 };
+        parties.set(key, entry);
+      }
+      return entry;
+    };
+    base.vendors.forEach(v => partyFor(vendorDisplayName(v)));
+    base.contracts.forEach(c => partyFor(c.party).contracts.push(c));
+    base.invoices.forEach(r => partyFor(r.invoice.vendor || r.contract.party).invoices.push(r.invoice));
+    base.sourcing.forEach(s => {
+      const p = partyFor(s.vendor);
+      p.sourcingCases += 1;
+      if (s.approvalStatus === "Approved") p.sourcingWins += 1;
+    });
+
+    const partyList = Array.from(parties.values());
+
+    const participation = partyList
+      .map(p => {
+        const totalValue = p.contracts.reduce((s, c) => s + c.value, 0);
+        return {
+          vendor: p.name,
+          bidsSubmitted: p.sourcingCases,
+          awardsWon: Math.max(p.sourcingWins, p.contracts.length),
+          winRate: pct(Math.max(p.sourcingWins, p.contracts.length), p.sourcingCases),
+          totalContractValue: totalValue,
+          activeContracts: p.contracts.filter(c => c.status === "Active" || c.status === "Expiring Soon" || c.status === "Under Variation").length,
+          completedContracts: p.contracts.filter(c => c.status === "Closed" || c.status === "Expired" || c.status === "Renewed").length,
+        };
+      })
+      .filter(p => p.bidsSubmitted > 0 || p.awardsWon > 0)
+      .sort((a, b) => b.totalContractValue - a.totalContractValue);
+
+    const payments = partyList
+      .map(p => {
+        const paid = p.invoices.filter(i => i.status === "Paid");
+        const queried = p.invoices.filter(i => i.status === "Queried");
+        const pending = p.invoices.filter(i => i.status !== "Paid" && i.status !== "Queried");
+        const overdue = pending.filter(i => (daysBetween(invoiceSubmittedDate(i), todayISO()) ?? 0) > KPI_TARGETS.paymentWithinDays);
+        const totalInvoiced = p.invoices.reduce((s, i) => s + i.amount, 0);
+        const totalPaid = paid.reduce((s, i) => s + (i.amountPaid ?? i.amount), 0);
+        const durations = p.invoices.map(invoiceDaysToPay).filter((d): d is number => d !== null && d >= 0);
+        return {
+          vendor: p.name,
+          invoicesSubmitted: p.invoices.length,
+          paid: paid.length,
+          pending: pending.length,
+          queried: queried.length,
+          overdue: overdue.length,
+          totalInvoiced,
+          totalPaid,
+          outstanding: totalInvoiced - totalPaid,
+          avgDaysToPay: average(durations),
+        };
+      })
+      .filter(p => p.invoicesSubmitted > 0)
+      .sort((a, b) => b.totalInvoiced - a.totalInvoiced);
+
+    const engagement = partyList
+      .flatMap(p =>
+        Array.from(groupBy(p.contracts, c => base.contractFunding(c))).map(([donor, list]) => {
+          const evals = list.map(c => latestEvaluation(c)).filter((e): e is PerformanceEvaluation => !!e);
+          const perfFromEvals = average(evals.map(e => e.overallScore * 10));
+          const perfFromVendor = p.vendor && avgScore(p.vendor.performance) > 0 ? avgScore(p.vendor.performance) * 10 : null;
+          return {
+            vendor: p.name,
+            donor,
+            contracts: list.length,
+            totalValue: list.reduce((s, c) => s + c.value, 0),
+            paid: list.reduce((s, c) => s + getContractFinancials(c).totalPaid, 0),
+            avgPerformance: perfFromEvals ?? perfFromVendor,
+          };
+        })
+      )
+      .sort((a, b) => b.totalValue - a.totalValue);
+
+    const master = base.vendors.map(v => {
+      const p = parties.get(normaliseName(vendorDisplayName(v)));
+      const contractValue = p ? p.contracts.reduce((s, c) => s + c.value, 0) : 0;
+      return {
+        vendor: v,
+        name: vendorDisplayName(v),
+        contractsInPeriod: p?.contracts.length ?? 0,
+        contractValue,
+        lifetimeContracts: v.contractHistory?.length ?? v.totalOrders,
+        lifetimeSpend: v.totalSpend,
+        score: avgScore(v.performance),
+        evaluations: v.evaluations?.length ?? 0,
+        prequal: prequalBucket(v),
+        expired: getExpiredDocs(v),
+        missing: getMissingDocs(v),
+        hasDocIssue: docIssueIds.has(v.id),
+        eligibility: checkSourcingEligibility(v.id),
+      };
+    });
+
+    // Approval-stage cycle time, bucketed by the month the requisition was raised.
+    const cycleMonths = monthAxis([base.prs.map(p => p.dateRequested)]);
+    const cycleTrend = cycleMonths
+      .map(key => {
+        const bucket = base.prs.filter(p => inMonth(p.dateRequested, key));
+        const stageValue = (pick: (pr: GeneratedPR) => number | null) =>
+          average(bucket.map(pick).filter((d): d is number => d !== null && d >= 0)) ?? 0;
+
+        const reqToApproval = stageValue(pr => {
+          const submitted = pr.approvalHistory.find(h => h.action === "Submitted")?.date;
+          const dept = pr.approvalHistory.find(h => h.action === "Approved")?.date;
+          return daysBetween(submitted, dept);
+        });
+        const approvalToSourcing = stageValue(pr => {
+          const dept = pr.approvalHistory.find(h => h.action === "Approved")?.date;
+          const final = [...pr.approvalHistory].reverse().find(h => h.action === "Approved")?.date;
+          return dept && final && dept !== final ? daysBetween(dept, final) : null;
+        });
+        const sourcingToContract = stageValue(pr => {
+          const contract = base.contractBySourcePR.get(pr.requisitionNumber);
+          const final = [...pr.approvalHistory].reverse().find(h => h.action === "Approved")?.date;
+          return contract ? daysBetween(final, contract.startDate) : null;
+        });
+
+        return {
+          month: monthLabel(key),
+          reqToApproval: +reqToApproval.toFixed(1),
+          approvalToSourcing: +approvalToSourcing.toFixed(1),
+          sourcingToContract: +sourcingToContract.toFixed(1),
+          total: +(reqToApproval + approvalToSourcing + sourcingToContract).toFixed(1),
+        };
+      })
+      .filter(m => m.total > 0);
+
+    // Payment timeliness by the month the invoice was settled.
+    const paymentMonths = monthAxis([base.invoices.map(r => invoicePaidDate(r.invoice))]);
+    const paymentTrend = paymentMonths.map(key => {
+      const bucket = base.invoices.filter(r => inMonth(invoicePaidDate(r.invoice), key));
+      const durations = bucket.map(r => invoiceDaysToPay(r.invoice)).filter((d): d is number => d !== null);
+      const onTime = durations.filter(d => d <= KPI_TARGETS.paymentWithinDays).length;
+      const late = durations.filter(d => d > KPI_TARGETS.paymentWithinDays && d <= KPI_TARGETS.paymentWithinDays * 2).length;
+      const overdue = durations.filter(d => d > KPI_TARGETS.paymentWithinDays * 2).length;
+      const total = durations.length || 1;
+      return {
+        month: monthLabel(key),
+        onTime: +pct(onTime, total).toFixed(1),
+        late: +pct(late, total).toFixed(1),
+        overdue: +pct(overdue, total).toFixed(1),
+      };
+    });
+
+    return {
+      prequalCounts, byCategory, blocked, docIssues, participation, payments, engagement,
+      master, cycleTrend, paymentTrend,
+      prequalifiedCount: base.vendors.filter(v => prequalBucket(v) === "Prequalified").length,
+    };
+  }, [base]);
+
+  /* ── Donor / funding-source derivations ────────────────────────────────── */
+
+  const donorData = useMemo(() => {
+    const donors = new Set<string>();
+    base.approvedPlanItems.forEach(p => donors.add(p.fundingSource || "Unattributed"));
+    base.prs.forEach(p => donors.add(p.fundingSource || "Unattributed"));
+    base.contracts.forEach(c => donors.add(base.contractFunding(c)));
+
+    const summary = Array.from(donors)
+      .map((donor, i) => {
+        const planItems = base.approvedPlanItems.filter(p => (p.fundingSource || "Unattributed") === donor);
+        const prs = base.prs.filter(p => (p.fundingSource || "Unattributed") === donor);
+        const contracts = base.contracts.filter(c => base.contractFunding(c) === donor);
+        const activities = [
+          ...planItems.map(p => categoryFamily(p.category)),
+          ...contracts.map(c => categoryFamily(c.category)),
+        ];
+        const checks = contracts.reduce(
+          (acc, c) => {
+            const result = complianceChecks(c);
+            COMPLIANCE_METRICS.forEach(m => { acc.total += 1; if (result[m]) acc.passed += 1; else acc.issues += 1; });
+            return acc;
+          },
+          { passed: 0, total: 0, issues: 0 }
+        );
+
+        const planned = planItems.reduce((s, p) => s + p.estimatedValue, 0);
+        const contractCommitted = contracts.reduce((s, c) => s + c.value, 0);
+        const uncontracted = prs
+          .filter(p => prBucket(p) === "Approved" && !base.contractBySourcePR.has(p.requisitionNumber))
+          .reduce((s, p) => s + p.estimatedCost, 0);
+        const spent = contracts.reduce((s, c) => s + getContractFinancials(c).totalPaid, 0);
+
+        return {
+          donor,
+          color: PALETTE[i % PALETTE.length],
+          projects: planItems.length + contracts.length,
+          goods: activities.filter(a => a === "goods").length,
+          services: activities.filter(a => a === "services").length,
+          works: activities.filter(a => a === "works").length,
+          totalProcured: contractCommitted,
+          openComp: contracts.filter(c => methodFamily(c.method) === "Open Competition").length,
+          limited: contracts.filter(c => methodFamily(c.method) === "Limited / RFQ").length,
+          direct: contracts.filter(c => methodFamily(c.method) === "Direct").length,
+          approved: prs.filter(p => prBucket(p) === "Approved").length,
+          pending: prs.filter(p => prBucket(p) === "Pending").length,
+          rejected: prs.filter(p => prBucket(p) === "Rejected").length,
+          pendingApprovals:
+            prs.filter(p => prBucket(p) === "Pending").length +
+            base.planItems.filter(p => (p.fundingSource || "Unattributed") === donor && p.approvalStatus.startsWith("Pending")).length,
+          planned,
+          committed: contractCommitted + uncontracted,
+          spent,
+          utilisation: pct(spent, planned || contractCommitted),
+          compliancePct: pct(checks.passed, checks.total),
+          issues: checks.issues,
+          contractCount: contracts.length,
+        };
+      })
+      .filter(d => d.projects > 0 || d.approved + d.pending + d.rejected > 0)
+      .sort((a, b) => b.totalProcured - a.totalProcured || b.projects - a.projects);
+
+    const spendChart = summary
+      .filter(d => d.spent > 0)
+      .map(d => ({ donor: d.donor, spend: d.spent, color: d.color }));
+
+    const countChart = summary
+      .filter(d => d.projects > 0)
+      .map(d => ({ name: d.donor, value: d.projects, color: d.color }));
+
+    // Compliance metric matrix, per donor, for the radar comparison.
+    const complianceRows = summary.filter(d => d.contractCount > 0);
+    const radar = COMPLIANCE_METRICS.map(metric => {
+      const row: Record<string, string | number> = { metric };
+      complianceRows.forEach(d => {
+        const contracts = base.contracts.filter(c => base.contractFunding(c) === d.donor);
+        const passed = contracts.filter(c => complianceChecks(c)[metric]).length;
+        row[d.donor] = +pct(passed, contracts.length).toFixed(1);
+      });
+      return row;
+    });
+
+    return {
+      summary, spendChart, countChart, radar,
+      donorsWithContracts: complianceRows,
+      totalPlanned: summary.reduce((s, d) => s + d.planned, 0),
+      totalCommitted: summary.reduce((s, d) => s + d.committed, 0),
+      totalSpent: summary.reduce((s, d) => s + d.spent, 0),
+      totalActivities: summary.reduce((s, d) => s + d.projects, 0),
+      totalPendingApprovals: summary.reduce((s, d) => s + d.pendingApprovals, 0),
+    };
+  }, [base]);
+  /* ── Contract derivations ──────────────────────────────────────────────── */
+
+  const contractData = useMemo(() => {
+    void version;
+
+    const withFinancials = base.contracts.map(c => {
+      const financials = getContractFinancials(c);
+      const deliverables = c.deliverables ?? [];
+      const accepted = deliverables.filter(d => d.status === "Accepted").length;
+      const invoices = c.invoices ?? [];
+      const overdueInvoices = invoices.filter(
+        i => i.status !== "Paid" && i.status !== "Queried" && (daysBetween(invoiceSubmittedDate(i), todayISO()) ?? 0) > KPI_TARGETS.paymentWithinDays
+      ).length;
+      const paymentStatus = overdueInvoices > 0
+        ? "Overdue"
+        : financials.pending > 0
+          ? "Pending Final"
+          : "On Track";
+      return {
+        contract: c,
+        funding: base.contractFunding(c),
+        totalPaid: financials.totalPaid,
+        pending: financials.pending,
+        balance: financials.balance,
+        deliverablesTotal: deliverables.length,
+        deliverablesAccepted: accepted,
+        invoiceCount: invoices.length,
+        paymentStatus,
+      };
+    });
+
+    const statusOrder = Array.from(new Set(withFinancials.map(r => r.contract.status)));
+    const valueByStatus = statusOrder.map(status => {
+      const rows = withFinancials.filter(r => r.contract.status === status);
+      return {
+        status,
+        goods: rows.filter(r => categoryFamily(r.contract.category) === "goods").reduce((s, r) => s + r.contract.value, 0),
+        services: rows.filter(r => categoryFamily(r.contract.category) === "services").reduce((s, r) => s + r.contract.value, 0),
+        works: rows.filter(r => categoryFamily(r.contract.category) === "works").reduce((s, r) => s + r.contract.value, 0),
+      };
+    });
+
+    const valueByCategory = Array.from(groupBy(base.contracts, c => c.category))
+      .map(([name, list], i) => ({ name, value: list.reduce((s, c) => s + c.value, 0), color: PALETTE[i % PALETTE.length] }));
+
+    const valueByFunding = Array.from(groupBy(base.contracts, c => base.contractFunding(c)))
+      .map(([name, list]) => ({ name, value: list.reduce((s, c) => s + c.value, 0) }))
+      .sort((a, b) => b.value - a.value);
+
+    const overdueDeliverables = getOverdueDeliverables();
+    const upcomingDeliverables = getUpcomingDeliverables(30);
+    const overdueIds = new Set(overdueDeliverables.map(d => d.deliverable.id));
+    const upcomingIds = new Set(upcomingDeliverables.map(d => d.deliverable.id));
+
+    const deliverableRows = base.deliverables.map(({ contract, deliverable }) => {
+      const state = deliverableState(deliverable);
+      const overdue = overdueDeliverables.find(o => o.deliverable.id === deliverable.id);
+      const upcoming = upcomingDeliverables.find(u => u.deliverable.id === deliverable.id);
+      return {
+        contract, deliverable, state,
+        daysOverdue: overdue?.daysOverdue ?? 0,
+        daysLeft: upcoming?.daysLeft ?? null,
+        flag: overdueIds.has(deliverable.id) ? "Overdue" : upcomingIds.has(deliverable.id) ? "Due soon" : "—",
+      };
+    });
+
+    const scorecard = base.contracts
+      .map(c => {
+        const ev = latestEvaluation(c);
+        if (!ev) return null;
+        return {
+          contract: c,
+          evaluation: ev,
+          quality: criterionScore(ev, /quality/i),
+          timeliness: criterionScore(ev, /timeli/i),
+          cost: criterionScore(ev, /cost/i),
+          compliance: criterionScore(ev, /complian/i),
+          overall: ev.overallScore,
+        };
+      })
+      .filter((r): r is NonNullable<typeof r> => r !== null)
+      .sort((a, b) => b.overall - a.overall);
+
+    const closeOut = base.contracts.map(c => {
+      const checks = verifyCloseOutReadiness(c);
+      const satisfied = checks.filter(k => k.satisfied).length;
+      const find = (key: string) => checks.find(k => k.key === key)?.satisfied ?? false;
+      return {
+        contract: c,
+        checks,
+        satisfied,
+        total: checks.length,
+        deliverablesDone: find("allDeliverablesCompleted"),
+        paymentsDone: find("allPaymentsCompleted"),
+        performanceDone: find("performanceFinalized"),
+        docsDone: find("allDocsUploaded"),
+        status: c.status === "Closed"
+          ? "Closed"
+          : satisfied === checks.length
+            ? "Pending Review"
+            : find("allDeliverablesCompleted") && !find("allPaymentsCompleted")
+              ? "Pending Payment"
+              : "In Progress",
+      };
+    });
+
+    const variationImpact = base.changeRequests.reduce((s, r) => s + (r.changeRequest.estimatedCostImpact || 0), 0);
+
+    return {
+      withFinancials, valueByStatus, valueByCategory, valueByFunding,
+      deliverableRows, overdueDeliverables, upcomingDeliverables,
+      scorecard, closeOut, variationImpact,
+      totalValue: base.contracts.reduce((s, c) => s + c.value, 0),
+      totalPaid: withFinancials.reduce((s, r) => s + r.totalPaid, 0),
+      activeCount: base.contracts.filter(c => c.status === "Active").length,
+    };
+  }, [base, version]);
+
+  /* ── Combined (vendor × donor) derivations ─────────────────────────────── */
+
+  const combined = useMemo(() => {
+    const vendorDonorPerformance = base.contracts.map(c => {
+      const vendor = base.lookupVendor(c.party);
+      const ev = latestEvaluation(c);
+      const score = ev ? ev.overallScore * 10 : vendor && avgScore(vendor.performance) > 0 ? avgScore(vendor.performance) * 10 : null;
+      return {
+        vendor: c.party,
+        donor: base.contractFunding(c),
+        contract: c.contractNumber,
+        value: c.value,
+        paid: getContractFinancials(c).totalPaid,
+        performanceScore: score,
+        evaluated: !!ev,
+        status: c.status,
+      };
+    }).sort((a, b) => (b.performanceScore ?? -1) - (a.performanceScore ?? -1));
+
+    const spendByDonorVendor = Array.from(
+      groupBy(base.contracts, c => `${base.contractFunding(c)}||${c.party}`)
+    )
+      .map(([key, list]) => {
+        const [donor, vendor] = key.split("||");
+        const invoiced = list.reduce(
+          (s, c) => s + (c.invoices ?? []).reduce((t, i) => t + i.amount, 0), 0
+        );
+        const paid = list.reduce((s, c) => s + getContractFinancials(c).totalPaid, 0);
+        return {
+          donor, vendor,
+          contracts: list.length,
+          awarded: list.reduce((s, c) => s + c.value, 0),
+          invoiced,
+          paid,
+          outstanding: invoiced - paid,
+        };
+      })
+      .sort((a, b) => b.awarded - a.awarded);
+
+    const donorNames = Array.from(new Set(spendByDonorVendor.map(r => r.donor)));
+    const vendorNames = Array.from(new Set(spendByDonorVendor.map(r => r.vendor)));
+    const spendStack = donorNames.map(donor => {
+      const row: Record<string, string | number> = { donor };
+      vendorNames.forEach(v => {
+        row[v] = spendByDonorVendor.filter(r => r.donor === donor && r.vendor === v).reduce((s, r) => s + r.paid, 0);
+      });
+      return row;
+    });
+
+    const topPerformers = vendorData.participation
+      .map(p => {
+        const rows = vendorDonorPerformance.filter(r => normaliseName(r.vendor) === normaliseName(p.vendor));
+        const scores = rows.map(r => r.performanceScore).filter((s): s is number => s !== null);
+        const donors = Array.from(new Set(rows.map(r => r.donor)));
+        return {
+          vendor: p.vendor,
+          contractsWon: p.awardsWon,
+          totalValue: p.totalContractValue,
+          avgScore: average(scores),
+          donors,
+          winRate: p.winRate,
+        };
+      })
+      .filter(p => p.contractsWon > 0)
+      .sort((a, b) => (b.avgScore ?? -1) - (a.avgScore ?? -1) || b.totalValue - a.totalValue);
+
+    const topPerFunding = donorNames
+      .map(donor => {
+        const candidates = spendByDonorVendor.filter(r => r.donor === donor);
+        const ranked = candidates
+          .map(c => {
+            const scores = vendorDonorPerformance
+              .filter(r => r.donor === donor && r.vendor === c.vendor)
+              .map(r => r.performanceScore)
+              .filter((s): s is number => s !== null);
+            return { ...c, score: average(scores) };
+          })
+          .sort((a, b) => (b.score ?? -1) - (a.score ?? -1) || b.awarded - a.awarded);
+        return ranked[0] ? { ...ranked[0], donor } : null;
+      })
+      .filter((r): r is NonNullable<typeof r> => r !== null);
+
+    const scored = vendorDonorPerformance.filter(r => r.performanceScore !== null);
+
+    return {
+      vendorDonorPerformance, spendByDonorVendor, spendStack, vendorNames,
+      topPerformers, topPerFunding,
+      avgPerformance: average(scored.map(r => r.performanceScore as number)),
+      scoredCount: scored.length,
+    };
+  }, [base, vendorData.participation]);
+  /* ══════════════════════════════════════════════════════════════════════════
+     RENDER
+     ══════════════════════════════════════════════════════════════════════════ */
 
   const screenTitle: Record<TabKey, { title: string; subtitle: string }> = {
     planning: { title: "Planning & Orders Report", subtitle: "Requisition pipeline, budget utilization, and purchase order trends" },
@@ -609,1585 +1618,1345 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
 
   const { title, subtitle } = screenTitle[activeTab];
 
-  /* ── Tab 1: Planning & Orders ────────────────────────────────────────────── */
+  const periodBar = (
+    <PeriodFilterBar
+      periodFilter={periodFilter}
+      setPeriodFilter={setPeriodFilter}
+      customFrom={customFrom}
+      setCustomFrom={setCustomFrom}
+      customTo={customTo}
+      setCustomTo={setCustomTo}
+      range={range}
+      scopeNote={scopeNote}
+    />
+  );
 
-  const planningTabs = ["Charts & Statistics", "Requisition Register", "Procurement Plan Status", "Efficiency Metrics"];
+  const noDataHint = "Adjust the period filter or capture activity in the upstream modules.";
+
+  const expiryControl = (
+    <div className="flex items-center gap-2">
+      <span className="text-[10px] text-slate-500 uppercase tracking-wider" style={{ fontFamily: F }}>Horizon:</span>
+      <ProcurementTabs
+        tabs={EXPIRY_WINDOWS.map(w => ({ key: String(w), label: `${w} days` }))}
+        active={String(expiryWindow)}
+        onChange={key => setExpiryWindow(Number(key) as ExpiryWindow)}
+        minWidth={72}
+      />
+      <span className="text-[10px] text-slate-400" style={{ fontFamily: F }}>
+        Renewal horizon is measured from today and is not affected by the report period.
+      </span>
+    </div>
+  );
+
+  const expiryColumns: TableColumn[] = [
+    { key: "contract", header: "Contract", cell: refCell("contract") },
+    { key: "vendor", header: "Vendor" },
+    { key: "endDate", header: "End Date", format: v => prettyDate(String(v ?? "")) },
+    {
+      key: "daysLeft", header: "Days Left", align: "center",
+      format: v => (Number(v) < 0 ? `${Math.abs(Number(v))} days overdue` : `${Number(v)} days`),
+      cell: row => {
+        const d = Number(row.daysLeft ?? 0);
+        return (
+          <span className={`text-[11px] ${d < 0 ? "text-red-700" : d <= 30 ? "text-red-600" : d <= 60 ? "text-amber-600" : "text-green-600"}`} style={{ fontWeight: 700 }}>
+            {d < 0 ? `${Math.abs(d)} overdue` : `${d} days`}
+          </span>
+        );
+      },
+    },
+    { key: "value", header: "Value", format: moneyFormat, cell: moneyCell("value") },
+    { key: "status", header: "Contract Status", cell: badgeCell("status") },
+    { key: "action", header: "Action", cell: badgeCell("action") },
+  ];
+
+  const expiryRows: ReportRow[] = expiry.rows.map(({ contract, daysLeft }) => ({
+    __key: contract.id,
+    contract: contract.contractNumber,
+    vendor: contract.party,
+    endDate: contract.endDate,
+    daysLeft,
+    value: contract.value,
+    status: contract.status,
+    action: daysLeft < 0 ? "Expired" : daysLeft <= 30 ? "Urgent Renewal" : daysLeft <= 60 ? "Renew" : "Review",
+  }));
+
+  /* ── Tab 1: Planning & Orders ──────────────────────────────────────────── */
+
+  const planningTabs = ["Charts & Statistics", "Requisition Register", "Procurement Plan Status", "Plan Pipeline", "Efficiency Metrics"];
 
   const renderPlanning = () => {
-    const filteredReqs = requisitionTable.filter(r => {
-      const matchFilter = reqFilter === "All" || r.status === reqFilter;
-      const q = searchQuery.toLowerCase();
-      const matchSearch = !q || r.id.toLowerCase().includes(q) || r.title.toLowerCase().includes(q) || r.dept.toLowerCase().includes(q);
-      return matchFilter && matchSearch;
-    });
+    const requisitionRows: ReportRow[] = base.prs
+      .filter(pr => reqFilter === "All" || prBucket(pr) === reqFilter)
+      .map(pr => ({
+        __key: pr.id,
+        prNumber: pr.requisitionNumber,
+        description: pr.requisitionTitle || pr.itemDescription,
+        department: pr.department,
+        funding: pr.fundingSource || "Unattributed",
+        value: pr.estimatedCost,
+        stage: pr.overallApprovalStatus,
+        status: prBucket(pr),
+        date: pr.dateRequested,
+        daysInStage: computeDaysInStage(pr),
+        approver: prApprover(pr),
+      }));
 
-    const totalReqs = requisitionStatus.reduce((s, r) => s + r.value, 0);
-    const totalBudget = budgetUtilization.reduce((s, b) => s + b.allocated, 0);
-    const totalUtilized = budgetUtilization.reduce((s, b) => s + b.utilized, 0);
-    const totalPOs = poTrendData.reduce((s, d) => s + d.orders, 0);
-    const totalPOValue = poTrendData.reduce((s, d) => s + d.value, 0);
+    const requisitionColumns: TableColumn[] = [
+      { key: "prNumber", header: "PR Number", cell: refCell("prNumber") },
+      { key: "description", header: "Description" },
+      { key: "department", header: "Department" },
+      { key: "funding", header: "Funding Source" },
+      { key: "value", header: "Value", format: moneyFormat, cell: moneyCell("value") },
+      { key: "stage", header: "Stage", cell: badgeCell("stage") },
+      { key: "status", header: "Status", cell: badgeCell("status") },
+      { key: "date", header: "Date Raised", format: v => prettyDate(String(v ?? "")) },
+      { key: "daysInStage", header: "Days in Stage", align: "center", cell: countCell("daysInStage", 14) },
+      { key: "approver", header: "Last Action By" },
+    ];
+
+    const planColumns: TableColumn[] = [
+      { key: "planRef", header: "Plan Ref", cell: refCell("planRef") },
+      { key: "activity", header: "Activity" },
+      { key: "category", header: "Category" },
+      { key: "budget", header: "Budget", format: moneyFormat, cell: moneyCell("budget") },
+      { key: "funding", header: "Funding" },
+      { key: "method", header: "Method" },
+      { key: "initiation", header: "Initiation", format: v => prettyDate(String(v ?? "")) },
+      { key: "completion", header: "Completion", format: v => prettyDate(String(v ?? "")) },
+      { key: "department", header: "Dept" },
+      { key: "status", header: "Status", cell: badgeCell("status") },
+      { key: "approval", header: "Approval", cell: badgeCell("approval") },
+    ];
+
+    const planRows: ReportRow[] = base.planItems.map(p => ({
+      __key: p.id,
+      planRef: p.ppItemId,
+      activity: p.activityDescription,
+      category: p.category,
+      budget: p.estimatedValue,
+      funding: p.fundingSource,
+      method: p.procurementMethod,
+      initiation: p.initiationDate,
+      completion: p.completionDate,
+      department: p.department,
+      status: p.status,
+      approval: p.approvalStatus,
+    }));
+
+    const pipelineColumns: TableColumn[] = [
+      { key: "planRef", header: "Plan Ref", cell: refCell("planRef") },
+      { key: "activity", header: "Activity" },
+      { key: "budget", header: "Budget", format: moneyFormat, cell: moneyCell("budget") },
+      { key: "funding", header: "Funding" },
+      { key: "method", header: "Method" },
+      { key: "initiation", header: "Initiation", format: v => prettyDate(String(v ?? "")) },
+      { key: "daysToStart", header: "Starts In", align: "center", format: v => `${Number(v)} days` },
+      { key: "owner", header: "Responsible" },
+      { key: "status", header: "Status", cell: badgeCell("status") },
+    ];
+
+    const pipelineRows: ReportRow[] = pipeline.upcoming.map(p => ({
+      __key: p.id,
+      planRef: p.ppItemId,
+      activity: p.activityDescription,
+      budget: p.estimatedValue,
+      funding: p.fundingSource,
+      method: p.procurementMethod,
+      initiation: p.initiationDate,
+      daysToStart: daysUntil(p.initiationDate),
+      owner: p.responsiblePerson,
+      status: p.status,
+    }));
+
+    const bottleneckColumns: TableColumn[] = [
+      { key: "planRef", header: "Plan Ref", cell: refCell("planRef") },
+      { key: "activity", header: "Activity" },
+      { key: "stage", header: "Stuck At" },
+      { key: "daysStuck", header: "Days Stuck", align: "center", cell: countCell("daysStuck", 7) },
+      { key: "responsible", header: "Responsible" },
+      { key: "budget", header: "Budget", format: moneyFormat, cell: moneyCell("budget") },
+    ];
+
+    const bottleneckRows: ReportRow[] = pipeline.bottlenecks.map(b => ({
+      __key: b.item.id,
+      planRef: b.item.ppItemId,
+      activity: b.item.activityDescription,
+      stage: b.stage,
+      daysStuck: b.daysStuck,
+      responsible: b.responsible,
+      budget: b.item.estimatedValue,
+    }));
+
+    const efficiencyColumns: TableColumn[] = [
+      { key: "metric", header: "Metric" },
+      { key: "value", header: "Actual" },
+      { key: "target", header: "Target" },
+      { key: "basis", header: "Basis" },
+      { key: "verdict", header: "Status", cell: badgeCell("verdict") },
+    ];
+
+    const verdictOf = (actual: number | null, target: number, lowerIsBetter: boolean) => {
+      if (actual === null) return "Pending";
+      return (lowerIsBetter ? actual <= target : actual >= target) ? "On Track" : "Review";
+    };
+
+    const efficiencyRows: ReportRow[] = [
+      {
+        __key: "execution", metric: "Plan execution rate", value: fmtPct(kpis.executionRate),
+        target: fmtPct(80), basis: `${kpis.executed} of ${kpis.plannedCount} approved plan lines awarded or beyond`,
+        verdict: verdictOf(kpis.executionRate, 80, false),
+      },
+      {
+        __key: "savings", metric: "Average cost saving vs plan",
+        value: kpis.avgCostSavings === null ? "—" : fmtPct(kpis.avgCostSavings),
+        target: "≥ 0%", basis: `${kpis.savingsSampleSize} plan lines traced through to an award`,
+        verdict: verdictOf(kpis.avgCostSavings, 0, false),
+      },
+      {
+        __key: "reqAward", metric: "Requisition → award", value: fmtDays(kpis.reqToAward),
+        target: `${KPI_TARGETS.reqToAwardDays} days`, basis: "Submitted to final approval on approved requisitions",
+        verdict: verdictOf(kpis.reqToAward, KPI_TARGETS.reqToAwardDays, true),
+      },
+      {
+        __key: "awardContract", metric: "Award → contract start", value: fmtDays(kpis.awardToContract),
+        target: `${KPI_TARGETS.awardToContractDays} days`, basis: "Award date to contract start date",
+        verdict: verdictOf(kpis.awardToContract, KPI_TARGETS.awardToContractDays, true),
+      },
+      {
+        __key: "contractPayment", metric: "Contract → first payment", value: fmtDays(kpis.contractToPayment),
+        target: `${KPI_TARGETS.contractToPaymentDays} days`, basis: "Contract start to invoice payment date",
+        verdict: verdictOf(kpis.contractToPayment, KPI_TARGETS.contractToPaymentDays, true),
+      },
+      {
+        __key: "paymentTimeliness", metric: "Payments settled within 30 days",
+        value: kpis.paidInvoiceCount ? fmtPct(kpis.paymentTimeliness) : "—",
+        target: fmtPct(KPI_TARGETS.paymentTimeliness), basis: `${kpis.paidInvoiceCount} settled invoices`,
+        verdict: kpis.paidInvoiceCount ? verdictOf(kpis.paymentTimeliness, KPI_TARGETS.paymentTimeliness, false) : "Pending",
+      },
+      {
+        __key: "onTimeDelivery", metric: "Deliverables accepted on time",
+        value: kpis.settledDeliverableCount ? fmtPct(kpis.onTimeDelivery) : "—",
+        target: fmtPct(KPI_TARGETS.onTimeDelivery), basis: `${kpis.settledDeliverableCount} accepted deliverables`,
+        verdict: kpis.settledDeliverableCount ? verdictOf(kpis.onTimeDelivery, KPI_TARGETS.onTimeDelivery, false) : "Pending",
+      },
+      {
+        __key: "responsiveness", metric: "Vendor responsiveness",
+        value: kpis.responsiveness ? fmtPct(kpis.responsiveness) : "—",
+        target: fmtPct(80), basis: "Average responsiveness score across rated vendors",
+        verdict: kpis.responsiveness ? verdictOf(kpis.responsiveness, 80, false) : "Pending",
+      },
+    ];
 
     return (
       <div>
         <SubTabBar tabs={planningTabs} active={subTab} onChange={setSubTab} />
         <div className="space-y-6 p-6">
-          <PeriodFilterBar periodFilter={periodFilter} setPeriodFilter={setPeriodFilter} />
+          {periodBar}
 
           {subTab === 0 && <>
-            <div className="grid grid-cols-4 gap-4">
-              <StatCard label="Total Requisitions" value={String(totalReqs)} sub="this period" trend="12%" trendDir="up" icon={<FileText size={18} />} color="#6366f1" />
-              <StatCard label="Approved" value={String(requisitionStatus.find(r => r.name === "Approved")?.value || 0)} sub={fmtPct((requisitionStatus.find(r => r.name === "Approved")?.value || 0) / totalReqs * 100)} trend="8%" trendDir="up" icon={<CheckCircle2 size={18} />} color="#10b981" />
-              <StatCard label="Purchase Orders" value={String(totalPOs)} sub={fmt(totalPOValue)} trend="12%" trendDir="up" icon={<Package size={18} />} color="#8b5cf6" />
-              <StatCard label="Budget Utilization" value={fmtPct(totalUtilized / totalBudget * 100)} sub={`${fmt(totalUtilized)} of ${fmt(totalBudget)}`} trend="5%" trendDir="up" icon={<DollarSign size={18} />} color="#f59e0b" />
-            </div>
+            <ProcurementStatCards variant="flush" stats={[
+              { label: "Total Requisitions", value: fmtNum(base.prs.length), sub: fmt(base.prs.reduce((s, p) => s + p.estimatedCost, 0)), icon: <FileText size={18} />, tone: "info" },
+              { label: "Approved", value: fmtNum(base.prs.filter(p => prBucket(p) === "Approved").length), sub: fmtPct(pct(base.prs.filter(p => prBucket(p) === "Approved").length, base.prs.length)), icon: <CheckCircle2 size={18} />, tone: "success" },
+              { label: "Purchase Orders", value: fmtNum(base.pos.length), sub: fmt(planning.poValue), icon: <Package size={18} />, tone: "accent" },
+              { label: "Budget Utilization", value: fmtPct(pct(planning.totalSpent, planning.totalPlanned)), sub: `${fmt(planning.totalSpent)} spent of ${fmt(planning.totalPlanned)} planned`, icon: <DollarSign size={18} />, tone: "warning" },
+            ]} />
+
             <div className="grid grid-cols-3 gap-4">
-              <div className="col-span-2 bg-white border border-slate-200 rounded-xl p-4">
-                <h3 className="text-[13px] text-slate-900 mb-4" style={{ fontFamily: F, fontWeight: 700 }}>Procurement Pipeline</h3>
-                <ResponsiveContainer width="100%" height={220}>
-                  <BarChart data={pipelineData} barGap={2}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                    <XAxis dataKey="month" tick={{ fontSize: 10, fontFamily: F }} />
-                    <YAxis tick={{ fontSize: 10, fontFamily: F }} />
-                    <Tooltip contentStyle={{ fontFamily: F, fontSize: 11 }} />
-                    <Bar dataKey="planned" fill="#c7d2fe" name="Planned" radius={[2, 2, 0, 0]} />
-                    <Bar dataKey="initiated" fill="#818cf8" name="Initiated" radius={[2, 2, 0, 0]} />
-                    <Bar dataKey="completed" fill={BLUE} name="Completed" radius={[2, 2, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="bg-white border border-slate-200 rounded-xl p-4">
-                <h3 className="text-[13px] text-slate-900 mb-4" style={{ fontFamily: F, fontWeight: 700 }}>Requisition Status</h3>
-                <ResponsiveContainer width="100%" height={220}>
-                  <PieChart>
-                    <Pie data={requisitionStatus} cx="50%" cy="50%" innerRadius={45} outerRadius={70} paddingAngle={3} dataKey="value">
-                      {requisitionStatus.map((entry) => <Cell key={`req-cell-${entry.name}`} fill={entry.color} />)}
-                    </Pie>
-                    <Tooltip contentStyle={{ fontFamily: F, fontSize: 11 }} />
-                    <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 10, fontFamily: F }} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-white border border-slate-200 rounded-xl p-4">
-                <h3 className="text-[13px] text-slate-900 mb-4" style={{ fontFamily: F, fontWeight: 700 }}>Budget Utilization by Department</h3>
-                <ResponsiveContainer width="100%" height={200}>
-                  <BarChart data={budgetUtilization} layout="vertical" barGap={2}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                    <XAxis type="number" tick={{ fontSize: 10, fontFamily: F }} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
-                    <YAxis dataKey="department" type="category" tick={{ fontSize: 10, fontFamily: F }} width={80} />
-                    <Tooltip contentStyle={{ fontFamily: F, fontSize: 11 }} formatter={(value: any) => fmt(value)} />
-                    <Bar dataKey="utilized" fill={BLUE} name="Utilized" radius={[0, 2, 2, 0]} stackId="a" />
-                    <Bar dataKey="committed" fill="#818cf8" name="Committed" radius={[0, 2, 2, 0]} stackId="a" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="bg-white border border-slate-200 rounded-xl p-4">
-                <h3 className="text-[13px] text-slate-900 mb-4" style={{ fontFamily: F, fontWeight: 700 }}>Purchase Order Trends</h3>
-                <ResponsiveContainer width="100%" height={200}>
-                  <LineChart data={poTrendData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                    <XAxis dataKey="month" tick={{ fontSize: 10, fontFamily: F }} />
-                    <YAxis yAxisId="left" tick={{ fontSize: 10, fontFamily: F }} />
-                    <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 10, fontFamily: F }} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
-                    <Tooltip contentStyle={{ fontFamily: F, fontSize: 11 }} />
-                    <Line yAxisId="left" type="monotone" dataKey="orders" stroke={BLUE} strokeWidth={2} name="PO Count" dot={{ r: 3 }} />
-                    <Line yAxisId="right" type="monotone" dataKey="value" stroke="#10b981" strokeWidth={2} name="PO Value" dot={{ r: 3 }} />
-                    <Legend iconType="line" wrapperStyle={{ fontSize: 10, fontFamily: F }} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 gap-4">
-              <StatCard label="Total Activities" value={String(procurementPlanItems.length)} icon={<FileText size={18} />} color="#6366f1" />
-              <StatCard label="Completed" value={String(procurementPlanItems.filter(p => p.status === "Completed").length)} icon={<CheckCircle2 size={18} />} color="#22c55e" />
-              <StatCard label="In Progress" value={String(procurementPlanItems.filter(p => p.status === "In Progress").length)} icon={<Clock size={18} />} color="#3b82f6" />
-              <StatCard label="Not Started" value={String(procurementPlanItems.filter(p => p.status === "Not Started").length)} icon={<AlertTriangle size={18} />} color="#f59e0b" />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-white border border-slate-200 rounded-xl p-4 h-[260px]">
-                <h3 className="text-[13px] text-slate-900 mb-4" style={{ fontFamily: F, fontWeight: 700 }}>Plan Status Breakdown</h3>
-                <ResponsiveContainer width="100%" height="85%">
-                  <PieChart>
-                    <Pie data={[
-                      { name: "Completed", value: procurementPlanItems.filter(p => p.status === "Completed").length },
-                      { name: "In Progress", value: procurementPlanItems.filter(p => p.status === "In Progress").length },
-                      { name: "Not Started", value: procurementPlanItems.filter(p => p.status === "Not Started").length },
-                    ]} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={3} dataKey="value" label={({ name, value }) => `${name}: ${value}`}>
-                      <Cell fill="#22c55e" /><Cell fill="#3b82f6" /><Cell fill="#f59e0b" />
-                    </Pie>
-                    <Tooltip />
-                    <Legend wrapperStyle={{ fontSize: 10, fontFamily: F }} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="bg-white border border-slate-200 rounded-xl p-4 h-[260px]">
-                <h3 className="text-[13px] text-slate-900 mb-4" style={{ fontFamily: F, fontWeight: 700 }}>By Procurement Method</h3>
-                <ResponsiveContainer width="100%" height="85%">
-                  <BarChart data={(() => {
-                    const methods: Record<string, number> = {};
-                    procurementPlanItems.forEach(p => { methods[p.method] = (methods[p.method] || 0) + 1; });
-                    return Object.entries(methods).map(([name, count]) => ({ name, count }));
-                  })()}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                    <XAxis dataKey="name" tick={{ fontSize: 9, fontFamily: F }} />
-                    <YAxis tick={{ fontSize: 9, fontFamily: F }} />
-                    <Tooltip contentStyle={{ fontSize: 10, fontFamily: F }} />
-                    <Bar dataKey="count" fill={BLUE} radius={[4, 4, 0, 0]} name="Activities" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 gap-4">
-              <StatCard label="Execution Rate" value={fmtPct(efficiencyMetrics.executionRate)} sub={`${efficiencyMetrics.executedProcurements} of ${efficiencyMetrics.plannedProcurements} planned`} trend="+3.2%" trendDir="up" icon={<TrendingUp size={18} />} color="#22c55e" />
-              <StatCard label="Avg Cost Savings" value={fmtPct(efficiencyMetrics.avgCostSavings)} sub={fmt(efficiencyMetrics.totalSavings) + " total saved"} trend="+1.1%" trendDir="up" icon={<DollarSign size={18} />} color="#6366f1" />
-              <StatCard label="Tenders This Month" value={String(efficiencyMetrics.tendersThisMonth)} sub={`Avg ${efficiencyMetrics.avgTendersPerMonth}/mo`} icon={<FileText size={18} />} color="#3b82f6" />
-              <StatCard label="Budget Utilization" value={fmtPct(efficiencyMetrics.plannedVsBudget)} icon={<Package size={18} />} color="#f59e0b" />
-            </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="bg-slate-50 rounded-lg p-4 text-center">
-                <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-1" style={{ fontFamily: F }}>Req → Award</p>
-                <p className="text-[22px] text-slate-900" style={{ fontFamily: F, fontWeight: 700 }}>{efficiencyMetrics.avgReqToAward} days</p>
-              </div>
-              <div className="bg-slate-50 rounded-lg p-4 text-center">
-                <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-1" style={{ fontFamily: F }}>Award → Contract</p>
-                <p className="text-[22px] text-slate-900" style={{ fontFamily: F, fontWeight: 700 }}>{efficiencyMetrics.avgAwardToContract} days</p>
-              </div>
-              <div className="bg-slate-50 rounded-lg p-4 text-center">
-                <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-1" style={{ fontFamily: F }}>Contract → Payment</p>
-                <p className="text-[22px] text-slate-900" style={{ fontFamily: F, fontWeight: 700 }}>{efficiencyMetrics.avgContractToPayment} days</p>
-              </div>
-            </div>
-            <div className="bg-white border border-slate-200 rounded-xl p-4 h-[260px]">
-              <h3 className="text-[13px] text-slate-900 mb-4" style={{ fontFamily: F, fontWeight: 700 }}>Cycle Time: Actual vs Target</h3>
-              <ResponsiveContainer width="100%" height="85%">
-                <ComposedChart data={[
-                  { stage: "Requisition to Award", avg: efficiencyMetrics.avgReqToAward, target: 20 },
-                  { stage: "Award to Contract", avg: efficiencyMetrics.avgAwardToContract, target: 5 },
-                  { stage: "Contract to Payment", avg: efficiencyMetrics.avgContractToPayment, target: 15 },
-                ]}>
+              <ChartCard title="Procurement Pipeline" className="col-span-2" isEmpty={planning.pipelineSeries.length === 0}
+                emptyMessage="No planning or requisition activity in this period" emptyHint={noDataHint}>
+                <BarChart data={planning.pipelineSeries} barGap={2}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis dataKey="stage" tick={{ fontSize: 9, fontFamily: F }} />
-                  <YAxis tick={{ fontSize: 9, fontFamily: F }} label={{ value: "Days", angle: -90, position: "insideLeft", style: { fontSize: 10, fontFamily: F } }} />
+                  <XAxis dataKey="month" tick={{ fontSize: 10, fontFamily: F }} />
+                  <YAxis tick={{ fontSize: 10, fontFamily: F }} allowDecimals={false} />
+                  <Tooltip contentStyle={{ fontFamily: F, fontSize: 11 }} />
+                  <Bar dataKey="planned" fill="#c7d2fe" name="Planned" radius={[2, 2, 0, 0]} />
+                  <Bar dataKey="initiated" fill="#818cf8" name="Requisitioned" radius={[2, 2, 0, 0]} />
+                  <Bar dataKey="completed" fill={BLUE} name="Ordered" radius={[2, 2, 0, 0]} />
+                  <Legend iconType="square" iconSize={8} wrapperStyle={{ fontSize: 10, fontFamily: F }} />
+                </BarChart>
+              </ChartCard>
+              <ChartCard title="Requisition Status" isEmpty={planning.requisitionStatus.length === 0}
+                emptyMessage="No requisitions in this period" emptyHint={noDataHint}>
+                <PieChart>
+                  <Pie data={planning.requisitionStatus} cx="50%" cy="50%" innerRadius={45} outerRadius={70} paddingAngle={3} dataKey="value">
+                    {planning.requisitionStatus.map(entry => <Cell key={`req-cell-${entry.name}`} fill={entry.color} />)}
+                  </Pie>
+                  <Tooltip contentStyle={{ fontFamily: F, fontSize: 11 }} />
+                  <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 10, fontFamily: F }} />
+                </PieChart>
+              </ChartCard>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <ChartCard title="Budget Utilization by Department" subtitle="Planned vs committed vs spent" height={200}
+                isEmpty={planning.budgetUtilization.length === 0}
+                emptyMessage="No budget activity in this period" emptyHint={noDataHint}>
+                <BarChart data={planning.budgetUtilization} layout="vertical" barGap={2}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis type="number" tick={{ fontSize: 10, fontFamily: F }} tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`} />
+                  <YAxis dataKey="department" type="category" tick={{ fontSize: 10, fontFamily: F }} width={90} />
+                  <Tooltip contentStyle={{ fontFamily: F, fontSize: 11 }} formatter={(value: any) => fmt(Number(value))} />
+                  <Bar dataKey="planned" fill="#c7d2fe" name="Planned" radius={[0, 2, 2, 0]} />
+                  <Bar dataKey="committed" fill="#818cf8" name="Committed" radius={[0, 2, 2, 0]} />
+                  <Bar dataKey="spent" fill={BLUE} name="Spent" radius={[0, 2, 2, 0]} />
+                  <Legend iconType="square" iconSize={8} wrapperStyle={{ fontSize: 10, fontFamily: F }} />
+                </BarChart>
+              </ChartCard>
+
+              <ChartCard title="Purchase Order Trends" height={200} isEmpty={planning.poTrend.length === 0}
+                emptyMessage="No purchase orders in this period" emptyHint={noDataHint}>
+                <LineChart data={planning.poTrend}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis dataKey="month" tick={{ fontSize: 10, fontFamily: F }} />
+                  <YAxis yAxisId="left" tick={{ fontSize: 10, fontFamily: F }} allowDecimals={false} />
+                  <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 10, fontFamily: F }} tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`} />
+                  <Tooltip contentStyle={{ fontFamily: F, fontSize: 11 }} />
+                  <Line yAxisId="left" type="monotone" dataKey="orders" stroke={BLUE} strokeWidth={2} name="PO Count" dot={{ r: 3 }} />
+                  <Line yAxisId="right" type="monotone" dataKey="value" stroke="#10b981" strokeWidth={2} name="PO Value" dot={{ r: 3 }} />
+                  <Legend iconType="line" wrapperStyle={{ fontSize: 10, fontFamily: F }} />
+                </LineChart>
+              </ChartCard>
+            </div>
+
+            <ProcurementStatCards variant="flush" stats={[
+              { label: "Plan Activities", value: fmtNum(base.planItems.length), sub: `${fmtNum(base.approvedPlanItems.length)} approved`, icon: <FileText size={18} />, tone: "info" },
+              { label: "Completed", value: fmtNum(base.planItems.filter(p => p.status === "Completed").length), icon: <CheckCircle2 size={18} />, tone: "success" },
+              { label: "In Progress", value: fmtNum(base.planItems.filter(p => ["In Progress", "Under Evaluation", "Awarded", "Contracted"].includes(p.status)).length), icon: <Clock size={18} />, tone: "info" },
+              { label: "Not Started / Delayed", value: fmtNum(base.planItems.filter(p => p.status === "Not Started" || p.status === "Delayed").length), icon: <AlertTriangle size={18} />, tone: "warning" },
+            ]} />
+
+            <div className="grid grid-cols-2 gap-4">
+              <ChartCard title="Plan Status Breakdown" height={210} isEmpty={planning.planStatusBreakdown.length === 0}
+                emptyMessage="No plan activities in this period" emptyHint={noDataHint}>
+                <PieChart>
+                  <Pie data={planning.planStatusBreakdown} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={3} dataKey="value"
+                    label={(props: any) => `${props.name}: ${props.value}`}>
+                    {planning.planStatusBreakdown.map(entry => <Cell key={`plan-${entry.name}`} fill={entry.color} />)}
+                  </Pie>
+                  <Tooltip contentStyle={{ fontFamily: F, fontSize: 11 }} />
+                  <Legend wrapperStyle={{ fontSize: 10, fontFamily: F }} />
+                </PieChart>
+              </ChartCard>
+
+              <ChartCard title="By Procurement Method" height={210} isEmpty={planning.methodBreakdown.length === 0}
+                emptyMessage="No plan activities in this period" emptyHint={noDataHint}>
+                <BarChart data={planning.methodBreakdown}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis dataKey="name" tick={{ fontSize: 9, fontFamily: F }} />
+                  <YAxis tick={{ fontSize: 9, fontFamily: F }} allowDecimals={false} />
                   <Tooltip contentStyle={{ fontSize: 10, fontFamily: F }} />
-                  <Bar dataKey="avg" fill={BLUE} radius={[4, 4, 0, 0]} name="Actual (days)" />
-                  <Line dataKey="target" stroke="#ef4444" strokeWidth={2} strokeDasharray="5 5" name="Target (days)" dot={{ r: 4 }} />
-                </ComposedChart>
-              </ResponsiveContainer>
+                  <Bar dataKey="count" fill={BLUE} radius={[4, 4, 0, 0]} name="Activities" />
+                </BarChart>
+              </ChartCard>
             </div>
+
+            <ProcurementStatCards variant="flush" stats={[
+              { label: "Execution Rate", value: fmtPct(kpis.executionRate), sub: `${kpis.executed} of ${kpis.plannedCount} planned`, icon: <TrendingUp size={18} />, tone: "success" },
+              { label: "Cost Saving vs Plan", value: kpis.avgCostSavings === null ? "—" : fmtPct(kpis.avgCostSavings), sub: kpis.savingsSampleSize ? `${fmt(kpis.totalSavings)} across ${kpis.savingsSampleSize} awards` : "No plan-linked awards yet", icon: <DollarSign size={18} />, tone: "info" },
+              { label: "Sourcing Cases", value: fmtNum(base.sourcing.length), sub: `${fmtNum(base.sourcing.filter(s => s.approvalStatus === "Approved").length)} approved`, icon: <FileText size={18} />, tone: "info" },
+              { label: "Committed Budget", value: fmt(planning.totalCommitted), sub: `${fmtPct(pct(planning.totalCommitted, planning.totalPlanned))} of plan`, icon: <Package size={18} />, tone: "warning" },
+            ]} />
+
+            <ChartCard title="Cycle Time: Actual vs Target" height={220} isEmpty={planning.cycleStages.every(s => !s.measured)}
+              emptyMessage="No completed cycles to measure in this period" emptyHint={noDataHint}>
+              <ComposedChart data={planning.cycleStages}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis dataKey="stage" tick={{ fontSize: 9, fontFamily: F }} />
+                <YAxis tick={{ fontSize: 9, fontFamily: F }} label={{ value: "Days", angle: -90, position: "insideLeft", style: { fontSize: 10, fontFamily: F } }} />
+                <Tooltip contentStyle={{ fontSize: 10, fontFamily: F }} />
+                <Bar dataKey="avg" fill={BLUE} radius={[4, 4, 0, 0]} name="Actual (days)" />
+                <Line dataKey="target" stroke="#ef4444" strokeWidth={2} strokeDasharray="5 5" name="Target (days)" dot={{ r: 4 }} />
+                <Legend wrapperStyle={{ fontSize: 10, fontFamily: F }} />
+              </ComposedChart>
+            </ChartCard>
           </>}
 
-          {subTab === 1 && <>
-            <ExportBar tableName="Requisition Register" />
-            <div className="flex items-center gap-2 mb-3">
-              <div className="bg-slate-100 p-0.5 rounded-lg inline-flex gap-0.5">
-                {(["All", "Approved", "Pending", "Rejected", "Draft"] as const).map(f => (
-                  <button key={f} onClick={() => setReqFilter(f)}
-                    className={`px-3 py-1 rounded-md text-[10px] transition-colors ${reqFilter === f ? "bg-purple-700 text-white shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
-                    style={{ fontFamily: F, fontWeight: reqFilter === f ? 600 : 400 }}>
-                    {f}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="overflow-auto">
-              <table className="w-full text-[11px]" style={{ fontFamily: F }}>
-                <thead>
-                  <tr style={{ backgroundColor: BLUE }}>
-                    {["PR Number", "Description", "Department", "Value", "Status", "Date", "Approver"].map(h => (
-                      <th key={h} className="px-3 py-2.5 text-left text-white" style={{ fontWeight: 600, fontSize: 11 }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredReqs.map((r, i) => (
-                    <tr key={r.id} className={`border-b border-slate-100 ${i % 2 === 1 ? "bg-slate-50/60" : "bg-white"}`}>
-                      <td className="px-3 py-2 text-indigo-700" style={{ fontWeight: 600 }}>{r.id}</td>
-                      <td className="px-3 py-2 text-slate-900">{r.title}</td>
-                      <td className="px-3 py-2 text-slate-600">{r.dept}</td>
-                      <td className="px-3 py-2 text-slate-900" style={{ fontWeight: 600 }}>{fmt(r.value)}</td>
-                      <td className="px-3 py-2"><StatusBadge status={r.status} /></td>
-                      <td className="px-3 py-2 text-slate-500">{r.date}</td>
-                      <td className="px-3 py-2 text-slate-600">{r.approver}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </>}
+          {subTab === 1 && (
+            <ReportSection
+              title="Requisition Register"
+              columns={requisitionColumns}
+              rows={requisitionRows}
+              meta={exportMeta}
+              search={searchQuery}
+              emptyMessage="No requisitions match the current filters"
+              emptyHint={noDataHint}
+              controls={
+                <ProcurementTabs
+                  tabs={(["All", "Approved", "Pending", "Rejected", "Draft"] as const).map(f => ({ key: f, label: f }))}
+                  active={reqFilter}
+                  onChange={setReqFilter}
+                  minWidth={72}
+                />
+              }
+            />
+          )}
 
-          {subTab === 2 && <>
-            <ExportBar tableName="Procurement Plan Status" />
-            <div className="overflow-auto">
-              <table className="w-full text-[11px]" style={{ fontFamily: F }}>
-                <thead>
-                  <tr style={{ backgroundColor: BLUE }}>
-                    {["Plan Ref", "Activity", "Budget", "Funding", "Method", "Initiation", "Completion", "Dept", "Status"].map(h => (
-                      <th key={h} className="px-3 py-2 text-left text-[12px] font-semibold text-white">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {procurementPlanItems.map((p, i) => (
-                    <tr key={p.id} className={`border-b border-slate-100 ${i % 2 === 1 ? "bg-slate-50/60" : "bg-white"}`}>
-                      <td className="px-3 py-2 text-indigo-700" style={{ fontWeight: 600 }}>{p.id}</td>
-                      <td className="px-3 py-2 text-slate-900">{p.activity}</td>
-                      <td className="px-3 py-2 text-slate-900" style={{ fontWeight: 600 }}>{fmt(p.budget)}</td>
-                      <td className="px-3 py-2 text-slate-600">{p.funding}</td>
-                      <td className="px-3 py-2 text-slate-600">{p.method}</td>
-                      <td className="px-3 py-2 text-slate-500">{p.initiation}</td>
-                      <td className="px-3 py-2 text-slate-500">{p.completion}</td>
-                      <td className="px-3 py-2 text-slate-600">{p.dept}</td>
-                      <td className="px-3 py-2"><StatusBadge status={p.status} /></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </>}
+          {subTab === 2 && (
+            <ReportSection title="Procurement Plan Status" columns={planColumns} rows={planRows} meta={exportMeta}
+              search={searchQuery} emptyMessage="No plan activities in this period" emptyHint={noDataHint} />
+          )}
 
           {subTab === 3 && <>
-            <ExportBar tableName="Efficiency Metrics" />
-            <div className="grid grid-cols-4 gap-4 mb-4">
-              <StatCard label="Execution Rate" value={fmtPct(efficiencyMetrics.executionRate)} sub={`${efficiencyMetrics.executedProcurements} of ${efficiencyMetrics.plannedProcurements} planned`} trend="+3.2%" trendDir="up" icon={<TrendingUp size={18} />} color="#22c55e" />
-              <StatCard label="Avg Cost Savings" value={fmtPct(efficiencyMetrics.avgCostSavings)} sub={fmt(efficiencyMetrics.totalSavings) + " total saved"} icon={<DollarSign size={18} />} color="#6366f1" />
-              <StatCard label="Tenders This Month" value={String(efficiencyMetrics.tendersThisMonth)} sub={`Avg ${efficiencyMetrics.avgTendersPerMonth}/mo`} icon={<FileText size={18} />} color="#3b82f6" />
-              <StatCard label="Budget Utilization" value={fmtPct(efficiencyMetrics.plannedVsBudget)} icon={<Package size={18} />} color="#f59e0b" />
-            </div>
-            <div className="grid grid-cols-3 gap-4 mb-4">
-              <div className="bg-slate-50 rounded-lg p-4 text-center">
-                <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-1" style={{ fontFamily: F }}>Req → Award</p>
-                <p className="text-[22px] text-slate-900" style={{ fontFamily: F, fontWeight: 700 }}>{efficiencyMetrics.avgReqToAward} days</p>
-              </div>
-              <div className="bg-slate-50 rounded-lg p-4 text-center">
-                <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-1" style={{ fontFamily: F }}>Award → Contract</p>
-                <p className="text-[22px] text-slate-900" style={{ fontFamily: F, fontWeight: 700 }}>{efficiencyMetrics.avgAwardToContract} days</p>
-              </div>
-              <div className="bg-slate-50 rounded-lg p-4 text-center">
-                <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-1" style={{ fontFamily: F }}>Contract → Payment</p>
-                <p className="text-[22px] text-slate-900" style={{ fontFamily: F, fontWeight: 700 }}>{efficiencyMetrics.avgContractToPayment} days</p>
-              </div>
-            </div>
+            <ProcurementStatCards variant="flush" stats={[
+              ...pipeline.buckets.map((b): ProcurementStat => ({
+                label: `Starting in ${b.days} days`,
+                value: fmtNum(b.items.length),
+                sub: fmt(b.items.reduce((s, p) => s + p.estimatedValue, 0)),
+                icon: <CalendarClock size={18} />,
+                tone: b.days === 30 ? "danger" : b.days === 60 ? "warning" : "success",
+              })),
+              { label: "Bottlenecks", value: fmtNum(pipeline.bottlenecks.length), sub: "stalled plan lines", icon: <AlertTriangle size={18} />, tone: "accent" },
+            ]} />
+            <ReportSection title="Plan Pipeline (next 90 days)" columns={pipelineColumns} rows={pipelineRows} meta={exportMeta}
+              search={searchQuery} emptyMessage="No approved plan activities start in the next 90 days"
+              emptyHint="The pipeline is measured from today, independently of the report period." />
+            <ReportSection title="Plan Bottlenecks" columns={bottleneckColumns} rows={bottleneckRows} meta={exportMeta}
+              search={searchQuery} emptyMessage="No stalled plan activities"
+              emptyHint="Every plan line is either approved and on schedule, or newly modified." />
+          </>}
+
+          {subTab === 4 && <>
+            <ProcurementStatCards variant="flush" stats={[
+              { label: "Execution Rate", value: fmtPct(kpis.executionRate), sub: `${kpis.executed} of ${kpis.plannedCount} planned`, icon: <TrendingUp size={18} />, tone: "success" },
+              { label: "Requisition → Award", value: fmtDays(kpis.reqToAward), sub: `target ${KPI_TARGETS.reqToAwardDays} days`, icon: <Clock size={18} />, tone: "info" },
+              { label: "Award → Contract", value: fmtDays(kpis.awardToContract), sub: `target ${KPI_TARGETS.awardToContractDays} days`, icon: <FileText size={18} />, tone: "info" },
+              { label: "Contract → Payment", value: fmtDays(kpis.contractToPayment), sub: `target ${KPI_TARGETS.contractToPaymentDays} days`, icon: <DollarSign size={18} />, tone: "warning" },
+            ]} />
+            <ReportSection title="Efficiency Metrics" columns={efficiencyColumns} rows={efficiencyRows} meta={exportMeta}
+              search={searchQuery} emptyMessage="No metrics available" emptyHint={noDataHint} />
           </>}
         </div>
       </div>
     );
   };
 
-  /* ── Tab 2: Sourcing & Contracts ───────────────────────────────────────────── */
+  /* ── Tab 2: Sourcing & Contracts ───────────────────────────────────────── */
 
-  const sourcingTabs = ["Charts & Statistics", "Active Contracts", "Expiry & Renewal Alerts"];
+  const sourcingTabs = ["Charts & Statistics", "Sourcing Status", "Bid Submission", "Invoice & Payment", "Contract Expiry"];
 
   const renderSourcing = () => {
-    const totalInvoiced = invoicePaymentData.reduce((s, d) => s + d.invoiced, 0);
-    const avgBidRate = bidSubmissionData.reduce((s, d) => s + d.rate, 0) / bidSubmissionData.length;
-    const totalRFQs = rfqStatusData.reduce((s, d) => s + d.value, 0);
+    const sourcingColumns: TableColumn[] = [
+      { key: "ref", header: "Sourcing Ref", cell: refCell("ref") },
+      { key: "title", header: "Title" },
+      { key: "vendor", header: "Vendor" },
+      { key: "project", header: "Project" },
+      { key: "sourcePR", header: "Source PR", cell: refCell("sourcePR") },
+      { key: "value", header: "Estimated Value", format: moneyFormat, cell: moneyCell("value") },
+      { key: "date", header: "Submitted", format: v => prettyDate(String(v ?? "")) },
+      { key: "status", header: "Status", cell: badgeCell("status") },
+    ];
+
+    const sourcingRows: ReportRow[] = base.sourcing.map(s => ({
+      __key: s.id,
+      ref: s.rfqNumber,
+      title: s.title,
+      vendor: s.vendor,
+      project: s.projectName,
+      sourcePR: s.sourcePR,
+      value: s.estimatedValue,
+      date: s.dateSubmitted,
+      status: s.approvalStatus,
+    }));
+
+    const bidColumns: TableColumn[] = [
+      { key: "project", header: "Project" },
+      { key: "invited", header: "Cases Run", align: "center", cell: countCell("invited") },
+      { key: "submitted", header: "Carried to Award", align: "center", cell: countCell("submitted") },
+      { key: "rate", header: "Award Rate", format: pctFormat, cell: scoreCell("rate", 60, 30, "%") },
+      { key: "value", header: "Total Value", format: moneyFormat, cell: moneyCell("value") },
+    ];
+
+    const bidRows: ReportRow[] = sourcingData.byProject.map((p, i) => ({
+      __key: `bid-${i}`,
+      project: p.project,
+      invited: p.invited,
+      submitted: p.submitted,
+      rate: p.rate,
+      value: p.value,
+    }));
+
+    const invoiceColumns: TableColumn[] = [
+      { key: "invoice", header: "Invoice", cell: refCell("invoice") },
+      { key: "contract", header: "Contract", cell: refCell("contract") },
+      { key: "vendor", header: "Vendor" },
+      { key: "via", header: "Received Via" },
+      { key: "submitted", header: "Submitted", format: v => prettyDate(String(v ?? "")) },
+      { key: "amount", header: "Amount", format: moneyFormat, cell: moneyCell("amount") },
+      { key: "paidAmount", header: "Paid", format: moneyFormat, cell: moneyCell("paidAmount") },
+      { key: "paidDate", header: "Date Paid", format: v => (v ? prettyDate(String(v)) : "—") },
+      { key: "daysToPay", header: "Days to Pay", align: "center", format: v => (v === null || v === undefined ? "—" : `${v}`) },
+      { key: "status", header: "Status", cell: badgeCell("status") },
+    ];
+
+    const invoiceRows: ReportRow[] = base.invoices.map(({ contract, invoice }) => {
+      const paid = invoicePaidDate(invoice);
+      return {
+        __key: invoice.id,
+        invoice: invoice.invoiceNumber,
+        contract: contract.contractNumber,
+        vendor: invoice.vendor,
+        via: invoice.submittedVia,
+        submitted: invoiceSubmittedDate(invoice),
+        amount: invoice.amount,
+        paidAmount: invoice.amountPaid ?? 0,
+        paidDate: paid ?? "",
+        daysToPay: paid ? daysBetween(invoiceSubmittedDate(invoice), paid) : null,
+        status: invoice.status,
+      };
+    });
+
+    const unpaid = base.invoices.filter(r => r.invoice.status !== "Paid" && r.invoice.status !== "Queried");
+    const queried = base.invoices.filter(r => r.invoice.status === "Queried");
 
     return (
       <div>
         <SubTabBar tabs={sourcingTabs} active={subTab} onChange={setSubTab} />
         <div className="space-y-6 p-6">
-          <PeriodFilterBar periodFilter={periodFilter} setPeriodFilter={setPeriodFilter} />
+          {periodBar}
 
           {subTab === 0 && <>
-            <div className="grid grid-cols-4 gap-4">
-              <StatCard label="Total RFQs" value={String(totalRFQs)} sub="this period" trend="15%" trendDir="up" icon={<FileText size={18} />} color="#6366f1" />
-              <StatCard label="Avg Bid Rate" value={fmtPct(avgBidRate)} trend="5%" trendDir="up" icon={<TrendingUp size={18} />} color="#10b981" />
-              <StatCard label="Total Invoiced" value={fmt(totalInvoiced)} sub="this period" icon={<DollarSign size={18} />} color="#8b5cf6" />
-              <StatCard label="Expiring (90 days)" value={String(expiryAlerts.length)} sub="contracts" icon={<AlertTriangle size={18} />} color="#f59e0b" />
-            </div>
+            <ProcurementStatCards variant="flush" stats={[
+              { label: "Sourcing Cases", value: fmtNum(base.sourcing.length), sub: `${fmtNum(base.sourcing.filter(s => s.approvalStatus === "Approved").length)} approved`, icon: <FileText size={18} />, tone: "info" },
+              { label: "Average Award Rate", value: fmtPct(sourcingData.avgAwardRate ?? 0), sub: "cases carried to award", icon: <TrendingUp size={18} />, tone: "success" },
+              { label: "Total Invoiced", value: fmt(sourcingData.totalInvoiced), sub: `${fmtNum(base.invoices.length)} invoices`, icon: <DollarSign size={18} />, tone: "info" },
+              { label: "Awaiting Payment", value: fmtNum(unpaid.length), sub: fmt(unpaid.reduce((s, r) => s + r.invoice.amount, 0)), icon: <Clock size={18} />, tone: "warning" },
+            ]} />
+
             <div className="grid grid-cols-3 gap-4">
-              <div className="bg-white border border-slate-200 rounded-xl p-4">
-                <h3 className="text-[13px] text-slate-900 mb-4" style={{ fontFamily: F, fontWeight: 700 }}>RFQ Status</h3>
-                <ResponsiveContainer width="100%" height={200}>
-                  <PieChart><Pie data={rfqStatusData} cx="50%" cy="50%" innerRadius={40} outerRadius={65} paddingAngle={3} dataKey="value">{rfqStatusData.map((entry) => <Cell key={`rfq-cell-${entry.name}`} fill={entry.color} />)}</Pie><Tooltip contentStyle={{ fontFamily: F, fontSize: 11 }} /><Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 10, fontFamily: F }} /></PieChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="bg-white border border-slate-200 rounded-xl p-4">
-                <h3 className="text-[13px] text-slate-900 mb-4" style={{ fontFamily: F, fontWeight: 700 }}>Bid Submission Rates</h3>
-                <ResponsiveContainer width="100%" height={200}>
-                  <BarChart data={bidSubmissionData} barGap={2}><CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" /><XAxis dataKey="rfq" tick={{ fontSize: 9, fontFamily: F }} /><YAxis tick={{ fontSize: 10, fontFamily: F }} /><Tooltip contentStyle={{ fontFamily: F, fontSize: 11 }} /><Bar dataKey="invited" fill="#c7d2fe" name="Invited" radius={[2, 2, 0, 0]} /><Bar dataKey="submitted" fill={BLUE} name="Submitted" radius={[2, 2, 0, 0]} /></BarChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="bg-white border border-slate-200 rounded-xl p-4">
-                <h3 className="text-[13px] text-slate-900 mb-4" style={{ fontFamily: F, fontWeight: 700 }}>Invoice & Payment</h3>
-                <ResponsiveContainer width="100%" height={200}>
-                  <ComposedChart data={invoicePaymentData}><CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" /><XAxis dataKey="month" tick={{ fontSize: 10, fontFamily: F }} /><YAxis tick={{ fontSize: 10, fontFamily: F }} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} /><Tooltip contentStyle={{ fontFamily: F, fontSize: 11 }} formatter={(value: any) => fmt(value)} /><Bar dataKey="invoiced" fill="#c7d2fe" name="Invoiced" radius={[2, 2, 0, 0]} /><Bar dataKey="paid" fill="#10b981" name="Paid" radius={[2, 2, 0, 0]} /><Line type="monotone" dataKey="outstanding" stroke="#ef4444" strokeWidth={2} name="Outstanding" dot={{ r: 3 }} /></ComposedChart>
-                </ResponsiveContainer>
-              </div>
+              <ChartCard title="Sourcing Case Status" isEmpty={sourcingData.rfqStatus.length === 0}
+                emptyMessage="No sourcing cases in this period" emptyHint={noDataHint}>
+                <PieChart>
+                  <Pie data={sourcingData.rfqStatus} cx="50%" cy="50%" innerRadius={45} outerRadius={75} paddingAngle={3} dataKey="value"
+                    label={(props: any) => `${props.name}: ${props.value}`}>
+                    {sourcingData.rfqStatus.map(e => <Cell key={`src-${e.name}`} fill={e.color} />)}
+                  </Pie>
+                  <Tooltip contentStyle={{ fontFamily: F, fontSize: 11 }} />
+                  <Legend wrapperStyle={{ fontSize: 10, fontFamily: F }} />
+                </PieChart>
+              </ChartCard>
+
+              <ChartCard title="Sourcing Activity by Project" className="col-span-2" isEmpty={sourcingData.byProject.length === 0}
+                emptyMessage="No sourcing activity in this period" emptyHint={noDataHint}>
+                <BarChart data={sourcingData.byProject.slice(0, 8)} barGap={2}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis dataKey="shortLabel" tick={{ fontSize: 9, fontFamily: F }} />
+                  <YAxis tick={{ fontSize: 9, fontFamily: F }} allowDecimals={false} />
+                  <Tooltip contentStyle={{ fontSize: 10, fontFamily: F }} />
+                  <Bar dataKey="invited" fill="#c7d2fe" name="Cases run" radius={[2, 2, 0, 0]} />
+                  <Bar dataKey="submitted" fill={BLUE} name="Carried to award" radius={[2, 2, 0, 0]} />
+                  <Legend iconType="square" iconSize={8} wrapperStyle={{ fontSize: 10, fontFamily: F }} />
+                </BarChart>
+              </ChartCard>
             </div>
+
+            <ChartCard title="Invoiced vs Paid" height={230} isEmpty={sourcingData.invoiceTrend.length === 0}
+              emptyMessage="No invoices in this period" emptyHint={noDataHint}>
+              <ComposedChart data={sourcingData.invoiceTrend}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis dataKey="month" tick={{ fontSize: 9, fontFamily: F }} />
+                <YAxis tick={{ fontSize: 9, fontFamily: F }} />
+                <Tooltip contentStyle={{ fontSize: 10, fontFamily: F }} formatter={(v: any) => fmt(Number(v))} />
+                <Bar dataKey="invoiced" fill="#c7d2fe" name="Invoiced" radius={[2, 2, 0, 0]} />
+                <Bar dataKey="paid" fill={BLUE} name="Paid" radius={[2, 2, 0, 0]} />
+                <Line dataKey="outstanding" stroke="#ef4444" strokeWidth={2} name="Outstanding" dot={{ r: 3 }} />
+                <Legend iconType="square" iconSize={8} wrapperStyle={{ fontSize: 10, fontFamily: F }} />
+              </ComposedChart>
+            </ChartCard>
           </>}
 
-          {subTab === 1 && <>
-            <ExportBar tableName="Active Contracts & Deliverables" />
-            <div className="overflow-auto">
-              <table className="w-full text-[11px]" style={{ fontFamily: F }}>
-                <thead>
-                  <tr style={{ backgroundColor: BLUE }}>
-                    {["Contract", "Vendor", "Value", "Start", "End", "Status", "Deliverables", "Progress"].map(h => (
-                      <th key={h} className="px-3 py-2.5 text-left text-white" style={{ fontWeight: 600, fontSize: 11 }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {activeContracts.map((c, i) => (
-                    <tr key={c.id} className={`border-b border-slate-100 ${i % 2 === 1 ? "bg-slate-50/60" : "bg-white"}`}>
-                      <td className="px-3 py-2 text-indigo-700" style={{ fontWeight: 600 }}>{c.id}</td>
-                      <td className="px-3 py-2 text-slate-900">{c.vendor}</td>
-                      <td className="px-3 py-2 text-slate-900" style={{ fontWeight: 600 }}>{fmt(c.value)}</td>
-                      <td className="px-3 py-2 text-slate-500">{c.startDate}</td>
-                      <td className="px-3 py-2 text-slate-500">{c.endDate}</td>
-                      <td className="px-3 py-2"><StatusBadge status={c.status} /></td>
-                      <td className="px-3 py-2 text-slate-700">{c.completed}/{c.deliverables}</td>
-                      <td className="px-3 py-2">
-                        <div className="flex items-center gap-2">
-                          <div className="flex-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                            <div className="h-full rounded-full" style={{ width: `${(c.completed / c.deliverables) * 100}%`, backgroundColor: c.completed === c.deliverables ? "#10b981" : BLUE }} />
-                          </div>
-                          <span className="text-[10px] text-slate-500" style={{ fontWeight: 600 }}>{Math.round((c.completed / c.deliverables) * 100)}%</span>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          {subTab === 1 && (
+            <ReportSection title="Sourcing Status Report" columns={sourcingColumns} rows={sourcingRows} meta={exportMeta}
+              search={searchQuery} emptyMessage="No sourcing cases in this period" emptyHint={noDataHint} />
+          )}
+
+          {subTab === 2 && (
+            <ReportSection title="Bid Submission Report" columns={bidColumns} rows={bidRows} meta={exportMeta}
+              search={searchQuery} emptyMessage="No bid activity in this period" emptyHint={noDataHint} />
+          )}
+
+          {subTab === 3 && <>
+            <ProcurementStatCards variant="flush" stats={[
+              { label: "Invoices Received", value: fmtNum(base.invoices.length), sub: fmt(sourcingData.totalInvoiced), icon: <FileText size={18} />, tone: "info" },
+              { label: "Paid", value: fmtNum(base.invoices.filter(r => r.invoice.status === "Paid").length), sub: fmt(base.invoices.reduce((s, r) => s + (r.invoice.amountPaid ?? 0), 0)), icon: <CheckCircle2 size={18} />, tone: "success" },
+              { label: "In Approval Chain", value: fmtNum(unpaid.length), sub: "awaiting a decision", icon: <Clock size={18} />, tone: "info" },
+              { label: "Queried", value: fmtNum(queried.length), sub: "returned to vendor", icon: <AlertTriangle size={18} />, tone: "danger" },
+            ]} />
+            <ReportSection title="Invoice and Payment Report" columns={invoiceColumns} rows={invoiceRows} meta={exportMeta}
+              search={searchQuery} emptyMessage="No invoices in this period" emptyHint={noDataHint} />
           </>}
 
-          {subTab === 2 && <>
-            <ExportBar tableName="Expiry & Renewal Alerts" />
-            <div className="overflow-auto">
-              <table className="w-full text-[11px]" style={{ fontFamily: F }}>
-                <thead>
-                  <tr style={{ backgroundColor: BLUE }}>
-                    {["Contract", "Vendor", "End Date", "Days Left", "Value", "Action"].map(h => (
-                      <th key={h} className="px-3 py-2.5 text-left text-white" style={{ fontWeight: 600, fontSize: 11 }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {expiryAlerts.sort((a, b) => a.daysLeft - b.daysLeft).map((a, i) => (
-                    <tr key={a.contract} className={`border-b border-slate-100 ${i % 2 === 1 ? "bg-slate-50/60" : "bg-white"}`}>
-                      <td className="px-3 py-2 text-indigo-700" style={{ fontWeight: 600 }}>{a.contract}</td>
-                      <td className="px-3 py-2 text-slate-900">{a.vendor}</td>
-                      <td className="px-3 py-2 text-slate-500">{a.endDate}</td>
-                      <td className="px-3 py-2">
-                        <span className={`text-[11px] ${a.daysLeft <= 30 ? "text-red-600" : a.daysLeft <= 60 ? "text-amber-600" : "text-green-600"}`} style={{ fontWeight: 700 }}>{a.daysLeft} days</span>
-                      </td>
-                      <td className="px-3 py-2 text-slate-900" style={{ fontWeight: 600 }}>{fmt(a.value)}</td>
-                      <td className="px-3 py-2"><StatusBadge status={a.action} /></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          {subTab === 4 && <>
+            <ProcurementStatCards variant="flush" stats={[
+              { label: "Expiring Within Window", value: fmtNum(expiry.rows.filter(r => r.daysLeft >= 0).length), sub: `next ${expiryWindow} days`, icon: <CalendarClock size={18} />, tone: "warning" },
+              { label: "Past End Date", value: fmtNum(expiry.overdue), sub: "not yet closed out", icon: <AlertTriangle size={18} />, tone: "danger" },
+              { label: "Active Contracts", value: fmtNum(base.allContracts.filter(c => c.status === "Active").length), sub: "across the portfolio", icon: <FileText size={18} />, tone: "success" },
+            ]} />
+            <ReportSection title="Contract Expiry and Renewal" columns={expiryColumns} rows={expiryRows} meta={exportMeta}
+              search={searchQuery} controls={expiryControl}
+              emptyMessage={`No contracts reach their end date within ${expiryWindow} days`}
+              emptyHint="The renewal horizon is measured from today." />
           </>}
         </div>
       </div>
     );
   };
 
-  /* ── Tab 3: Vendors & KPIs ────────────────────────────────────────────────── */
+  /* ── Tab 3: Vendors & KPIs ─────────────────────────────────────────────── */
 
-  const vendorTabs = ["Charts & Statistics", "Vendor Performance", "Donor Procurement Summary", "Vendor Participation", "Vendor Payment & Invoice", "Vendor Engagement by Funding"];
+  const vendorTabs = ["Charts & Statistics", "Vendor Master List", "Participation", "Payments", "Prequalification", "Cycle & Timeliness"];
 
   const renderVendors = () => {
-    const filteredVendors = vendorMasterList.filter(v => {
-      const q = searchQuery.toLowerCase();
-      return !q || v.name.toLowerCase().includes(q) || v.category.toLowerCase().includes(q);
+    const masterColumns: TableColumn[] = [
+      { key: "vendorId", header: "Vendor ID", cell: refCell("vendorId") },
+      { key: "name", header: "Vendor / Consultant" },
+      { key: "type", header: "Type" },
+      { key: "category", header: "Category" },
+      { key: "status", header: "Status", cell: badgeCell("status") },
+      { key: "risk", header: "Risk", cell: badgeCell("risk") },
+      { key: "score", header: "Score", align: "center", format: scoreFormat, cell: scoreCell("score", 8, 5) },
+      { key: "contracts", header: "Contracts", align: "center", cell: countCell("contracts") },
+      { key: "spend", header: "Lifetime Spend", format: moneyFormat, cell: moneyCell("spend") },
+      { key: "docIssues", header: "Doc Issues", align: "center", cell: countCell("docIssues", 0) },
+      { key: "eligible", header: "Sourcing Eligible", format: yesNoFormat, cell: yesNoCell("eligible") },
+    ];
+
+    const masterRows: ReportRow[] = base.vendors.map(v => {
+      const flags = getVendorFlags(v);
+      const eligibility = checkSourcingEligibility(v.id);
+      return {
+        __key: v.id,
+        vendorId: v.vendorId,
+        name: vendorDisplayName(v),
+        type: v.type,
+        category: v.category,
+        status: v.status,
+        risk: v.riskLevel,
+        score: avgScore(v.performance) || "",
+        contracts: v.contractHistory?.length ?? v.totalOrders,
+        spend: v.totalSpend,
+        docIssues: flags.expiredDocs.length + flags.missingDocs.length,
+        eligible: eligibility.eligible,
+      };
     });
 
-    const latestCycleTime = cycleTimeData[cycleTimeData.length - 1];
-    const prevCycleTime = cycleTimeData[cycleTimeData.length - 2];
-    const avgOnTimePayment = paymentTimeliness.reduce((s, p) => s + p.onTime, 0) / paymentTimeliness.length;
+    const participationColumns: TableColumn[] = [
+      { key: "vendor", header: "Vendor" },
+      { key: "bids", header: "Bids Submitted", align: "center", cell: countCell("bids") },
+      { key: "awards", header: "Awards Won", align: "center", cell: countCell("awards") },
+      { key: "winRate", header: "Win Rate", format: pctFormat, cell: scoreCell("winRate", 50, 25, "%") },
+      { key: "value", header: "Contract Value", format: moneyFormat, cell: moneyCell("value") },
+      { key: "active", header: "Active", align: "center", cell: countCell("active") },
+      { key: "completed", header: "Completed", align: "center", cell: countCell("completed") },
+    ];
+
+    const participationRows: ReportRow[] = vendorData.participation.map((p, i) => ({
+      __key: `part-${i}`,
+      vendor: p.vendor,
+      bids: p.bidsSubmitted,
+      awards: p.awardsWon,
+      winRate: p.winRate,
+      value: p.totalContractValue,
+      active: p.activeContracts,
+      completed: p.completedContracts,
+    }));
+
+    const paymentColumns: TableColumn[] = [
+      { key: "vendor", header: "Vendor" },
+      { key: "submitted", header: "Invoices", align: "center", cell: countCell("submitted") },
+      { key: "paid", header: "Paid", align: "center", cell: countCell("paid") },
+      { key: "pending", header: "In Chain", align: "center", cell: countCell("pending") },
+      { key: "queried", header: "Queried", align: "center", cell: countCell("queried", 0) },
+      { key: "outstanding", header: "Outstanding", format: moneyFormat, cell: moneyCell("outstanding") },
+      { key: "avgDays", header: "Avg Days to Pay", align: "center", format: v => (v === null || v === undefined || v === "" ? "—" : `${Number(v).toFixed(1)}`) },
+    ];
+
+    const paymentRows: ReportRow[] = vendorData.payments.map((p, i) => ({
+      __key: `pay-${i}`,
+      vendor: p.vendor,
+      submitted: p.invoicesSubmitted,
+      paid: p.paid,
+      pending: p.pending,
+      queried: p.queried,
+      outstanding: p.outstanding,
+      avgDays: p.avgDaysToPay ?? "",
+    }));
+
+    const prequalColumns: TableColumn[] = [
+      { key: "vendorId", header: "Vendor ID", cell: refCell("vendorId") },
+      { key: "name", header: "Vendor / Consultant" },
+      { key: "category", header: "Category" },
+      { key: "prequal", header: "Prequalification", cell: badgeCell("prequal") },
+      { key: "score", header: "Score", align: "center", format: scoreFormat, cell: scoreCell("score", 8, 5) },
+      { key: "expired", header: "Expired Docs", align: "center", cell: countCell("expired", 0) },
+      { key: "missing", header: "Missing Docs", align: "center", cell: countCell("missing", 0) },
+      { key: "reason", header: "Eligibility" },
+    ];
+
+    const prequalRows: ReportRow[] = base.vendors.map(v => {
+      const flags = getVendorFlags(v);
+      const eligibility = checkSourcingEligibility(v.id);
+      return {
+        __key: `pq-${v.id}`,
+        vendorId: v.vendorId,
+        name: vendorDisplayName(v),
+        category: v.category,
+        prequal: prequalBucket(v),
+        score: avgScore(v.performance) || "",
+        expired: flags.expiredDocs.length,
+        missing: flags.missingDocs.length,
+        reason: eligibility.eligible
+          ? eligibility.requiresManagementApproval ? "Eligible with management approval" : "Eligible"
+          : eligibility.blockingReasons[0] ?? "Blocked",
+      };
+    });
+
+    const blockedCount = base.vendors.filter(v => !checkSourcingEligibility(v.id).eligible).length;
+    const docIssueCount = base.vendors.filter(v => {
+      const f = getVendorFlags(v);
+      return f.expiredDocs.length > 0 || f.missingDocs.length > 0 || f.expiringDocs.length > 0;
+    }).length;
 
     return (
       <div>
         <SubTabBar tabs={vendorTabs} active={subTab} onChange={setSubTab} />
         <div className="space-y-6 p-6">
-          <PeriodFilterBar periodFilter={periodFilter} setPeriodFilter={setPeriodFilter} />
+          {periodBar}
 
           {subTab === 0 && <>
-            {/* Stat Cards */}
-            <div className="grid grid-cols-4 gap-4">
-              <StatCard label="Registered Vendors" value={String(vendorMasterList.length)} sub="in master list" icon={<Users size={18} />} color="#6366f1" />
-              <StatCard label="Prequalified" value={String(prequalStatus.find(s => s.name === "Prequalified")?.value || 0)} sub="active vendors" trend="3" trendDir="up" icon={<ShieldCheck size={18} />} color="#10b981" />
-              <StatCard
-                label="Avg Cycle Time"
-                value={`${latestCycleTime.total} days`}
-                sub="req → contract"
-                trend={`${Math.abs(latestCycleTime.total - prevCycleTime.total).toFixed(1)} days`}
-                trendDir={latestCycleTime.total < prevCycleTime.total ? "up" : "down"}
-                icon={<Clock size={18} />}
-                color="#8b5cf6"
-              />
-              <StatCard
-                label="On-Time Payments"
-                value={fmtPct(avgOnTimePayment)}
-                trend="4%" trendDir="up"
-                sub="of invoices"
-                icon={<CheckCircle2 size={18} />}
-                color="#f59e0b"
-              />
-            </div>
+            <ProcurementStatCards variant="flush" stats={[
+              { label: "Registered Vendors", value: fmtNum(base.vendors.length), sub: `${fmtNum(base.vendors.filter(v => v.status === "Active").length)} active`, icon: <Users size={18} />, tone: "info" },
+              { label: "Prequalified", value: fmtNum(vendorData.prequalifiedCount), sub: "eligible for sourcing", icon: <CheckCircle2 size={18} />, tone: "success" },
+              { label: "Blocked or Restricted", value: fmtNum(blockedCount), sub: "cannot be awarded", icon: <AlertTriangle size={18} />, tone: "danger" },
+              { label: "Document Issues", value: fmtNum(docIssueCount), sub: "expired, expiring or missing", icon: <FileText size={18} />, tone: "warning" },
+            ]} />
 
-            {/* KPI Charts Row */}
-            <div className="grid grid-cols-3 gap-4">
-              {/* Prequalification Status Pie */}
-              <div className="bg-white border border-slate-200 rounded-xl p-4">
-                <h3 className="text-[13px] text-slate-900 mb-4" style={{ fontFamily: F, fontWeight: 700 }}>Prequalification Status</h3>
-                <ResponsiveContainer width="100%" height={200}>
-                  <PieChart id="rpt-prequal">
-                    <Pie data={prequalStatus} cx="50%" cy="50%" innerRadius={42} outerRadius={68} paddingAngle={3} dataKey="value">
-                      {prequalStatus.map((entry) => <Cell key={`prequal-cell-${entry.name}`} fill={entry.color} />)}
-                    </Pie>
-                    <Tooltip contentStyle={{ fontFamily: F, fontSize: 11 }} />
-                    <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 10, fontFamily: F }} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-
-              {/* Cycle Time Trend */}
-              <div className="bg-white border border-slate-200 rounded-xl p-4">
-                <h3 className="text-[13px] text-slate-900 mb-4" style={{ fontFamily: F, fontWeight: 700 }}>Cycle Time Trend (Days)</h3>
-                <ResponsiveContainer width="100%" height={200}>
-                  <AreaChart id="rpt-cycle-time" data={cycleTimeData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                    <XAxis dataKey="month" tick={{ fontSize: 10, fontFamily: F }} />
-                    <YAxis tick={{ fontSize: 10, fontFamily: F }} />
-                    <Tooltip contentStyle={{ fontFamily: F, fontSize: 11 }} />
-                    <Area type="monotone" dataKey="reqToApproval" stackId="1" fill="#c7d2fe" stroke="#818cf8" name="Req → Approval" />
-                    <Area type="monotone" dataKey="approvalToSourcing" stackId="1" fill="#a5b4fc" stroke="#6366f1" name="Approval → Sourcing" />
-                    <Area type="monotone" dataKey="sourcingToContract" stackId="1" fill="#818cf8" stroke={BLUE} name="Sourcing → Contract" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-
-              {/* KPI Radar */}
-              <div className="bg-white border border-slate-200 rounded-xl p-4">
-                <h3 className="text-[13px] text-slate-900 mb-4" style={{ fontFamily: F, fontWeight: 700 }}>KPI Scorecard</h3>
-                <ResponsiveContainer width="100%" height={200}>
-                  <RadarChart id="rpt-kpi-radar" cx="50%" cy="50%" outerRadius="70%" data={radarKPI}>
-                    <PolarGrid stroke="#e2e8f0" />
-                    <PolarAngleAxis dataKey="metric" tick={{ fontSize: 9, fontFamily: F }} />
-                    <PolarRadiusAxis tick={{ fontSize: 8 }} domain={[0, 100]} />
-                    <Radar name="Actual" dataKey="score" stroke={BLUE} fill={BLUE} fillOpacity={0.25} />
-                    <Radar name="Target" dataKey="target" stroke="#10b981" fill="#10b981" fillOpacity={0.1} strokeDasharray="4 4" />
-                    <Tooltip contentStyle={{ fontFamily: F, fontSize: 11 }} />
-                    <Legend iconType="line" wrapperStyle={{ fontSize: 10, fontFamily: F }} />
-                  </RadarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            {/* Payment Timeliness */}
-            <div className="bg-white border border-slate-200 rounded-xl p-4">
-              <h3 className="text-[13px] text-slate-900 mb-4" style={{ fontFamily: F, fontWeight: 700 }}>Payment Timeliness (%)</h3>
-              <ResponsiveContainer width="100%" height={180}>
-                <BarChart id="rpt-pay-timely" data={paymentTimeliness} barGap={1}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis dataKey="month" tick={{ fontSize: 10, fontFamily: F }} />
-                  <YAxis tick={{ fontSize: 10, fontFamily: F }} domain={[0, 100]} />
+            <div className="grid grid-cols-2 gap-4">
+              <ChartCard title="Prequalification Status" height={215} isEmpty={vendorData.prequalCounts.length === 0}
+                emptyMessage="No vendors registered" emptyHint={noDataHint}>
+                <PieChart>
+                  <Pie data={vendorData.prequalCounts} cx="50%" cy="50%" innerRadius={45} outerRadius={78} paddingAngle={3} dataKey="value"
+                    label={(props: any) => `${props.name}: ${props.value}`}>
+                    {vendorData.prequalCounts.map(e => <Cell key={`pq-${e.name}`} fill={e.color} />)}
+                  </Pie>
                   <Tooltip contentStyle={{ fontFamily: F, fontSize: 11 }} />
-                  <Bar dataKey="onTime" fill="#10b981" name="On Time" stackId="a" />
-                  <Bar dataKey="late" fill="#f59e0b" name="Late" stackId="a" />
-                  <Bar dataKey="overdue" fill="#ef4444" name="Overdue" stackId="a" radius={[2, 2, 0, 0]} />
+                  <Legend wrapperStyle={{ fontSize: 10, fontFamily: F }} />
+                </PieChart>
+              </ChartCard>
+
+              <ChartCard title="Payment Timeliness" height={215} isEmpty={vendorData.paymentTrend.length === 0}
+                emptyMessage="No settled invoices in this period" emptyHint={noDataHint}>
+                <BarChart data={vendorData.paymentTrend} barGap={2}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis dataKey="month" tick={{ fontSize: 9, fontFamily: F }} />
+                  <YAxis tick={{ fontSize: 9, fontFamily: F }} allowDecimals={false} />
+                  <Tooltip contentStyle={{ fontSize: 10, fontFamily: F }} />
+                  <Bar dataKey="onTime" stackId="p" fill="#22c55e" name="On time" radius={[2, 2, 0, 0]} />
+                  <Bar dataKey="late" stackId="p" fill="#f59e0b" name="Late" />
+                  <Bar dataKey="overdue" stackId="p" fill="#ef4444" name="Still outstanding" />
+                  <Legend iconType="square" iconSize={8} wrapperStyle={{ fontSize: 10, fontFamily: F }} />
                 </BarChart>
-              </ResponsiveContainer>
+              </ChartCard>
             </div>
 
-            {/* Vendor Participation Charts (Gap 2) */}
-            <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-              <div className="px-4 py-3 border-b border-slate-200">
-                <h3 className="text-[13px] text-slate-900" style={{ fontFamily: F, fontWeight: 700 }}>Vendor Procurement Participation</h3>
-                <p className="text-[10px] text-slate-500 mt-0.5" style={{ fontFamily: F }}>Bids submitted, awards won, and win rates by vendor</p>
-              </div>
-              <div className="grid grid-cols-2 gap-4 p-4">
-                <div className="h-[220px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={vendorParticipation.map(v => ({ name: v.vendor.length > 15 ? v.vendor.slice(0, 15) + "…" : v.vendor, bids: v.bidsSubmitted, awards: v.awardsWon }))} layout="vertical">
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                      <XAxis type="number" tick={{ fontSize: 9, fontFamily: F }} />
-                      <YAxis dataKey="name" type="category" width={110} tick={{ fontSize: 8, fontFamily: F }} />
-                      <Tooltip contentStyle={{ fontSize: 10, fontFamily: F }} />
-                      <Bar dataKey="bids" fill="#94a3b8" name="Bids" radius={[0, 4, 4, 0]} />
-                      <Bar dataKey="awards" fill={BLUE} name="Awards" radius={[0, 4, 4, 0]} />
-                      <Legend wrapperStyle={{ fontSize: 10, fontFamily: F }} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-                <div className="h-[220px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={vendorParticipation.map(v => ({ name: v.vendor.length > 15 ? v.vendor.slice(0, 15) + "…" : v.vendor, rate: v.winRate }))}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                      <XAxis dataKey="name" tick={{ fontSize: 8, fontFamily: F, angle: -30 }} height={50} />
-                      <YAxis tick={{ fontSize: 9, fontFamily: F }} domain={[0, 100]} />
-                      <Tooltip contentStyle={{ fontSize: 10, fontFamily: F }} formatter={(v) => `${v}%`} />
-                      <Bar dataKey="rate" fill="#22c55e" radius={[4, 4, 0, 0]} name="Win Rate %" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            </div>
-
-            {/* Vendor Payment & Invoice Charts (Gap 3) */}
-            <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-              <div className="px-4 py-3 border-b border-slate-200">
-                <h3 className="text-[13px] text-slate-900" style={{ fontFamily: F, fontWeight: 700 }}>Vendor Payment & Invoice Report</h3>
-                <p className="text-[10px] text-slate-500 mt-0.5" style={{ fontFamily: F }}>Invoice status, payments, and outstanding amounts by vendor</p>
-              </div>
-              <div className="grid grid-cols-4 gap-4 p-4">
-                <StatCard label="Total Invoiced" value={fmt(vendorPaymentReport.reduce((s, v) => s + v.totalInvoiced, 0))} icon={<FileText size={18} />} color="#6366f1" />
-                <StatCard label="Total Paid" value={fmt(vendorPaymentReport.reduce((s, v) => s + v.totalPaid, 0))} icon={<CheckCircle2 size={18} />} color="#22c55e" />
-                <StatCard label="Outstanding" value={fmt(vendorPaymentReport.reduce((s, v) => s + v.outstanding, 0))} icon={<Clock size={18} />} color="#f59e0b" />
-                <StatCard label="Overdue Invoices" value={String(vendorPaymentReport.reduce((s, v) => s + v.overdue, 0))} icon={<AlertTriangle size={18} />} color="#ef4444" />
-              </div>
-              <div className="h-[220px] px-4 pb-4">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={vendorPaymentReport.map(v => ({ name: v.vendor.length > 15 ? v.vendor.slice(0, 15) + "…" : v.vendor, paid: v.totalPaid, outstanding: v.outstanding }))}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                    <XAxis dataKey="name" tick={{ fontSize: 8, fontFamily: F, angle: -20 }} height={45} />
-                    <YAxis tick={{ fontSize: 9, fontFamily: F }} tickFormatter={(v) => `$${(Number(v) / 1000).toFixed(0)}k`} />
-                    <Tooltip contentStyle={{ fontSize: 10, fontFamily: F }} formatter={(v) => fmt(v as number)} />
-                    <Bar dataKey="paid" stackId="a" fill="#22c55e" name="Paid" />
-                    <Bar dataKey="outstanding" stackId="a" fill="#f59e0b" name="Outstanding" radius={[4, 4, 0, 0]} />
-                    <Legend wrapperStyle={{ fontSize: 10, fontFamily: F }} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            {/* Vendor Engagement by Funding Source Charts (Gap 4) */}
-            <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-              <div className="px-4 py-3 border-b border-slate-200">
-                <h3 className="text-[13px] text-slate-900" style={{ fontFamily: F, fontWeight: 700 }}>Vendor Engagement by Funding Source</h3>
-                <p className="text-[10px] text-slate-500 mt-0.5" style={{ fontFamily: F }}>Vendor-donor contract relationships and performance</p>
-              </div>
-              <div className="grid grid-cols-2 gap-4 p-4">
-                <div className="h-[220px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={(() => {
-                      const byDonor: Record<string, number> = {};
-                      vendorDonorEngagement.forEach(e => { byDonor[e.donor] = (byDonor[e.donor] || 0) + e.totalValue; });
-                      return Object.entries(byDonor).map(([donor, value]) => ({ donor, value })).sort((a, b) => b.value - a.value);
-                    })()}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                      <XAxis dataKey="donor" tick={{ fontSize: 9, fontFamily: F }} />
-                      <YAxis tick={{ fontSize: 9, fontFamily: F }} tickFormatter={(v) => `$${(Number(v) / 1000).toFixed(0)}k`} />
-                      <Tooltip contentStyle={{ fontSize: 10, fontFamily: F }} formatter={(v) => fmt(v as number)} />
-                      <Bar dataKey="value" fill={BLUE} radius={[4, 4, 0, 0]} name="Total Value" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-                <div className="h-[220px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={(() => {
-                      const byVendor: Record<string, { contracts: number; avgPerf: number; count: number }> = {};
-                      vendorDonorEngagement.forEach(e => {
-                        if (!byVendor[e.vendor]) byVendor[e.vendor] = { contracts: 0, avgPerf: 0, count: 0 };
-                        byVendor[e.vendor].contracts += e.contracts;
-                        byVendor[e.vendor].avgPerf += e.avgPerformance;
-                        byVendor[e.vendor].count++;
-                      });
-                      return Object.entries(byVendor).map(([v, d]) => ({ name: v.length > 15 ? v.slice(0, 15) + "…" : v, perf: +(d.avgPerf / d.count).toFixed(1) }));
-                    })()}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                      <XAxis dataKey="name" tick={{ fontSize: 8, fontFamily: F, angle: -25 }} height={50} />
-                      <YAxis tick={{ fontSize: 9, fontFamily: F }} domain={[0, 100]} />
-                      <Tooltip contentStyle={{ fontSize: 10, fontFamily: F }} />
-                      <Bar dataKey="perf" fill="#22c55e" radius={[4, 4, 0, 0]} name="Avg Performance" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            </div>
+            <ChartCard title="Requisition-to-Contract Cycle Time" height={230} isEmpty={vendorData.cycleTrend.length === 0}
+              emptyMessage="No completed cycles in this period" emptyHint={noDataHint}>
+              <ComposedChart data={vendorData.cycleTrend}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis dataKey="month" tick={{ fontSize: 9, fontFamily: F }} />
+                <YAxis tick={{ fontSize: 9, fontFamily: F }} label={{ value: "Days", angle: -90, position: "insideLeft", style: { fontSize: 10, fontFamily: F } }} />
+                <Tooltip contentStyle={{ fontSize: 10, fontFamily: F }} />
+                <Bar dataKey="reqToApproval" stackId="c" fill="#c7d2fe" name="Raise → approve" radius={[2, 2, 0, 0]} />
+                <Bar dataKey="approvalToSourcing" stackId="c" fill="#818cf8" name="Approve → source" />
+                <Bar dataKey="sourcingToContract" stackId="c" fill={BLUE} name="Source → contract" />
+                <Legend iconType="square" iconSize={8} wrapperStyle={{ fontSize: 10, fontFamily: F }} />
+              </ComposedChart>
+            </ChartCard>
           </>}
 
-          {subTab === 1 && <>
-            <ExportBar tableName="Vendor Performance" />
-            <div className="flex-1 overflow-auto">
-              <table className="w-full text-[11px]" style={{ fontFamily: F }}>
-                <thead>
-                  <tr style={{ backgroundColor: BLUE }}>
-                    {["Vendor", "Category", "Status", "Contracts", "Total Value", "Rating", "On-Time Delivery", "Avg Response"].map(h => (
-                      <th key={h} className="px-3 py-2.5 text-left text-white" style={{ fontWeight: 600, fontSize: 11 }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredVendors.map((v, i) => (
-                    <tr key={v.name} className={`border-b border-slate-100 ${i % 2 === 1 ? "bg-slate-50/60" : "bg-white"}`}>
-                      <td className="px-3 py-2 text-slate-900" style={{ fontWeight: 600 }}>{v.name}</td>
-                      <td className="px-3 py-2 text-slate-600">{v.category}</td>
-                      <td className="px-3 py-2"><StatusBadge status={v.status} /></td>
-                      <td className="px-3 py-2 text-slate-700 text-center">{v.contracts}</td>
-                      <td className="px-3 py-2 text-slate-900" style={{ fontWeight: 600 }}>{fmt(v.totalValue)}</td>
-                      <td className="px-3 py-2">
-                        <div className="flex items-center gap-1">
-                          <span className="text-amber-500">★</span>
-                          <span className="text-slate-900" style={{ fontWeight: 600 }}>{v.rating}</span>
-                        </div>
-                      </td>
-                      <td className="px-3 py-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-14 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                            <div className="h-full rounded-full" style={{ width: `${v.onTimeDelivery}%`, backgroundColor: v.onTimeDelivery >= 90 ? "#10b981" : v.onTimeDelivery >= 80 ? "#f59e0b" : "#ef4444" }} />
-                          </div>
-                          <span className="text-slate-700" style={{ fontWeight: 600 }}>{v.onTimeDelivery}%</span>
-                        </div>
-                      </td>
-                      <td className="px-3 py-2">
-                        <span className={`${v.avgResponseDays <= 2 ? "text-green-600" : v.avgResponseDays <= 3 ? "text-amber-600" : "text-red-500"}`} style={{ fontWeight: 600 }}>
-                          {v.avgResponseDays}d
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </>}
+          {subTab === 1 && (
+            <ReportSection title="Vendor and Consultant Master List" columns={masterColumns} rows={masterRows} meta={exportMeta}
+              search={searchQuery} emptyMessage="No vendors registered" emptyHint={noDataHint} />
+          )}
 
-          {subTab === 2 && <>
-            <ExportBar tableName="Donor Procurement Summary" />
-            <div className="flex-1 overflow-auto">
-              <table className="w-full text-[11px]" style={{ fontFamily: F }}>
-                <thead>
-                  <tr style={{ backgroundColor: BLUE }}>
-                    {["Donor", "Projects", "Total Procured", "ICB", "NCB", "Shopping", "Compliance"].map(h => (
-                      <th key={h} className="px-3 py-2.5 text-left text-white" style={{ fontWeight: 600, fontSize: 11 }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {donorProcurementSummary.map((d, i) => (
-                    <tr key={d.donor} className={`border-b border-slate-100 ${i % 2 === 1 ? "bg-slate-50/60" : "bg-white"}`}>
-                      <td className="px-3 py-2 text-slate-900" style={{ fontWeight: 600 }}>{d.donor}</td>
-                      <td className="px-3 py-2 text-slate-700 text-center">{d.projects}</td>
-                      <td className="px-3 py-2 text-slate-900" style={{ fontWeight: 600 }}>{fmt(d.totalProcured)}</td>
-                      <td className="px-3 py-2 text-slate-700 text-center">{d.methods.ICB}</td>
-                      <td className="px-3 py-2 text-slate-700 text-center">{d.methods.NCB}</td>
-                      <td className="px-3 py-2 text-slate-700 text-center">{d.methods.Shopping}</td>
-                      <td className="px-3 py-2">
-                        <span className={`text-[11px] ${d.compliance >= 95 ? "text-green-600" : "text-amber-600"}`} style={{ fontWeight: 700 }}>
-                          {d.compliance}%
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </>}
+          {subTab === 2 && (
+            <ReportSection title="Vendor Procurement Participation" columns={participationColumns} rows={participationRows} meta={exportMeta}
+              search={searchQuery} emptyMessage="No vendor participation in this period" emptyHint={noDataHint} />
+          )}
 
-          {subTab === 3 && <>
-            <ExportBar tableName="Vendor Participation" />
-            <div className="overflow-x-auto">
-              <table className="w-full text-[11px]" style={{ fontFamily: F }}>
-                <thead>
-                  <tr style={{ backgroundColor: "#0B01D0" }}>
-                    {["Vendor", "Bids Submitted", "Awards Won", "Win Rate", "Contract Value", "Active", "Completed"].map(h => (
-                      <th key={h} className="px-3 py-2 text-left text-[12px] font-semibold text-white">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {vendorParticipation.map((v, i) => (
-                    <tr key={v.vendor} className={`border-b border-slate-100 ${i % 2 === 1 ? "bg-slate-50/60" : "bg-white"}`}>
-                      <td className="px-3 py-2 text-slate-900" style={{ fontWeight: 600 }}>{v.vendor}</td>
-                      <td className="px-3 py-2 text-slate-700 text-center">{v.bidsSubmitted}</td>
-                      <td className="px-3 py-2 text-slate-700 text-center">{v.awardsWon}</td>
-                      <td className="px-3 py-2">
-                        <span className={`text-[11px] ${v.winRate >= 60 ? "text-green-600" : v.winRate >= 45 ? "text-amber-600" : "text-red-500"}`} style={{ fontWeight: 700 }}>{v.winRate}%</span>
-                      </td>
-                      <td className="px-3 py-2 text-slate-900" style={{ fontWeight: 600 }}>{fmt(v.totalContractValue)}</td>
-                      <td className="px-3 py-2 text-slate-700 text-center">{v.activeContracts}</td>
-                      <td className="px-3 py-2 text-slate-700 text-center">{v.completedContracts}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </>}
+          {subTab === 3 && (
+            <ReportSection title="Vendor Payment and Invoice Report" columns={paymentColumns} rows={paymentRows} meta={exportMeta}
+              search={searchQuery} emptyMessage="No vendor invoices in this period" emptyHint={noDataHint} />
+          )}
 
-          {subTab === 4 && <>
-            <ExportBar tableName="Vendor Payment & Invoice" />
-            <div className="overflow-x-auto">
-              <table className="w-full text-[11px]" style={{ fontFamily: F }}>
-                <thead>
-                  <tr style={{ backgroundColor: "#0B01D0" }}>
-                    {["Vendor", "Invoices", "Paid", "Pending", "Overdue", "Total Invoiced", "Total Paid", "Outstanding"].map(h => (
-                      <th key={h} className="px-3 py-2 text-left text-[12px] font-semibold text-white">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {vendorPaymentReport.map((v, i) => (
-                    <tr key={v.vendor} className={`border-b border-slate-100 ${i % 2 === 1 ? "bg-slate-50/60" : "bg-white"}`}>
-                      <td className="px-3 py-2 text-slate-900" style={{ fontWeight: 600 }}>{v.vendor}</td>
-                      <td className="px-3 py-2 text-slate-700 text-center">{v.invoicesSubmitted}</td>
-                      <td className="px-3 py-2 text-green-600 text-center" style={{ fontWeight: 600 }}>{v.paid}</td>
-                      <td className="px-3 py-2 text-amber-600 text-center" style={{ fontWeight: 600 }}>{v.pending}</td>
-                      <td className="px-3 py-2 text-center">
-                        <span className={v.overdue > 0 ? "text-red-600 font-bold" : "text-slate-400"}>{v.overdue}</span>
-                      </td>
-                      <td className="px-3 py-2 text-slate-900" style={{ fontWeight: 600 }}>{fmt(v.totalInvoiced)}</td>
-                      <td className="px-3 py-2 text-green-700" style={{ fontWeight: 600 }}>{fmt(v.totalPaid)}</td>
-                      <td className="px-3 py-2">
-                        <span className={v.outstanding > 0 ? "text-amber-600 font-bold" : "text-green-600"}>{fmt(v.outstanding)}</span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </>}
+          {subTab === 4 && (
+            <ReportSection title="Prequalification Status Report" columns={prequalColumns} rows={prequalRows} meta={exportMeta}
+              search={searchQuery} emptyMessage="No vendors registered" emptyHint={noDataHint} />
+          )}
 
           {subTab === 5 && <>
-            <ExportBar tableName="Vendor Engagement by Funding" />
-            <div className="overflow-x-auto">
-              <table className="w-full text-[11px]" style={{ fontFamily: F }}>
-                <thead>
-                  <tr style={{ backgroundColor: "#0B01D0" }}>
-                    {["Vendor", "Funding Source", "Contracts", "Total Value", "Avg Performance"].map(h => (
-                      <th key={h} className="px-3 py-2 text-left text-[12px] font-semibold text-white">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {vendorDonorEngagement.map((e, i) => (
-                    <tr key={`${e.vendor}-${e.donor}`} className={`border-b border-slate-100 ${i % 2 === 1 ? "bg-slate-50/60" : "bg-white"}`}>
-                      <td className="px-3 py-2 text-slate-900" style={{ fontWeight: 600 }}>{e.vendor}</td>
-                      <td className="px-3 py-2 text-slate-600">{e.donor}</td>
-                      <td className="px-3 py-2 text-slate-700 text-center">{e.contracts}</td>
-                      <td className="px-3 py-2 text-slate-900" style={{ fontWeight: 600 }}>{fmt(e.totalValue)}</td>
-                      <td className="px-3 py-2">
-                        <span className={`text-[11px] ${e.avgPerformance >= 90 ? "text-green-600" : e.avgPerformance >= 80 ? "text-amber-600" : "text-red-500"}`} style={{ fontWeight: 700 }}>
-                          {e.avgPerformance}%
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <ProcurementStatCards variant="flush" stats={[
+              { label: "Requisition → Award", value: fmtDays(kpis.reqToAward), sub: `target ${KPI_TARGETS.reqToAwardDays} days`, icon: <Clock size={18} />, tone: "info" },
+              { label: "Award → Contract", value: fmtDays(kpis.awardToContract), sub: `target ${KPI_TARGETS.awardToContractDays} days`, icon: <FileText size={18} />, tone: "info" },
+              { label: "Contract → Payment", value: fmtDays(kpis.contractToPayment), sub: `target ${KPI_TARGETS.contractToPaymentDays} days`, icon: <DollarSign size={18} />, tone: "warning" },
+              { label: "Invoice → Payment", value: fmtDays(average(base.invoices.map(r => invoiceDaysToPay(r.invoice)).filter((d): d is number => d !== null))), sub: `target ${KPI_TARGETS.paymentWithinDays} days`, icon: <CheckCircle2 size={18} />, tone: "success" },
+            ]} />
+            <ReportSection title="Vendor Payment Timeliness" columns={paymentColumns} rows={paymentRows} meta={exportMeta}
+              search={searchQuery} emptyMessage="No vendor invoices in this period" emptyHint={noDataHint} />
           </>}
         </div>
       </div>
     );
   };
 
-  /* ── Tab 4: Contract Reports ─────────────────────────────────────────────── */
+  /* ── Tab 4: Contracts ──────────────────────────────────────────────────── */
 
-  const contractTabs = ["Charts & Statistics", "Active Contracts", "Deliverables Status", "Invoice & Payment", "Contract Variations", "Contract Close-Out", "Contract Expiry Alerts", "Contract Summary", "Performance Scorecard", "Contract Risk"];
+  const contractTabs = ["Charts & Statistics", "Active Contracts", "Deliverables", "Variations", "Close-Out", "Contract Risk", "Expiry Alerts"];
 
   const renderContracts = () => {
-    const totalContractValue = contractDetailData.reduce((s, c) => s + c.value, 0);
-    const totalPaid = contractDetailData.reduce((s, c) => s + c.paidAmount, 0);
-    const activeCount = contractDetailData.filter(c => c.status === "Active").length;
-    const totalVariationImpact = contractVariationData.reduce((s, v) => s + v.costImpact, 0);
+    const activeColumns: TableColumn[] = [
+      { key: "contract", header: "Contract", cell: refCell("contract") },
+      { key: "title", header: "Title" },
+      { key: "vendor", header: "Vendor" },
+      { key: "category", header: "Category" },
+      { key: "funding", header: "Funding Source" },
+      { key: "value", header: "Value", format: moneyFormat, cell: moneyCell("value") },
+      { key: "paid", header: "Paid", format: moneyFormat, cell: moneyCell("paid") },
+      { key: "balance", header: "Balance", format: moneyFormat, cell: moneyCell("balance") },
+      { key: "start", header: "Start", format: v => prettyDate(String(v ?? "")) },
+      { key: "end", header: "End", format: v => prettyDate(String(v ?? "")) },
+      { key: "deliverables", header: "Deliverables", cell: progressCell("deliverablesAccepted", "deliverablesTotal") },
+      { key: "status", header: "Status", cell: badgeCell("status") },
+    ];
+
+    const activeRows: ReportRow[] = base.contracts.map(c => {
+      const f = getContractFinancials(c);
+      const dels = c.deliverables ?? [];
+      return {
+        __key: c.id,
+        contract: c.contractNumber,
+        title: c.title,
+        vendor: c.party,
+        category: c.category,
+        funding: base.contractFunding(c),
+        value: c.value,
+        paid: f.totalPaid,
+        balance: f.balance,
+        start: c.startDate,
+        end: c.endDate,
+        deliverablesAccepted: dels.filter(d => d.status === "Accepted").length,
+        deliverablesTotal: dels.length,
+        deliverables: "",
+        status: c.status,
+      };
+    });
+
+    const deliverableColumns: TableColumn[] = [
+      { key: "contract", header: "Contract", cell: refCell("contract") },
+      { key: "vendor", header: "Vendor" },
+      { key: "description", header: "Deliverable" },
+      { key: "due", header: "Due", format: v => prettyDate(String(v ?? "")) },
+      { key: "actual", header: "Submitted", format: v => (v ? prettyDate(String(v)) : "—") },
+      { key: "daysLate", header: "Timing", align: "center", format: v => (v === null || v === undefined ? "—" : Number(v) > 0 ? `${v} days late` : `${Math.abs(Number(v))} days early`) },
+      { key: "amount", header: "Value", format: moneyFormat, cell: moneyCell("amount") },
+      { key: "reviewer", header: "Reviewed By" },
+      { key: "status", header: "Status", cell: badgeCell("status") },
+    ];
+
+    const deliverableRows: ReportRow[] = base.contracts.flatMap(c =>
+      (c.deliverables ?? []).map(d => ({
+        __key: d.id,
+        contract: c.contractNumber,
+        vendor: c.party,
+        description: d.description,
+        due: d.dueDate,
+        actual: d.actualDate ?? "",
+        daysLate: d.actualDate ? daysBetween(d.dueDate, d.actualDate) : null,
+        amount: d.amount ?? 0,
+        reviewer: d.reviewedBy ?? "—",
+        status: d.status,
+      }))
+    );
+
+    const variationColumns: TableColumn[] = [
+      { key: "contract", header: "Contract", cell: refCell("contract") },
+      { key: "number", header: "Amendment", align: "center" },
+      { key: "types", header: "Type" },
+      { key: "reason", header: "Reason" },
+      { key: "costImpact", header: "Cost Impact", format: moneyFormat, cell: moneyCell("costImpact") },
+      { key: "timeImpact", header: "Time Impact" },
+      { key: "revisedValue", header: "Revised Value", format: moneyFormat, cell: moneyCell("revisedValue") },
+      { key: "requestedBy", header: "Requested By" },
+      { key: "status", header: "Status", cell: badgeCell("status") },
+    ];
+
+    const variationRows: ReportRow[] = base.changeRequests.map(({ contract, changeRequest }) => ({
+      __key: changeRequest.id,
+      contract: contract.contractNumber,
+      number: `#${changeRequest.changeNumber}`,
+      types: changeRequest.types.join(", "),
+      reason: changeRequest.reason,
+      costImpact: changeRequest.estimatedCostImpact,
+      timeImpact: changeRequest.estimatedTimeImpact || "—",
+      revisedValue: changeRequest.revisedValue ?? contract.value,
+      requestedBy: changeRequest.requestedBy,
+      status: changeRequest.status,
+    }));
+
+    const closeOutColumns: TableColumn[] = [
+      { key: "contract", header: "Contract", cell: refCell("contract") },
+      { key: "vendor", header: "Vendor" },
+      { key: "value", header: "Value", format: moneyFormat, cell: moneyCell("value") },
+      { key: "paid", header: "Final Payments", format: moneyFormat, cell: moneyCell("paid") },
+      { key: "readiness", header: "Close-Out Readiness", cell: progressCell("satisfied", "totalChecks") },
+      { key: "score", header: "Final Score", align: "center", format: scoreFormat, cell: scoreCell("score", 8, 5) },
+      { key: "certificate", header: "Certificate Issued", format: yesNoFormat, cell: yesNoCell("certificate") },
+      { key: "closedDate", header: "Closed", format: v => (v ? prettyDate(String(v)) : "—") },
+      { key: "status", header: "Status", cell: badgeCell("status") },
+    ];
+
+    const closeOutRows: ReportRow[] = base.contracts.map(c => {
+      const checks = verifyCloseOutReadiness(c);
+      const f = getContractFinancials(c);
+      const finalEval = (c.performanceEvaluations ?? []).find(e => e.evaluationType === "Final");
+      return {
+        __key: `co-${c.id}`,
+        contract: c.contractNumber,
+        vendor: c.party,
+        value: c.value,
+        paid: f.totalPaid,
+        satisfied: checks.filter(ch => ch.satisfied).length,
+        totalChecks: checks.length,
+        readiness: "",
+        score: finalEval?.overallScore ?? "",
+        certificate: !!c.closeOut?.completionCertificate,
+        closedDate: c.closeOut?.closedDate ?? "",
+        status: c.status,
+      };
+    });
+
+    const riskColumns: TableColumn[] = [
+      { key: "contract", header: "Contract", cell: refCell("contract") },
+      { key: "vendor", header: "Vendor" },
+      { key: "value", header: "Value", format: moneyFormat, cell: moneyCell("value") },
+      { key: "severity", header: "Severity", cell: badgeCell("severity") },
+      { key: "riskCount", header: "Signals", align: "center", cell: countCell("riskCount", 1) },
+      { key: "risks", header: "Risk Signals" },
+    ];
+
+    const riskRows: ReportRow[] = base.risks.map(r => ({
+      __key: `risk-${r.contract.id}`,
+      contract: r.contract.contractNumber,
+      vendor: r.contract.party,
+      value: r.contract.value,
+      severity: r.severity,
+      riskCount: r.risks.length,
+      risks: r.risks.join("; "),
+    }));
+
+    const overdueCount = deliverableRows.filter(r => r.status !== "Accepted" && daysUntil(String(r.due)) < 0).length;
 
     return (
       <div>
         <SubTabBar tabs={contractTabs} active={subTab} onChange={setSubTab} />
         <div className="space-y-6 p-6">
-          <PeriodFilterBar periodFilter={periodFilter} setPeriodFilter={setPeriodFilter} />
+          {periodBar}
 
           {subTab === 0 && <>
-            {/* Stat Cards */}
-            <div className="grid grid-cols-4 gap-4">
-              <StatCard label="Total Contracts" value={String(contractDetailData.length)} sub="tracked" trend="3" trendDir="up" icon={<FileText size={18} />} color="#6366f1" />
-              <StatCard label="Active Contracts" value={String(activeCount)} sub="in progress" icon={<CheckCircle2 size={18} />} color="#10b981" />
-              <StatCard label="Total Value" value={fmt(totalContractValue)} sub={`${fmt(totalPaid)} paid`} icon={<DollarSign size={18} />} color="#8b5cf6" />
-              <StatCard label="Variation Impact" value={fmt(totalVariationImpact)} sub={`${contractVariationData.length} changes`} trend={totalVariationImpact > 0 ? "increase" : "decrease"} trendDir={totalVariationImpact > 0 ? "up" : "down"} icon={<TrendingUp size={18} />} color="#f59e0b" />
-            </div>
+            <ProcurementStatCards variant="flush" stats={[
+              { label: "Contract Portfolio", value: fmt(contractData.totalValue), sub: `${fmtNum(base.contracts.length)} contracts`, icon: <FileText size={18} />, tone: "info" },
+              { label: "Paid to Date", value: fmt(contractData.totalPaid), sub: fmtPct(pct(contractData.totalPaid, contractData.totalValue)), icon: <DollarSign size={18} />, tone: "success" },
+              { label: "Active", value: fmtNum(contractData.activeCount), sub: "in delivery", icon: <CheckCircle2 size={18} />, tone: "info" },
+              { label: "Overdue Deliverables", value: fmtNum(overdueCount), sub: "past due date", icon: <AlertTriangle size={18} />, tone: "danger" },
+            ]} />
 
-            {/* Contract Value by Status - Stacked Bar */}
-            <div className="bg-white border border-slate-200 rounded-xl p-4">
-              <h3 className="text-[13px] text-slate-900 mb-4" style={{ fontFamily: F, fontWeight: 700 }}>Contract Values by Status</h3>
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart id="rpt-cnt-val-status" data={contractValueByStatus} barGap={2}>
+            <div className="grid grid-cols-2 gap-4">
+              <ChartCard title="Contract Value by Status" height={215} isEmpty={base.contracts.length === 0}
+                emptyMessage="No contracts in this period" emptyHint={noDataHint}>
+                <BarChart data={Array.from(groupBy(base.contracts, c => c.status)).map(([name, list]) => ({ name, value: list.reduce((s, c) => s + c.value, 0), count: list.length }))}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis dataKey="status" tick={{ fontSize: 10, fontFamily: F }} />
-                  <YAxis tick={{ fontSize: 10, fontFamily: F }} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
-                  <Tooltip contentStyle={{ fontFamily: F, fontSize: 11 }} formatter={(value: any) => fmt(value as number)} />
-                  <Bar dataKey="goods" fill="#6366f1" name="Goods" stackId="a" radius={[0, 0, 0, 0]} />
-                  <Bar dataKey="services" fill="#10b981" name="Services" stackId="a" radius={[0, 0, 0, 0]} />
-                  <Bar dataKey="works" fill="#f59e0b" name="Works" stackId="a" radius={[2, 2, 0, 0]} />
-                  <Legend iconType="square" iconSize={8} wrapperStyle={{ fontSize: 10, fontFamily: F }} />
+                  <XAxis dataKey="name" tick={{ fontSize: 9, fontFamily: F }} />
+                  <YAxis tick={{ fontSize: 9, fontFamily: F }} />
+                  <Tooltip contentStyle={{ fontSize: 10, fontFamily: F }} formatter={(v: any) => fmt(Number(v))} />
+                  <Bar dataKey="value" fill={BLUE} name="Value" radius={[4, 4, 0, 0]} />
                 </BarChart>
-              </ResponsiveContainer>
-            </div>
+              </ChartCard>
 
-            {/* Contract Summary Charts (Gap 5) */}
-            <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-              <div className="px-4 py-3 border-b border-slate-200">
-                <h3 className="text-[13px] text-slate-900" style={{ fontFamily: F, fontWeight: 700 }}>Contract Summary Report</h3>
-                <p className="text-[10px] text-slate-500 mt-0.5" style={{ fontFamily: F }}>Full contract details with funding, method, milestones, and deliverables</p>
-              </div>
-              <div className="grid grid-cols-4 gap-4 p-4">
-                <StatCard label="Total Contracts" value={String(contractSummaryData.length)} icon={<FileText size={18} />} color="#6366f1" />
-                <StatCard label="Total Value" value={fmt(contractSummaryData.reduce((s, c) => s + c.value, 0))} icon={<DollarSign size={18} />} color="#22c55e" />
-                <StatCard label="Total Milestones" value={String(contractSummaryData.reduce((s, c) => s + c.milestones, 0))} icon={<CalendarClock size={18} />} color="#3b82f6" />
-                <StatCard label="Total Deliverables" value={String(contractSummaryData.reduce((s, c) => s + c.deliverables, 0))} icon={<Package size={18} />} color="#f59e0b" />
-              </div>
-              <div className="grid grid-cols-2 gap-4 px-4 pb-4">
-                <div className="h-[200px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie data={(() => {
-                        const byCat: Record<string, number> = {};
-                        contractSummaryData.forEach(c => { byCat[c.category] = (byCat[c.category] || 0) + c.value; });
-                        return Object.entries(byCat).map(([name, value]) => ({ name, value }));
-                      })()} cx="50%" cy="50%" innerRadius={40} outerRadius={70} paddingAngle={3} dataKey="value" label={({ name, value }) => `${name}: ${fmt(value)}`}>
-                        <Cell fill="#6366f1" /><Cell fill="#22c55e" /><Cell fill="#f59e0b" /><Cell fill="#ef4444" />
-                      </Pie>
-                      <Tooltip formatter={(v) => fmt(v as number)} />
-                      <Legend wrapperStyle={{ fontSize: 10, fontFamily: F }} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-                <div className="h-[200px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={(() => {
-                      const byFunding: Record<string, number> = {};
-                      contractSummaryData.forEach(c => { byFunding[c.funding] = (byFunding[c.funding] || 0) + c.value; });
-                      return Object.entries(byFunding).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
-                    })()}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                      <XAxis dataKey="name" tick={{ fontSize: 9, fontFamily: F }} />
-                      <YAxis tick={{ fontSize: 9, fontFamily: F }} tickFormatter={(v) => `$${(Number(v) / 1000).toFixed(0)}k`} />
-                      <Tooltip contentStyle={{ fontSize: 10, fontFamily: F }} formatter={(v) => fmt(v as number)} />
-                      <Bar dataKey="value" fill={BLUE} radius={[4, 4, 0, 0]} name="Contract Value" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            </div>
-
-            {/* Performance Scorecard Charts (Gap 6) */}
-            <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-              <div className="px-4 py-3 border-b border-slate-200">
-                <h3 className="text-[13px] text-slate-900" style={{ fontFamily: F, fontWeight: 700 }}>Contract Performance Scorecard</h3>
-                <p className="text-[10px] text-slate-500 mt-0.5" style={{ fontFamily: F }}>Quality, timeliness, cost, and compliance scores per contract</p>
-              </div>
-              <div className="grid grid-cols-2 gap-4 p-4">
-                <div className="h-[260px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <RadarChart data={[
-                      { metric: "Quality", ...Object.fromEntries(contractPerformanceData.map(c => [c.vendor.split(" ")[0], c.quality])) },
-                      { metric: "Timeliness", ...Object.fromEntries(contractPerformanceData.map(c => [c.vendor.split(" ")[0], c.timeliness])) },
-                      { metric: "Cost", ...Object.fromEntries(contractPerformanceData.map(c => [c.vendor.split(" ")[0], c.cost])) },
-                      { metric: "Compliance", ...Object.fromEntries(contractPerformanceData.map(c => [c.vendor.split(" ")[0], c.compliance])) },
-                    ]}>
-                      <PolarGrid stroke="#e2e8f0" />
-                      <PolarAngleAxis dataKey="metric" tick={{ fontSize: 9, fontFamily: F }} />
-                      <PolarRadiusAxis angle={30} domain={[0, 10]} tick={{ fontSize: 8 }} />
-                      {contractPerformanceData.slice(0, 4).map((c, idx) => (
-                        <Radar key={c.contract} name={c.vendor.split(" ")[0]} dataKey={c.vendor.split(" ")[0]} stroke={["#6366f1", "#22c55e", "#f59e0b", "#ef4444"][idx]} fill={["#6366f1", "#22c55e", "#f59e0b", "#ef4444"][idx]} fillOpacity={0.15} />
-                      ))}
-                      <Legend wrapperStyle={{ fontSize: 9, fontFamily: F }} />
-                      <Tooltip contentStyle={{ fontSize: 10, fontFamily: F }} />
-                    </RadarChart>
-                  </ResponsiveContainer>
-                </div>
-                <div className="h-[260px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={contractPerformanceData.map(c => ({ name: c.vendor.length > 15 ? c.vendor.slice(0, 15) + "…" : c.vendor, score: c.overall }))}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                      <XAxis dataKey="name" tick={{ fontSize: 8, fontFamily: F, angle: -25 }} height={50} />
-                      <YAxis tick={{ fontSize: 9, fontFamily: F }} domain={[0, 10]} />
-                      <Tooltip contentStyle={{ fontSize: 10, fontFamily: F }} />
-                      <Bar dataKey="score" name="Overall Score" radius={[4, 4, 0, 0]}>
-                        {contractPerformanceData.map((c, i) => (
-                          <Cell key={i} fill={c.overall >= 8.5 ? "#22c55e" : c.overall >= 7 ? "#f59e0b" : "#ef4444"} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            </div>
-
-            {/* Risk Stat Cards (Gap 7) */}
-            <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-              <div className="px-4 py-3 border-b border-slate-200">
-                <h3 className="text-[13px] text-slate-900" style={{ fontFamily: F, fontWeight: 700 }}>Contract Risk Report</h3>
-                <p className="text-[10px] text-slate-500 mt-0.5" style={{ fontFamily: F }}>Flagged contracts with risk type, severity, and details</p>
-              </div>
-              <div className="grid grid-cols-3 gap-4 p-4">
-                <StatCard label="High Risk" value={String(contractRiskData.filter(r => r.severity === "High").length)} icon={<AlertTriangle size={18} />} color="#ef4444" />
-                <StatCard label="Medium Risk" value={String(contractRiskData.filter(r => r.severity === "Medium").length)} icon={<ShieldCheck size={18} />} color="#f59e0b" />
-                <StatCard label="Low Risk" value={String(contractRiskData.filter(r => r.severity === "Low").length)} icon={<CheckCircle2 size={18} />} color="#22c55e" />
-              </div>
+              <ChartCard title="Contract Value by Category" height={215} isEmpty={base.contracts.length === 0}
+                emptyMessage="No contracts in this period" emptyHint={noDataHint}>
+                <BarChart data={Array.from(groupBy(base.contracts, c => c.category)).map(([name, list]) => ({ name, value: list.reduce((s, c) => s + c.value, 0) }))}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis dataKey="name" tick={{ fontSize: 9, fontFamily: F }} />
+                  <YAxis tick={{ fontSize: 9, fontFamily: F }} />
+                  <Tooltip contentStyle={{ fontSize: 10, fontFamily: F }} formatter={(v: any) => fmt(Number(v))} />
+                  <Bar dataKey="value" fill="#8b5cf6" name="Value" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ChartCard>
             </div>
           </>}
 
-          {subTab === 1 && <>
-            <ExportBar tableName="Active Contracts" />
-            <div className="flex-1 overflow-auto">
-              <table className="w-full text-[11px]" style={{ fontFamily: F }}>
-                <thead>
-                  <tr style={{ backgroundColor: BLUE }}>
-                    {["Contract #", "Vendor", "Value", "Start", "End", "Status", "Deliverables Progress", "Payment Status"].map(h => (
-                      <th key={h} className="px-3 py-2.5 text-left text-white" style={{ fontWeight: 600, fontSize: 11 }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {contractDetailData.map((c, i) => (
-                    <tr key={c.id} className={`border-b border-slate-100 ${i % 2 === 1 ? "bg-slate-50/60" : "bg-white"}`}>
-                      <td className="px-3 py-2 text-indigo-700" style={{ fontWeight: 600 }}>{c.id}</td>
-                      <td className="px-3 py-2 text-slate-900">{c.vendor}</td>
-                      <td className="px-3 py-2 text-slate-900" style={{ fontWeight: 600 }}>{fmt(c.value)}</td>
-                      <td className="px-3 py-2 text-slate-500">{c.startDate}</td>
-                      <td className="px-3 py-2 text-slate-500">{c.endDate}</td>
-                      <td className="px-3 py-2"><StatusBadge status={c.status} /></td>
-                      <td className="px-3 py-2">
-                        <div className="flex items-center gap-2">
-                          <div className="flex-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                            <div className="h-full rounded-full" style={{ width: `${(c.deliverablesCompleted / c.deliverablesTotal) * 100}%`, backgroundColor: c.deliverablesCompleted === c.deliverablesTotal ? "#10b981" : BLUE }} />
-                          </div>
-                          <span className="text-[10px] text-slate-500" style={{ fontWeight: 600 }}>{c.deliverablesCompleted}/{c.deliverablesTotal}</span>
-                        </div>
-                      </td>
-                      <td className="px-3 py-2"><StatusBadge status={c.paymentStatus} /></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </>}
+          {subTab === 1 && (
+            <ReportSection title="Active Contracts Report" columns={activeColumns} rows={activeRows} meta={exportMeta}
+              search={searchQuery} emptyMessage="No contracts in this period" emptyHint={noDataHint} />
+          )}
 
-          {subTab === 2 && <>
-            <ExportBar tableName="Deliverables Status" />
-            <div className="flex-1 overflow-auto">
-              <table className="w-full text-[11px]" style={{ fontFamily: F }}>
-                <thead>
-                  <tr style={{ backgroundColor: BLUE }}>
-                    {["Contract", "Deliverable", "Due Date", "Status"].map(h => (
-                      <th key={h} className="px-3 py-2.5 text-left text-white" style={{ fontWeight: 600, fontSize: 11 }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {deliverablesStatusData.map((d, i) => (
-                    <tr key={`${d.contract}-${d.deliverable}`} className={`border-b border-slate-100 ${i % 2 === 1 ? "bg-slate-50/60" : "bg-white"}`}>
-                      <td className="px-3 py-2 text-indigo-700" style={{ fontWeight: 600 }}>{d.contract}</td>
-                      <td className="px-3 py-2 text-slate-900">{d.deliverable}</td>
-                      <td className="px-3 py-2 text-slate-500">{d.dueDate}</td>
-                      <td className="px-3 py-2"><StatusBadge status={d.status} /></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </>}
+          {subTab === 2 && (
+            <ReportSection title="Deliverables Status Report" columns={deliverableColumns} rows={deliverableRows} meta={exportMeta}
+              search={searchQuery} emptyMessage="No deliverables recorded" emptyHint={noDataHint} />
+          )}
 
-          {subTab === 3 && <>
-            <ExportBar tableName="Invoice & Payment" />
-            <div className="flex-1 overflow-auto">
-              <table className="w-full text-[11px]" style={{ fontFamily: F }}>
-                <thead>
-                  <tr style={{ backgroundColor: BLUE }}>
-                    {["Invoice #", "Contract", "Vendor", "Amount", "Status", "Date"].map(h => (
-                      <th key={h} className="px-3 py-2.5 text-left text-white" style={{ fontWeight: 600, fontSize: 11 }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {contractInvoiceData.map((inv, i) => (
-                    <tr key={inv.invoiceNo} className={`border-b border-slate-100 ${i % 2 === 1 ? "bg-slate-50/60" : "bg-white"}`}>
-                      <td className="px-3 py-2 text-indigo-700" style={{ fontWeight: 600 }}>{inv.invoiceNo}</td>
-                      <td className="px-3 py-2 text-slate-700">{inv.contract}</td>
-                      <td className="px-3 py-2 text-slate-900">{inv.vendor}</td>
-                      <td className="px-3 py-2 text-slate-900" style={{ fontWeight: 600 }}>{fmt(inv.amount)}</td>
-                      <td className="px-3 py-2"><StatusBadge status={inv.status} /></td>
-                      <td className="px-3 py-2 text-slate-500">{inv.date}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </>}
+          {subTab === 3 && (
+            <ReportSection title="Contract Variation Report" columns={variationColumns} rows={variationRows} meta={exportMeta}
+              search={searchQuery} emptyMessage="No variations raised in this period"
+              emptyHint="Amendments appear here once a change request is submitted against a contract." />
+          )}
 
-          {subTab === 4 && <>
-            <ExportBar tableName="Contract Variations" />
-            <div className="flex-1 overflow-auto">
-              <table className="w-full text-[11px]" style={{ fontFamily: F }}>
-                <thead>
-                  <tr style={{ backgroundColor: BLUE }}>
-                    {["Contract", "Change #", "Type", "Cost Impact", "Status"].map(h => (
-                      <th key={h} className="px-3 py-2.5 text-left text-white" style={{ fontWeight: 600, fontSize: 11 }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {contractVariationData.map((v, i) => (
-                    <tr key={`${v.contract}-${v.changeNo}`} className={`border-b border-slate-100 ${i % 2 === 1 ? "bg-slate-50/60" : "bg-white"}`}>
-                      <td className="px-3 py-2 text-indigo-700" style={{ fontWeight: 600 }}>{v.contract}</td>
-                      <td className="px-3 py-2 text-slate-700">{v.changeNo}</td>
-                      <td className="px-3 py-2 text-slate-900">{v.type}</td>
-                      <td className="px-3 py-2" style={{ fontWeight: 600 }}>
-                        <span className={v.costImpact > 0 ? "text-red-600" : v.costImpact < 0 ? "text-green-600" : "text-slate-500"}>
-                          {v.costImpact > 0 ? "+" : ""}{fmt(v.costImpact)}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2"><StatusBadge status={v.status} /></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </>}
+          {subTab === 4 && (
+            <ReportSection title="Contract Close-Out Report" columns={closeOutColumns} rows={closeOutRows} meta={exportMeta}
+              search={searchQuery} emptyMessage="No contracts in this period" emptyHint={noDataHint} />
+          )}
 
-          {subTab === 5 && <>
-            <ExportBar tableName="Contract Close-Out" />
-            <div className="flex-1 overflow-auto">
-              <table className="w-full text-[11px]" style={{ fontFamily: F }}>
-                <thead>
-                  <tr style={{ backgroundColor: BLUE }}>
-                    {["Contract", "Vendor", "Deliverables Done", "Payments Done", "Performance Done", "Status"].map(h => (
-                      <th key={h} className="px-3 py-2.5 text-left text-white" style={{ fontWeight: 600, fontSize: 11 }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {contractCloseOutData.map((c, i) => (
-                    <tr key={c.contract} className={`border-b border-slate-100 ${i % 2 === 1 ? "bg-slate-50/60" : "bg-white"}`}>
-                      <td className="px-3 py-2 text-indigo-700" style={{ fontWeight: 600 }}>{c.contract}</td>
-                      <td className="px-3 py-2 text-slate-900">{c.vendor}</td>
-                      <td className="px-3 py-2 text-center">
-                        <span className={c.deliverablesDone ? "text-green-600" : "text-amber-600"} style={{ fontWeight: 600 }}>
-                          {c.deliverablesDone ? "Yes" : "No"}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2 text-center">
-                        <span className={c.paymentsDone ? "text-green-600" : "text-amber-600"} style={{ fontWeight: 600 }}>
-                          {c.paymentsDone ? "Yes" : "No"}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2 text-center">
-                        <span className={c.performanceDone ? "text-green-600" : "text-amber-600"} style={{ fontWeight: 600 }}>
-                          {c.performanceDone ? "Yes" : "No"}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2"><StatusBadge status={c.status} /></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </>}
+          {subTab === 5 && (
+            <ReportSection title="Contract Risk Report" columns={riskColumns} rows={riskRows} meta={exportMeta}
+              search={searchQuery} emptyMessage="No contract risks detected"
+              emptyHint="Risk signals include overdue deliverables, repeated invoice queries, excessive variations and approaching expiry." />
+          )}
 
-          {subTab === 6 && <>
-            <ExportBar tableName="Contract Expiry Alerts" />
-            <div className="flex-1 overflow-auto">
-              <table className="w-full text-[11px]" style={{ fontFamily: F }}>
-                <thead>
-                  <tr style={{ backgroundColor: BLUE }}>
-                    {["Contract", "Vendor", "End Date", "Days Left", "Value", "Action"].map(h => (
-                      <th key={h} className="px-3 py-2.5 text-left text-white" style={{ fontWeight: 600, fontSize: 11 }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {expiryAlerts.sort((a, b) => a.daysLeft - b.daysLeft).map((a, i) => (
-                    <tr key={`cnt-exp-${a.contract}`} className={`border-b border-slate-100 ${i % 2 === 1 ? "bg-slate-50/60" : "bg-white"}`}>
-                      <td className="px-3 py-2 text-indigo-700" style={{ fontWeight: 600 }}>{a.contract}</td>
-                      <td className="px-3 py-2 text-slate-900">{a.vendor}</td>
-                      <td className="px-3 py-2 text-slate-500">{a.endDate}</td>
-                      <td className="px-3 py-2">
-                        <span className={`text-[11px] ${a.daysLeft <= 30 ? "text-red-600" : a.daysLeft <= 60 ? "text-amber-600" : "text-green-600"}`} style={{ fontWeight: 700 }}>
-                          {a.daysLeft} days
-                        </span>
-                      </td>
-                      <td className="px-3 py-2 text-slate-900" style={{ fontWeight: 600 }}>{fmt(a.value)}</td>
-                      <td className="px-3 py-2"><StatusBadge status={a.action} /></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </>}
-
-          {subTab === 7 && <>
-            <ExportBar tableName="Contract Summary" />
-            <div className="overflow-x-auto">
-              <table className="w-full text-[11px]" style={{ fontFamily: F }}>
-                <thead>
-                  <tr style={{ backgroundColor: "#0B01D0" }}>
-                    {["Contract ID", "Vendor", "Value", "Funding", "Method", "Start", "End", "Category", "Milestones", "Deliverables"].map(h => (
-                      <th key={h} className="px-3 py-2 text-left text-[12px] font-semibold text-white">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {contractSummaryData.map((c, i) => (
-                    <tr key={c.id} className={`border-b border-slate-100 ${i % 2 === 1 ? "bg-slate-50/60" : "bg-white"}`}>
-                      <td className="px-3 py-2 text-indigo-700" style={{ fontWeight: 600 }}>{c.id}</td>
-                      <td className="px-3 py-2 text-slate-900">{c.vendor}</td>
-                      <td className="px-3 py-2 text-slate-900" style={{ fontWeight: 600 }}>{fmt(c.value)}</td>
-                      <td className="px-3 py-2 text-slate-600">{c.funding}</td>
-                      <td className="px-3 py-2 text-slate-600">{c.method}</td>
-                      <td className="px-3 py-2 text-slate-500">{c.start}</td>
-                      <td className="px-3 py-2 text-slate-500">{c.end}</td>
-                      <td className="px-3 py-2"><StatusBadge status={c.category} /></td>
-                      <td className="px-3 py-2 text-slate-700 text-center">{c.milestones}</td>
-                      <td className="px-3 py-2 text-slate-700 text-center">{c.deliverables}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </>}
-
-          {subTab === 8 && <>
-            <ExportBar tableName="Performance Scorecard" />
-            <div className="overflow-x-auto">
-              <table className="w-full text-[11px]" style={{ fontFamily: F }}>
-                <thead>
-                  <tr style={{ backgroundColor: "#0B01D0" }}>
-                    {["Contract", "Vendor", "Quality", "Timeliness", "Cost", "Compliance", "Overall"].map(h => (
-                      <th key={h} className="px-3 py-2 text-left text-[12px] font-semibold text-white">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {contractPerformanceData.map((c, i) => (
-                    <tr key={c.contract} className={`border-b border-slate-100 ${i % 2 === 1 ? "bg-slate-50/60" : "bg-white"}`}>
-                      <td className="px-3 py-2 text-indigo-700" style={{ fontWeight: 600 }}>{c.contract}</td>
-                      <td className="px-3 py-2 text-slate-900">{c.vendor}</td>
-                      {[c.quality, c.timeliness, c.cost, c.compliance, c.overall].map((score, si) => (
-                        <td key={si} className="px-3 py-2 text-center">
-                          <span className={`text-[11px] ${score >= 8.5 ? "text-green-600" : score >= 7 ? "text-amber-600" : "text-red-500"}`} style={{ fontWeight: 700 }}>
-                            {score.toFixed(1)}
-                          </span>
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </>}
-
-          {subTab === 9 && <>
-            <ExportBar tableName="Contract Risk" />
-            <div className="overflow-x-auto">
-              <table className="w-full text-[11px]" style={{ fontFamily: F }}>
-                <thead>
-                  <tr style={{ backgroundColor: "#0B01D0" }}>
-                    {["Contract", "Vendor", "Risk Type", "Severity", "Details", "Overdue MS", "Invoice Queries", "Variations"].map(h => (
-                      <th key={h} className="px-3 py-2 text-left text-[12px] font-semibold text-white">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {contractRiskData.sort((a, b) => {
-                    const sev = { High: 0, Medium: 1, Low: 2 } as Record<string, number>;
-                    return (sev[a.severity] ?? 3) - (sev[b.severity] ?? 3);
-                  }).map((r, i) => (
-                    <tr key={r.contract} className={`border-b border-slate-100 ${i % 2 === 1 ? "bg-slate-50/60" : "bg-white"}`}>
-                      <td className="px-3 py-2 text-indigo-700" style={{ fontWeight: 600 }}>{r.contract}</td>
-                      <td className="px-3 py-2 text-slate-900">{r.vendor}</td>
-                      <td className="px-3 py-2 text-slate-700">{r.risk}</td>
-                      <td className="px-3 py-2">
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] ${
-                          r.severity === "High" ? "bg-red-100 text-red-700" :
-                          r.severity === "Medium" ? "bg-amber-100 text-amber-700" :
-                          "bg-green-100 text-green-700"
-                        }`} style={{ fontWeight: 600 }}>{r.severity}</span>
-                      </td>
-                      <td className="px-3 py-2 text-slate-600 max-w-[200px]">{r.details}</td>
-                      <td className="px-3 py-2 text-center">
-                        <span className={r.milestonesOverdue > 0 ? "text-red-600 font-bold" : "text-slate-400"}>{r.milestonesOverdue}</span>
-                      </td>
-                      <td className="px-3 py-2 text-center">
-                        <span className={r.invoiceQueries > 0 ? "text-red-600 font-bold" : "text-slate-400"}>{r.invoiceQueries}</span>
-                      </td>
-                      <td className="px-3 py-2 text-center">
-                        <span className={r.variations > 1 ? "text-amber-600 font-bold" : "text-slate-400"}>{r.variations}</span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </>}
+          {subTab === 6 && (
+            <ReportSection title="Contract Expiry Alerts" columns={expiryColumns} rows={expiryRows} meta={exportMeta}
+              search={searchQuery} controls={expiryControl}
+              emptyMessage={`No contracts reach their end date within ${expiryWindow} days`}
+              emptyHint="The renewal horizon is measured from today." />
+          )}
         </div>
       </div>
     );
   };
 
-  /* ── Tab 5: Donor Reports ────────────────────────────────────────────────── */
+  /* ── Tab 5: Donors ─────────────────────────────────────────────────────── */
 
   const donorTabs = ["Charts & Statistics", "Donor Procurement Summary", "Donor Budget Utilization"];
 
   const renderDonors = () => {
-    const totalDonorSpend = donorBudgetUtilization.reduce((s, d) => s + d.spent, 0);
-    const totalDonorPlanned = donorBudgetUtilization.reduce((s, d) => s + d.planned, 0);
-    const totalProcurements = donorDetailSummary.reduce((s, d) => s + d.goods + d.services + d.works, 0);
-    const totalPendingApprovals = donorDetailSummary.reduce((s, d) => s + d.pendingApprovals, 0);
+    const donors = new Map<string, {
+      planned: number; committed: number; spent: number;
+      activities: number; contracts: number; pending: number;
+      goods: number; services: number; works: number; consultancy: number;
+    }>();
+
+    const bucket = (name: string) => {
+      const key = name || "Unattributed";
+      if (!donors.has(key)) {
+        donors.set(key, { planned: 0, committed: 0, spent: 0, activities: 0, contracts: 0, pending: 0, goods: 0, services: 0, works: 0, consultancy: 0 });
+      }
+      return donors.get(key)!;
+    };
+
+    base.approvedPlanItems.forEach(p => {
+      const d = bucket(p.fundingSource);
+      d.planned += p.estimatedValue;
+      d.activities += 1;
+      if (p.category === "Goods") d.goods += 1;
+      else if (p.category === "Services") d.services += 1;
+      else if (p.category === "Works") d.works += 1;
+      else d.consultancy += 1;
+    });
+
+    base.prs.forEach(p => {
+      const d = bucket(p.fundingSource ?? "");
+      if (["Pending Dept Approval", "Pending Procurement & Finance", "Pending Senior Mgmt"].includes(p.overallApprovalStatus)) {
+        d.pending += 1;
+      }
+    });
+
+    base.contracts.forEach(c => {
+      const d = bucket(base.contractFunding(c));
+      d.committed += c.value;
+      d.spent += getContractFinancials(c).totalPaid;
+      d.contracts += 1;
+    });
+
+    const donorRows: ReportRow[] = Array.from(donors, ([donor, d]) => ({
+      __key: `donor-${donor}`,
+      donor,
+      activities: d.activities,
+      contracts: d.contracts,
+      goods: d.goods,
+      services: d.services,
+      works: d.works,
+      consultancy: d.consultancy,
+      planned: d.planned,
+      committed: d.committed,
+      spent: d.spent,
+      remaining: d.planned - d.spent,
+      utilization: pct(d.spent, d.planned),
+      pending: d.pending,
+    })).sort((a, b) => Number(b.committed) - Number(a.committed));
+
+    const summaryColumns: TableColumn[] = [
+      { key: "donor", header: "Donor / Funding Source" },
+      { key: "activities", header: "Plan Activities", align: "center", cell: countCell("activities") },
+      { key: "goods", header: "Goods", align: "center", cell: countCell("goods") },
+      { key: "services", header: "Services", align: "center", cell: countCell("services") },
+      { key: "works", header: "Works", align: "center", cell: countCell("works") },
+      { key: "consultancy", header: "Consultancy", align: "center", cell: countCell("consultancy") },
+      { key: "contracts", header: "Contracts", align: "center", cell: countCell("contracts") },
+      { key: "committed", header: "Committed", format: moneyFormat, cell: moneyCell("committed") },
+      { key: "pending", header: "Pending Approvals", align: "center", cell: countCell("pending", 0) },
+    ];
+
+    const utilizationColumns: TableColumn[] = [
+      { key: "donor", header: "Donor / Funding Source" },
+      { key: "planned", header: "Planned", format: moneyFormat, cell: moneyCell("planned") },
+      { key: "committed", header: "Committed", format: moneyFormat, cell: moneyCell("committed") },
+      { key: "spent", header: "Spent", format: moneyFormat, cell: moneyCell("spent") },
+      { key: "remaining", header: "Remaining", format: moneyFormat, cell: moneyCell("remaining") },
+      { key: "utilization", header: "Utilization", format: pctFormat, cell: scoreCell("utilization", 0, 0, "%") },
+    ];
+
+    const chartData = donorRows.slice(0, 8).map(r => ({
+      name: String(r.donor).length > 14 ? `${String(r.donor).slice(0, 14)}…` : String(r.donor),
+      planned: Number(r.planned),
+      committed: Number(r.committed),
+      spent: Number(r.spent),
+      contracts: Number(r.contracts),
+    }));
 
     return (
       <div>
         <SubTabBar tabs={donorTabs} active={subTab} onChange={setSubTab} />
         <div className="space-y-6 p-6">
-          <PeriodFilterBar periodFilter={periodFilter} setPeriodFilter={setPeriodFilter} />
+          {periodBar}
 
           {subTab === 0 && <>
-            {/* Stat Cards */}
-            <div className="grid grid-cols-4 gap-4">
-              <StatCard label="Donor Partners" value={String(donorDetailSummary.length)} sub="active donors" icon={<Users size={18} />} color="#6366f1" />
-              <StatCard label="Total Procurements" value={String(totalProcurements)} sub="across donors" trend="8%" trendDir="up" icon={<Package size={18} />} color="#10b981" />
-              <StatCard label="Total Spend" value={fmt(totalDonorSpend)} sub={`of ${fmt(totalDonorPlanned)} planned`} icon={<DollarSign size={18} />} color="#8b5cf6" />
-              <StatCard label="Pending Approvals" value={String(totalPendingApprovals)} sub="awaiting action" icon={<AlertTriangle size={18} />} color="#f59e0b" />
-            </div>
+            <ProcurementStatCards variant="flush" stats={[
+              { label: "Funding Sources", value: fmtNum(donorRows.length), sub: "with activity in scope", icon: <Users size={18} />, tone: "info" },
+              { label: "Total Planned", value: fmt(donorRows.reduce((s, r) => s + Number(r.planned), 0)), sub: "approved plan value", icon: <FileText size={18} />, tone: "info" },
+              { label: "Total Committed", value: fmt(donorRows.reduce((s, r) => s + Number(r.committed), 0)), sub: "contracted", icon: <Package size={18} />, tone: "accent" },
+              { label: "Total Spent", value: fmt(donorRows.reduce((s, r) => s + Number(r.spent), 0)), sub: "paid to vendors", icon: <DollarSign size={18} />, tone: "success" },
+            ]} />
 
-            {/* Charts Row */}
-            <div className="grid grid-cols-2 gap-4">
-              {/* Procurement Spend by Donor - Bar */}
-              <div className="bg-white border border-slate-200 rounded-xl p-4">
-                <h3 className="text-[13px] text-slate-900 mb-4" style={{ fontFamily: F, fontWeight: 700 }}>Procurement Spend by Donor</h3>
-                <ResponsiveContainer width="100%" height={220}>
-                  <BarChart id="rpt-donor-spend" data={donorSpendChart} barGap={2}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                    <XAxis dataKey="donor" tick={{ fontSize: 10, fontFamily: F }} />
-                    <YAxis tick={{ fontSize: 10, fontFamily: F }} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
-                    <Tooltip contentStyle={{ fontFamily: F, fontSize: 11 }} formatter={(value: any) => fmt(value as number)} />
-                    <Bar dataKey="spend" name="Spend" radius={[4, 4, 0, 0]}>
-                      {donorSpendChart.map((entry, index) => (
-                        <Cell key={`donor-spend-${index}`} fill={entry.color} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
+            <ChartCard title="Planned vs Committed vs Spent by Donor" height={260} isEmpty={chartData.length === 0}
+              emptyMessage="No donor-attributed activity in this period" emptyHint={noDataHint}>
+              <BarChart data={chartData} barGap={2}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis dataKey="name" tick={{ fontSize: 9, fontFamily: F }} />
+                <YAxis tick={{ fontSize: 9, fontFamily: F }} />
+                <Tooltip contentStyle={{ fontSize: 10, fontFamily: F }} formatter={(v: any) => fmt(Number(v))} />
+                <Bar dataKey="planned" fill="#c7d2fe" name="Planned" radius={[2, 2, 0, 0]} />
+                <Bar dataKey="committed" fill="#818cf8" name="Committed" radius={[2, 2, 0, 0]} />
+                <Bar dataKey="spent" fill={BLUE} name="Spent" radius={[2, 2, 0, 0]} />
+                <Legend iconType="square" iconSize={8} wrapperStyle={{ fontSize: 10, fontFamily: F }} />
+              </BarChart>
+            </ChartCard>
 
-              {/* Procurement Count by Donor - Pie */}
-              <div className="bg-white border border-slate-200 rounded-xl p-4">
-                <h3 className="text-[13px] text-slate-900 mb-4" style={{ fontFamily: F, fontWeight: 700 }}>Procurement Count by Donor</h3>
-                <ResponsiveContainer width="100%" height={220}>
-                  <PieChart id="rpt-donor-count">
-                    <Pie data={donorCountChart} cx="50%" cy="50%" innerRadius={45} outerRadius={70} paddingAngle={3} dataKey="value">
-                      {donorCountChart.map((entry) => <Cell key={`donor-cnt-${entry.name}`} fill={entry.color} />)}
-                    </Pie>
-                    <Tooltip contentStyle={{ fontFamily: F, fontSize: 11 }} />
-                    <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 10, fontFamily: F }} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
+            <ChartCard title="Contracts per Donor" height={220} isEmpty={chartData.length === 0}
+              emptyMessage="No donor-attributed contracts in this period" emptyHint={noDataHint}>
+              <BarChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis dataKey="name" tick={{ fontSize: 9, fontFamily: F }} />
+                <YAxis tick={{ fontSize: 9, fontFamily: F }} allowDecimals={false} />
+                <Tooltip contentStyle={{ fontSize: 10, fontFamily: F }} />
+                <Bar dataKey="contracts" fill="#22c55e" name="Contracts" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ChartCard>
           </>}
 
-          {subTab === 1 && <>
-            <ExportBar tableName="Donor Procurement Summary" />
-            <div className="flex-1 overflow-auto">
-              <table className="w-full text-[11px]" style={{ fontFamily: F }}>
-                <thead>
-                  <tr style={{ backgroundColor: BLUE }}>
-                    {["Donor", "Goods", "Services", "Works", "Total Value", "Approved", "Pending", "Rejected", "Pending Approvals"].map(h => (
-                      <th key={h} className="px-3 py-2.5 text-left text-white" style={{ fontWeight: 600, fontSize: 11 }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {donorDetailSummary.map((d, i) => (
-                    <tr key={d.donor} className={`border-b border-slate-100 ${i % 2 === 1 ? "bg-slate-50/60" : "bg-white"}`}>
-                      <td className="px-3 py-2 text-slate-900" style={{ fontWeight: 600 }}>{d.donor}</td>
-                      <td className="px-3 py-2 text-slate-700 text-center">{d.goods}</td>
-                      <td className="px-3 py-2 text-slate-700 text-center">{d.services}</td>
-                      <td className="px-3 py-2 text-slate-700 text-center">{d.works}</td>
-                      <td className="px-3 py-2 text-slate-900" style={{ fontWeight: 600 }}>{fmt(d.totalValue)}</td>
-                      <td className="px-3 py-2 text-green-600 text-center" style={{ fontWeight: 600 }}>{d.approved}</td>
-                      <td className="px-3 py-2 text-amber-600 text-center" style={{ fontWeight: 600 }}>{d.pending}</td>
-                      <td className="px-3 py-2 text-red-500 text-center" style={{ fontWeight: 600 }}>{d.rejected}</td>
-                      <td className="px-3 py-2 text-center">
-                        {d.pendingApprovals > 0 ? (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] bg-amber-100 text-amber-700" style={{ fontWeight: 600 }}>{d.pendingApprovals}</span>
-                        ) : (
-                          <span className="text-slate-400">0</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </>}
+          {subTab === 1 && (
+            <ReportSection title="Donor Procurement Summary" columns={summaryColumns} rows={donorRows} meta={exportMeta}
+              search={searchQuery} emptyMessage="No donor-attributed activity in this period" emptyHint={noDataHint} />
+          )}
 
-          {subTab === 2 && <>
-            <ExportBar tableName="Donor Budget Utilization" />
-            <div className="flex-1 overflow-auto">
-              <table className="w-full text-[11px]" style={{ fontFamily: F }}>
-                <thead>
-                  <tr style={{ backgroundColor: BLUE }}>
-                    {["Donor", "Planned", "Committed", "Spent", "Utilization", "Progress"].map(h => (
-                      <th key={h} className="px-3 py-2.5 text-left text-white" style={{ fontWeight: 600, fontSize: 11 }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {donorBudgetUtilization.map((d, i) => {
-                    const utilizationPct = (d.spent / d.planned) * 100;
-                    return (
-                      <tr key={d.donor} className={`border-b border-slate-100 ${i % 2 === 1 ? "bg-slate-50/60" : "bg-white"}`}>
-                        <td className="px-3 py-2 text-slate-900" style={{ fontWeight: 600 }}>{d.donor}</td>
-                        <td className="px-3 py-2 text-slate-700" style={{ fontWeight: 600 }}>{fmt(d.planned)}</td>
-                        <td className="px-3 py-2 text-slate-700" style={{ fontWeight: 600 }}>{fmt(d.committed)}</td>
-                        <td className="px-3 py-2 text-slate-900" style={{ fontWeight: 600 }}>{fmt(d.spent)}</td>
-                        <td className="px-3 py-2">
-                          <span className={`text-[11px] ${utilizationPct >= 75 ? "text-green-600" : utilizationPct >= 50 ? "text-amber-600" : "text-red-500"}`} style={{ fontWeight: 700 }}>
-                            {fmtPct(utilizationPct)}
-                          </span>
-                        </td>
-                        <td className="px-3 py-2">
-                          <div className="flex items-center gap-2">
-                            <div className="flex-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                              <div className="h-full rounded-full" style={{ width: `${utilizationPct}%`, backgroundColor: utilizationPct >= 75 ? "#10b981" : utilizationPct >= 50 ? "#f59e0b" : "#ef4444" }} />
-                            </div>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </>}
+          {subTab === 2 && (
+            <ReportSection title="Donor Budget Utilization" columns={utilizationColumns} rows={donorRows} meta={exportMeta}
+              search={searchQuery} emptyMessage="No donor-attributed activity in this period" emptyHint={noDataHint} />
+          )}
         </div>
       </div>
     );
   };
 
-  /* ── Tab 6: Combined Analysis ────────────────────────────────────────────── */
+  /* ── Tab 6: Combined analysis ──────────────────────────────────────────── */
 
-  const combinedTabs = ["Charts & Statistics", "Vendor Donor Performance", "Top Performers", "Procurement Compliance"];
+  const combinedTabs = ["Vendor × Donor Performance", "Top Performers", "Spend per Donor by Vendor", "Procurement Compliance"];
 
   const renderCombined = () => {
-    const avgPerformance = vendorDonorPerformance.reduce((s, v) => s + v.performanceScore, 0) / vendorDonorPerformance.length;
-    const avgCompliance = donorComplianceData.reduce((s, d) => s + d.compliancePct, 0) / donorComplianceData.length;
-    const totalIssues = donorComplianceData.reduce((s, d) => s + d.issues, 0);
-    const totalTopValue = topPerformers.reduce((s, t) => s + t.totalValue, 0);
+    const vdColumns: TableColumn[] = [
+      { key: "vendor", header: "Vendor" },
+      { key: "donor", header: "Donor / Funding Source" },
+      { key: "contract", header: "Contract", cell: refCell("contract") },
+      { key: "value", header: "Contract Value", format: moneyFormat, cell: moneyCell("value") },
+      { key: "paid", header: "Paid", format: moneyFormat, cell: moneyCell("paid") },
+      { key: "performanceScore", header: "Performance", align: "center", format: scoreFormat, cell: scoreCell("performanceScore", 80, 50, "%") },
+      { key: "evaluated", header: "Evaluated", format: yesNoFormat, cell: yesNoCell("evaluated") },
+      { key: "status", header: "Status", cell: badgeCell("status") },
+    ];
+
+    const vdRows: ReportRow[] = combined.vendorDonorPerformance.map((r, i) => ({
+      __key: `vd-${i}`,
+      vendor: r.vendor,
+      donor: r.donor,
+      contract: r.contract,
+      value: r.value,
+      paid: r.paid,
+      performanceScore: r.performanceScore ?? "",
+      evaluated: r.evaluated,
+      status: r.status,
+    }));
+
+    const topColumns: TableColumn[] = [
+      { key: "vendor", header: "Vendor" },
+      { key: "avgScore", header: "Average Score", align: "center", format: scoreFormat, cell: scoreCell("avgScore", 8, 5) },
+      { key: "contractsWon", header: "Contracts Won", align: "center", cell: countCell("contractsWon") },
+      { key: "totalValue", header: "Total Value", format: moneyFormat, cell: moneyCell("totalValue") },
+      { key: "winRate", header: "Win Rate", format: pctFormat, cell: scoreCell("winRate", 50, 25, "%") },
+    ];
+
+    const topRows: ReportRow[] = combined.topPerformers.map((t, i) => ({
+      __key: `top-${i}`,
+      vendor: t.vendor,
+      avgScore: t.avgScore,
+      contractsWon: t.contractsWon,
+      totalValue: t.totalValue,
+      winRate: t.winRate,
+    }));
+
+    // Spend per donor broken down by vendor.
+    const spendMap = new Map<string, Map<string, number>>();
+    base.contracts.forEach(c => {
+      const donor = base.contractFunding(c);
+      if (!spendMap.has(donor)) spendMap.set(donor, new Map());
+      const inner = spendMap.get(donor)!;
+      inner.set(c.party, (inner.get(c.party) ?? 0) + getContractFinancials(c).totalPaid);
+    });
+
+    const spendRows: ReportRow[] = Array.from(spendMap).flatMap(([donor, vendorsMap]) =>
+      Array.from(vendorsMap, ([vendor, spend]) => ({
+        __key: `sp-${donor}-${vendor}`,
+        donor,
+        vendor,
+        spend,
+        share: pct(spend, Array.from(vendorsMap.values()).reduce((s, v) => s + v, 0)),
+      }))
+    ).sort((a, b) => Number(b.spend) - Number(a.spend));
+
+    const spendColumns: TableColumn[] = [
+      { key: "donor", header: "Donor / Funding Source" },
+      { key: "vendor", header: "Vendor" },
+      { key: "spend", header: "Spend", format: moneyFormat, cell: moneyCell("spend") },
+      { key: "share", header: "Share of Donor Spend", format: pctFormat, cell: scoreCell("share", 0, 0, "%") },
+    ];
+
+    // Compliance per donor: are contracts under this funding source running clean?
+    const complianceRows: ReportRow[] = Array.from(
+      groupBy(base.contracts, c => base.contractFunding(c))
+    ).map(([donor, list]) => {
+      const withRisk = list.filter(c => base.risks.some(r => r.contract.id === c.id)).length;
+      const overdueDels = list.reduce(
+        (s, c) => s + (c.deliverables ?? []).filter(d => d.status !== "Accepted" && daysUntil(d.dueDate) < 0).length, 0
+      );
+      const queriedInv = list.reduce((s, c) => s + (c.invoices ?? []).filter(i => i.status === "Queried").length, 0);
+      const evaluated = list.filter(c => (c.performanceEvaluations ?? []).length > 0).length;
+      return {
+        __key: `comp-${donor}`,
+        donor,
+        contracts: list.length,
+        clean: list.length - withRisk,
+        atRisk: withRisk,
+        overdueDeliverables: overdueDels,
+        queriedInvoices: queriedInv,
+        evaluated,
+        complianceRate: pct(list.length - withRisk, list.length),
+      };
+    }).sort((a, b) => Number(b.contracts) - Number(a.contracts));
+
+    const complianceColumns: TableColumn[] = [
+      { key: "donor", header: "Donor / Funding Source" },
+      { key: "contracts", header: "Contracts", align: "center", cell: countCell("contracts") },
+      { key: "clean", header: "Running Clean", align: "center", cell: countCell("clean") },
+      { key: "atRisk", header: "Carrying Risk", align: "center", cell: countCell("atRisk", 0) },
+      { key: "overdueDeliverables", header: "Overdue Deliverables", align: "center", cell: countCell("overdueDeliverables", 0) },
+      { key: "queriedInvoices", header: "Queried Invoices", align: "center", cell: countCell("queriedInvoices", 0) },
+      { key: "evaluated", header: "Evaluated", align: "center", cell: countCell("evaluated") },
+      { key: "complianceRate", header: "Compliance Rate", format: pctFormat, cell: scoreCell("complianceRate", 80, 50, "%") },
+    ];
 
     return (
       <div>
         <SubTabBar tabs={combinedTabs} active={subTab} onChange={setSubTab} />
         <div className="space-y-6 p-6">
-          <PeriodFilterBar periodFilter={periodFilter} setPeriodFilter={setPeriodFilter} />
+          {periodBar}
 
-          {subTab === 0 && <>
-            {/* Stat Cards */}
-            <div className="grid grid-cols-4 gap-4">
-              <StatCard label="Avg Performance" value={fmtPct(avgPerformance)} sub="across contracts" trend="3%" trendDir="up" icon={<TrendingUp size={18} />} color="#6366f1" />
-              <StatCard label="Avg Compliance" value={fmtPct(avgCompliance)} sub="across donors" icon={<ShieldCheck size={18} />} color="#10b981" />
-              <StatCard label="Compliance Issues" value={String(totalIssues)} sub="total flagged" icon={<AlertTriangle size={18} />} color="#f59e0b" />
-              <StatCard label="Top Performer Value" value={fmt(totalTopValue)} sub="combined" icon={<DollarSign size={18} />} color="#8b5cf6" />
-            </div>
+          <ProcurementStatCards variant="flush" stats={[
+            { label: "Average Performance", value: combined.scoredCount ? fmtPct(combined.avgPerformance ?? 0) : "—", sub: `${fmtNum(combined.scoredCount)} scored contracts`, icon: <TrendingUp size={18} />, tone: "success" },
+            { label: "Vendors Engaged", value: fmtNum(new Set(base.contracts.map(c => c.party)).size), sub: "under contract in period", icon: <Users size={18} />, tone: "info" },
+            { label: "Funding Sources", value: fmtNum(new Set(base.contracts.map(c => base.contractFunding(c))).size), sub: "with contracted spend", icon: <Package size={18} />, tone: "accent" },
+            { label: "Contracts at Risk", value: fmtNum(base.risks.length), sub: "carrying one or more signals", icon: <AlertTriangle size={18} />, tone: "danger" },
+          ]} />
 
-            {/* Donor Compliance Radar Chart */}
-            <div className="bg-white border border-slate-200 rounded-xl p-4">
-              <h3 className="text-[13px] text-slate-900 mb-4" style={{ fontFamily: F, fontWeight: 700 }}>Donor Compliance Metrics Comparison</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <RadarChart id="rpt-donor-compliance-radar" cx="50%" cy="50%" outerRadius="70%" data={donorComplianceRadar}>
-                  <PolarGrid stroke="#e2e8f0" />
-                  <PolarAngleAxis dataKey="metric" tick={{ fontSize: 9, fontFamily: F }} />
-                  <PolarRadiusAxis tick={{ fontSize: 8 }} domain={[80, 100]} />
-                  <Radar name="World Bank" dataKey="World Bank" stroke="#6366f1" fill="#6366f1" fillOpacity={0.15} />
-                  <Radar name="USAID" dataKey="USAID" stroke="#10b981" fill="#10b981" fillOpacity={0.1} />
-                  <Radar name="EU" dataKey="EU" stroke="#f59e0b" fill="#f59e0b" fillOpacity={0.1} />
-                  <Radar name="DFID" dataKey="DFID" stroke="#ef4444" fill="#ef4444" fillOpacity={0.1} />
-                  <Radar name="AfDB" dataKey="AfDB" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.1} />
-                  <Tooltip contentStyle={{ fontFamily: F, fontSize: 11 }} />
-                  <Legend iconType="line" wrapperStyle={{ fontSize: 10, fontFamily: F }} />
-                </RadarChart>
-              </ResponsiveContainer>
-            </div>
-          </>}
+          {subTab === 0 && (
+            <ReportSection title="Vendor Performance on Donor-Funded Contracts" columns={vdColumns} rows={vdRows} meta={exportMeta}
+              search={searchQuery} emptyMessage="No contracts in this period" emptyHint={noDataHint} />
+          )}
 
-          {subTab === 1 && <>
-            <ExportBar tableName="Vendor Donor Performance" />
-            <div className="flex-1 overflow-auto">
-              <table className="w-full text-[11px]" style={{ fontFamily: F }}>
-                <thead>
-                  <tr style={{ backgroundColor: BLUE }}>
-                    {["Vendor", "Donor", "Contract", "Performance Score", "Status"].map(h => (
-                      <th key={h} className="px-3 py-2.5 text-left text-white" style={{ fontWeight: 600, fontSize: 11 }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {vendorDonorPerformance.map((v, i) => (
-                    <tr key={`${v.vendor}-${v.contract}`} className={`border-b border-slate-100 ${i % 2 === 1 ? "bg-slate-50/60" : "bg-white"}`}>
-                      <td className="px-3 py-2 text-slate-900" style={{ fontWeight: 600 }}>{v.vendor}</td>
-                      <td className="px-3 py-2 text-slate-700">{v.donor}</td>
-                      <td className="px-3 py-2 text-indigo-700" style={{ fontWeight: 600 }}>{v.contract}</td>
-                      <td className="px-3 py-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-16 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                            <div className="h-full rounded-full" style={{ width: `${v.performanceScore}%`, backgroundColor: v.performanceScore >= 90 ? "#10b981" : v.performanceScore >= 80 ? "#f59e0b" : "#ef4444" }} />
-                          </div>
-                          <span className={`text-[11px] ${v.performanceScore >= 90 ? "text-green-600" : v.performanceScore >= 80 ? "text-amber-600" : "text-red-500"}`} style={{ fontWeight: 700 }}>
-                            {v.performanceScore}%
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-3 py-2"><StatusBadge status={v.status} /></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </>}
+          {subTab === 1 && (
+            <ReportSection title="Top Performing Vendors" columns={topColumns} rows={topRows} meta={exportMeta}
+              search={searchQuery} emptyMessage="No vendors have been scored yet"
+              emptyHint="Scores arrive from contract performance evaluations at mid-term and close-out." />
+          )}
 
-          {subTab === 2 && <>
-            <ExportBar tableName="Top Performers" />
-            <div className="flex-1 overflow-auto">
-              <table className="w-full text-[11px]" style={{ fontFamily: F }}>
-                <thead>
-                  <tr style={{ backgroundColor: BLUE }}>
-                    {["Rank", "Vendor", "Contracts Won", "Total Value", "Avg Rating"].map(h => (
-                      <th key={h} className="px-3 py-2.5 text-left text-white" style={{ fontWeight: 600, fontSize: 11 }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {topPerformers.map((t, i) => (
-                    <tr key={t.vendor} className={`border-b border-slate-100 ${i % 2 === 1 ? "bg-slate-50/60" : "bg-white"}`}>
-                      <td className="px-3 py-2">
-                        <span className="w-6 h-6 rounded-full inline-flex items-center justify-center text-[10px] text-white" style={{ backgroundColor: i === 0 ? "#f59e0b" : i === 1 ? "#94a3b8" : i === 2 ? "#cd7f32" : BLUE, fontWeight: 700 }}>
-                          {i + 1}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2 text-slate-900" style={{ fontWeight: 600 }}>{t.vendor}</td>
-                      <td className="px-3 py-2 text-slate-700 text-center">{t.contractsWon}</td>
-                      <td className="px-3 py-2 text-slate-900" style={{ fontWeight: 600 }}>{fmt(t.totalValue)}</td>
-                      <td className="px-3 py-2">
-                        <div className="flex items-center gap-1">
-                          <span className="text-amber-500">★</span>
-                          <span className="text-slate-900" style={{ fontWeight: 600 }}>{t.avgRating}</span>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </>}
+          {subTab === 2 && (
+            <ReportSection title="Procurement Spend per Donor by Vendor" columns={spendColumns} rows={spendRows} meta={exportMeta}
+              search={searchQuery} emptyMessage="No spend recorded in this period" emptyHint={noDataHint} />
+          )}
 
-          {subTab === 3 && <>
-            <ExportBar tableName="Procurement Compliance" />
-            <div className="flex-1 overflow-auto">
-              <table className="w-full text-[11px]" style={{ fontFamily: F }}>
-                <thead>
-                  <tr style={{ backgroundColor: BLUE }}>
-                    {["Donor", "Compliance %", "Issues", "Status"].map(h => (
-                      <th key={h} className="px-3 py-2.5 text-left text-white" style={{ fontWeight: 600, fontSize: 11 }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {donorComplianceData.map((d, i) => (
-                    <tr key={d.donor} className={`border-b border-slate-100 ${i % 2 === 1 ? "bg-slate-50/60" : "bg-white"}`}>
-                      <td className="px-3 py-2 text-slate-900" style={{ fontWeight: 600 }}>{d.donor}</td>
-                      <td className="px-3 py-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-16 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                            <div className="h-full rounded-full" style={{ width: `${d.compliancePct}%`, backgroundColor: d.compliancePct >= 95 ? "#10b981" : d.compliancePct >= 90 ? "#f59e0b" : "#ef4444" }} />
-                          </div>
-                          <span className={`text-[11px] ${d.compliancePct >= 95 ? "text-green-600" : "text-amber-600"}`} style={{ fontWeight: 700 }}>
-                            {d.compliancePct}%
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-3 py-2 text-center">
-                        {d.issues > 0 ? (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] bg-red-100 text-red-700" style={{ fontWeight: 600 }}>{d.issues}</span>
-                        ) : (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] bg-green-100 text-green-700" style={{ fontWeight: 600 }}>None</span>
-                        )}
-                      </td>
-                      <td className="px-3 py-2">
-                        <StatusBadge status={d.compliancePct >= 95 ? "Approved" : "Under Review"} />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </>}
+          {subTab === 3 && (
+            <ReportSection title="Procurement Compliance per Donor" columns={complianceColumns} rows={complianceRows} meta={exportMeta}
+              search={searchQuery} emptyMessage="No contracts in this period" emptyHint={noDataHint} />
+          )}
         </div>
       </div>
     );
   };
 
-  /* ══════════════════════════════════════════════════════════════════════════════
-     MAIN RENDER
-     ══════════════════════════════════════════════════════════════════════════════ */
+  /* ── Screen ────────────────────────────────────────────────────────────── */
+
+  const renderers: Record<TabKey, () => ReactNode> = {
+    planning: renderPlanning,
+    sourcing: renderSourcing,
+    vendors: renderVendors,
+    contracts: renderContracts,
+    donors: renderDonors,
+    combined: renderCombined,
+  };
 
   return (
-    <div className="h-full flex flex-col bg-slate-50 overflow-hidden" style={{ fontFamily: F }}>
-      {/* Header */}
-      <div className="px-6 py-4 border-b border-slate-200 bg-white flex justify-between items-center shrink-0">
+    <div className="h-full flex flex-col bg-slate-50 overflow-hidden">
+      <div className="px-6 py-4 border-b border-slate-200 bg-white flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-[20px] text-slate-900" style={{ fontFamily: F, fontWeight: 700 }}>
-            {title}
-          </h1>
-          <p className="text-[11px] text-slate-500 mt-0.5" style={{ fontFamily: F }}>
-            {subtitle}
-          </p>
+          <h1 className="text-2xl font-semibold text-slate-900" style={{ fontFamily: F }}>{title}</h1>
+          <p className="text-sm text-slate-500 mt-0.5" style={{ fontFamily: F }}>{subtitle}</p>
         </div>
-        <div className="flex items-center gap-2">
-          {/* Search */}
-          <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 px-3 py-2 border border-slate-200 rounded-lg bg-white shadow-sm w-64">
+            <Search size={16} className="text-slate-400" />
             <input
-              type="text"
-              placeholder="Search..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-[12px] text-slate-900 w-56 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white"
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="Filter the table below"
+              className="flex-1 outline-none text-sm text-slate-900 placeholder:text-slate-400"
               style={{ fontFamily: F }}
             />
           </div>
-          {/* Period Selector */}
-          <div className="relative">
-            <button onClick={() => setShowPeriodDropdown(!showPeriodDropdown)}
-              className="flex items-center gap-2 px-3 py-2 border border-slate-200 rounded-lg bg-white hover:bg-slate-50 transition-colors shadow-sm text-[12px] text-slate-700"
-              style={{ fontFamily: F }}>
-              <CalendarClock size={14} className="text-slate-400" />
-              {selectedPeriod}
-              <ChevronDown size={14} className="text-purple-700" />
-            </button>
-            {showPeriodDropdown && (
-              <>
-                <div className="fixed inset-0 z-10" onClick={() => setShowPeriodDropdown(false)} />
-                <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-slate-200 rounded-lg shadow-lg z-20 overflow-hidden">
-                  {TIME_PERIODS.map((p) => (
-                    <button key={p} onClick={() => { setSelectedPeriod(p); setShowPeriodDropdown(false); }}
-                      className={`w-full px-4 py-2 text-left text-[12px] hover:bg-slate-50 transition-colors ${p === selectedPeriod ? "bg-indigo-50 text-indigo-700" : "text-slate-700"}`}
-                      style={{ fontFamily: F, fontWeight: p === selectedPeriod ? 600 : 400 }}>
-                      {p}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-
         </div>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-auto">
-        {activeTab === "planning" && renderPlanning()}
-        {activeTab === "sourcing" && renderSourcing()}
-        {activeTab === "vendors" && renderVendors()}
-        {activeTab === "contracts" && renderContracts()}
-        {activeTab === "donors" && renderDonors()}
-        {activeTab === "combined" && renderCombined()}
-      </div>
+      <ProcurementTabBar>
+        <ProcurementTabs tabs={REPORT_TABS} active={activeTab} onChange={setActiveTab} />
+      </ProcurementTabBar>
+
+      <div className="flex-1 overflow-auto">{renderers[activeTab]()}</div>
     </div>
   );
 }
+
+export default ProcurementReportingAnalytics;

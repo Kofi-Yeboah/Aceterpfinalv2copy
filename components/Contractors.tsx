@@ -261,7 +261,7 @@ export function Contractors({ onViewDetails }: ContractorsProps) {
       </div>
 
       {/* Filters & Search */}
-      <div className="px-6 py-3 bg-white border-b border-slate-200 shrink-0">
+      <div className="px-4 py-3 bg-white border-b border-slate-200 shrink-0">
         <div className="flex items-center gap-3">
           {/* Search */}
           <div className="flex-1 flex items-center gap-2 px-3.5 py-2 border border-slate-200 rounded-lg bg-white">
@@ -334,21 +334,20 @@ export function Contractors({ onViewDetails }: ContractorsProps) {
         <table className="w-full">
           <thead style={{ backgroundColor: "#0B01D0" }} className="sticky top-0 z-10">
             <tr>
-              <th className="px-6 py-3 text-left text-[11px] font-medium text-white uppercase tracking-wider">Contractor</th>
-              <th className="px-6 py-3 text-left text-[11px] font-medium text-white uppercase tracking-wider">Contract #</th>
-              <th className="px-6 py-3 text-left text-[11px] font-medium text-white uppercase tracking-wider">Category</th>
-              <th className="px-6 py-3 text-right text-[11px] font-medium text-white uppercase tracking-wider">Total Contract</th>
-              <th className="px-6 py-3 text-right text-[11px] font-medium text-white uppercase tracking-wider">Total Paid</th>
-              <th className="px-6 py-3 text-right text-[11px] font-medium text-white uppercase tracking-wider">Balance</th>
-              <th className="px-6 py-3 text-center text-[11px] font-medium text-white uppercase tracking-wider">Tasks</th>
-              <th className="px-6 py-3 text-center text-[11px] font-medium text-white uppercase tracking-wider">Status</th>
-              <th className="px-6 py-3 text-center text-[11px] font-medium text-white uppercase tracking-wider">Action</th>
+              <th className="px-4 py-3 text-left text-[12px] font-semibold text-white">Contractor</th>
+              <th className="px-4 py-3 text-left text-[12px] font-semibold text-white">Contract #</th>
+              <th className="px-4 py-3 text-left text-[12px] font-semibold text-white">Category</th>
+              <th className="px-4 py-3 text-right text-[12px] font-semibold text-white">Total Contract</th>
+              <th className="px-4 py-3 text-right text-[12px] font-semibold text-white">Total Paid</th>
+              <th className="px-4 py-3 text-right text-[12px] font-semibold text-white">Balance</th>
+              <th className="px-4 py-3 text-center text-[12px] font-semibold text-white">Status</th>
+              <th className="px-4 py-3 text-center text-[12px] font-semibold text-white">Action</th>
             </tr>
           </thead>
           <tbody className="bg-white">
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={9} className="px-6 py-12 text-center">
+                <td colSpan={8} className="px-6 py-12 text-center">
                   <div className="flex flex-col items-center gap-2">
                     <Users size={32} className="text-slate-300" />
                     <p className="text-sm text-slate-500">No contractors found</p>
@@ -372,41 +371,35 @@ export function Contractors({ onViewDetails }: ContractorsProps) {
                 <tr
                   key={contractor.id}
                   onClick={() => onViewDetails(contractor.id)}
-                  className={`border-b border-slate-100 hover:bg-blue-50 cursor-pointer transition-colors ${
-                    idx % 2 === 0 ? "bg-white" : "bg-slate-50"
+                  className={`border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors ${
+                    idx % 2 === 0 ? "bg-white" : "bg-slate-50/50"
                   }`}
                 >
-                  <td className="px-6 py-3">
+                  <td className="px-4 py-3">
                     <div>
-                      <p className="text-sm text-slate-900 font-medium">{contractor.name}</p>
+                      <p className="text-[12px] text-slate-900 font-medium">{contractor.name}</p>
                       <p className="text-[11px] text-slate-500">{contractor.company}</p>
                     </div>
                   </td>
-                  <td className="px-6 py-3">
-                    <span className="text-[11px] text-blue-600 font-mono">{contractor.contractNumber}</span>
+                  <td className="px-4 py-3">
+                    <span className="text-[12px] text-purple-700 font-medium">{contractor.contractNumber}</span>
                   </td>
-                  <td className="px-6 py-3">
-                    <span className="text-[11px] text-slate-700">{contractor.category}</span>
+                  <td className="px-4 py-3">
+                    <span className="text-[12px] text-slate-600">{contractor.category}</span>
                   </td>
-                  <td className="px-6 py-3 text-right">
-                    <span className="text-sm text-slate-900 font-medium">{formatCurrency(contractor.totalContract)}</span>
+                  <td className="px-4 py-3 text-right">
+                    <span className="text-[12px] text-slate-900 font-medium">{formatCurrency(contractor.totalContract)}</span>
                   </td>
-                  <td className="px-6 py-3 text-right">
-                    <span className="text-sm text-green-700 font-medium">{formatCurrency(contractor.totalPaid)}</span>
+                  <td className="px-4 py-3 text-right">
+                    <span className="text-[12px] text-slate-900 font-medium">{formatCurrency(contractor.totalPaid)}</span>
                   </td>
-                  <td className="px-6 py-3 text-right">
-                    <span className={`text-sm font-medium ${contractor.balance > 0 ? "text-amber-700" : "text-slate-400"}`}>
+                  <td className="px-4 py-3 text-right">
+                    <span className="text-[12px] text-slate-900 font-medium">
                       {formatCurrency(contractor.balance)}
                     </span>
                   </td>
-                  <td className="px-6 py-3">
-                    <div className="flex items-center justify-center gap-2">
-                      <span className="text-[11px] text-green-600 font-medium">{contractor.activeTasks} active</span>
-                      <span className="text-[11px] text-slate-400">/ {contractor.completedTasks} done</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-3 text-center">{getStatusBadge(contractor.status)}</td>
-                  <td className="px-6 py-3 text-center">
+                  <td className="px-4 py-3 text-center">{getStatusBadge(contractor.status)}</td>
+                  <td className="px-4 py-3 text-center">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();

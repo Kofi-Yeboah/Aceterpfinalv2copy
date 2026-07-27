@@ -1,6 +1,20 @@
-import { ShoppingCart, Users, FileText, DollarSign, TrendingUp, Package, AlertTriangle, Clock, CheckCircle2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ShoppingCart, Users, FileText, DollarSign, TrendingUp, Package, AlertTriangle, Clock, CheckCircle2, Layers, Briefcase, CalendarClock } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend } from "recharts";
 import { DashboardConfigPanel, useDashboardConfig } from "./DashboardConfigPanel";
+import { ProcurementStatCards, ProcurementStatCard } from "./procurement/ProcurementStatCards";
+import {
+  getPlanStats,
+  getPRStats,
+  getPlanPipeline,
+  getPlanBottlenecks,
+  getProcurementPlanItems,
+  getGeneratedPOs,
+  subscribe as subscribeProcurement,
+  type ProcurementPlanItem,
+} from "../lib/procurementStore";
+import { getVendorStats, subscribe as subscribeVendors } from "../lib/vendorStore";
+import { getContractStats, subscribe as subscribeContracts } from "../lib/contractStore";
 
 const PROC_SECTIONS = [
   { id: "kpis", label: "KPI Cards" },
@@ -10,85 +24,154 @@ const PROC_SECTIONS = [
   { id: "recentPOs", label: "Recent Purchase Orders" },
   { id: "donorSpend", label: "Spend by Donor" },
   { id: "activeCompleted", label: "Active vs Completed" },
+  { id: "procType", label: "Totals by Procurement Type" },
+  { id: "contracts", label: "Contract Portfolio" },
   { id: "pipeline", label: "Procurement Pipeline" },
   { id: "bottlenecks", label: "Bottlenecks & Delays" },
 ];
 
+const DONOR_COLORS = ["#0B01D0", "#10b981", "#f59e0b", "#8b5cf6", "#ef4444", "#0ea5e9", "#6b7280"];
+
+const PROCUREMENT_TYPES: { type: ProcurementPlanItem["category"]; color: string; icon: typeof Package }[] = [
+  { type: "Goods", color: "#0B01D0", icon: Package },
+  { type: "Services", color: "#8b5cf6", icon: Layers },
+  { type: "Works", color: "#f59e0b", icon: Briefcase },
+  { type: "Consultancy", color: "#10b981", icon: Users },
+];
+
+const EXECUTED_STATUSES: ProcurementPlanItem["status"][] = ["Awarded", "Contracted", "Completed"];
+
 export function ProcurementDashboard() {
   const { visibleSections, onToggle, onShowAll, onHideAll, isVisible } = useDashboardConfig(PROC_SECTIONS);
 
-  // Mock data for charts
-  const purchaseOrderData = [
-    { month: "Jan", orders: 45, value: 125000 },
-    { month: "Feb", orders: 52, value: 142000 },
-    { month: "Mar", orders: 48, value: 135000 },
-    { month: "Apr", orders: 61, value: 168000 },
-    { month: "May", orders: 55, value: 152000 },
-    { month: "Jun", orders: 58, value: 159000 },
-  ];
+  // A single revision counter drives a recompute whenever any source store fires.
+  const [revision, setRevision] = useState(0);
 
-  const supplierData = [
-    { name: "Active", value: 45, color: "#10b981" },
-    { name: "Pending", value: 12, color: "#f59e0b" },
-    { name: "Inactive", value: 8, color: "#6b7280" },
-  ];
+  useEffect(() => {
+    const bump = () => setRevision((r) => r + 1);
+    const unsubs = [subscribeProcurement(bump), subscribeVendors(bump), subscribeContracts(bump)];
+    return () => unsubs.forEach((u) => u());
+  }, []);
 
-  const categorySpendData = [
-    { category: "IT Equipment", spend: 285000 },
-    { category: "Office Supplies", spend: 145000 },
-    { category: "Professional Services", spend: 325000 },
-    { category: "Facilities", spend: 198000 },
-    { category: "Marketing", spend: 112000 },
-  ];
+  const data = useMemo(() => {
+    const planStats = getPlanStats();
+    const prStats = getPRStats();
+    const vendorStats = getVendorStats();
+    const contractStats = getContractStats();
+    const planItems = getProcurementPlanItems();
+    const pos = getGeneratedPOs();
 
-  const recentPurchaseOrders = [
-    { id: "PO-2024-156", supplier: "Tech Solutions Inc.", amount: 45600, status: "Approved", date: "2024-11-28" },
-    { id: "PO-2024-157", supplier: "Office Depot Ltd.", amount: 12300, status: "Pending", date: "2024-11-29" },
-    { id: "PO-2024-158", supplier: "Global Services Co.", amount: 78900, status: "Approved", date: "2024-11-30" },
-    { id: "PO-2024-159", supplier: "Premier Supplies", amount: 23400, status: "Processing", date: "2024-12-01" },
-    { id: "PO-2024-160", supplier: "Elite Partners", amount: 56700, status: "Approved", date: "2024-12-02" },
-  ];
+    const approvedItems = planItems.filter((i) => i.approvalStatus === "Approved");
+    const executedItems = approvedItems.filter((i) => EXECUTED_STATUSES.includes(i.status));
+    const executedValue = executedItems.reduce((s, i) => s + i.estimatedValue, 0);
+    const executionRate = planStats.totalValue > 0 ? Math.round((executedValue / planStats.totalValue) * 100) : 0;
 
-  const donorSpendData = [
-    { name: "TAP", value: 320000, color: "#0B01D0" },
-    { name: "ATTP", value: 245000, color: "#10b981" },
-    { name: "Gates Foundation", value: 198000, color: "#f59e0b" },
-    { name: "World Bank", value: 175000, color: "#8b5cf6" },
-    { name: "Other", value: 127000, color: "#6b7280" },
-  ];
+    // ── Purchase order trend, grouped by the month the order was raised ──────
+    const byMonth = new Map<string, { orders: number; value: number }>();
+    pos.forEach((po) => {
+      const key = (po.orderDate || "").slice(0, 7);
+      if (!key) return;
+      const cell = byMonth.get(key) ?? { orders: 0, value: 0 };
+      byMonth.set(key, { orders: cell.orders + 1, value: cell.value + po.amount });
+    });
+    const purchaseOrderData = Array.from(byMonth, ([month, v]) => ({ key: month, ...v }))
+      .sort((a, b) => a.key.localeCompare(b.key))
+      .slice(-12)
+      .map((row) => ({
+        month: new Date(`${row.key}-01T00:00:00`).toLocaleDateString("en-US", { month: "short", year: "2-digit" }),
+        orders: row.orders,
+        value: row.value,
+      }));
 
-  const activeCompletedData = [
-    { name: "Active", count: 84, color: "#0B01D0" },
-    { name: "Completed", count: 143, color: "#10b981" },
-    { name: "Cancelled", count: 9, color: "#ef4444" },
-  ];
+    // ── Vendor status distribution ──────────────────────────────────────────
+    const otherVendors = Math.max(
+      vendorStats.total - vendorStats.active - vendorStats.pending - vendorStats.flagged,
+      0
+    );
+    const supplierData = [
+      { name: "Active", value: vendorStats.active, color: "#10b981" },
+      { name: "Pending", value: vendorStats.pending, color: "#f59e0b" },
+      { name: "Flagged", value: vendorStats.flagged, color: "#ef4444" },
+      { name: "Other", value: otherVendors, color: "#6b7280" },
+    ].filter((d) => d.value > 0);
 
-  const pipelineNext30 = [
-    { title: "Server Infrastructure Upgrade", value: 85000, status: "Approved" },
-    { title: "Office Furniture Renewal", value: 32000, status: "In Review" },
-    { title: "Security System Installation", value: 54000, status: "Pending" },
-    { title: "Vehicle Fleet Maintenance", value: 27000, status: "Approved" },
-  ];
+    // ── Spend by category and donor, from approved plan items ───────────────
+    const categorySpendData = [...planStats.byCategory]
+      .sort((a, b) => b.value - a.value)
+      .map((c) => ({ category: c.category, spend: c.value, count: c.count }));
 
-  const pipelineNext60 = [
-    { title: "IT Network Expansion", value: 120000, status: "Planning" },
-    { title: "Staff Training Program", value: 45000, status: "Draft" },
-    { title: "Warehouse Equipment", value: 67000, status: "Planning" },
-  ];
+    const donorSpendData = [...planStats.byDonor]
+      .sort((a, b) => b.value - a.value)
+      .map((d, index) => ({ name: d.donor, value: d.value, count: d.count, color: DONOR_COLORS[index % DONOR_COLORS.length] }));
 
-  const pipelineNext90 = [
-    { title: "Annual Software Licenses", value: 95000, status: "Draft" },
-    { title: "Building Renovation Phase 2", value: 210000, status: "Concept" },
-    { title: "Regional Office Setup", value: 150000, status: "Concept" },
-  ];
+    // ── Totals by procurement type ──────────────────────────────────────────
+    const typeTotals = PROCUREMENT_TYPES.map(({ type, color, icon }) => {
+      const items = approvedItems.filter((i) => i.category === type);
+      const value = items.reduce((s, i) => s + i.estimatedValue, 0);
+      const executed = items.filter((i) => EXECUTED_STATUSES.includes(i.status)).reduce((s, i) => s + i.estimatedValue, 0);
+      return {
+        type,
+        color,
+        icon,
+        count: items.length,
+        value,
+        executed,
+        share: planStats.totalValue > 0 ? Math.round((value / planStats.totalValue) * 100) : 0,
+      };
+    });
 
-  const bottlenecks = [
-    { description: "Medical Supply Procurement", daysOverdue: 18, responsible: "Sarah Johnson", stage: "Vendor Evaluation" },
-    { description: "IT Hardware Replacement", daysOverdue: 12, responsible: "Michael Chen", stage: "Budget Approval" },
-    { description: "Logistics Vehicle Purchase", daysOverdue: 25, responsible: "David Osei", stage: "Contract Negotiation" },
-    { description: "Field Equipment Order", daysOverdue: 8, responsible: "Amina Diallo", stage: "Technical Review" },
-    { description: "Office Lease Renewal", daysOverdue: 15, responsible: "James Mwangi", stage: "Legal Review" },
-  ];
+    // ── Active vs completed ─────────────────────────────────────────────────
+    const activeCompletedData = [
+      { name: "Active", count: planStats.active, color: "#0B01D0" },
+      { name: "Completed", count: planStats.completed, color: "#10b981" },
+      { name: "Delayed", count: planStats.delayed, color: "#ef4444" },
+    ];
+
+    // ── Pipeline, split into mutually exclusive 30 / 60 / 90-day buckets ────
+    const p30 = getPlanPipeline(30);
+    const p60All = getPlanPipeline(60);
+    const p90All = getPlanPipeline(90);
+    const ids30 = new Set(p30.map((i) => i.id));
+    const ids60 = new Set(p60All.map((i) => i.id));
+    const pipelineNext30 = p30;
+    const pipelineNext60 = p60All.filter((i) => !ids30.has(i.id));
+    const pipelineNext90 = p90All.filter((i) => !ids60.has(i.id));
+
+    // ── Recent purchase orders ──────────────────────────────────────────────
+    const recentPurchaseOrders = [...pos]
+      .sort((a, b) => (b.orderDate || "").localeCompare(a.orderDate || ""))
+      .slice(0, 5)
+      .map((po) => ({
+        id: po.poNumber,
+        supplier: po.vendor,
+        amount: po.amount,
+        status: po.status ?? "Signed",
+        date: po.orderDate,
+      }));
+
+    return {
+      planStats,
+      prStats,
+      vendorStats,
+      contractStats,
+      executedValue,
+      executionRate,
+      purchaseOrderData,
+      supplierData,
+      categorySpendData,
+      donorSpendData,
+      typeTotals,
+      activeCompletedData,
+      pipelineNext30,
+      pipelineNext60,
+      pipelineNext90,
+      recentPurchaseOrders,
+      bottlenecks: getPlanBottlenecks(),
+      totalPOs: pos.length,
+      totalPOValue: pos.reduce((s, po) => s + po.amount, 0),
+    };
+    // `revision` is the store-change signal; the stores themselves are modules.
+  }, [revision]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("en-US", {
@@ -101,15 +184,21 @@ export function ProcurementDashboard() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Approved":
+      case "Signed":
         return "bg-green-50 text-green-600";
       case "Pending":
+      case "Pending Signature":
         return "bg-orange-50 text-orange-600";
       case "Processing":
+      case "Dispatched":
         return "bg-blue-50 text-blue-600";
       default:
         return "bg-slate-50 text-slate-600";
     }
   };
+
+  const pendingApprovals =
+    data.planStats.pendingApproval + data.planStats.pendingAmendments + data.prStats.awaitingAction;
 
   return (
     <div className="h-full flex flex-col bg-slate-50 overflow-auto">
@@ -121,121 +210,97 @@ export function ProcurementDashboard() {
         </div>
       </div>
 
+      {/* Stats Cards */}
+      {isVisible("kpis") && (
+        <ProcurementStatCards
+          stats={[
+            {
+              label: "Total Vendors",
+              value: data.vendorStats.total,
+              icon: <Users size={14} />,
+              tone: "accent",
+              sub: `${data.vendorStats.active} active, ${data.vendorStats.pending} pending`,
+            },
+            {
+              label: "Purchase Orders",
+              value: data.totalPOs,
+              icon: <ShoppingCart size={14} />,
+              tone: "info",
+              sub: `${formatCurrency(data.totalPOValue)} ordered`,
+            },
+            {
+              label: "Pending Requisitions",
+              value: data.prStats.awaitingAction,
+              icon: <FileText size={14} />,
+              tone: "warning",
+              sub: `of ${data.prStats.total} raised`,
+            },
+            {
+              label: "Approved Plan Value",
+              value: formatCurrency(data.planStats.totalValue),
+              icon: <DollarSign size={14} />,
+              tone: "success",
+              sub: `${data.planStats.approved} of ${data.planStats.total} items approved`,
+            },
+            {
+              label: "Pending Approvals",
+              value: pendingApprovals,
+              icon: <Clock size={14} />,
+              tone: "warning",
+              sub: `${data.planStats.pendingApproval} plan, ${data.planStats.pendingAmendments} amendment, ${data.prStats.awaitingAction} requisition`,
+            },
+            {
+              label: "Planned vs Executed",
+              value: `${data.executionRate}%`,
+              icon: <TrendingUp size={14} />,
+              tone: "success",
+              sub: `${formatCurrency(data.executedValue)} of ${formatCurrency(data.planStats.totalValue)}`,
+            },
+          ]}
+        />
+      )}
+
       {/* Content */}
       <div className="flex-1 p-6">
-        {/* Stats Cards */}
-        {isVisible("kpis") && (
-        <div className="grid grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
-          <div className="bg-white rounded-lg border border-slate-200 p-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600">Total Vendors</p>
-                <p className="text-2xl font-semibold text-slate-900 mt-1">65</p>
-                <p className="text-xs text-green-600 mt-1">↑ 8% from last month</p>
-              </div>
-              <div className="bg-purple-100 p-3 rounded-lg">
-                <Users className="w-6 h-6 text-purple-700" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg border border-slate-200 p-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600">Active Purchase Orders</p>
-                <p className="text-2xl font-semibold text-slate-900 mt-1">127</p>
-                <p className="text-xs text-green-600 mt-1">↑ 12% from last month</p>
-              </div>
-              <div className="bg-blue-100 p-3 rounded-lg">
-                <ShoppingCart className="w-6 h-6 text-[#0B01D0]" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg border border-slate-200 p-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600">Pending Requisitions</p>
-                <p className="text-2xl font-semibold text-slate-900 mt-1">23</p>
-                <p className="text-xs text-orange-600 mt-1">↓ 3% from last month</p>
-              </div>
-              <div className="bg-orange-100 p-3 rounded-lg">
-                <FileText className="w-6 h-6 text-orange-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg border border-slate-200 p-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600">Total Spend (YTD)</p>
-                <p className="text-2xl font-semibold text-slate-900 mt-1">{formatCurrency(1065000)}</p>
-                <p className="text-xs text-green-600 mt-1">↑ 15% from last year</p>
-              </div>
-              <div className="bg-green-100 p-3 rounded-lg">
-                <DollarSign className="w-6 h-6 text-green-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg border border-amber-200 p-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600">Pending Approvals</p>
-                <p className="text-2xl font-semibold text-amber-600 mt-1">14</p>
-                <p className="text-xs text-amber-600 mt-1">5 urgent, 9 routine</p>
-              </div>
-              <div className="bg-amber-100 p-3 rounded-lg">
-                <Clock className="w-6 h-6 text-amber-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg border border-slate-200 p-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600">Planned vs Executed</p>
-                <p className="text-2xl font-semibold text-slate-900 mt-1">78%</p>
-                <p className="text-xs text-green-600 mt-1">↑ 5% from last quarter</p>
-              </div>
-              <div className="bg-emerald-100 p-3 rounded-lg">
-                <TrendingUp className="w-6 h-6 text-emerald-600" />
-              </div>
-            </div>
-          </div>
-        </div>
-        )}
-
         {/* Charts Row */}
         <div className="grid grid-cols-2 gap-6 mb-6">
           {/* Purchase Orders Trend */}
           {isVisible("poTrend") && (
           <div className="bg-white rounded-lg border border-slate-200 p-5">
             <h3 className="text-sm font-semibold text-slate-900 mb-4">Purchase Orders Trend</h3>
-            <ResponsiveContainer width="100%" height={250}>
-              <LineChart id="proc-dash-line" data={purchaseOrderData}>
-                <CartesianGrid key="pd-line-grid" strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis key="pd-line-xaxis" dataKey="month" tick={{ fontSize: 12 }} stroke="#64748b" />
-                <YAxis key="pd-line-yaxis-left" yAxisId="left" tick={{ fontSize: 12 }} stroke="#64748b" />
-                <YAxis key="pd-line-yaxis-right" yAxisId="right" orientation="right" tick={{ fontSize: 12 }} stroke="#64748b" tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
-                <Tooltip key="pd-line-tooltip" />
-                <Legend key="pd-line-legend" />
-                <Line key="pd-line-orders" yAxisId="left" type="monotone" dataKey="orders" stroke="#0B01D0" strokeWidth={2} name="Orders" />
-                <Line key="pd-line-value" yAxisId="right" type="monotone" dataKey="value" stroke="#10b981" strokeWidth={2} name="Value ($)" />
-              </LineChart>
-            </ResponsiveContainer>
+            {data.purchaseOrderData.length === 0 ? (
+              <div className="h-[250px] flex items-center justify-center text-sm text-slate-400">
+                No purchase orders have been raised yet.
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={250}>
+                <LineChart id="proc-dash-line" data={data.purchaseOrderData}>
+                  <CartesianGrid key="pd-line-grid" strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis key="pd-line-xaxis" dataKey="month" tick={{ fontSize: 12 }} stroke="#64748b" />
+                  <YAxis key="pd-line-yaxis-left" yAxisId="left" tick={{ fontSize: 12 }} stroke="#64748b" allowDecimals={false} />
+                  <YAxis key="pd-line-yaxis-right" yAxisId="right" orientation="right" tick={{ fontSize: 12 }} stroke="#64748b" tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
+                  <Tooltip key="pd-line-tooltip" />
+                  <Legend key="pd-line-legend" />
+                  <Line key="pd-line-orders" yAxisId="left" type="monotone" dataKey="orders" stroke="#0B01D0" strokeWidth={2} name="Orders" />
+                  <Line key="pd-line-value" yAxisId="right" type="monotone" dataKey="value" stroke="#10b981" strokeWidth={2} name="Value ($)" />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
           </div>
           )}
 
           {/* Supplier Distribution */}
           {isVisible("supplierPerf") && (
           <div className="bg-white rounded-lg border border-slate-200 p-5">
-            <h3 className="text-sm font-semibold text-slate-900 mb-4">Vendor Status Distribution</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-slate-900">Vendor Status Distribution</h3>
+              <span className="text-xs text-slate-500">Avg performance {data.vendorStats.avgPerformance}/5</span>
+            </div>
             <ResponsiveContainer width="100%" height={250}>
               <PieChart id="proc-dash-pie">
                 <Pie
                   key="pd-pie-main"
-                  data={supplierData}
+                  data={data.supplierData}
                   cx="50%"
                   cy="50%"
                   innerRadius={70}
@@ -243,7 +308,7 @@ export function ProcurementDashboard() {
                   fill="#8884d8"
                   dataKey="value"
                 >
-                  {supplierData.map((entry, index) => (
+                  {data.supplierData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
@@ -251,12 +316,18 @@ export function ProcurementDashboard() {
               </PieChart>
             </ResponsiveContainer>
             <div className="mt-4 grid grid-cols-2 gap-3">
-              {supplierData.map((item) => (
+              {data.supplierData.map((item) => (
                 <div key={item.name} className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
                   <span className="text-sm text-slate-600">{item.name}: {item.value}</span>
                 </div>
               ))}
+              {data.vendorStats.expiring > 0 && (
+                <div className="col-span-2 flex items-center gap-2 text-xs text-amber-700 bg-amber-50 rounded-lg px-2 py-1.5">
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                  {data.vendorStats.expiring} vendor{data.vendorStats.expiring === 1 ? " has" : "s have"} expiring or expired documents
+                </div>
+              )}
             </div>
           </div>
           )}
@@ -268,15 +339,21 @@ export function ProcurementDashboard() {
           {isVisible("spending") && (
           <div className="bg-white rounded-lg border border-slate-200 p-5">
             <h3 className="text-sm font-semibold text-slate-900 mb-4">Spend by Category</h3>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart id="proc-dash-bar" data={categorySpendData}>
-                <CartesianGrid key="pd-bar-grid" strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis key="pd-bar-xaxis" dataKey="category" tick={{ fontSize: 11 }} stroke="#64748b" angle={-45} textAnchor="end" height={80} />
-                <YAxis key="pd-bar-yaxis" tick={{ fontSize: 12 }} stroke="#64748b" />
-                <Tooltip key="pd-bar-tooltip" formatter={(value) => formatCurrency(Number(value))} />
-                <Bar key="pd-bar-spend" dataKey="spend" fill="#0B01D0" />
-              </BarChart>
-            </ResponsiveContainer>
+            {data.categorySpendData.length === 0 ? (
+              <div className="h-[250px] flex items-center justify-center text-sm text-slate-400">
+                No approved plan items to report on yet.
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart id="proc-dash-bar" data={data.categorySpendData}>
+                  <CartesianGrid key="pd-bar-grid" strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis key="pd-bar-xaxis" dataKey="category" tick={{ fontSize: 11 }} stroke="#64748b" angle={-45} textAnchor="end" height={80} />
+                  <YAxis key="pd-bar-yaxis" tick={{ fontSize: 12 }} stroke="#64748b" tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
+                  <Tooltip key="pd-bar-tooltip" formatter={(value) => formatCurrency(Number(value))} />
+                  <Bar key="pd-bar-spend" dataKey="spend" fill="#0B01D0" />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </div>
           )}
 
@@ -285,7 +362,7 @@ export function ProcurementDashboard() {
           <div className="bg-white rounded-lg border border-slate-200 p-5">
             <h3 className="text-sm font-semibold text-slate-900 mb-4">Recent Purchase Orders</h3>
             <div className="space-y-3">
-              {recentPurchaseOrders.map((order) => (
+              {data.recentPurchaseOrders.map((order) => (
                 <div key={order.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
                   <div className="flex-1">
                     <p className="text-sm font-medium text-slate-900">{order.id}</p>
@@ -299,6 +376,9 @@ export function ProcurementDashboard() {
                   </div>
                 </div>
               ))}
+              {data.recentPurchaseOrders.length === 0 && (
+                <p className="text-sm text-slate-400 text-center py-8">No purchase orders have been generated yet.</p>
+              )}
             </div>
           </div>
           )}
@@ -310,29 +390,35 @@ export function ProcurementDashboard() {
           {isVisible("donorSpend") && (
           <div className="bg-white rounded-lg border border-slate-200 p-5">
             <h3 className="text-sm font-semibold text-slate-900 mb-4">Procurement Spend by Donor</h3>
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart id="proc-donor-pie">
-                <Pie
-                  key="pd-donor-pie"
-                  data={donorSpendData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={70}
-                  outerRadius={100}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {donorSpendData.map((entry, index) => (
-                    <Cell key={`donor-cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip key="pd-donor-tooltip" formatter={(value) => formatCurrency(Number(value))} />
-              </PieChart>
-            </ResponsiveContainer>
+            {data.donorSpendData.length === 0 ? (
+              <div className="h-[250px] flex items-center justify-center text-sm text-slate-400">
+                No approved plan items to report on yet.
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={250}>
+                <PieChart id="proc-donor-pie">
+                  <Pie
+                    key="pd-donor-pie"
+                    data={data.donorSpendData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={70}
+                    outerRadius={100}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {data.donorSpendData.map((entry, index) => (
+                      <Cell key={`donor-cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip key="pd-donor-tooltip" formatter={(value) => formatCurrency(Number(value))} />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
             <div className="mt-4 grid grid-cols-3 gap-3">
-              {donorSpendData.map((item) => (
+              {data.donorSpendData.map((item) => (
                 <div key={item.name} className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
+                  <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
                   <span className="text-xs text-slate-600">{item.name}: {formatCurrency(item.value)}</span>
                 </div>
               ))}
@@ -345,20 +431,20 @@ export function ProcurementDashboard() {
           <div className="bg-white rounded-lg border border-slate-200 p-5">
             <h3 className="text-sm font-semibold text-slate-900 mb-4">Active vs Completed Procurements</h3>
             <ResponsiveContainer width="100%" height={250}>
-              <BarChart id="proc-active-bar" data={activeCompletedData} layout="vertical">
+              <BarChart id="proc-active-bar" data={data.activeCompletedData} layout="vertical">
                 <CartesianGrid key="pd-ac-grid" strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis key="pd-ac-xaxis" type="number" tick={{ fontSize: 12 }} stroke="#64748b" />
+                <XAxis key="pd-ac-xaxis" type="number" tick={{ fontSize: 12 }} stroke="#64748b" allowDecimals={false} />
                 <YAxis key="pd-ac-yaxis" dataKey="name" type="category" tick={{ fontSize: 12 }} stroke="#64748b" width={80} />
                 <Tooltip key="pd-ac-tooltip" />
                 <Bar key="pd-ac-bar" dataKey="count" radius={[0, 4, 4, 0]}>
-                  {activeCompletedData.map((entry, index) => (
+                  {data.activeCompletedData.map((entry, index) => (
                     <Cell key={`ac-cell-${index}`} fill={entry.color} />
                   ))}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
             <div className="mt-4 grid grid-cols-3 gap-3">
-              {activeCompletedData.map((item) => (
+              {data.activeCompletedData.map((item) => (
                 <div key={item.name} className="flex items-center gap-2 bg-slate-50 rounded-lg p-2">
                   <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
                   <span className="text-sm font-medium text-slate-700">{item.name}</span>
@@ -366,6 +452,72 @@ export function ProcurementDashboard() {
                 </div>
               ))}
             </div>
+          </div>
+          )}
+        </div>
+
+        {/* Totals by Procurement Type & Contract Portfolio */}
+        <div className="grid grid-cols-2 gap-6 mt-6">
+          {isVisible("procType") && (
+          <div className="bg-white rounded-lg border border-slate-200 p-5">
+            <h3 className="text-sm font-semibold text-slate-900 mb-4 flex items-center gap-2">
+              <Layers className="w-4 h-4 text-slate-700" />
+              Totals by Procurement Type
+            </h3>
+            <div className="space-y-3">
+              {data.typeTotals.map((t) => {
+                const Icon = t.icon;
+                return (
+                  <div key={t.type} className="p-3 bg-slate-50 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="p-1.5 rounded-md" style={{ backgroundColor: `${t.color}1A` }}>
+                          <Icon className="w-4 h-4" style={{ color: t.color }} />
+                        </div>
+                        <span className="text-sm font-medium text-slate-800">{t.type}</span>
+                        <span className="text-xs text-slate-500">{t.count} item{t.count === 1 ? "" : "s"}</span>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-semibold text-slate-900">{formatCurrency(t.value)}</p>
+                        <p className="text-xs text-slate-500">{t.share}% of plan · {formatCurrency(t.executed)} executed</p>
+                      </div>
+                    </div>
+                    <div className="mt-2 h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
+                      <div className="h-full rounded-full" style={{ width: `${t.share}%`, backgroundColor: t.color }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          )}
+
+          {isVisible("contracts") && (
+          <div className="bg-white rounded-lg border border-slate-200 p-5">
+            <h3 className="text-sm font-semibold text-slate-900 mb-4 flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-slate-700" />
+              Contract Portfolio
+            </h3>
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { label: "Total Contracts", value: String(data.contractStats.total), icon: <FileText size={14} />, tone: "neutral" as const },
+                { label: "Active", value: String(data.contractStats.active), icon: <CheckCircle2 size={14} />, tone: "success" as const },
+                { label: "Contracted Value", value: formatCurrency(data.contractStats.totalValue), icon: <DollarSign size={14} />, tone: "info" as const },
+                { label: "Paid to Date", value: formatCurrency(data.contractStats.totalPaid), icon: <DollarSign size={14} />, tone: "success" as const },
+                { label: "Pending Deliverables", value: String(data.contractStats.pendingDeliverables), icon: <Clock size={14} />, tone: "warning" as const },
+                { label: "Unpaid Invoices", value: String(data.contractStats.unpaidInvoices), icon: <Clock size={14} />, tone: "warning" as const },
+                { label: "Pending Variations", value: String(data.contractStats.pendingVariations), icon: <AlertTriangle size={14} />, tone: "danger" as const },
+                { label: "Expiring in 60 Days", value: String(data.contractStats.expiringSoon), icon: <CalendarClock size={14} />, tone: "danger" as const },
+              ].map((stat) => (
+                <ProcurementStatCard key={stat.label} {...stat} />
+              ))}
+            </div>
+            {data.contractStats.overdueDeliverables > 0 && (
+              <div className="mt-3 flex items-center gap-2 text-xs text-red-700 bg-red-50 rounded-lg px-3 py-2">
+                <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                {data.contractStats.overdueDeliverables} deliverable{data.contractStats.overdueDeliverables === 1 ? " is" : "s are"} past their due date
+              </div>
+            )}
           </div>
           )}
         </div>
@@ -378,66 +530,43 @@ export function ProcurementDashboard() {
             Procurement Pipeline
           </h3>
           <div className="grid grid-cols-3 gap-4">
-            {/* Next 30 Days */}
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Next 30 Days</span>
-                <span className="text-xs text-slate-500">{formatCurrency(pipelineNext30.reduce((s, i) => s + i.value, 0))}</span>
-              </div>
-              <div className="space-y-2">
-                {pipelineNext30.map((item) => (
-                  <div key={item.title} className="p-3 bg-slate-50 rounded-lg border border-slate-100">
-                    <p className="text-sm font-medium text-slate-900">{item.title}</p>
-                    <div className="flex items-center justify-between mt-1">
-                      <span className="text-xs text-slate-600">{formatCurrency(item.value)}</span>
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs ${
-                        item.status === "Approved" ? "bg-green-50 text-green-600" :
-                        item.status === "In Review" ? "bg-blue-50 text-blue-600" :
-                        "bg-orange-50 text-orange-600"
-                      }`}>{item.status}</span>
+            {([
+              { label: "Next 30 Days", chip: "bg-green-100 text-green-700", items: data.pipelineNext30 },
+              { label: "Next 60 Days", chip: "bg-blue-100 text-blue-700", items: data.pipelineNext60 },
+              { label: "Next 90 Days", chip: "bg-purple-100 text-purple-700", items: data.pipelineNext90 },
+            ] as const).map((bucket) => (
+              <div key={bucket.label}>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${bucket.chip}`}>
+                    {bucket.label}
+                  </span>
+                  <span className="text-xs text-slate-500">
+                    {formatCurrency(bucket.items.reduce((s, i) => s + i.estimatedValue, 0))}
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  {bucket.items.map((item) => (
+                    <div key={item.id} className="p-3 bg-slate-50 rounded-lg border border-slate-100">
+                      <p className="text-sm font-medium text-slate-900">{item.activityDescription}</p>
+                      <p className="text-xs text-slate-500 mt-0.5">{item.ppItemId} · starts {item.initiationDate}</p>
+                      <div className="flex items-center justify-between mt-1">
+                        <span className="text-xs text-slate-600">{formatCurrency(item.estimatedValue)}</span>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs ${
+                          item.status === "Delayed" ? "bg-red-50 text-red-600" :
+                          item.status === "Not Started" ? "bg-orange-50 text-orange-600" :
+                          "bg-blue-50 text-blue-600"
+                        }`}>{item.status}</span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                  {bucket.items.length === 0 && (
+                    <p className="text-xs text-slate-400 p-3 bg-slate-50 rounded-lg border border-slate-100">
+                      Nothing scheduled to start in this window.
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
-
-            {/* Next 60 Days */}
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">Next 60 Days</span>
-                <span className="text-xs text-slate-500">{formatCurrency(pipelineNext60.reduce((s, i) => s + i.value, 0))}</span>
-              </div>
-              <div className="space-y-2">
-                {pipelineNext60.map((item) => (
-                  <div key={item.title} className="p-3 bg-slate-50 rounded-lg border border-slate-100">
-                    <p className="text-sm font-medium text-slate-900">{item.title}</p>
-                    <div className="flex items-center justify-between mt-1">
-                      <span className="text-xs text-slate-600">{formatCurrency(item.value)}</span>
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-slate-100 text-slate-600">{item.status}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Next 90 Days */}
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700">Next 90 Days</span>
-                <span className="text-xs text-slate-500">{formatCurrency(pipelineNext90.reduce((s, i) => s + i.value, 0))}</span>
-              </div>
-              <div className="space-y-2">
-                {pipelineNext90.map((item) => (
-                  <div key={item.title} className="p-3 bg-slate-50 rounded-lg border border-slate-100">
-                    <p className="text-sm font-medium text-slate-900">{item.title}</p>
-                    <div className="flex items-center justify-between mt-1">
-                      <span className="text-xs text-slate-600">{formatCurrency(item.value)}</span>
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-slate-100 text-slate-600">{item.status}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            ))}
           </div>
         </div>
         )}
@@ -454,24 +583,36 @@ export function ProcurementDashboard() {
               <thead>
                 <tr className="border-b border-slate-200">
                   <th className="text-left py-2 pr-4 text-xs font-medium text-slate-500 uppercase">Item</th>
-                  <th className="text-left py-2 pr-4 text-xs font-medium text-slate-500 uppercase">Days Overdue</th>
+                  <th className="text-left py-2 pr-4 text-xs font-medium text-slate-500 uppercase">Days Stuck</th>
                   <th className="text-left py-2 pr-4 text-xs font-medium text-slate-500 uppercase">Responsible</th>
                   <th className="text-left py-2 text-xs font-medium text-slate-500 uppercase">Stage Stuck At</th>
                 </tr>
               </thead>
               <tbody>
-                {bottlenecks.map((item) => (
-                  <tr key={item.description} className="border-b border-slate-100 last:border-0">
-                    <td className="py-3 pr-4 font-medium text-slate-900">{item.description}</td>
+                {data.bottlenecks.map((row) => (
+                  <tr key={row.item.id} className="border-b border-slate-100 last:border-0">
+                    <td className="py-3 pr-4 font-medium text-slate-900">
+                      {row.item.activityDescription}
+                      <span className="block text-xs font-normal text-slate-500">{row.item.ppItemId}</span>
+                    </td>
                     <td className="py-3 pr-4">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-700">
-                        {item.daysOverdue} days
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                        row.daysStuck > 14 ? "bg-red-50 text-red-700" : "bg-amber-50 text-amber-700"
+                      }`}>
+                        {row.daysStuck} days
                       </span>
                     </td>
-                    <td className="py-3 pr-4 text-slate-600">{item.responsible}</td>
-                    <td className="py-3 text-slate-600">{item.stage}</td>
+                    <td className="py-3 pr-4 text-slate-600">{row.responsible}</td>
+                    <td className="py-3 text-slate-600">{row.stage}</td>
                   </tr>
                 ))}
+                {data.bottlenecks.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="py-8 text-center text-sm text-slate-400">
+                      Nothing is currently stuck — every plan item is approved and on schedule.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

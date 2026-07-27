@@ -2,7 +2,15 @@
 // Contract Management Store
 // Contracts pushed here from Sourcing → Contract Award.
 // ContractRepository.tsx reads from this store alongside its static data.
+//
+// The invoice, deliverable, change-request and close-out workflows all live
+// here rather than in the components, because each one is a multi-party chain
+// (CC → Procurement → Supervisor → Finance) and the guards that stop a stage
+// being skipped have to sit where every caller passes through.
 // ──────────────────────────────────────────────────────────────────────────────
+
+import { notify, scheduleReminder, resolveReminder } from "./notificationStore";
+import { recordVendorEvaluation, recordContractAward } from "./vendorStore";
 
 export interface ContractDocument {
   id: string;
@@ -12,6 +20,8 @@ export interface ContractDocument {
   type: string; // MIME or short label
   size: string; // human-readable e.g. "245 KB"
   version: number;
+  /** Object URL from the file picker, so the document can be opened again. */
+  url?: string;
 }
 
 export interface ContractDocumentGroup {
@@ -46,20 +56,49 @@ export interface ContractMilestone {
 }
 
 // ── NEW: Deliverable tracking ──
+export type DeliverableStatus = "Pending" | "Submitted" | "Under Review" | "Accepted" | "Rejected";
+
 export interface ContractDeliverable {
   id: string;
   milestoneRef: string;
   description: string;
   dueDate: string;
   actualDate?: string;
-  status: "Pending" | "Submitted" | "Under Review" | "Accepted" | "Rejected";
+  status: DeliverableStatus;
   documents: string[];
   comments: string;
   paymentLinked?: string; // invoice id
   amount?: number;
+  /** Who uploaded the evidence — normally the Contract Coordinator. */
+  submittedBy?: string;
+  /** Second-person sign-off: the CC cannot accept their own upload. */
+  reviewedBy?: string;
+  reviewDate?: string;
+  reviewComments?: string;
+  /** Goods received note / inspection form flags for goods and works. */
+  goodsReceived?: boolean;
+  inspectionPassed?: boolean;
 }
 
 // ── NEW: Invoice / Payment tracking ──
+export type InvoiceStatus =
+  | "Submitted"
+  | "CC Reviewed"
+  | "Procurement Approved"
+  | "Supervisor Approved"
+  | "Paid"
+  | "Queried";
+
+/** One step in the invoice's journey, so the approval chain is auditable. */
+export interface InvoiceApprovalEntry {
+  stage: InvoiceStatus | "Queried" | "Resubmitted";
+  action: "Reviewed" | "Approved" | "Queried" | "Paid" | "Submitted" | "Resubmitted";
+  by: string;
+  role: string;
+  date: string;
+  comments: string;
+}
+
 export interface ContractInvoice {
   id: string;
   invoiceNumber: string;
@@ -69,13 +108,21 @@ export interface ContractInvoice {
   datePaid?: string;
   amountPaid?: number;
   deliverableId?: string;
-  status: "Submitted" | "CC Reviewed" | "Procurement Approved" | "Supervisor Approved" | "Paid" | "Queried";
+  status: InvoiceStatus;
   paymentInfo?: string;
   submittedVia: "Vendor Portal" | "Email" | "Manual";
   reviewedBy?: string;
   approvedBy?: string;
   paymentMethod?: "Wire Transfer" | "Cheque" | "Mobile Money";
   referenceNumber?: string;
+  /** Set by the CC when confirming the deliverable meets contract specifications. */
+  deliverableConfirmed?: boolean;
+  procurementApprovedBy?: string;
+  supervisorApprovedBy?: string;
+  paidBy?: string;
+  queryReason?: string;
+  documents?: string[];
+  approvalHistory?: InvoiceApprovalEntry[];
 }
 
 // ── NEW: Change Request ──
@@ -96,6 +143,13 @@ export interface ContractChangeRequest {
   requestedDate: string;
   approvedBy?: string;
   approvedDate?: string;
+  rejectionReason?: string;
+  /** Mirrors the requisition chain: Dept → Procurement → Finance → Senior Mgmt. */
+  approvalTrail?: { role: string; by: string; action: "Approved" | "Rejected"; date: string; comments: string }[];
+  /** Set once the approved change has been written into the contract record. */
+  implementedDate?: string;
+  originalValue?: number;
+  originalEndDate?: string;
 }
 
 // ── NEW: Vendor Performance Evaluation ──
@@ -462,7 +516,7 @@ let _lastAwardedContractNumber: string | null = null;
 export function getLastAwardedContractNumber() { return _lastAwardedContractNumber; }
 export function clearLastAwardedContractNumber() { _lastAwardedContractNumber = null; }
 
-function notify() {
+function notifyStoreListeners() {
   listeners.forEach(l => l());
 }
 
@@ -525,7 +579,7 @@ export function pushContract(opts: {
 
   contracts = [...contracts, newContract];
   _lastAwardedContractNumber = newContract.contractNumber;
-  notify();
+  notifyStoreListeners();
   return newContract;
 }
 
@@ -613,7 +667,7 @@ export function registerContract(data: {
 
   contracts = [...contracts, newContract];
   _lastAwardedContractNumber = newContract.contractNumber;
-  notify();
+  notifyStoreListeners();
   return newContract;
 }
 
@@ -654,7 +708,7 @@ export function addDocumentToContract(contractId: string, doc: { label: string; 
     }
     return { ...c };
   });
-  notify();
+  notifyStoreListeners();
 }
 
 // ── Add amendment to a contract ──
@@ -666,7 +720,7 @@ export function addAmendment(contractId: string, amendment: Omit<ContractAmendme
       amendments: [...c.amendments, { ...amendment, id: `amd-${Date.now()}` }],
     };
   });
-  notify();
+  notifyStoreListeners();
 }
 
 // ── Update contract status ──
@@ -675,7 +729,7 @@ export function updateContractStatus(contractId: string, status: AwardedContract
     if (c.id !== contractId) return c;
     return { ...c, status };
   });
-  notify();
+  notifyStoreListeners();
 }
 
 // ── Find a contract by contractNumber ──
@@ -689,7 +743,7 @@ export function updateContract(contractId: string, updates: Partial<AwardedContr
     if (c.id !== contractId) return c;
     return { ...c, ...updates };
   });
-  notify();
+  notifyStoreListeners();
 }
 
 // ── Add audit log entry ──
@@ -699,7 +753,7 @@ export function addAuditLog(contractId: string, action: string, performedBy: str
     const log: AuditLogEntry = { id: `al-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, date: new Date().toISOString().split("T")[0], action, performedBy, details };
     return { ...c, auditLog: [...(c.auditLog || []), log] };
   });
-  notify();
+  notifyStoreListeners();
 }
 
 // ── Add a deliverable to an existing contract (CC upload) ──
@@ -709,5 +763,1352 @@ export function addDeliverableToContract(contractId: string, deliverable: Omit<C
     const newDel: ContractDeliverable = { ...deliverable, id: `del-${Date.now()}` };
     return { ...c, deliverables: [...(c.deliverables || []), newDel] };
   });
-  notify();
+  notifyDeliverableSubmitted(contractId, deliverable.description, deliverable.submittedBy ?? "Contract Coordinator");
+  notifyStoreListeners();
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// WORKFLOWS
+// ══════════════════════════════════════════════════════════════════════════════
+
+const today = () => new Date().toISOString().split("T")[0];
+
+function coordinatorNames(c: AwardedContract): string[] {
+  return (c.coordinators ?? []).map(cc => cc.name);
+}
+
+function pushAudit(c: AwardedContract, action: string, performedBy: string, details: string): AwardedContract {
+  const log: AuditLogEntry = {
+    id: `al-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    date: today(),
+    action,
+    performedBy,
+    details,
+  };
+  return { ...c, auditLog: [...(c.auditLog ?? []), log] };
+}
+
+// ── Deliverables ────────────────────────────────────────────────────────────
+
+function notifyDeliverableSubmitted(contractId: string, description: string, by: string) {
+  const c = contracts.find(x => x.id === contractId);
+  if (!c) return;
+  notify({
+    category: "Approval",
+    module: "Contract Management",
+    subject: `Deliverable awaiting review — ${c.contractNumber}`,
+    body: `"${description}" was submitted by ${by} on ${c.contractNumber} (${c.title}). A second reviewer must accept or reject it before it can support an invoice.`,
+    recipientRole: "Procurement",
+    entityRef: c.contractNumber,
+  });
+}
+
+/**
+ * Contract Coordinator submits evidence against a milestone. The status is
+ * forced to "Submitted" regardless of what the form offered: the requirement is
+ * that whatever the CC uploads "may be approved by another person before the
+ * system would accept it", so a CC cannot mark their own work Accepted.
+ */
+export function submitDeliverable(
+  contractId: string,
+  deliverable: Omit<ContractDeliverable, "id" | "status" | "reviewedBy" | "reviewDate">,
+  submittedBy: string
+): ContractDeliverable | undefined {
+  let created: ContractDeliverable | undefined;
+  contracts = contracts.map(c => {
+    if (c.id !== contractId) return c;
+
+    // Registration seeds one Pending deliverable per milestone. Evidence
+    // arriving for that milestone advances the existing record rather than
+    // creating a second one alongside it, which would leave the original
+    // Pending for ever and block close-out.
+    const existing = (c.deliverables ?? []).find(
+      d => d.milestoneRef === deliverable.milestoneRef && d.status === "Pending" && d.documents.length === 0
+    );
+
+    created = {
+      ...deliverable,
+      id: existing?.id ?? `del-${Date.now()}`,
+      status: "Submitted",
+      submittedBy,
+      actualDate: deliverable.actualDate || today(),
+      // Keep whatever the plan set up where the upload did not restate it.
+      amount: deliverable.amount ?? existing?.amount,
+      dueDate: deliverable.dueDate || existing?.dueDate || today(),
+    };
+
+    const deliverables = existing
+      ? (c.deliverables ?? []).map(d => (d.id === existing.id ? created! : d))
+      : [...(c.deliverables ?? []), created];
+
+    const next = { ...c, deliverables };
+    return pushAudit(next, "Deliverable Submitted", submittedBy, `${deliverable.description} submitted with ${deliverable.documents.length} document(s)`);
+  });
+
+  if (created) {
+    resolveReminder(`${contractId}:${created.milestoneRef}`, "Deliverable");
+    notifyDeliverableSubmitted(contractId, created.description, submittedBy);
+    notifyStoreListeners();
+  }
+  return created;
+}
+
+/** Updates an existing deliverable's evidence without changing its review state. */
+export function updateDeliverable(
+  contractId: string,
+  deliverableId: string,
+  updates: Partial<Omit<ContractDeliverable, "id">>,
+  updatedBy: string
+) {
+  contracts = contracts.map(c => {
+    if (c.id !== contractId) return c;
+    const next = {
+      ...c,
+      deliverables: (c.deliverables ?? []).map(d => (d.id === deliverableId ? { ...d, ...updates } : d)),
+    };
+    return pushAudit(next, "Deliverable Updated", updatedBy, `Deliverable ${deliverableId} updated: ${Object.keys(updates).join(", ")}`);
+  });
+  notifyStoreListeners();
+}
+
+/**
+ * Second-person review. `reviewer` must differ from the submitter — that
+ * separation is the whole point of the control.
+ */
+export function reviewDeliverable(
+  contractId: string,
+  deliverableId: string,
+  decision: "Under Review" | "Accepted" | "Rejected",
+  reviewer: string,
+  comments: string
+): { ok: boolean; error?: string } {
+  const contract = contracts.find(c => c.id === contractId);
+  const deliverable = contract?.deliverables?.find(d => d.id === deliverableId);
+  if (!contract || !deliverable) return { ok: false, error: "Deliverable not found." };
+
+  if (decision !== "Under Review" && deliverable.submittedBy && deliverable.submittedBy === reviewer) {
+    return {
+      ok: false,
+      error: `${reviewer} submitted this deliverable and cannot also approve it. A second reviewer is required.`,
+    };
+  }
+  if (decision === "Rejected" && !comments.trim()) {
+    return { ok: false, error: "A reason is required when rejecting a deliverable." };
+  }
+
+  contracts = contracts.map(c => {
+    if (c.id !== contractId) return c;
+    const next = {
+      ...c,
+      deliverables: (c.deliverables ?? []).map(d =>
+        d.id === deliverableId
+          ? { ...d, status: decision, reviewedBy: reviewer, reviewDate: today(), reviewComments: comments }
+          : d
+      ),
+      // Accepting the final evidence for a milestone marks that milestone done.
+      milestones: c.milestones.map(m =>
+        decision === "Accepted" && m.id === deliverable.milestoneRef ? { ...m, completed: true } : m
+      ),
+    };
+    return pushAudit(next, `Deliverable ${decision}`, reviewer, `${deliverable.description}: ${comments || decision}`);
+  });
+
+  notify({
+    category: decision === "Rejected" ? "Alert" : "Info",
+    module: "Contract Management",
+    subject: `Deliverable ${decision.toLowerCase()} — ${contract.contractNumber}`,
+    body: `"${deliverable.description}" was ${decision.toLowerCase()} by ${reviewer}.${comments ? `\n\n${comments}` : ""}`,
+    recipientName: deliverable.submittedBy,
+    recipientRole: "Contract Coordinator",
+    entityRef: contract.contractNumber,
+    priority: decision === "Rejected" ? "High" : "Normal",
+  });
+
+  notifyStoreListeners();
+  return { ok: true };
+}
+
+// ── Invoices ────────────────────────────────────────────────────────────────
+
+function appendInvoiceHistory(inv: ContractInvoice, entry: InvoiceApprovalEntry): ContractInvoice {
+  return { ...inv, approvalHistory: [...(inv.approvalHistory ?? []), entry] };
+}
+
+function mapInvoice(
+  contractId: string,
+  invoiceId: string,
+  fn: (inv: ContractInvoice, c: AwardedContract) => ContractInvoice,
+  audit?: { action: string; by: string; details: string }
+) {
+  contracts = contracts.map(c => {
+    if (c.id !== contractId) return c;
+    const next = {
+      ...c,
+      invoices: (c.invoices ?? []).map(i => (i.id === invoiceId ? fn(i, c) : i)),
+    };
+    return audit ? pushAudit(next, audit.action, audit.by, audit.details) : next;
+  });
+  notifyStoreListeners();
+}
+
+export function getInvoice(contractId: string, invoiceId: string): ContractInvoice | undefined {
+  return contracts.find(c => c.id === contractId)?.invoices?.find(i => i.id === invoiceId);
+}
+
+/**
+ * Records a vendor invoice against the contract.
+ *
+ * A deliverable link is mandatory: "Before payment, the Contract Coordinator
+ * must upload related deliverables, link each invoice to the corresponding
+ * deliverable". Enforcing it here rather than in the form means an invoice
+ * arriving from the vendor portal is held to the same rule.
+ */
+export function addInvoice(
+  contractId: string,
+  invoice: Omit<ContractInvoice, "id" | "status" | "approvalHistory">,
+  submittedBy: string
+): { ok: boolean; error?: string; invoice?: ContractInvoice } {
+  const contract = contracts.find(c => c.id === contractId);
+  if (!contract) return { ok: false, error: "Contract not found." };
+
+  if (!invoice.invoiceNumber?.trim()) return { ok: false, error: "An invoice number is required." };
+  if (!invoice.amount || invoice.amount <= 0) return { ok: false, error: "Invoice amount must be greater than zero." };
+
+  const duplicate = (contract.invoices ?? []).some(
+    i => i.invoiceNumber.trim().toLowerCase() === invoice.invoiceNumber.trim().toLowerCase()
+  );
+  if (duplicate) {
+    return { ok: false, error: `Invoice ${invoice.invoiceNumber} has already been recorded against this contract.` };
+  }
+
+  // Guard against paying out more than the contract (or its revised ceiling) allows.
+  const ceiling = contract.maxAmount ?? contract.value;
+  const committed = (contract.invoices ?? [])
+    .filter(i => i.status !== "Queried")
+    .reduce((sum, i) => sum + i.amount, 0);
+  if (committed + invoice.amount > ceiling) {
+    return {
+      ok: false,
+      error: `This invoice would bring total invoiced value to $${(committed + invoice.amount).toLocaleString()}, above the contract ceiling of $${ceiling.toLocaleString()}. Raise a cost variation first.`,
+    };
+  }
+
+  const created: ContractInvoice = {
+    ...invoice,
+    id: `inv-${Date.now()}`,
+    status: "Submitted",
+    approvalHistory: [
+      {
+        stage: "Submitted",
+        action: "Submitted",
+        by: submittedBy,
+        role: invoice.submittedVia === "Vendor Portal" ? "Vendor" : "Contract Coordinator",
+        date: today(),
+        comments: `Invoice received via ${invoice.submittedVia}`,
+      },
+    ],
+  };
+
+  contracts = contracts.map(c => {
+    if (c.id !== contractId) return c;
+    const next = { ...c, invoices: [...(c.invoices ?? []), created] };
+    return pushAudit(next, "Invoice Submitted", submittedBy, `${created.invoiceNumber} for $${created.amount.toLocaleString()} submitted via ${created.submittedVia}`);
+  });
+
+  notify({
+    category: "Approval",
+    module: "Invoices & Payments",
+    subject: `Invoice ${created.invoiceNumber} awaiting deliverable matching`,
+    body: `${created.vendor} submitted ${created.invoiceNumber} for $${created.amount.toLocaleString()} against ${contract.contractNumber}. The Contract Coordinator must match it to a deliverable and confirm the deliverable meets contract specifications before it can progress.`,
+    recipientRole: "Contract Coordinator",
+    entityRef: created.invoiceNumber,
+  });
+
+  scheduleReminder({
+    entityRef: created.invoiceNumber,
+    entityType: "Invoice",
+    module: "Invoices & Payments",
+    subject: `Invoice ${created.invoiceNumber} awaiting Contract Coordinator review`,
+    body: `${created.vendor}'s invoice for $${created.amount.toLocaleString()} on ${contract.contractNumber} has not yet been matched to a deliverable.`,
+    recipientRole: "Contract Coordinator",
+    dueDate: today(),
+    reminderAfterHours: 48,
+    escalateAfterHours: 72,
+    escalateToRole: "Procurement",
+  });
+
+  notifyStoreListeners();
+  return { ok: true, invoice: created };
+}
+
+/**
+ * Stage 1 — Contract Coordinator matches the invoice to a deliverable and
+ * confirms the deliverable meets specification.
+ */
+export function ccReviewInvoice(
+  contractId: string,
+  invoiceId: string,
+  opts: { deliverableId: string; specificationsConfirmed: boolean; reviewedBy: string; comments?: string }
+): { ok: boolean; error?: string } {
+  const contract = contracts.find(c => c.id === contractId);
+  const invoice = contract?.invoices?.find(i => i.id === invoiceId);
+  if (!contract || !invoice) return { ok: false, error: "Invoice not found." };
+  if (invoice.status !== "Submitted" && invoice.status !== "Queried") {
+    return { ok: false, error: `Invoice is already at "${invoice.status}" and cannot be reviewed again at this stage.` };
+  }
+  if (!opts.deliverableId) {
+    return { ok: false, error: "Link the invoice to a deliverable before submitting the review." };
+  }
+
+  const deliverable = contract.deliverables?.find(d => d.id === opts.deliverableId);
+  if (!deliverable) return { ok: false, error: "The selected deliverable no longer exists." };
+  if (deliverable.status !== "Accepted") {
+    return {
+      ok: false,
+      error: `Deliverable "${deliverable.description}" is ${deliverable.status}. Only an Accepted deliverable can support an invoice.`,
+    };
+  }
+  if (!opts.specificationsConfirmed) {
+    return { ok: false, error: "You must confirm the deliverable meets contract specifications." };
+  }
+
+  mapInvoice(
+    contractId,
+    invoiceId,
+    inv =>
+      appendInvoiceHistory(
+        {
+          ...inv,
+          status: "CC Reviewed",
+          deliverableId: opts.deliverableId,
+          deliverableConfirmed: true,
+          reviewedBy: opts.reviewedBy,
+        },
+        {
+          stage: "CC Reviewed",
+          action: "Reviewed",
+          by: opts.reviewedBy,
+          role: "Contract Coordinator",
+          date: today(),
+          comments: opts.comments || `Matched to "${deliverable.description}"; specifications confirmed.`,
+        }
+      ),
+    {
+      action: "Invoice Reviewed by Coordinator",
+      by: opts.reviewedBy,
+      details: `${invoice.invoiceNumber} matched to deliverable "${deliverable.description}"`,
+    }
+  );
+
+  // Link back so the deliverable shows which invoice it paid.
+  updateDeliverable(contractId, opts.deliverableId, { paymentLinked: invoiceId }, opts.reviewedBy);
+
+  resolveReminder(invoice.invoiceNumber, "Invoice");
+  notify({
+    category: "Approval",
+    module: "Invoices & Payments",
+    subject: `Invoice ${invoice.invoiceNumber} ready for Procurement review`,
+    body: `${opts.reviewedBy} matched ${invoice.invoiceNumber} ($${invoice.amount.toLocaleString()}) to "${deliverable.description}" and confirmed it meets specification. Procurement must now validate compliance with the contract.`,
+    recipientRole: "Procurement",
+    entityRef: invoice.invoiceNumber,
+  });
+  scheduleReminder({
+    entityRef: invoice.invoiceNumber,
+    entityType: "Invoice",
+    module: "Invoices & Payments",
+    subject: `Invoice ${invoice.invoiceNumber} awaiting Procurement review`,
+    body: `${invoice.vendor}'s invoice on ${contract.contractNumber} has been matched and is awaiting Procurement validation.`,
+    recipientRole: "Procurement",
+    dueDate: today(),
+    reminderAfterHours: 48,
+    escalateAfterHours: 72,
+    escalateToRole: "Senior Management",
+  });
+
+  return { ok: true };
+}
+
+/** Stage 2 — Procurement validates compliance with the contract. */
+export function procurementApproveInvoice(
+  contractId: string,
+  invoiceId: string,
+  approvedBy: string,
+  comments = ""
+): { ok: boolean; error?: string } {
+  const contract = contracts.find(c => c.id === contractId);
+  const invoice = contract?.invoices?.find(i => i.id === invoiceId);
+  if (!contract || !invoice) return { ok: false, error: "Invoice not found." };
+  if (invoice.status !== "CC Reviewed") {
+    return {
+      ok: false,
+      error: `Invoice must be reviewed and matched by the Contract Coordinator first (currently "${invoice.status}").`,
+    };
+  }
+
+  mapInvoice(
+    contractId,
+    invoiceId,
+    inv =>
+      appendInvoiceHistory(
+        { ...inv, status: "Procurement Approved", procurementApprovedBy: approvedBy },
+        {
+          stage: "Procurement Approved",
+          action: "Approved",
+          by: approvedBy,
+          role: "Procurement",
+          date: today(),
+          comments: comments || "Compliance with contract terms verified.",
+        }
+      ),
+    { action: "Invoice Approved by Procurement", by: approvedBy, details: `${invoice.invoiceNumber} cleared procurement review` }
+  );
+
+  resolveReminder(invoice.invoiceNumber, "Invoice");
+  const supervisors = coordinatorNames(contract);
+  notify({
+    category: "Approval",
+    module: "Invoices & Payments",
+    subject: `Invoice ${invoice.invoiceNumber} awaiting supervisor approval`,
+    body: `Procurement cleared ${invoice.invoiceNumber} ($${invoice.amount.toLocaleString()}) on ${contract.contractNumber}. The coordinator's supervisor must give final approval before Finance can pay.${
+      supervisors.length ? `\n\nContract coordinators: ${supervisors.join(", ")}.` : ""
+    }`,
+    recipientRole: "Supervisor",
+    entityRef: invoice.invoiceNumber,
+  });
+  scheduleReminder({
+    entityRef: invoice.invoiceNumber,
+    entityType: "Invoice",
+    module: "Invoices & Payments",
+    subject: `Invoice ${invoice.invoiceNumber} awaiting supervisor approval`,
+    body: `Procurement-approved invoice on ${contract.contractNumber} is awaiting final supervisor sign-off.`,
+    recipientRole: "Supervisor",
+    dueDate: today(),
+    reminderAfterHours: 48,
+    escalateAfterHours: 72,
+    escalateToRole: "Senior Management",
+  });
+
+  return { ok: true };
+}
+
+/** Stage 3 — the coordinator's supervisor gives final approval. */
+export function supervisorApproveInvoice(
+  contractId: string,
+  invoiceId: string,
+  approvedBy: string,
+  comments = ""
+): { ok: boolean; error?: string } {
+  const contract = contracts.find(c => c.id === contractId);
+  const invoice = contract?.invoices?.find(i => i.id === invoiceId);
+  if (!contract || !invoice) return { ok: false, error: "Invoice not found." };
+  if (invoice.status !== "Procurement Approved") {
+    return {
+      ok: false,
+      error: `Procurement must approve the invoice before supervisor sign-off (currently "${invoice.status}").`,
+    };
+  }
+  if (invoice.reviewedBy === approvedBy) {
+    return {
+      ok: false,
+      error: `${approvedBy} performed the coordinator review and cannot also give supervisor approval.`,
+    };
+  }
+
+  mapInvoice(
+    contractId,
+    invoiceId,
+    inv =>
+      appendInvoiceHistory(
+        { ...inv, status: "Supervisor Approved", supervisorApprovedBy: approvedBy, approvedBy },
+        {
+          stage: "Supervisor Approved",
+          action: "Approved",
+          by: approvedBy,
+          role: "Supervisor",
+          date: today(),
+          comments: comments || "Final approval granted.",
+        }
+      ),
+    { action: "Invoice Approved by Supervisor", by: approvedBy, details: `${invoice.invoiceNumber} approved for payment` }
+  );
+
+  resolveReminder(invoice.invoiceNumber, "Invoice");
+  notify({
+    category: "Approval",
+    module: "Invoices & Payments",
+    subject: `Invoice ${invoice.invoiceNumber} cleared for payment`,
+    body: `${invoice.vendor}'s invoice for $${invoice.amount.toLocaleString()} on ${contract.contractNumber} has completed all approvals. Finance may now process payment.`,
+    recipientRole: "Finance",
+    entityRef: invoice.invoiceNumber,
+    priority: "High",
+  });
+  scheduleReminder({
+    entityRef: invoice.invoiceNumber,
+    entityType: "Invoice",
+    module: "Invoices & Payments",
+    subject: `Invoice ${invoice.invoiceNumber} awaiting payment`,
+    body: `Fully approved invoice on ${contract.contractNumber} is awaiting Finance payment processing.`,
+    recipientRole: "Finance",
+    dueDate: today(),
+    reminderAfterHours: 72,
+    escalateAfterHours: 120,
+    escalateToRole: "Senior Management",
+  });
+
+  return { ok: true };
+}
+
+/** Any reviewer can query an invoice back to the vendor with a documented reason. */
+export function queryInvoice(
+  contractId: string,
+  invoiceId: string,
+  reason: string,
+  queriedBy: string,
+  role: string
+): { ok: boolean; error?: string } {
+  if (!reason.trim()) return { ok: false, error: "A reason is required when querying an invoice." };
+  const contract = contracts.find(c => c.id === contractId);
+  const invoice = contract?.invoices?.find(i => i.id === invoiceId);
+  if (!contract || !invoice) return { ok: false, error: "Invoice not found." };
+  if (invoice.status === "Paid") return { ok: false, error: "A paid invoice cannot be queried." };
+
+  mapInvoice(
+    contractId,
+    invoiceId,
+    inv =>
+      appendInvoiceHistory(
+        { ...inv, status: "Queried", queryReason: reason },
+        { stage: "Queried", action: "Queried", by: queriedBy, role, date: today(), comments: reason }
+      ),
+    { action: "Invoice Queried", by: queriedBy, details: `${invoice.invoiceNumber} queried: ${reason}` }
+  );
+
+  resolveReminder(invoice.invoiceNumber, "Invoice");
+  notify({
+    category: "Alert",
+    module: "Invoices & Payments",
+    subject: `Invoice ${invoice.invoiceNumber} queried`,
+    body: `${queriedBy} (${role}) queried ${invoice.invoiceNumber} on ${contract.contractNumber}.\n\nReason: ${reason}\n\nThe invoice must be corrected and resubmitted.`,
+    recipientRole: "Contract Coordinator",
+    entityRef: invoice.invoiceNumber,
+    priority: "High",
+  });
+
+  return { ok: true };
+}
+
+/** Returns a queried invoice to the start of the chain after correction. */
+export function resubmitInvoice(
+  contractId: string,
+  invoiceId: string,
+  resubmittedBy: string,
+  comments = ""
+): { ok: boolean; error?: string } {
+  const invoice = getInvoice(contractId, invoiceId);
+  if (!invoice) return { ok: false, error: "Invoice not found." };
+  if (invoice.status !== "Queried") return { ok: false, error: "Only a queried invoice can be resubmitted." };
+
+  mapInvoice(
+    contractId,
+    invoiceId,
+    inv =>
+      appendInvoiceHistory(
+        { ...inv, status: "Submitted", queryReason: undefined, deliverableConfirmed: false },
+        {
+          stage: "Resubmitted",
+          action: "Resubmitted",
+          by: resubmittedBy,
+          role: "Contract Coordinator",
+          date: today(),
+          comments: comments || "Query addressed and invoice resubmitted.",
+        }
+      ),
+    { action: "Invoice Resubmitted", by: resubmittedBy, details: `${invoice.invoiceNumber} resubmitted after query` }
+  );
+
+  notify({
+    category: "Approval",
+    module: "Invoices & Payments",
+    subject: `Invoice ${invoice.invoiceNumber} resubmitted`,
+    body: `${resubmittedBy} addressed the query on ${invoice.invoiceNumber} and resubmitted it for coordinator review.`,
+    recipientRole: "Contract Coordinator",
+    entityRef: invoice.invoiceNumber,
+  });
+
+  return { ok: true };
+}
+
+/** Stage 4 — Finance pays and the contract balance moves. */
+export function recordInvoicePayment(
+  contractId: string,
+  invoiceId: string,
+  payment: {
+    datePaid: string;
+    amountPaid: number;
+    paymentMethod: "Wire Transfer" | "Cheque" | "Mobile Money";
+    referenceNumber: string;
+    paidBy: string;
+  }
+): { ok: boolean; error?: string } {
+  const contract = contracts.find(c => c.id === contractId);
+  const invoice = contract?.invoices?.find(i => i.id === invoiceId);
+  if (!contract || !invoice) return { ok: false, error: "Invoice not found." };
+  if (invoice.status !== "Supervisor Approved") {
+    return {
+      ok: false,
+      error: `Payment requires full approval. Invoice is currently "${invoice.status}" — it must reach "Supervisor Approved" first.`,
+    };
+  }
+  if (!payment.referenceNumber.trim()) return { ok: false, error: "A payment reference number is required." };
+  if (!payment.amountPaid || payment.amountPaid <= 0) return { ok: false, error: "Amount paid must be greater than zero." };
+
+  mapInvoice(
+    contractId,
+    invoiceId,
+    inv =>
+      appendInvoiceHistory(
+        {
+          ...inv,
+          status: "Paid",
+          datePaid: payment.datePaid,
+          amountPaid: payment.amountPaid,
+          paymentMethod: payment.paymentMethod,
+          referenceNumber: payment.referenceNumber,
+          paidBy: payment.paidBy,
+          paymentInfo: `${payment.paymentMethod} ref ${payment.referenceNumber} on ${payment.datePaid}`,
+        },
+        {
+          stage: "Paid",
+          action: "Paid",
+          by: payment.paidBy,
+          role: "Finance",
+          date: payment.datePaid,
+          comments: `${payment.paymentMethod} — reference ${payment.referenceNumber}`,
+        }
+      ),
+    {
+      action: "Payment Processed",
+      by: payment.paidBy,
+      details: `${invoice.invoiceNumber} paid $${payment.amountPaid.toLocaleString()} via ${payment.paymentMethod} (ref ${payment.referenceNumber})`,
+    }
+  );
+
+  resolveReminder(invoice.invoiceNumber, "Invoice");
+  notify({
+    category: "Info",
+    module: "Invoices & Payments",
+    subject: `Payment processed — ${invoice.invoiceNumber}`,
+    body: `$${payment.amountPaid.toLocaleString()} paid to ${invoice.vendor} on ${payment.datePaid} via ${payment.paymentMethod} (ref ${payment.referenceNumber}).`,
+    recipientRole: "Contract Coordinator",
+    entityRef: invoice.invoiceNumber,
+  });
+
+  return { ok: true };
+}
+
+/** Total paid and remaining balance, honouring any approved cost variation. */
+export function getContractFinancials(c: AwardedContract) {
+  const invoices = c.invoices ?? [];
+  const totalPaid = invoices.filter(i => i.status === "Paid").reduce((s, i) => s + (i.amountPaid ?? i.amount), 0);
+  const pending = invoices
+    .filter(i => i.status !== "Paid" && i.status !== "Queried")
+    .reduce((s, i) => s + i.amount, 0);
+  const ceiling = c.maxAmount ?? c.value;
+  return { totalPaid, pending, balance: ceiling - totalPaid, ceiling };
+}
+
+// ── Change requests ─────────────────────────────────────────────────────────
+
+/** The chain an amendment walks, mirroring a fresh procurement request. */
+export const CHANGE_APPROVAL_CHAIN = ["Department Head", "Procurement", "Finance", "Senior Management"] as const;
+
+export function submitChangeRequest(
+  contractId: string,
+  cr: Omit<ContractChangeRequest, "id" | "changeNumber" | "status" | "approvalTrail" | "revisedValue" | "revisedEndDate">
+): { ok: boolean; error?: string; changeRequest?: ContractChangeRequest } {
+  const contract = contracts.find(c => c.id === contractId);
+  if (!contract) return { ok: false, error: "Contract not found." };
+  if (!cr.reason.trim()) return { ok: false, error: "A reason for the change is required." };
+  if (!cr.description.trim()) return { ok: false, error: "A detailed description of the change is required." };
+  if (!cr.types.length) return { ok: false, error: "Select at least one change type." };
+  if (!cr.supportingDocs.length) {
+    return { ok: false, error: "At least one supporting document is required (vendor proposal, justification memo, or an approved change document)." };
+  }
+
+  const existing = contract.changeRequests ?? [];
+  const revisedValue = contract.value + (cr.estimatedCostImpact || 0);
+  const revisedEndDate = computeRevisedEndDate(contract.endDate, cr.estimatedTimeImpact);
+
+  const created: ContractChangeRequest = {
+    ...cr,
+    id: `cr-${Date.now()}`,
+    changeNumber: existing.length + 1,
+    status: "Pending Approval",
+    revisedValue,
+    revisedEndDate,
+    originalValue: contract.value,
+    originalEndDate: contract.endDate,
+    approvalTrail: [],
+  };
+
+  contracts = contracts.map(c => {
+    if (c.id !== contractId) return c;
+    const next = { ...c, changeRequests: [...existing, created], status: "Under Variation" as const };
+    return pushAudit(next, "Change Request Submitted", cr.requestedBy, `Amendment #${created.changeNumber}: ${cr.types.join(", ")} — ${cr.reason}`);
+  });
+
+  notify({
+    category: "Approval",
+    module: "Contract Management",
+    subject: `Amendment #${created.changeNumber} raised on ${contract.contractNumber}`,
+    body: `${cr.requestedBy} raised a change request on ${contract.contractNumber} (${contract.title}).\n\nTypes: ${cr.types.join(", ")}\nReason: ${cr.reason}\nCost impact: $${(cr.estimatedCostImpact || 0).toLocaleString()} (revised value $${revisedValue.toLocaleString()})\nTime impact: ${cr.estimatedTimeImpact || "none"}\n\nIt follows the standard procurement approval chain: ${CHANGE_APPROVAL_CHAIN.join(" → ")}.`,
+    recipientRole: "Department Head",
+    entityRef: contract.contractNumber,
+    priority: "High",
+  });
+  scheduleReminder({
+    entityRef: `${contract.contractNumber}-CR${created.changeNumber}`,
+    entityType: "Change Request",
+    module: "Contract Management",
+    subject: `Amendment #${created.changeNumber} on ${contract.contractNumber} awaiting approval`,
+    body: `Change request raised by ${cr.requestedBy} is awaiting the next approval in the chain.`,
+    recipientRole: "Department Head",
+    dueDate: today(),
+    reminderAfterHours: 48,
+    escalateAfterHours: 72,
+    escalateToRole: "Senior Management",
+  });
+
+  notifyStoreListeners();
+  return { ok: true, changeRequest: created };
+}
+
+/** Parses "3 months" / "2 weeks" / "14 days" into a revised completion date. */
+export function computeRevisedEndDate(endDate: string, timeImpact: string): string | undefined {
+  if (!timeImpact?.trim()) return undefined;
+  const match = timeImpact.match(/(-?\d+(?:\.\d+)?)\s*(day|week|month|year)/i);
+  if (!match) return undefined;
+  const qty = parseFloat(match[1]);
+  const unit = match[2].toLowerCase();
+  const d = new Date(endDate);
+  if (Number.isNaN(d.getTime())) return undefined;
+  if (unit === "day") d.setDate(d.getDate() + qty);
+  else if (unit === "week") d.setDate(d.getDate() + qty * 7);
+  else if (unit === "month") d.setMonth(d.getMonth() + qty);
+  else if (unit === "year") d.setFullYear(d.getFullYear() + qty);
+  return d.toISOString().split("T")[0];
+}
+
+/**
+ * Records one approval in the chain. The change is only written into the
+ * contract once every station has signed — see `implementChangeRequest`.
+ */
+export function approveChangeRequestStep(
+  contractId: string,
+  crId: string,
+  role: (typeof CHANGE_APPROVAL_CHAIN)[number],
+  approvedBy: string,
+  comments = ""
+): { ok: boolean; error?: string; fullyApproved?: boolean } {
+  const contract = contracts.find(c => c.id === contractId);
+  const cr = contract?.changeRequests?.find(x => x.id === crId);
+  if (!contract || !cr) return { ok: false, error: "Change request not found." };
+  if (cr.status !== "Pending Approval") {
+    return { ok: false, error: `Change request is "${cr.status}" and is no longer awaiting approval.` };
+  }
+
+  const trail = cr.approvalTrail ?? [];
+  const expectedIndex = trail.filter(t => t.action === "Approved").length;
+  const expectedRole = CHANGE_APPROVAL_CHAIN[expectedIndex];
+  if (role !== expectedRole) {
+    return { ok: false, error: `${expectedRole} must approve next in the chain, not ${role}.` };
+  }
+  if (trail.some(t => t.by === approvedBy && t.action === "Approved")) {
+    return { ok: false, error: `${approvedBy} has already approved this amendment.` };
+  }
+
+  const newTrail = [...trail, { role, by: approvedBy, action: "Approved" as const, date: today(), comments }];
+  const fullyApproved = newTrail.filter(t => t.action === "Approved").length === CHANGE_APPROVAL_CHAIN.length;
+
+  contracts = contracts.map(c => {
+    if (c.id !== contractId) return c;
+    const next = {
+      ...c,
+      changeRequests: (c.changeRequests ?? []).map(x =>
+        x.id === crId
+          ? {
+              ...x,
+              approvalTrail: newTrail,
+              status: fullyApproved ? ("Approved" as const) : x.status,
+              approvedBy: fullyApproved ? approvedBy : x.approvedBy,
+              approvedDate: fullyApproved ? today() : x.approvedDate,
+            }
+          : x
+      ),
+    };
+    return pushAudit(next, `Change Request ${role} Approval`, approvedBy, `Amendment #${cr.changeNumber} approved by ${role}${comments ? `: ${comments}` : ""}`);
+  });
+
+  if (fullyApproved) {
+    resolveReminder(`${contract.contractNumber}-CR${cr.changeNumber}`, "Change Request");
+    notify({
+      category: "Info",
+      module: "Contract Management",
+      subject: `Amendment #${cr.changeNumber} approved — ${contract.contractNumber}`,
+      body: `The change request has cleared all approvals. Applying it will revise the contract value to $${(cr.revisedValue ?? contract.value).toLocaleString()}${cr.revisedEndDate ? ` and the completion date to ${cr.revisedEndDate}` : ""}.`,
+      recipientRole: "Procurement",
+      entityRef: contract.contractNumber,
+      priority: "High",
+    });
+    // Apply immediately: the approved amendment is the contract from here on.
+    implementChangeRequest(contractId, crId, approvedBy);
+  } else {
+    const nextRole = CHANGE_APPROVAL_CHAIN[expectedIndex + 1];
+    notify({
+      category: "Approval",
+      module: "Contract Management",
+      subject: `Amendment #${cr.changeNumber} awaiting ${nextRole} approval`,
+      body: `${role} approved the amendment on ${contract.contractNumber}. It now requires ${nextRole} approval.`,
+      recipientRole: nextRole,
+      entityRef: contract.contractNumber,
+    });
+    scheduleReminder({
+      entityRef: `${contract.contractNumber}-CR${cr.changeNumber}`,
+      entityType: "Change Request",
+      module: "Contract Management",
+      subject: `Amendment #${cr.changeNumber} on ${contract.contractNumber} awaiting ${nextRole}`,
+      body: `Change request is awaiting ${nextRole} approval.`,
+      recipientRole: nextRole,
+      dueDate: today(),
+      reminderAfterHours: 48,
+      escalateAfterHours: 72,
+      escalateToRole: "Senior Management",
+    });
+  }
+
+  notifyStoreListeners();
+  return { ok: true, fullyApproved };
+}
+
+export function rejectChangeRequest(
+  contractId: string,
+  crId: string,
+  role: string,
+  rejectedBy: string,
+  reason: string
+): { ok: boolean; error?: string } {
+  if (!reason.trim()) return { ok: false, error: "A reason is required when rejecting a change request." };
+  const contract = contracts.find(c => c.id === contractId);
+  const cr = contract?.changeRequests?.find(x => x.id === crId);
+  if (!contract || !cr) return { ok: false, error: "Change request not found." };
+
+  contracts = contracts.map(c => {
+    if (c.id !== contractId) return c;
+    const remaining = (c.changeRequests ?? []).filter(x => x.id !== crId && x.status === "Pending Approval");
+    const next = {
+      ...c,
+      changeRequests: (c.changeRequests ?? []).map(x =>
+        x.id === crId
+          ? {
+              ...x,
+              status: "Rejected" as const,
+              rejectionReason: reason,
+              approvalTrail: [...(x.approvalTrail ?? []), { role, by: rejectedBy, action: "Rejected" as const, date: today(), comments: reason }],
+            }
+          : x
+      ),
+      // Only drop out of "Under Variation" when nothing else is pending.
+      status: remaining.length === 0 && c.status === "Under Variation" ? ("Active" as const) : c.status,
+    };
+    return pushAudit(next, "Change Request Rejected", rejectedBy, `Amendment #${cr.changeNumber} rejected by ${role}: ${reason}`);
+  });
+
+  resolveReminder(`${contract.contractNumber}-CR${cr.changeNumber}`, "Change Request");
+  notify({
+    category: "Alert",
+    module: "Contract Management",
+    subject: `Amendment #${cr.changeNumber} rejected — ${contract.contractNumber}`,
+    body: `${rejectedBy} (${role}) rejected the change request.\n\nReason: ${reason}`,
+    recipientName: cr.requestedBy,
+    recipientRole: "Contract Coordinator",
+    entityRef: contract.contractNumber,
+    priority: "High",
+  });
+
+  notifyStoreListeners();
+  return { ok: true };
+}
+
+/**
+ * Writes an approved amendment into the contract: revised value, revised
+ * completion date, extended deliverable schedule, and an entry in the formal
+ * amendment register.
+ */
+export function implementChangeRequest(contractId: string, crId: string, by: string): { ok: boolean; error?: string } {
+  const contract = contracts.find(c => c.id === contractId);
+  const cr = contract?.changeRequests?.find(x => x.id === crId);
+  if (!contract || !cr) return { ok: false, error: "Change request not found." };
+  if (cr.status !== "Approved") return { ok: false, error: "Only an approved change request can be implemented." };
+
+  const newValue = cr.revisedValue ?? contract.value;
+  const newEnd = cr.revisedEndDate ?? contract.endDate;
+
+  contracts = contracts.map(c => {
+    if (c.id !== contractId) return c;
+    const stillPending = (c.changeRequests ?? []).some(x => x.id !== crId && x.status === "Pending Approval");
+
+    const amendment: ContractAmendment = {
+      id: `amd-${Date.now()}`,
+      amendmentNumber: String(cr.changeNumber),
+      date: today(),
+      description: cr.description,
+      type: cr.types.includes("Time Extension")
+        ? "Extension"
+        : cr.types.includes("Cost Variation")
+          ? "Value Change"
+          : cr.types.includes("Scope Change")
+            ? "Scope Change"
+            : "Renewal",
+      oldValue: `$${c.value.toLocaleString()} / ends ${c.endDate}`,
+      newValue: `$${newValue.toLocaleString()} / ends ${newEnd}`,
+      approvedBy: cr.approvedBy ?? by,
+      status: "Approved",
+      reason: cr.reason,
+      supportingDocs: cr.supportingDocs,
+      impactCost: cr.estimatedCostImpact,
+      impactTime: cr.estimatedTimeImpact,
+      requestedBy: cr.requestedBy,
+    };
+
+    const next: AwardedContract = {
+      ...c,
+      value: newValue,
+      // A time-based contract's ceiling moves with an approved cost variation.
+      maxAmount: c.maxAmount !== undefined ? c.maxAmount + (cr.estimatedCostImpact || 0) : c.maxAmount,
+      endDate: newEnd,
+      status: stillPending ? "Under Variation" : "Active",
+      amendments: [...c.amendments, amendment],
+      changeRequests: (c.changeRequests ?? []).map(x =>
+        x.id === crId ? { ...x, status: "Implemented" as const, implementedDate: today() } : x
+      ),
+    };
+    return pushAudit(next, "Change Request Implemented", by, `Amendment #${cr.changeNumber} applied: value $${c.value.toLocaleString()} → $${newValue.toLocaleString()}, end date ${c.endDate} → ${newEnd}`);
+  });
+
+  notify({
+    category: "Info",
+    module: "Contract Management",
+    subject: `Contract ${contract.contractNumber} revised by Amendment #${cr.changeNumber}`,
+    body: `Contract value is now $${newValue.toLocaleString()} and the completion date is ${newEnd}. Payment schedule and deliverable dates should be reviewed against the revised terms.`,
+    recipientRole: "Finance",
+    entityRef: contract.contractNumber,
+  });
+
+  notifyStoreListeners();
+  return { ok: true };
+}
+
+// ── Performance evaluation ──────────────────────────────────────────────────
+
+export function addPerformanceEvaluation(
+  contractId: string,
+  evaluation: Omit<PerformanceEvaluation, "id">
+): { ok: boolean; error?: string } {
+  const contract = contracts.find(c => c.id === contractId);
+  if (!contract) return { ok: false, error: "Contract not found." };
+  if (!evaluation.evaluator.trim()) return { ok: false, error: "An evaluator is required." };
+  if (evaluation.supervisorApproval && evaluation.supervisorApproval === evaluation.evaluator) {
+    return { ok: false, error: "The supervisor approval must come from someone other than the evaluator." };
+  }
+
+  const record: PerformanceEvaluation = { ...evaluation, id: `pe-${Date.now()}` };
+
+  contracts = contracts.map(c => {
+    if (c.id !== contractId) return c;
+    const next = { ...c, performanceEvaluations: [...(c.performanceEvaluations ?? []), record] };
+    return pushAudit(next, "Performance Evaluation", evaluation.evaluator, `${evaluation.evaluationType} evaluation scored ${evaluation.overallScore}/10${evaluation.supervisorApproval ? `, approved by ${evaluation.supervisorApproval}` : " (awaiting supervisor approval)"}`);
+  });
+
+  // Push the scorecard onto the vendor profile so it informs future sourcing.
+  recordVendorEvaluation(contract.party, {
+    contractNumber: contract.contractNumber,
+    contractTitle: contract.title,
+    evaluationType: evaluation.evaluationType,
+    evaluationDate: evaluation.evaluationDate,
+    evaluator: evaluation.evaluator,
+    supervisorApproval: evaluation.supervisorApproval,
+    criteria: evaluation.criteria,
+    overallScore: evaluation.overallScore,
+    comments: evaluation.comments,
+  });
+
+  notifyStoreListeners();
+  return { ok: true };
+}
+
+// ── Close-out ───────────────────────────────────────────────────────────────
+
+export function updateCloseOut(contractId: string, updates: Partial<ContractCloseOut>, by: string) {
+  contracts = contracts.map(c => {
+    if (c.id !== contractId) return c;
+    const base: ContractCloseOut = c.closeOut ?? {
+      allDeliverablesCompleted: false, procurementCompliance: false, allPaymentsCompleted: false,
+      performanceFinalized: false, allDocsUploaded: false,
+    };
+    const next = { ...c, closeOut: { ...base, ...updates } };
+    return pushAudit(next, "Close-Out Updated", by, `Checklist updated: ${Object.keys(updates).join(", ")}`);
+  });
+  notifyStoreListeners();
+}
+
+/** Verifies each close-out condition against the contract's actual state. */
+export function verifyCloseOutReadiness(c: AwardedContract): { key: keyof ContractCloseOut; label: string; satisfied: boolean; detail: string }[] {
+  const deliverables = c.deliverables ?? [];
+  const invoices = c.invoices ?? [];
+  const outstandingDeliverables = deliverables.filter(d => d.status !== "Accepted");
+  const unpaidInvoices = invoices.filter(i => i.status !== "Paid" && i.status !== "Queried");
+  const finalEval = (c.performanceEvaluations ?? []).find(e => e.evaluationType === "Final");
+  const hasSignedContract = c.documents.some(d => /signed contract|purchase order/i.test(d.label));
+
+  return [
+    {
+      key: "allDeliverablesCompleted",
+      label: "All deliverables completed and accepted",
+      satisfied: deliverables.length > 0 && outstandingDeliverables.length === 0,
+      detail: deliverables.length === 0
+        ? "No deliverables recorded on this contract."
+        : outstandingDeliverables.length === 0
+          ? `All ${deliverables.length} deliverables accepted.`
+          : `${outstandingDeliverables.length} outstanding: ${outstandingDeliverables.map(d => d.description).join(", ")}.`,
+    },
+    {
+      key: "procurementCompliance",
+      label: "Procurement confirms compliance with contract terms",
+      satisfied: !!c.closeOut?.procurementCompliance,
+      detail: "Manual confirmation by the Procurement Unit.",
+    },
+    {
+      key: "allPaymentsCompleted",
+      label: "All payments completed",
+      satisfied: invoices.length > 0 && unpaidInvoices.length === 0,
+      detail: unpaidInvoices.length === 0
+        ? `All ${invoices.length} invoices settled.`
+        : `${unpaidInvoices.length} invoice(s) not yet paid: ${unpaidInvoices.map(i => i.invoiceNumber).join(", ")}.`,
+    },
+    {
+      key: "performanceFinalized",
+      label: "Final vendor performance evaluation completed",
+      satisfied: !!finalEval && !!finalEval.supervisorApproval,
+      detail: !finalEval
+        ? "No final evaluation recorded."
+        : finalEval.supervisorApproval
+          ? `Scored ${finalEval.overallScore}/10, approved by ${finalEval.supervisorApproval}.`
+          : "Final evaluation awaiting supervisor approval.",
+    },
+    {
+      key: "allDocsUploaded",
+      label: "All required documents uploaded",
+      satisfied: hasSignedContract,
+      detail: hasSignedContract
+        ? `${c.documents.length} document group(s) on file.`
+        : "The signed contract or purchase order has not been uploaded.",
+    },
+  ];
+}
+
+export function closeContract(
+  contractId: string,
+  by: string,
+  artefacts: { completionCertificate: string; closureReport: string }
+): { ok: boolean; error?: string } {
+  const contract = contracts.find(c => c.id === contractId);
+  if (!contract) return { ok: false, error: "Contract not found." };
+
+  const checks = verifyCloseOutReadiness(contract);
+  const failed = checks.filter(ch => !ch.satisfied);
+  if (failed.length > 0) {
+    return { ok: false, error: `Cannot close: ${failed.map(f => f.label).join("; ")}.` };
+  }
+  if (!artefacts.completionCertificate || !artefacts.closureReport) {
+    return { ok: false, error: "Generate the Certificate of Completion and the Final Closure Report before closing." };
+  }
+
+  contracts = contracts.map(c => {
+    if (c.id !== contractId) return c;
+    const next: AwardedContract = {
+      ...c,
+      status: "Closed",
+      closeOut: {
+        allDeliverablesCompleted: true,
+        procurementCompliance: true,
+        allPaymentsCompleted: true,
+        performanceFinalized: true,
+        allDocsUploaded: true,
+        completionCertificate: artefacts.completionCertificate,
+        closureReport: artefacts.closureReport,
+        closedDate: today(),
+        closedBy: by,
+      },
+    };
+    return pushAudit(next, "Contract Closed", by, `Contract closed. Certificate: ${artefacts.completionCertificate}; Closure report: ${artefacts.closureReport}`);
+  });
+
+  resolveReminder(contract.contractNumber, "Contract");
+  notify({
+    category: "Info",
+    module: "Contract Management",
+    subject: `Contract ${contract.contractNumber} closed`,
+    body: `${contract.title} with ${contract.party} was closed by ${by}. Certificate of Completion and Final Closure Report have been generated.`,
+    recipientRole: "Procurement",
+    entityRef: contract.contractNumber,
+  });
+
+  notifyStoreListeners();
+  return { ok: true };
+}
+
+// ── Enrichment from sourcing ────────────────────────────────────────────────
+
+/**
+ * Fills in a contract created by the sourcing award, which arrives as a shell
+ * with no coordinators, schedule or deliverables. Without this the awarded
+ * record could never be brought up to a manageable state.
+ */
+export function enrichContract(
+  contractId: string,
+  data: {
+    title?: string;
+    startDate?: string;
+    endDate?: string;
+    renewalDate?: string;
+    contractType?: "Lump Sum" | "Time Based";
+    paymentFrequency?: AwardedContract["paymentFrequency"];
+    maxAmount?: number;
+    coordinators?: ContractCoordinator[];
+    milestones?: ContractMilestone[];
+    deliverySchedule?: AwardedContract["deliverySchedule"];
+    paymentSchedule?: AwardedContract["paymentSchedule"];
+    budgetLine?: string;
+    fundingSource?: string;
+    value?: number;
+  },
+  by: string
+): { ok: boolean; error?: string } {
+  const contract = contracts.find(c => c.id === contractId);
+  if (!contract) return { ok: false, error: "Contract not found." };
+
+  contracts = contracts.map(c => {
+    if (c.id !== contractId) return c;
+
+    // Milestones supplied here seed deliverables, but never duplicate ones
+    // already tracked against the same milestone.
+    const existingRefs = new Set((c.deliverables ?? []).map(d => d.milestoneRef));
+    const newMilestones = data.milestones ?? c.milestones;
+    const seeded = (data.milestones ?? [])
+      .filter(m => !existingRefs.has(m.id))
+      .map((m, i) => ({
+        id: `del-enr-${Date.now()}-${i}`,
+        milestoneRef: m.id,
+        description: m.label,
+        dueDate: m.date,
+        status: "Pending" as const,
+        documents: [],
+        comments: "",
+      }));
+
+    const next: AwardedContract = {
+      ...c,
+      ...(data.title ? { title: data.title } : {}),
+      ...(data.value !== undefined ? { value: data.value } : {}),
+      startDate: data.startDate ?? c.startDate,
+      endDate: data.endDate ?? c.endDate,
+      renewalDate: data.renewalDate ?? c.renewalDate,
+      contractType: data.contractType ?? c.contractType,
+      paymentFrequency: data.paymentFrequency ?? c.paymentFrequency,
+      maxAmount: data.maxAmount ?? c.maxAmount,
+      coordinators: data.coordinators ?? c.coordinators ?? [],
+      milestones: newMilestones,
+      deliverables: [...(c.deliverables ?? []), ...seeded],
+      invoices: c.invoices ?? [],
+      changeRequests: c.changeRequests ?? [],
+      performanceEvaluations: c.performanceEvaluations ?? [],
+      closeOut: c.closeOut ?? {
+        allDeliverablesCompleted: false, procurementCompliance: false, allPaymentsCompleted: false,
+        performanceFinalized: false, allDocsUploaded: false,
+      },
+      deliverySchedule: data.deliverySchedule ?? c.deliverySchedule,
+      paymentSchedule: data.paymentSchedule ?? c.paymentSchedule,
+      budgetLine: data.budgetLine ?? c.budgetLine,
+      fundingSource: data.fundingSource ?? c.fundingSource,
+    };
+    return pushAudit(next, "Contract Details Completed", by, `Contract enriched with ${data.coordinators?.length ?? 0} coordinator(s), ${newMilestones.length} milestone(s) and payment schedule`);
+  });
+
+  const updated = contracts.find(c => c.id === contractId);
+  if (updated) syncContractReminders(updated);
+  notifyStoreListeners();
+  return { ok: true };
+}
+
+// ── Reminders ───────────────────────────────────────────────────────────────
+
+/** Queues deliverable-due and contract-expiry reminders for one contract. */
+export function syncContractReminders(c: AwardedContract) {
+  if (c.status === "Closed") return;
+
+  (c.deliverables ?? [])
+    .filter(d => d.status === "Pending" || d.status === "Submitted" || d.status === "Under Review")
+    .forEach(d => {
+      scheduleReminder({
+        entityRef: `${c.id}:${d.milestoneRef}`,
+        entityType: "Deliverable",
+        module: "Contract Management",
+        subject: `Deliverable due on ${c.contractNumber}: ${d.description}`,
+        body: `"${d.description}" under ${c.contractNumber} (${c.party}) is due ${d.dueDate}. Current status: ${d.status}.`,
+        recipientName: c.coordinators?.[0]?.name,
+        recipientRole: "Contract Coordinator",
+        dueDate: d.dueDate,
+        reminderAfterHours: 24 * 7,
+        escalateAfterHours: 24 * 14,
+        escalateToRole: "Procurement",
+      });
+    });
+
+  scheduleReminder({
+    entityRef: c.contractNumber,
+    entityType: "Contract",
+    module: "Contract Management",
+    subject: `Contract ${c.contractNumber} expires ${c.endDate}`,
+    body: `${c.title} with ${c.party} reaches its end date on ${c.endDate}. Confirm whether it will be closed out, extended or renewed.`,
+    recipientRole: "Procurement",
+    dueDate: c.endDate,
+    reminderAfterHours: 24 * 7,
+    escalateAfterHours: 24 * 30,
+  });
+}
+
+export function syncAllContractReminders() {
+  contracts.forEach(syncContractReminders);
+}
+
+// ── Aggregate reads ─────────────────────────────────────────────────────────
+
+export function daysUntil(dateStr: string): number {
+  return Math.round((new Date(dateStr).getTime() - new Date(today()).getTime()) / 86_400_000);
+}
+
+export function getOverdueDeliverables(): { contract: AwardedContract; deliverable: ContractDeliverable; daysOverdue: number }[] {
+  const out: { contract: AwardedContract; deliverable: ContractDeliverable; daysOverdue: number }[] = [];
+  contracts.forEach(c => {
+    if (c.status === "Closed") return;
+    (c.deliverables ?? []).forEach(d => {
+      if (d.status === "Accepted") return;
+      const days = daysUntil(d.dueDate);
+      if (days < 0) out.push({ contract: c, deliverable: d, daysOverdue: -days });
+    });
+  });
+  return out.sort((a, b) => b.daysOverdue - a.daysOverdue);
+}
+
+export function getUpcomingDeliverables(withinDays = 30) {
+  const out: { contract: AwardedContract; deliverable: ContractDeliverable; daysLeft: number }[] = [];
+  contracts.forEach(c => {
+    if (c.status === "Closed") return;
+    (c.deliverables ?? []).forEach(d => {
+      if (d.status === "Accepted") return;
+      const days = daysUntil(d.dueDate);
+      if (days >= 0 && days <= withinDays) out.push({ contract: c, deliverable: d, daysLeft: days });
+    });
+  });
+  return out.sort((a, b) => a.daysLeft - b.daysLeft);
+}
+
+export function getExpiringContracts(withinDays = 90) {
+  return contracts
+    .filter(c => c.status !== "Closed")
+    .map(c => ({ contract: c, daysLeft: daysUntil(c.endDate) }))
+    .filter(r => r.daysLeft >= 0 && r.daysLeft <= withinDays)
+    .sort((a, b) => a.daysLeft - b.daysLeft);
+}
+
+export function getContractStats() {
+  const active = contracts.filter(c => c.status === "Active").length;
+  const totalValue = contracts.reduce((s, c) => s + c.value, 0);
+  const totalPaid = contracts.reduce((s, c) => s + getContractFinancials(c).totalPaid, 0);
+  const pendingDeliverables = contracts.reduce(
+    (s, c) => s + (c.deliverables ?? []).filter(d => d.status !== "Accepted").length, 0
+  );
+  const unpaidInvoices = contracts.reduce(
+    (s, c) => s + (c.invoices ?? []).filter(i => i.status !== "Paid" && i.status !== "Queried").length, 0
+  );
+  const pendingVariations = contracts.reduce(
+    (s, c) => s + (c.changeRequests ?? []).filter(cr => cr.status === "Pending Approval").length, 0
+  );
+  return {
+    total: contracts.length, active, totalValue, totalPaid,
+    pendingDeliverables, unpaidInvoices, pendingVariations,
+    expiringSoon: getExpiringContracts(60).length,
+    overdueDeliverables: getOverdueDeliverables().length,
+  };
+}
+
+/** Every invoice across every contract, for the invoice & payment report. */
+export function getAllInvoices(): { contract: AwardedContract; invoice: ContractInvoice }[] {
+  return contracts.flatMap(c => (c.invoices ?? []).map(invoice => ({ contract: c, invoice })));
+}
+
+export function getAllChangeRequests(): { contract: AwardedContract; changeRequest: ContractChangeRequest }[] {
+  return contracts.flatMap(c => (c.changeRequests ?? []).map(changeRequest => ({ contract: c, changeRequest })));
+}
+
+/** Contract-level risk signals for the contract risk report. */
+export function getContractRisks(): { contract: AwardedContract; risks: string[]; severity: "Low" | "Medium" | "High" }[] {
+  return contracts
+    .filter(c => c.status !== "Closed")
+    .map(c => {
+      const risks: string[] = [];
+      const overdue = (c.deliverables ?? []).filter(d => d.status !== "Accepted" && daysUntil(d.dueDate) < 0);
+      if (overdue.length) risks.push(`${overdue.length} overdue deliverable(s)`);
+
+      const queried = (c.invoices ?? []).filter(i => i.status === "Queried");
+      if (queried.length >= 2) risks.push(`${queried.length} queried invoices — recurring billing disputes`);
+      else if (queried.length === 1) risks.push("1 queried invoice");
+
+      const variations = (c.changeRequests ?? []).filter(cr => cr.status === "Approved" || cr.status === "Implemented");
+      if (variations.length >= 3) risks.push(`${variations.length} approved variations — excessive change`);
+      const scopeChanges = variations.filter(cr => cr.types.includes("Scope Change"));
+      if (scopeChanges.length >= 2) risks.push("Repeated scope changes — scope creep");
+
+      const costGrowth = variations.reduce((s, cr) => s + (cr.estimatedCostImpact || 0), 0);
+      if (costGrowth > 0 && c.value > 0 && costGrowth / (c.value - costGrowth) > 0.2) {
+        risks.push(`Contract value grown ${Math.round((costGrowth / (c.value - costGrowth)) * 100)}% through variations`);
+      }
+
+      const expiry = daysUntil(c.endDate);
+      if (expiry >= 0 && expiry <= 30) risks.push(`Expires in ${expiry} days`);
+      else if (expiry < 0) risks.push(`Passed end date ${-expiry} days ago without close-out`);
+
+      const evals = c.performanceEvaluations ?? [];
+      const poor = evals.filter(e => e.overallScore < 5);
+      if (poor.length) risks.push(`Performance scored below 5 on ${poor.length} evaluation(s)`);
+
+      const severity: "Low" | "Medium" | "High" = risks.length >= 3 ? "High" : risks.length >= 1 ? "Medium" : "Low";
+      return { contract: c, risks, severity };
+    })
+    .filter(r => r.risks.length > 0)
+    .sort((a, b) => b.risks.length - a.risks.length);
+}
+
+// ── Award registration into the vendor profile ──────────────────────────────
+
+/** Called after an award so the vendor's contract history and totals update. */
+export function registerAwardWithVendor(c: AwardedContract) {
+  recordContractAward(c.party, {
+    contractNumber: c.contractNumber,
+    title: c.title,
+    value: c.value,
+    awardDate: c.awardDate,
+    status: c.status,
+    fundingSource: c.fundingSource,
+  });
 }

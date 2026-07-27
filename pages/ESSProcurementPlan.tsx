@@ -7,25 +7,40 @@ import {
   Loader2, Save
 } from "lucide-react";
 import { cn } from "../lib/utils";
-import { createRequisitionFromPlan, getGeneratedPRs, subscribe } from "../lib/procurementStore";
+import {
+  createRequisitionFromPlan,
+  createDirectRequisition,
+  updatePR,
+  submitPRForApproval,
+  validatePRForSubmission,
+  getApprovedPlanItems,
+  getGeneratedPRs,
+  subscribe,
+  type GeneratedPR,
+  type PRValidationIssue,
+} from "../lib/procurementStore";
+import {
+  PROCUREMENT_METHODS,
+  suggestProcurementMethod,
+  validateMethodAgainstThreshold,
+  isDirect,
+  canonicalMethod,
+  type ProcurementMethod,
+} from "../lib/procurementThresholds";
+import { getCurrentUser, subscribe as subscribeUser } from "../lib/currentUser";
+import { pickFiles, FileValidationError, openFile, type UploadedFile } from "../lib/fileUpload";
+import {
+  getVendors,
+  getEligibleVendors,
+  vendorDisplayName,
+  vendorEmail,
+  vendorAddress,
+  avgScore,
+  checkSourcingEligibility,
+  type Vendor,
+} from "../lib/vendorStore";
 import { subscribe as subscribeContracts } from "../lib/contractStore";
 import { ProcurementItemDetailView } from "../components/ProcurementItemDetailView";
-
-/* ─── Vendor Database (shared mock data) ─────────────────────────────────────── */
-const VENDOR_DATABASE = [
-  { id: "V-001", name: "Tech Solutions Inc.", contactPerson: "John Smith", email: "john@techsolutions.com", phone: "+1 (555) 123-4567", category: "IT Equipment", rating: 4.8, status: "Active", address: "12 Innovation Drive, Accra" },
-  { id: "V-002", name: "Office Depot Ltd.", contactPerson: "Sarah Johnson", email: "sarah@officedepot.com", phone: "+1 (555) 234-5678", category: "Office Supplies", rating: 4.5, status: "Active", address: "45 Commerce St, Tema" },
-  { id: "V-003", name: "Global Services Co.", contactPerson: "Michael Brown", email: "michael@globalservices.com", phone: "+1 (555) 345-6789", category: "Professional Services", rating: 4.9, status: "Active", address: "8 Partnership Ave, Kumasi" },
-  { id: "V-004", name: "Premier Supplies", contactPerson: "Emily Davis", email: "emily@premiersupplies.com", phone: "+1 (555) 456-7890", category: "Office Supplies", rating: 4.3, status: "Active", address: "21 Supply Chain Rd, Accra" },
-  { id: "V-005", name: "Elite Partners", contactPerson: "David Wilson", email: "david@elitepartners.com", phone: "+1 (555) 567-8901", category: "Professional Services", rating: 4.7, status: "Active", address: "3 Executive Blvd, Accra" },
-  { id: "V-006", name: "Facilities Management Pro", contactPerson: "Lisa Martinez", email: "lisa@facilitiespro.com", phone: "+1 (555) 678-9012", category: "Facilities", rating: 4.6, status: "Active", address: "77 Maintenance Lane, Takoradi" },
-  { id: "V-007", name: "Creative Marketing Solutions", contactPerson: "Tom Anderson", email: "tom@creativemarketingsolutions.com", phone: "+1 (555) 789-0123", category: "Marketing", rating: 4.4, status: "Pending", address: "9 Brand Ave, Accra" },
-  { id: "V-008", name: "Tech Innovators LLC", contactPerson: "Rachel Green", email: "rachel@techinnovators.com", phone: "+1 (555) 890-1234", category: "IT Equipment", rating: 4.2, status: "Inactive", address: "55 Tech Park, Tema" },
-  { id: "V-009", name: "PrintWorks Ghana Ltd", contactPerson: "Kofi Mensah", email: "kofi@printworks.gh", phone: "+233 30 277 5500", category: "Office Supplies", rating: 4.1, status: "Active", address: "16 Industrial Area, Accra" },
-  { id: "V-010", name: "Ghana Research Associates", contactPerson: "Ama Serwaa", email: "info@ghanaresearch.org", phone: "+233 30 266 1100", category: "Professional Services", rating: 4.6, status: "Active", address: "University Ave, Legon" },
-  { id: "V-011", name: "La Palm Royal Beach Hotel", contactPerson: "Events Desk", email: "events@lapalmhotel.com", phone: "+233 30 277 1700", category: "Facilities", rating: 4.5, status: "Active", address: "La Beach Rd, Accra" },
-  { id: "V-012", name: "MedSupply GH", contactPerson: "Kwaku Frimpong", email: "sales@medsupplygh.com", phone: "+233 24 411 2233", category: "Office Supplies", rating: 4.0, status: "Active", address: "22 Health Lane, Kumasi" },
-];
 
 /* ─── Types ──────────────────────────────────────────────────────────────────── */
 
@@ -90,8 +105,8 @@ const mockPlans: ProcurementPlan[] = [
     rejectionReason: null,
     versionHistory: [
       { version: 1, date: "Jan 05, 2026", action: "Submitted", performedBy: "Kwame Asante", notes: "Initial procurement plan submission for FY2026", totalBudget: 210000, itemCount: 10 },
-      { version: 2, date: "Jan 10, 2026", action: "Flagged - Out of Budget", performedBy: "Ama Boateng (Finance)", notes: "Total budget exceeds departmental allocation by GHS 22,500. Vehicle fleet servicing cost too high — please obtain competitive quotes. Conference room renovation deferred to Q3.", totalBudget: 210000, itemCount: 10, snapshot: { approved: 7, rejected: 2, amended: 1 } },
-      { version: 3, date: "Jan 14, 2026", action: "Revised & Resubmitted", performedBy: "Kwame Asante", notes: "Reduced vehicle servicing estimate to GHS 18,000 (3 new quotes attached). Removed duplicate stationery line. Adjusted miscellaneous allocation.", totalBudget: 187500, itemCount: 9 },
+      { version: 2, date: "Jan 10, 2026", action: "Flagged - Out of Budget", performedBy: "Ama Boateng (Finance)", notes: "Total budget exceeds departmental allocation by $22,500. Vehicle fleet servicing cost too high — please obtain competitive quotes. Conference room renovation deferred to Q3.", totalBudget: 210000, itemCount: 10, snapshot: { approved: 7, rejected: 2, amended: 1 } },
+      { version: 3, date: "Jan 14, 2026", action: "Revised & Resubmitted", performedBy: "Kwame Asante", notes: "Reduced vehicle servicing estimate to $18,000 (3 new quotes attached). Removed duplicate stationery line. Adjusted miscellaneous allocation.", totalBudget: 187500, itemCount: 9 },
       { version: 4, date: "Jan 20, 2026", action: "Approved", performedBy: "Dr. Akua Mensah (Finance Director)", notes: "Plan approved. Budget within departmental ceiling. Quarterly review scheduled.", totalBudget: 187500, itemCount: 9 },
     ],
     items: [
@@ -122,8 +137,8 @@ const mockPlans: ProcurementPlan[] = [
     rejectionReason: null,
     versionHistory: [
       { version: 1, date: "Jan 08, 2025", action: "Submitted", performedBy: "Kwame Asante", notes: "Initial procurement plan for FY2025", totalBudget: 158000, itemCount: 8 },
-      { version: 2, date: "Jan 13, 2025", action: "Flagged - Items Rejected", performedBy: "Ama Boateng (Finance)", notes: "Office renovation rejected — building lease expires Dec 2025, renovation not cost-effective. Reduce miscellaneous allocation to GHS 12,000.", totalBudget: 158000, itemCount: 8, snapshot: { approved: 6, rejected: 1, amended: 1 } },
-      { version: 3, date: "Jan 17, 2025", action: "Revised & Resubmitted", performedBy: "Kwame Asante", notes: "Removed office renovation. Adjusted miscellaneous to GHS 12,000.", totalBudget: 142000, itemCount: 7 },
+      { version: 2, date: "Jan 13, 2025", action: "Flagged - Items Rejected", performedBy: "Ama Boateng (Finance)", notes: "Office renovation rejected — building lease expires Dec 2025, renovation not cost-effective. Reduce miscellaneous allocation to $12,000.", totalBudget: 158000, itemCount: 8, snapshot: { approved: 6, rejected: 1, amended: 1 } },
+      { version: 3, date: "Jan 17, 2025", action: "Revised & Resubmitted", performedBy: "Kwame Asante", notes: "Removed office renovation. Adjusted miscellaneous to $12,000.", totalBudget: 142000, itemCount: 7 },
       { version: 4, date: "Jan 22, 2025", action: "Approved", performedBy: "Dr. Akua Mensah (Finance Director)", notes: "Approved within budget.", totalBudget: 142000, itemCount: 7 },
     ],
     items: [
@@ -195,13 +210,157 @@ const versionActionMeta: Record<string, { bg: string; icon: React.ReactNode }> =
   "Amendment Rejected":        { bg: "bg-red-50 text-red-600 border-red-200",           icon: <XCircle size={12} /> },
 };
 
-const fmt = (n: number) => "GHS " + n.toLocaleString("en-GH");
+/**
+ * The requisition store, the $10,000 senior-approval threshold and the method
+ * value bands are all denominated in USD, so the plan is too — plan costs flow
+ * straight into requisitions and a second currency would corrupt every
+ * threshold comparison downstream.
+ */
+const fmt = (n: number) =>
+  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(n);
 
 const CATEGORIES: ItemCategory[] = ["Goods", "Services", "Consultancy", "Works", "Other"];
 const UNITS = ["Units", "Lot", "Contract", "Engagement", "Project", "Program", "Vehicles", "Event", "Allocation"];
 
 function blankItem(): ProcurementItem {
   return { id: "", description: "", category: "Goods", quantity: 1, unit: "Units", estimatedCost: 0, targetDate: "", status: "Not Started", notes: "", approvalStatus: "Pending Verification" };
+}
+
+/* ─── Requisition form model ─────────────────────────────────────────────────── */
+
+interface ShortlistEntry {
+  name: string;
+  address: string;
+  email: string;
+}
+
+interface PRFormState {
+  detailedDescription: string;
+  /** ppItemId of the approved activity on the corporate procurement plan. */
+  linkedPlanItemId: string;
+  // Goods
+  desiredDeliveryDate: string;
+  deliveryLocation: string;
+  // Services / Consultancy / Works
+  consultancyType: "Firm" | "Individual";
+  estimatedStartDate: string;
+  estimatedEndDate: string;
+  // Sourcing
+  sourcingMethod: ProcurementMethod;
+  methodDeviationJustification: string;
+  directSelectionJustification: string;
+}
+
+function blankPRForm(): PRFormState {
+  return {
+    detailedDescription: "",
+    linkedPlanItemId: "",
+    desiredDeliveryDate: "",
+    deliveryLocation: "HQ - Accra",
+    consultancyType: "Firm",
+    estimatedStartDate: "",
+    estimatedEndDate: "",
+    sourcingMethod: "Request for Quotation",
+    methodDeviationJustification: "",
+    directSelectionJustification: "",
+  };
+}
+
+function blankShortlistEntry(): ShortlistEntry {
+  return { name: "", address: "", email: "" };
+}
+
+const DELIVERY_LOCATIONS = [
+  "HQ - Accra", "Regional Office - Kumasi", "Regional Office - Tamale",
+  "Regional Office - Takoradi", "Field Office - Cape Coast", "Warehouse - Tema",
+];
+
+/** Store validation fields → the form control that owns them. */
+const ISSUE_FIELD_MAP: Record<string, string> = {
+  itemDescription: "detailedDescription",
+  deliveryTimeline: "desiredDeliveryDate",
+  serviceDates: "estimatedStartDate",
+  linkedPlanItemId: "linkedPlanItemId",
+  fundingSource: "linkedPlanItemId",
+  purchaseType: "methodDeviationJustification",
+  directSelectionJustification: "directSelectionJustification",
+  shortlistedEntities: "shortlist",
+  attachments: "specsAttachment",
+};
+
+function issuesToFormErrors(issues: PRValidationIssue[]): Record<string, string> {
+  const errors: Record<string, string> = {};
+  issues.forEach((issue) => {
+    const key = ISSUE_FIELD_MAP[issue.field] ?? "general";
+    errors[key] = errors[key] ? `${errors[key]} ${issue.message}` : issue.message;
+  });
+  return errors;
+}
+
+/** Rough description match so the plan activity is pre-selected, not guessed at by the user. */
+function matchPlanActivity(
+  description: string,
+  category: string,
+  activities: { ppItemId: string; activityDescription: string; category: string }[]
+): string {
+  const normalise = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  const words = normalise(description).split(" ").filter((w) => w.length > 3);
+  if (words.length === 0) return "";
+
+  let bestId = "";
+  let bestScore = 0;
+  activities.forEach((activity) => {
+    const haystack = normalise(activity.activityDescription);
+    let score = words.filter((w) => haystack.includes(w)).length;
+    if (activity.category === category) score += 0.5;
+    if (score > bestScore) {
+      bestScore = score;
+      bestId = activity.ppItemId;
+    }
+  });
+  return bestScore >= 2 ? bestId : "";
+}
+
+type AttachmentRecord = { name: string; url: string; type: string; size: string; label: string };
+
+function toAttachmentRecords(files: UploadedFile[], label: string): AttachmentRecord[] {
+  return files.map((f) => ({ name: f.name, url: f.url, type: f.type, size: f.sizeLabel, label }));
+}
+
+/** Rehydrates a reopened draft's attachments so re-saving does not wipe them. */
+function fromAttachmentRecords(records: AttachmentRecord[] | undefined, label: string): UploadedFile[] {
+  return (records ?? [])
+    .filter((r) => r.label === label)
+    .map((r, idx) => ({
+      id: `restored-${label}-${idx}-${r.name}`,
+      name: r.name,
+      size: 0,
+      sizeLabel: r.size,
+      type: r.type,
+      mimeType: "application/octet-stream",
+      url: r.url,
+      uploadedAt: "",
+      uploadedBy: "",
+    }));
+}
+
+/** The store requires start and end dates for anything that is not a delivery of goods. */
+function needsServiceDates(category: ItemCategory): boolean {
+  return category === "Services" || category === "Consultancy" || category === "Works";
+}
+
+const DELIVERY_JOIN = " · Deliver to ";
+
+/** Delivery date and location travel together in the store's single timeline field. */
+function composeDeliveryTimeline(date: string, location: string): string {
+  if (!date) return "";
+  return location ? `${date}${DELIVERY_JOIN}${location}` : date;
+}
+
+function splitDeliveryTimeline(value: string | undefined): { date: string; location: string } {
+  if (!value) return { date: "", location: DELIVERY_LOCATIONS[0] };
+  const [date, location] = value.split(DELIVERY_JOIN);
+  return { date: date ?? "", location: location ?? DELIVERY_LOCATIONS[0] };
 }
 
 /* ═════════════════════��═════════════════════════════════════════════════════════
@@ -220,10 +379,14 @@ export function ESSProcurementPlan() {
   useEffect(() => {
     const unsub1 = subscribe(() => setStoreTick((t) => t + 1));
     const unsub2 = subscribeContracts(() => setStoreTick((t) => t + 1));
-    return () => { unsub1(); unsub2(); };
+    const unsub3 = subscribeUser(() => setStoreTick((t) => t + 1));
+    return () => { unsub1(); unsub2(); unsub3(); };
   }, []);
 
+  const currentUser = getCurrentUser();
   const generatedPRs = getGeneratedPRs();
+  const approvedPlanActivities = getApprovedPlanItems();
+
   useEffect(() => {
     if (generatedPRs.length === 0) return;
     setPlans(prev => prev.map(plan => ({
@@ -234,9 +397,15 @@ export function ESSProcurementPlan() {
         );
         if (!matchingPR) return item;
         let newStatus: ItemStatus;
-        if (matchingPR.overallApprovalStatus === "Approved") {
+        if (matchingPR.overallApprovalStatus === "Approved" || matchingPR.overallApprovalStatus === "Converted to Sourcing") {
           newStatus = "In Progress";
-        } else if (matchingPR.overallApprovalStatus === "Rejected") {
+        } else if (
+          // A draft, a rejection or a withdrawal all leave the activity open for
+          // the requester to pick up again, so the item must not look "pending".
+          matchingPR.overallApprovalStatus === "Rejected" ||
+          matchingPR.overallApprovalStatus === "Withdrawn" ||
+          matchingPR.overallApprovalStatus === "Draft"
+        ) {
           newStatus = "Not Started";
         } else {
           newStatus = "Requisition Pending";
@@ -246,6 +415,12 @@ export function ESSProcurementPlan() {
       }),
     })));
   }, [generatedPRs]);
+
+  /** The saved but unsubmitted requisition for a plan item, if there is one. */
+  const findDraftFor = (planId: string, itemId: string): GeneratedPR | undefined =>
+    generatedPRs.find(
+      pr => pr.sourcePlanId === planId && pr.sourcePlanItemId === itemId && pr.overallApprovalStatus === "Draft"
+    );
 
   // Creation flow
   const [creating, setCreating] = useState(false);
@@ -263,29 +438,16 @@ export function ESSProcurementPlan() {
 
   // Initiate procurement — PR form
   const [prFormOpen, setPrFormOpen] = useState<{ planId: string; itemId: string } | null>(null);
-  const [prFormData, setPrFormData] = useState({
-    detailedDescription: "",
-    // Goods fields
-    desiredDeliveryDate: "",
-    deliveryLocation: "HQ - Accra" as string,
-    // Services / Consultancy fields
-    consultancyType: "Firm" as "Firm" | "Individual",
-    estimatedStartDate: "",
-    estimatedEndDate: "",
-    // Sourcing
-    sourcingMethod: "Standard Competitive" as "Standard Competitive" | "Direct Selection",
-    directSelectionJustification: "",
-    vendorLegalName: "",
-    vendorAddress: "",
-    vendorContact: "",
-    // Funding
-    fundingSource: "Core Funding",
-  });
-  const [prSpecsAttachments, setPrSpecsAttachments] = useState<string[]>([]);
-  const [prSupportingDocs, setPrSupportingDocs] = useState<string[]>([]);
+  const [prDraftId, setPrDraftId] = useState<string | null>(null);
+  const [prFormData, setPrFormData] = useState<PRFormState>(blankPRForm());
+  const [prShortlist, setPrShortlist] = useState<ShortlistEntry[]>([blankShortlistEntry()]);
+  const [prSpecsAttachments, setPrSpecsAttachments] = useState<UploadedFile[]>([]);
+  const [prSupportingDocs, setPrSupportingDocs] = useState<UploadedFile[]>([]);
   const [prFormErrors, setPrFormErrors] = useState<Record<string, string>>({});
+  const [prSubmitting, setPrSubmitting] = useState(false);
   const [vendorSearchOpen, setVendorSearchOpen] = useState(false);
   const [vendorSearchQuery, setVendorSearchQuery] = useState("");
+  const [vendorSearchTarget, setVendorSearchTarget] = useState(0);
 
   // Version history
   const [showVersionHistory, setShowVersionHistory] = useState<string | null>(null);
@@ -454,87 +616,235 @@ export function ESSProcurementPlan() {
   /* ── Initiate procurement — open PR form ──────────────────────────────────── */
 
   const openPRForm = (planId: string, itemId: string) => {
+    const plan = plans.find(p => p.id === planId);
+    const item = plan?.items.find(i => i.id === itemId);
+    if (!plan || !item) return;
+
+    const draft = findDraftFor(planId, itemId);
     setPrFormOpen({ planId, itemId });
+    setPrDraftId(draft?.id ?? null);
+
+    const autoLinked = matchPlanActivity(item.description, item.category, approvedPlanActivities);
+    const delivery = splitDeliveryTimeline(draft?.deliveryTimeline);
     setPrFormData({
-      detailedDescription: "",
-      desiredDeliveryDate: "",
-      deliveryLocation: "HQ - Accra",
-      consultancyType: "Firm",
-      estimatedStartDate: "",
-      estimatedEndDate: "",
-      sourcingMethod: "Standard Competitive",
-      directSelectionJustification: "",
-      vendorLegalName: "",
-      vendorAddress: "",
-      vendorContact: "",
-      fundingSource: "Core Funding",
+      ...blankPRForm(),
+      detailedDescription: draft?.itemDescription ?? "",
+      linkedPlanItemId: draft?.linkedPlanItemId ?? autoLinked,
+      desiredDeliveryDate: delivery.date,
+      deliveryLocation: delivery.location,
+      consultancyType: draft?.entityType ?? "Firm",
+      estimatedStartDate: draft?.serviceStartDate ?? "",
+      estimatedEndDate: draft?.serviceEndDate ?? "",
+      sourcingMethod: draft ? canonicalMethod(draft.purchaseType) : suggestProcurementMethod(item.estimatedCost),
+      methodDeviationJustification: draft?.methodDeviationJustification ?? "",
+      directSelectionJustification: draft?.directSelectionJustification ?? "",
     });
-    setPrSpecsAttachments([]);
-    setPrSupportingDocs([]);
+    setPrShortlist(draft?.shortlistedEntities?.length ? draft.shortlistedEntities.map(e => ({ ...e })) : [blankShortlistEntry()]);
+    setPrSpecsAttachments(fromAttachmentRecords(draft?.attachmentFiles, "Specs / Terms of Reference"));
+    setPrSupportingDocs(fromAttachmentRecords(draft?.attachmentFiles, "Supporting Document"));
     setPrFormErrors({});
+    setPrSubmitting(false);
+    setVendorSearchOpen(false);
+  };
+
+  const closePRForm = () => {
+    setPrFormOpen(null);
+    setPrDraftId(null);
+    setPrFormErrors({});
+    setVendorSearchOpen(false);
+  };
+
+  /**
+   * Everything the requester entered, shaped for the store. The previous build
+   * collected all of this and then passed only the ten base arguments, so the
+   * funding source, dates, justification, vendor details and every attachment
+   * were discarded on submission.
+   */
+  const buildPRPayload = (plan: ProcurementPlan, item: ProcurementItem) => {
+    const planActivity = approvedPlanActivities.find(a => a.ppItemId === prFormData.linkedPlanItemId);
+    const needsShortlist = isDirect(prFormData.sourcingMethod) || prFormData.sourcingMethod === "Limited Competition";
+    const shortlist = needsShortlist
+      ? prShortlist.filter(e => e.name.trim() || e.address.trim() || e.email.trim())
+      : undefined;
+    const attachmentFiles = [
+      ...toAttachmentRecords(prSpecsAttachments, "Specs / Terms of Reference"),
+      ...toAttachmentRecords(prSupportingDocs, "Supporting Document"),
+    ];
+
+    return {
+      requisitionTitle: item.description,
+      itemDescription: prFormData.detailedDescription.trim(),
+      category: item.category,
+      quantity: item.quantity,
+      unit: item.unit,
+      estimatedCost: item.estimatedCost,
+      department: plan.department,
+      requestedBy: currentUser.name,
+      entityType: prFormData.consultancyType,
+      purchaseType: prFormData.sourcingMethod,
+      fundingSource: planActivity?.fundingSource ?? "",
+      deliveryTimeline: item.category === "Goods"
+        ? composeDeliveryTimeline(prFormData.desiredDeliveryDate, prFormData.deliveryLocation)
+        : undefined,
+      serviceStartDate: needsServiceDates(item.category) ? prFormData.estimatedStartDate : undefined,
+      serviceEndDate: needsServiceDates(item.category) ? prFormData.estimatedEndDate : undefined,
+      directSelectionJustification: isDirect(prFormData.sourcingMethod)
+        ? prFormData.directSelectionJustification.trim()
+        : undefined,
+      methodDeviationJustification: prFormData.methodDeviationJustification.trim() || undefined,
+      shortlistedEntities: shortlist?.length ? shortlist : undefined,
+      linkedPlanItemId: prFormData.linkedPlanItemId || undefined,
+      attachments: [...prSpecsAttachments, ...prSupportingDocs].map(f => f.name),
+      attachmentFiles: attachmentFiles.length ? attachmentFiles : undefined,
+      sourcePlanId: plan.id,
+      sourcePlanItemId: item.id,
+    };
+  };
+
+  /** Runs the store's own submission gate against the unsaved form. */
+  const validatePRForm = (plan: ProcurementPlan, item: ProcurementItem): Record<string, string> => {
+    const payload = buildPRPayload(plan, item);
+    const candidate = {
+      ...(prDraftId ? generatedPRs.find(pr => pr.id === prDraftId) : undefined),
+      ...payload,
+      // Fields the store reads but the form does not own.
+      purchaseType: payload.purchaseType as string,
+      approvalHistory: [],
+    } as unknown as GeneratedPR;
+    return issuesToFormErrors(validatePRForSubmission(candidate));
   };
 
   const handlePRFormSubmit = () => {
-    if (!prFormOpen) return;
+    if (!prFormOpen || prSubmitting) return;
     const { planId, itemId } = prFormOpen;
     const plan = plans.find(p => p.id === planId);
     const item = plan?.items.find(i => i.id === itemId);
     if (!plan || !item) return;
 
-    const errors: Record<string, string> = {};
-    if (!prFormData.detailedDescription.trim()) errors.detailedDescription = "Detailed description is required";
-    if (item.category === "Goods" && !prFormData.desiredDeliveryDate) errors.desiredDeliveryDate = "Delivery date is required";
-    if ((item.category === "Services" || item.category === "Consultancy") && !prFormData.estimatedStartDate) errors.estimatedStartDate = "Start date is required";
-    if ((item.category === "Services" || item.category === "Consultancy") && !prFormData.estimatedEndDate) errors.estimatedEndDate = "End date is required";
-    if (prFormData.sourcingMethod === "Direct Selection" && !prFormData.directSelectionJustification.trim()) errors.directSelectionJustification = "Direct selection justification is required";
-    if (prSpecsAttachments.length === 0) errors.specsAttachment = "At least one Specs / Terms of Reference document is required";
+    const errors = validatePRForm(plan, item);
     if (Object.keys(errors).length) { setPrFormErrors(errors); return; }
 
-    createRequisitionFromPlan({
-      planId: plan.id,
-      itemId: item.id,
-      description: item.description,
-      category: item.category,
-      quantity: item.quantity,
-      unit: item.unit,
-      estimatedCost: item.estimatedCost,
-      targetDate: item.targetDate,
-      requestedBy: plan.createdBy,
-      department: plan.department,
-    });
+    setPrSubmitting(true);
+    const payload = buildPRPayload(plan, item);
+
+    if (prDraftId) {
+      // The draft is already a store record; update it in place and put it
+      // through the same submission gate as any other requisition.
+      updatePR(prDraftId, payload);
+      const result = submitPRForApproval(prDraftId, currentUser.name);
+      if (!result.ok) {
+        setPrSubmitting(false);
+        setPrFormErrors(
+          result.issues?.length
+            ? issuesToFormErrors(result.issues)
+            : { general: result.error ?? "The requisition could not be submitted." }
+        );
+        return;
+      }
+    } else {
+      const created = createRequisitionFromPlan({
+        planId: plan.id,
+        itemId: item.id,
+        description: prFormData.detailedDescription.trim() || item.description,
+        category: item.category,
+        quantity: item.quantity,
+        unit: item.unit,
+        estimatedCost: item.estimatedCost,
+        targetDate: item.targetDate,
+        requestedBy: currentUser.name,
+        department: plan.department,
+        requisitionTitle: payload.requisitionTitle,
+        entityType: payload.entityType,
+        fundingSource: payload.fundingSource,
+        deliveryTimeline: payload.deliveryTimeline,
+        serviceStartDate: payload.serviceStartDate,
+        serviceEndDate: payload.serviceEndDate,
+        directSelectionJustification: payload.directSelectionJustification,
+        shortlistedEntities: payload.shortlistedEntities,
+        attachments: payload.attachments,
+        linkedPlanItemId: payload.linkedPlanItemId,
+        attachmentFiles: payload.attachmentFiles,
+      });
+      // createRequisitionFromPlan derives the method from the plan activity and
+      // has no slot for a deviation note, so the requester's own choice and its
+      // justification are written back here rather than being lost.
+      updatePR(created.id, {
+        purchaseType: payload.purchaseType,
+        methodDeviationJustification: payload.methodDeviationJustification,
+      });
+    }
 
     setPlans(prev => prev.map(p =>
       p.id === planId
         ? { ...p, items: p.items.map(i => i.id === itemId ? { ...i, status: "Requisition Pending" as ItemStatus } : i) }
         : p
     ));
-    setPrFormOpen(null);
+    setPrSubmitting(false);
+    closePRForm();
   };
 
+  /**
+   * Drafts are real store records now — previously this closed the modal and
+   * threw everything the requester had typed away.
+   */
   const handlePRSaveAsDraft = () => {
-    // In a real app this would persist to the backend
-    setPrFormOpen(null);
+    if (!prFormOpen) return;
+    const { planId, itemId } = prFormOpen;
+    const plan = plans.find(p => p.id === planId);
+    const item = plan?.items.find(i => i.id === itemId);
+    if (!plan || !item) return;
+
+    if (!prFormData.detailedDescription.trim()) {
+      setPrFormErrors({ detailedDescription: "Add a detailed description before saving the draft." });
+      return;
+    }
+
+    const payload = buildPRPayload(plan, item);
+    if (prDraftId) {
+      updatePR(prDraftId, payload);
+    } else {
+      const created = createDirectRequisition({
+        ...payload,
+        requisitionTitle: payload.requisitionTitle,
+        itemDescription: payload.itemDescription,
+        requestedBy: payload.requestedBy,
+        department: payload.department,
+        estimatedCost: payload.estimatedCost,
+        category: payload.category,
+      });
+      // createDirectRequisition stamps every new record "Direct"; this one came
+      // off the departmental plan and its provenance has to say so.
+      updatePR(created.id, { sourceType: "ESS Plan" });
+      setPrDraftId(created.id);
+    }
+    closePRForm();
   };
 
-  const handleUploadSpecsFile = () => {
-    const fakeNames = ["Terms_of_Reference.pdf", "Technical_Specifications.docx", "Scope_of_Work.pdf", "Requirements_Document.pdf"];
-    const nextFile = fakeNames.find(f => !prSpecsAttachments.includes(f)) || `TOR_${prSpecsAttachments.length + 1}.pdf`;
-    setPrSpecsAttachments(prev => [...prev, nextFile]);
-    setPrFormErrors(prev => { const n = { ...prev }; delete n.specsAttachment; return n; });
+  const handleUploadFiles = async (target: "specs" | "supporting") => {
+    try {
+      const files = await pickFiles({ multiple: true, uploadedBy: currentUser.name });
+      if (files.length === 0) return;
+      if (target === "specs") {
+        setPrSpecsAttachments(prev => [...prev, ...files]);
+        setPrFormErrors(prev => { const n = { ...prev }; delete n.specsAttachment; return n; });
+      } else {
+        setPrSupportingDocs(prev => [...prev, ...files]);
+      }
+    } catch (err) {
+      const message = err instanceof FileValidationError ? err.message : "The file could not be attached.";
+      setPrFormErrors(prev => ({ ...prev, [target === "specs" ? "specsAttachment" : "supportingDocs"]: message }));
+    }
   };
 
-  const handleUploadSupportingDoc = () => {
-    const fakeNames = ["Email_Approval.pdf", "Vendor_Quote_A.pdf", "Budget_Clearance.pdf", "Sole_Source_Memo.docx"];
-    const nextFile = fakeNames.find(f => !prSupportingDocs.includes(f)) || `Supporting_${prSupportingDocs.length + 1}.pdf`;
-    setPrSupportingDocs(prev => [...prev, nextFile]);
-  };
-
-  const updatePrField = (field: string, value: string) => {
+  const updatePrField = <K extends keyof PRFormState>(field: K, value: PRFormState[K]) => {
     setPrFormData(prev => ({ ...prev, [field]: value }));
-    setPrFormErrors(prev => { const n = { ...prev }; delete n[field]; return n; });
+    setPrFormErrors(prev => { const n = { ...prev }; delete n[field as string]; delete n.general; return n; });
   };
 
-  const DELIVERY_LOCATIONS = ["HQ - Accra", "Regional Office - Kumasi", "Regional Office - Tamale", "Regional Office - Takoradi", "Field Office - Cape Coast", "Warehouse - Tema"];
+  const updateShortlistEntry = (index: number, patch: Partial<ShortlistEntry>) => {
+    setPrShortlist(prev => prev.map((entry, i) => (i === index ? { ...entry, ...patch } : entry)));
+    setPrFormErrors(prev => { const n = { ...prev }; delete n.shortlist; return n; });
+  };
 
   /* ── Render helpers ───────────────────────────────────────────────────────── */
 
@@ -565,7 +875,7 @@ export function ESSProcurementPlan() {
         </div>
       </div>
       <div>
-        <label className="block text-[11px] text-slate-500 mb-1">Estimated Cost (GHS) <span className="text-red-400">*</span></label>
+        <label className="block text-[11px] text-slate-500 mb-1">Estimated Cost (USD) <span className="text-red-400">*</span></label>
         <input type="number" min={0} value={item.estimatedCost || ""} onChange={e => setItem(p => ({ ...p, estimatedCost: parseFloat(e.target.value) || 0 }))} placeholder="0.00" className={cn("w-full px-3 py-2 border rounded-lg text-[12px] outline-none focus:border-purple-400", errors.estimatedCost ? "border-red-300 bg-red-50" : "border-slate-200")} />
         {errors.estimatedCost && <p className="text-[10px] text-red-500 mt-0.5">{errors.estimatedCost}</p>}
       </div>
@@ -691,6 +1001,7 @@ export function ESSProcurementPlan() {
             displayed.map((item, idx) => {
               const cc = categoryMeta[item.category];
               const sc = statusMeta[item.status];
+              const hasDraft = Boolean(planId && findDraftFor(planId, item.id));
               return (
                 <tr key={item.id} className={cn("border-b border-slate-100 hover:bg-slate-50/80 transition-colors", idx % 2 === 0 ? "bg-white" : "bg-slate-50/40")}>
                   <td className="px-5 py-2.5 text-[11px] text-slate-400">{idx + 1}</td>
@@ -708,9 +1019,15 @@ export function ESSProcurementPlan() {
                     <div className="flex items-center justify-center gap-1">
                       <button onClick={() => setViewItem({ item, planId: planId || "" })} className="p-1 hover:bg-slate-100 rounded" title="View Details"><Eye size={14} className="text-slate-400" /></button>
                       {isCurrentYearPlan && item.status === "Not Started" && item.approvalStatus === "Approved" && (
-                        <button onClick={() => planId && openPRForm(planId, item.id)} className="flex items-center gap-1 px-2.5 py-1 bg-emerald-600 text-white rounded-md text-[11px] font-medium hover:bg-emerald-700 transition-colors">
-                          <Play size={12} /> Initiate
-                        </button>
+                        hasDraft ? (
+                          <button onClick={() => planId && openPRForm(planId, item.id)} className="flex items-center gap-1 px-2.5 py-1 bg-amber-500 text-white rounded-md text-[11px] font-medium hover:bg-amber-600 transition-colors" title="A saved draft requisition is waiting to be completed">
+                            <Save size={12} /> Resume Draft
+                          </button>
+                        ) : (
+                          <button onClick={() => planId && openPRForm(planId, item.id)} className="flex items-center gap-1 px-2.5 py-1 bg-emerald-600 text-white rounded-md text-[11px] font-medium hover:bg-emerald-700 transition-colors">
+                            <Play size={12} /> Initiate
+                          </button>
+                        )
                       )}
                     </div>
                   </td>
@@ -1139,36 +1456,50 @@ export function ESSProcurementPlan() {
         const item = plan?.items.find(i => i.id === prFormOpen.itemId);
         if (!plan || !item) return null;
         const budgetCode = `BUD-${plan.year}-${item.category.substring(0, 3).toUpperCase()}-${item.id.replace("PI-", "")}`;
-        const isGoods = item.category === "Goods" || item.category === "Works";
-        const isServiceOrConsultancy = item.category === "Services" || item.category === "Consultancy";
-        const isDirectSelection = prFormData.sourcingMethod === "Direct Selection";
+        const isGoods = item.category === "Goods";
+        const isServiceOrConsultancy = needsServiceDates(item.category);
+        const isDirectSelection = isDirect(prFormData.sourcingMethod);
+        const needsShortlist = isDirectSelection || prFormData.sourcingMethod === "Limited Competition";
+        const planActivity = approvedPlanActivities.find(a => a.ppItemId === prFormData.linkedPlanItemId);
+        const methodCheck = validateMethodAgainstThreshold(prFormData.sourcingMethod, item.estimatedCost);
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center">
-            <div className="absolute inset-0 bg-black/50" onClick={() => setPrFormOpen(null)} />
+            <div className="absolute inset-0 bg-black/50" onClick={closePRForm} />
             <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-3xl mx-4 max-h-[92vh] flex flex-col">
               {/* Header */}
               <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 shrink-0">
                 <div>
-                  <h3 className="text-[16px] font-semibold text-slate-900">Create Purchase Requisition</h3>
-                  <p className="text-[12px] text-slate-400 mt-0.5">Initiating from {plan.year} Procurement Plan</p>
+                  <h3 className="text-[16px] font-semibold text-slate-900">
+                    {prDraftId ? "Complete Draft Requisition" : "Create Purchase Requisition"}
+                  </h3>
+                  <p className="text-[12px] text-slate-400 mt-0.5">
+                    Initiating from {plan.year} Procurement Plan · Raised by {currentUser.name}
+                  </p>
                 </div>
-                <button onClick={() => setPrFormOpen(null)} className="p-1.5 hover:bg-slate-100 rounded-lg"><X size={16} className="text-slate-500" /></button>
+                <button onClick={closePRForm} className="p-1.5 hover:bg-slate-100 rounded-lg"><X size={16} className="text-slate-500" /></button>
               </div>
 
               {/* Scrollable body */}
               <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
 
-                {/* ── Section 1: The Golden Thread (Locked) ─────────────────────── */}
+                {prFormErrors.general && (
+                  <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5">
+                    <AlertCircle size={13} className="text-red-500 mt-0.5 shrink-0" />
+                    <p className="text-[11px] text-red-700">{prFormErrors.general}</p>
+                  </div>
+                )}
+
+                {/* ── Section 1: The Golden Thread ──────────────────────────────── */}
                 <div>
                   <div className="flex items-center gap-2 mb-3">
                     <div className="w-1 h-4 bg-[#0B01D0] rounded-full" />
                     <p className="text-[12px] font-semibold text-slate-700 uppercase tracking-wider">Linked Plan Details</p>
-                    <span className="text-[9px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-medium uppercase">Auto-filled · Read Only</span>
+                    <span className="text-[9px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-medium uppercase">From the approved plan</span>
                   </div>
                   <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
                     <div className="grid grid-cols-2 gap-x-6 gap-y-3">
                       <div>
-                        <label className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Linked Plan Item</label>
+                        <label className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Departmental Plan Item</label>
                         <p className="text-[13px] text-slate-900 mt-0.5">{item.description}</p>
                       </div>
                       <div>
@@ -1187,13 +1518,38 @@ export function ESSProcurementPlan() {
                         <label className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Estimated Cost</label>
                         <p className="text-[13px] text-slate-900 font-medium mt-0.5">{fmt(item.estimatedCost)}</p>
                       </div>
+                      <div className="col-span-2">
+                        <label className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">
+                          Approved Plan Activity <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          value={prFormData.linkedPlanItemId}
+                          onChange={e => updatePrField("linkedPlanItemId", e.target.value)}
+                          className={cn(
+                            "mt-1 w-full border rounded-lg px-3 py-2 text-[12px] text-slate-900 outline-none bg-white",
+                            prFormErrors.linkedPlanItemId ? "border-red-300 bg-red-50/50" : "border-slate-200 focus:border-[#0B01D0]"
+                          )}
+                        >
+                          <option value="">Select the approved plan activity this draws against…</option>
+                          {approvedPlanActivities.map(activity => (
+                            <option key={activity.ppItemId} value={activity.ppItemId}>
+                              {activity.ppItemId} — {activity.activityDescription} ({fmt(activity.estimatedValue)}, {activity.fundingSource})
+                            </option>
+                          ))}
+                        </select>
+                        {prFormErrors.linkedPlanItemId && (
+                          <p className="text-[10px] text-red-500 mt-1 flex items-center gap-1"><AlertCircle size={10} /> {prFormErrors.linkedPlanItemId}</p>
+                        )}
+                      </div>
                       <div>
                         <label className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Funding Source</label>
-                        <p className="text-[13px] text-slate-900 mt-0.5">{prFormData.fundingSource}</p>
+                        <p className={cn("text-[13px] mt-0.5", planActivity ? "text-slate-900" : "text-slate-400")}>
+                          {planActivity?.fundingSource ?? "Set by the linked plan activity"}
+                        </p>
                       </div>
                       <div>
                         <label className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Budget Code</label>
-                        <p className="text-[13px] text-slate-900 font-mono mt-0.5">{budgetCode}</p>
+                        <p className="text-[13px] text-slate-900 font-mono mt-0.5">{planActivity?.linkedBudgetLine ?? budgetCode}</p>
                       </div>
                     </div>
                   </div>
@@ -1274,7 +1630,11 @@ export function ESSProcurementPlan() {
                             <label className="text-[12px] font-medium text-slate-700 mb-2 block">Consultancy Type</label>
                             <div className="flex items-center gap-4">
                               {(["Firm", "Individual"] as const).map(type => (
-                                <label key={type} className="flex items-center gap-2 cursor-pointer group">
+                                <label
+                                  key={type}
+                                  onClick={() => updatePrField("consultancyType", type)}
+                                  className="flex items-center gap-2 cursor-pointer group"
+                                >
                                   <div className={cn(
                                     "w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors",
                                     prFormData.consultancyType === type ? "border-[#0B01D0]" : "border-slate-300 group-hover:border-slate-400"
@@ -1342,51 +1702,103 @@ export function ESSProcurementPlan() {
                       <label className="text-[12px] font-medium text-slate-700 mb-1.5 block">Proposed Sourcing Method</label>
                       <select
                         value={prFormData.sourcingMethod}
-                        onChange={e => updatePrField("sourcingMethod", e.target.value)}
+                        onChange={e => updatePrField("sourcingMethod", e.target.value as ProcurementMethod)}
                         className="w-full border border-slate-200 rounded-lg px-3 py-2 text-[12px] text-slate-900 outline-none focus:border-[#0B01D0] bg-white"
                       >
-                        <option value="Standard Competitive">Standard Competitive Bidding</option>
-                        <option value="Direct Selection">Direct Selection (Sole Source)</option>
+                        {PROCUREMENT_METHODS.map(method => (
+                          <option key={method} value={method}>
+                            {method}{method === methodCheck.suggested ? " — suggested at this value" : ""}
+                          </option>
+                        ))}
                       </select>
                     </div>
 
-                    {isDirectSelection && (
-                      <div className="border border-amber-200 bg-amber-50/50 rounded-lg p-4 space-y-4">
-                        <div className="flex items-start gap-2 mb-1">
+                    {!methodCheck.compliant && (
+                      <div className="border border-amber-200 bg-amber-50/50 rounded-lg p-4 space-y-3">
+                        <div className="flex items-start gap-2">
                           <AlertCircle size={13} className="text-amber-600 mt-0.5 shrink-0" />
-                          <p className="text-[11px] text-amber-700">Direct Selection requires additional justification and vendor details. This will be subject to enhanced review during the approval process.</p>
+                          <p className="text-[11px] text-amber-700">{methodCheck.message}</p>
                         </div>
                         <div>
                           <label className="text-[12px] font-medium text-slate-700 mb-1.5 block">
-                            Direct Selection Justification <span className="text-red-500">*</span>
+                            Threshold Deviation Justification <span className="text-red-500">*</span>
                           </label>
                           <textarea
-                            value={prFormData.directSelectionJustification}
-                            onChange={e => updatePrField("directSelectionJustification", e.target.value)}
-                            rows={3}
+                            value={prFormData.methodDeviationJustification}
+                            onChange={e => updatePrField("methodDeviationJustification", e.target.value)}
+                            rows={2}
                             className={cn(
                               "w-full border rounded-lg px-3 py-2.5 text-[12px] text-slate-900 placeholder:text-slate-400 outline-none transition-colors resize-none",
-                              prFormErrors.directSelectionJustification ? "border-red-300 bg-red-50/50" : "border-slate-200 focus:border-[#0B01D0]"
+                              prFormErrors.methodDeviationJustification ? "border-red-300 bg-red-50/50" : "border-slate-200 focus:border-[#0B01D0]"
                             )}
-                            placeholder="Why are we requesting procurement from only this vendor? (e.g., sole distributor, proprietary technology, continuation of existing engagement...)"
+                            placeholder="Why does this procurement depart from the method its value band indicates?"
                           />
-                          {prFormErrors.directSelectionJustification && (
-                            <p className="text-[10px] text-red-500 mt-1 flex items-center gap-1"><AlertCircle size={10} /> {prFormErrors.directSelectionJustification}</p>
+                          {prFormErrors.methodDeviationJustification && (
+                            <p className="text-[10px] text-red-500 mt-1 flex items-center gap-1"><AlertCircle size={10} /> {prFormErrors.methodDeviationJustification}</p>
                           )}
                         </div>
+                      </div>
+                    )}
 
-                        <div>
-                          <label className="text-[12px] font-medium text-slate-700 mb-2 block">Vendor Source</label>
-                          <div className="relative">
-                            <button
-                              type="button"
-                              onClick={() => { setVendorSearchOpen(!vendorSearchOpen); setVendorSearchQuery(""); }}
-                              className="flex items-center gap-1.5 px-3 py-2 border border-slate-200 bg-white rounded-lg text-[11px] text-[#0B01D0] hover:bg-slate-50 transition-colors font-medium mb-1"
-                            >
-                              <Search size={12} /> Search Vendor Database
-                            </button>
-                            {vendorSearchOpen && (
-                              <div className="absolute z-50 left-0 top-full mt-0 w-full max-w-md bg-white border border-slate-200 rounded-lg shadow-xl">
+                    {isDirectSelection && (
+                      <div>
+                        <label className="text-[12px] font-medium text-slate-700 mb-1.5 block">
+                          Direct Selection Justification <span className="text-red-500">*</span>
+                        </label>
+                        <textarea
+                          value={prFormData.directSelectionJustification}
+                          onChange={e => updatePrField("directSelectionJustification", e.target.value)}
+                          rows={3}
+                          className={cn(
+                            "w-full border rounded-lg px-3 py-2.5 text-[12px] text-slate-900 placeholder:text-slate-400 outline-none transition-colors resize-none",
+                            prFormErrors.directSelectionJustification ? "border-red-300 bg-red-50/50" : "border-slate-200 focus:border-[#0B01D0]"
+                          )}
+                          placeholder="Why are we requesting procurement from only this vendor? (e.g., sole distributor, proprietary technology, continuation of existing engagement...)"
+                        />
+                        {prFormErrors.directSelectionJustification && (
+                          <p className="text-[10px] text-red-500 mt-1 flex items-center gap-1"><AlertCircle size={10} /> {prFormErrors.directSelectionJustification}</p>
+                        )}
+                      </div>
+                    )}
+
+                    {needsShortlist && (
+                      <div className="border border-amber-200 bg-amber-50/50 rounded-lg p-4 space-y-4">
+                        <div className="flex items-start gap-2">
+                          <AlertCircle size={13} className="text-amber-600 mt-0.5 shrink-0" />
+                          <p className="text-[11px] text-amber-700">
+                            {isDirectSelection
+                              ? "Direct Selection requires the supplier's full legal name, registered address and email. This will be subject to enhanced review during approval."
+                              : "Limited Competition requires the invited firms or individuals to be identified up front."}
+                          </p>
+                        </div>
+
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={() => { setVendorSearchOpen(!vendorSearchOpen); setVendorSearchQuery(""); }}
+                            className="flex items-center gap-1.5 px-3 py-2 border border-slate-200 bg-white rounded-lg text-[11px] text-[#0B01D0] hover:bg-slate-50 transition-colors font-medium"
+                          >
+                            <Search size={12} /> Search Vendor Database
+                          </button>
+                          {vendorSearchOpen && (() => {
+                            const query = vendorSearchQuery.trim().toLowerCase();
+                            const eligibleIds = new Set(getEligibleVendors().map(v => v.id));
+                            const matches = getVendors()
+                              .filter(v => {
+                                if (!query) return true;
+                                return (
+                                  vendorDisplayName(v).toLowerCase().includes(query) ||
+                                  v.category.toLowerCase().includes(query) ||
+                                  v.subCategory.toLowerCase().includes(query) ||
+                                  vendorEmail(v).toLowerCase().includes(query)
+                                );
+                              })
+                              .sort((a, b) => {
+                                const eligibility = Number(eligibleIds.has(b.id)) - Number(eligibleIds.has(a.id));
+                                return eligibility !== 0 ? eligibility : avgScore(b.performance) - avgScore(a.performance);
+                              });
+                            return (
+                              <div className="absolute z-50 left-0 top-full mt-1 w-full max-w-md bg-white border border-slate-200 rounded-lg shadow-xl">
                                 <div className="p-2 border-b border-slate-100">
                                   <div className="flex items-center gap-2 px-2 py-1.5 bg-slate-50 rounded-md">
                                     <Search size={12} className="text-slate-400 shrink-0" />
@@ -1394,7 +1806,7 @@ export function ESSProcurementPlan() {
                                       autoFocus
                                       value={vendorSearchQuery}
                                       onChange={e => setVendorSearchQuery(e.target.value)}
-                                      placeholder="Search by name, category, or contact..."
+                                      placeholder="Search the vendor register by name, category or email…"
                                       className="flex-1 bg-transparent text-[11px] text-slate-900 outline-none placeholder:text-slate-400"
                                     />
                                     <button type="button" onClick={() => setVendorSearchOpen(false)} className="text-slate-400 hover:text-slate-600">
@@ -1402,79 +1814,122 @@ export function ESSProcurementPlan() {
                                     </button>
                                   </div>
                                 </div>
-                                <div className="max-h-52 overflow-y-auto">
-                                  {VENDOR_DATABASE
-                                    .filter(v => v.status === "Active")
-                                    .filter(v => {
-                                      if (!vendorSearchQuery.trim()) return true;
-                                      const q = vendorSearchQuery.toLowerCase();
-                                      return v.name.toLowerCase().includes(q) || v.category.toLowerCase().includes(q) || v.contactPerson.toLowerCase().includes(q);
-                                    })
-                                    .map(v => (
+                                <div className="max-h-56 overflow-y-auto">
+                                  {matches.map((v: Vendor) => {
+                                    const eligible = eligibleIds.has(v.id);
+                                    const rating = avgScore(v.performance);
+                                    const blocked = eligible ? [] : checkSourcingEligibility(v.id).blockingReasons;
+                                    return (
                                       <button
                                         key={v.id}
                                         type="button"
-                                        className="w-full text-left px-3 py-2.5 hover:bg-indigo-50 transition-colors border-b border-slate-50 last:border-0"
+                                        disabled={!eligible}
+                                        title={eligible ? undefined : blocked.join(" ")}
+                                        className={cn(
+                                          "w-full text-left px-3 py-2.5 border-b border-slate-50 last:border-0 transition-colors",
+                                          eligible ? "hover:bg-indigo-50" : "opacity-60 cursor-not-allowed bg-slate-50/60"
+                                        )}
                                         onClick={() => {
-                                          updatePrField("vendorLegalName", v.name);
-                                          updatePrField("vendorAddress", v.address);
-                                          updatePrField("vendorContact", `${v.phone} · ${v.email}`);
+                                          updateShortlistEntry(vendorSearchTarget, {
+                                            name: vendorDisplayName(v),
+                                            address: vendorAddress(v),
+                                            email: vendorEmail(v),
+                                          });
                                           setVendorSearchOpen(false);
                                           setVendorSearchQuery("");
                                         }}
                                       >
-                                        <div className="flex items-center justify-between">
-                                          <p className="text-[11px] font-medium text-slate-900">{v.name}</p>
-                                          <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-medium">{v.category}</span>
+                                        <div className="flex items-center justify-between gap-2">
+                                          <p className="text-[11px] font-medium text-slate-900">{vendorDisplayName(v)}</p>
+                                          <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-medium shrink-0">{v.category}</span>
                                         </div>
-                                        <p className="text-[10px] text-slate-500 mt-0.5">{v.contactPerson} · {v.phone}</p>
+                                        <div className="flex items-center gap-2 mt-0.5">
+                                          <span className={cn(
+                                            "text-[10px] font-medium",
+                                            rating >= 7 ? "text-emerald-600" : rating >= 5 ? "text-amber-600" : "text-red-500"
+                                          )}>
+                                            {rating > 0 ? `Performance ${rating}/10` : "Not yet rated"}
+                                          </span>
+                                          <span className="text-[10px] text-slate-400">· {v.vendorId} · {v.status}</span>
+                                        </div>
+                                        {!eligible && (
+                                          <p className="text-[9px] text-red-500 mt-0.5">{blocked[0] ?? "Not eligible for sourcing."}</p>
+                                        )}
                                       </button>
-                                    ))
-                                  }
-                                  {VENDOR_DATABASE.filter(v => v.status === "Active").filter(v => {
-                                    if (!vendorSearchQuery.trim()) return true;
-                                    const q = vendorSearchQuery.toLowerCase();
-                                    return v.name.toLowerCase().includes(q) || v.category.toLowerCase().includes(q) || v.contactPerson.toLowerCase().includes(q);
-                                  }).length === 0 && (
+                                    );
+                                  })}
+                                  {matches.length === 0 && (
                                     <p className="text-[11px] text-slate-400 text-center py-4">No vendors found matching "{vendorSearchQuery}"</p>
                                   )}
                                 </div>
                               </div>
-                            )}
-                          </div>
-                          <p className="text-[10px] text-slate-400 mb-3 mt-2">Or enter new vendor details manually:</p>
-                          <div className="grid grid-cols-1 gap-3">
-                            <div>
-                              <label className="text-[11px] text-slate-500 mb-1 block">Full Legal Name</label>
+                            );
+                          })()}
+                        </div>
+
+                        <div className="space-y-3">
+                          {prShortlist.map((entry, idx) => (
+                            <div key={idx} className="bg-white border border-slate-200 rounded-lg p-3 space-y-2">
+                              <div className="flex items-center justify-between">
+                                <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">
+                                  {isDirectSelection ? "Proposed supplier" : `Shortlisted entity ${idx + 1}`}
+                                </p>
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => { setVendorSearchTarget(idx); setVendorSearchOpen(true); setVendorSearchQuery(""); }}
+                                    className="text-[10px] text-[#0B01D0] font-medium hover:underline"
+                                  >
+                                    Fill from register
+                                  </button>
+                                  {prShortlist.length > 1 && (
+                                    <button
+                                      type="button"
+                                      onClick={() => setPrShortlist(prev => prev.filter((_, i) => i !== idx))}
+                                      className="p-0.5 hover:bg-red-50 rounded"
+                                      title="Remove"
+                                    >
+                                      <Trash2 size={12} className="text-red-400" />
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
                               <input
-                                value={prFormData.vendorLegalName}
-                                onChange={e => updatePrField("vendorLegalName", e.target.value)}
-                                placeholder="e.g., TechServe Ghana Ltd"
+                                value={entry.name}
+                                onChange={e => updateShortlistEntry(idx, { name: e.target.value })}
+                                placeholder="Full legal name — e.g., TechServe Ghana Ltd"
                                 className="w-full border border-slate-200 rounded-lg px-3 py-2 text-[12px] text-slate-900 outline-none focus:border-[#0B01D0] placeholder:text-slate-400"
                               />
-                            </div>
-                            <div className="grid grid-cols-2 gap-3">
-                              <div>
-                                <label className="text-[11px] text-slate-500 mb-1 block">Registered Address</label>
+                              <div className="grid grid-cols-2 gap-2">
                                 <input
-                                  value={prFormData.vendorAddress}
-                                  onChange={e => updatePrField("vendorAddress", e.target.value)}
-                                  placeholder="e.g., 14 Independence Ave, Accra"
+                                  value={entry.address}
+                                  onChange={e => updateShortlistEntry(idx, { address: e.target.value })}
+                                  placeholder="Registered address"
                                   className="w-full border border-slate-200 rounded-lg px-3 py-2 text-[12px] text-slate-900 outline-none focus:border-[#0B01D0] placeholder:text-slate-400"
                                 />
-                              </div>
-                              <div>
-                                <label className="text-[11px] text-slate-500 mb-1 block">Contact Information</label>
                                 <input
-                                  value={prFormData.vendorContact}
-                                  onChange={e => updatePrField("vendorContact", e.target.value)}
-                                  placeholder="e.g., +233 30 222 1234"
+                                  type="email"
+                                  value={entry.email}
+                                  onChange={e => updateShortlistEntry(idx, { email: e.target.value })}
+                                  placeholder="Email address"
                                   className="w-full border border-slate-200 rounded-lg px-3 py-2 text-[12px] text-slate-900 outline-none focus:border-[#0B01D0] placeholder:text-slate-400"
                                 />
                               </div>
                             </div>
-                          </div>
+                          ))}
                         </div>
+                        {!isDirectSelection && (
+                          <button
+                            type="button"
+                            onClick={() => setPrShortlist(prev => [...prev, blankShortlistEntry()])}
+                            className="text-[11px] text-[#0B01D0] font-medium hover:underline"
+                          >
+                            + Add another entity
+                          </button>
+                        )}
+                        {prFormErrors.shortlist && (
+                          <p className="text-[10px] text-red-500 flex items-center gap-1"><AlertCircle size={10} /> {prFormErrors.shortlist}</p>
+                        )}
                       </div>
                     )}
                   </div>
@@ -1490,7 +1945,7 @@ export function ESSProcurementPlan() {
                     {/* Specs / ToR — Required */}
                     <div>
                       <label className="text-[12px] font-medium text-slate-700 mb-1.5 block">
-                        Upload Specs / Terms of Reference <span className="text-red-500">*</span>
+                        Upload {item.category === "Goods" ? "Technical Specifications" : "Terms of Reference"} <span className="text-red-500">*</span>
                       </label>
                       <div className={cn(
                         "border border-dashed rounded-lg p-4",
@@ -1499,12 +1954,18 @@ export function ESSProcurementPlan() {
                         {prSpecsAttachments.length > 0 && (
                           <div className="space-y-2 mb-3">
                             {prSpecsAttachments.map((file, i) => (
-                              <div key={`spec-${i}`} className="flex items-center justify-between bg-white border border-slate-200 rounded-lg px-3 py-2">
-                                <div className="flex items-center gap-2">
-                                  <Paperclip size={12} className="text-[#0B01D0]" />
-                                  <span className="text-[12px] text-slate-700">{file}</span>
-                                </div>
-                                <button onClick={() => { setPrSpecsAttachments(prev => prev.filter((_, idx) => idx !== i)); if (prSpecsAttachments.length <= 1) setPrFormErrors(prev => ({ ...prev, specsAttachment: "At least one Specs / Terms of Reference document is required" })); }} className="p-0.5 hover:bg-slate-100 rounded">
+                              <div key={file.id} className="flex items-center justify-between bg-white border border-slate-200 rounded-lg px-3 py-2">
+                                <button
+                                  type="button"
+                                  onClick={() => openFile(file)}
+                                  className="flex items-center gap-2 text-left min-w-0"
+                                  title="Open document"
+                                >
+                                  <Paperclip size={12} className="text-[#0B01D0] shrink-0" />
+                                  <span className="text-[12px] text-slate-700 truncate hover:underline">{file.name}</span>
+                                  <span className="text-[10px] text-slate-400 shrink-0">{file.type} · {file.sizeLabel}</span>
+                                </button>
+                                <button onClick={() => setPrSpecsAttachments(prev => prev.filter((_, idx) => idx !== i))} className="p-0.5 hover:bg-slate-100 rounded shrink-0">
                                   <X size={12} className="text-slate-400" />
                                 </button>
                               </div>
@@ -1512,10 +1973,10 @@ export function ESSProcurementPlan() {
                           </div>
                         )}
                         <button
-                          onClick={handleUploadSpecsFile}
+                          onClick={() => void handleUploadFiles("specs")}
                           className="flex items-center gap-1.5 px-3 py-2 border border-slate-200 bg-white rounded-lg text-[11px] text-slate-600 hover:bg-slate-50 transition-colors"
                         >
-                          <Upload size={12} /> Upload Specs / ToR
+                          <Upload size={12} /> Choose file…
                         </button>
                       </div>
                       {prFormErrors.specsAttachment && (
@@ -1532,12 +1993,18 @@ export function ESSProcurementPlan() {
                         {prSupportingDocs.length > 0 && (
                           <div className="space-y-2 mb-3">
                             {prSupportingDocs.map((file, i) => (
-                              <div key={`sup-${i}`} className="flex items-center justify-between bg-white border border-slate-200 rounded-lg px-3 py-2">
-                                <div className="flex items-center gap-2">
-                                  <Paperclip size={12} className="text-slate-400" />
-                                  <span className="text-[12px] text-slate-700">{file}</span>
-                                </div>
-                                <button onClick={() => setPrSupportingDocs(prev => prev.filter((_, idx) => idx !== i))} className="p-0.5 hover:bg-slate-100 rounded">
+                              <div key={file.id} className="flex items-center justify-between bg-white border border-slate-200 rounded-lg px-3 py-2">
+                                <button
+                                  type="button"
+                                  onClick={() => openFile(file)}
+                                  className="flex items-center gap-2 text-left min-w-0"
+                                  title="Open document"
+                                >
+                                  <Paperclip size={12} className="text-slate-400 shrink-0" />
+                                  <span className="text-[12px] text-slate-700 truncate hover:underline">{file.name}</span>
+                                  <span className="text-[10px] text-slate-400 shrink-0">{file.type} · {file.sizeLabel}</span>
+                                </button>
+                                <button onClick={() => setPrSupportingDocs(prev => prev.filter((_, idx) => idx !== i))} className="p-0.5 hover:bg-slate-100 rounded shrink-0">
                                   <X size={12} className="text-slate-400" />
                                 </button>
                               </div>
@@ -1545,12 +2012,15 @@ export function ESSProcurementPlan() {
                           </div>
                         )}
                         <button
-                          onClick={handleUploadSupportingDoc}
+                          onClick={() => void handleUploadFiles("supporting")}
                           className="flex items-center gap-1.5 px-3 py-2 border border-slate-200 bg-white rounded-lg text-[11px] text-slate-600 hover:bg-slate-50 transition-colors"
                         >
-                          <Upload size={12} /> Upload Supporting Document
+                          <Upload size={12} /> Choose file…
                         </button>
                       </div>
+                      {prFormErrors.supportingDocs && (
+                        <p className="text-[10px] text-red-500 mt-1 flex items-center gap-1"><AlertCircle size={10} /> {prFormErrors.supportingDocs}</p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1559,12 +2029,20 @@ export function ESSProcurementPlan() {
 
               {/* Footer */}
               <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200 bg-slate-50/50 rounded-b-2xl shrink-0">
-                <p className="text-[10px] text-slate-400">PR will be routed to Department Head for Level 1 approval</p>
+                <p className="text-[10px] text-slate-400">
+                  {prDraftId
+                    ? "Saved as a draft requisition — it will enter the workflow when you submit."
+                    : "PR will be routed to Department Head for Level 1 approval"}
+                </p>
                 <div className="flex items-center gap-2">
                   <button onClick={handlePRSaveAsDraft} className="flex items-center gap-1.5 px-4 py-2 border border-slate-200 rounded-lg text-[12px] text-slate-600 hover:bg-white transition-colors">
                     <Save size={13} /> Save as Draft
                   </button>
-                  <button onClick={handlePRFormSubmit} className="flex items-center gap-1.5 px-5 py-2 bg-[#0B01D0] text-white rounded-lg text-[12px] font-medium hover:bg-[#0900a5] transition-colors">
+                  <button
+                    onClick={handlePRFormSubmit}
+                    disabled={prSubmitting}
+                    className="flex items-center gap-1.5 px-5 py-2 bg-[#0B01D0] text-white rounded-lg text-[12px] font-medium hover:bg-[#0900a5] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
                     <Send size={13} /> Submit Requisition
                   </button>
                 </div>

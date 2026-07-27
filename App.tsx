@@ -1,6 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 const imgImage35 = "/acet-logo-white.png";
 import { NavigationSidebar } from "./components/NavigationSidebar";
+import { VendorPortal } from "./components/VendorPortal";
+import { ContractRepository } from "./pages/ContractRepository";
+import { ProjectPurchasePlans } from "./pages/ProjectPurchasePlans";
+import { RoleSwitcher } from "./components/RoleSwitcher";
+import { startReminderSweep } from "./lib/notificationStore";
+import { syncAllDocumentReminders } from "./lib/vendorStore";
+import { syncAllContractReminders } from "./lib/contractStore";
+import { detectOverduePlanItems } from "./lib/procurementStore";
 import { Login } from "./components/Login";
 import { EmployeeHome } from "./pages/EmployeeHome";
 import { MyPersonalInformation } from "./pages/MyPersonalInformation";
@@ -174,6 +182,16 @@ export default function App() {
     setIsAuthenticated(false);
     setSelectedMenuItem("EMPLOYEE SELF-SERVICE-Home");
   };
+
+  // Bring the reminder queue to life: schedule the outstanding document, contract
+  // and deliverable reminders, flag plan items that have slipped, and keep the
+  // sweep running so escalations fire while the session is open.
+  useEffect(() => {
+    syncAllDocumentReminders();
+    syncAllContractReminders();
+    detectOverduePlanItems();
+    startReminderSweep();
+  }, []);
 
   if (!isAuthenticated) {
     return <Login onLogin={handleLogin} />;
@@ -431,8 +449,10 @@ export default function App() {
         return <ContractorsManagement />;
       case "PROCUREMENT-Approvals-Purchase Requisitions":
         return <ProcurementApprovals />;
-      case "PROCUREMENT-Purchase Plan":
+      case "PROCUREMENT-Purchase Plan-Departmental Plans":
         return <PurchasePlan />;
+      case "PROCUREMENT-Purchase Plan-Project Plans":
+        return <ProjectPurchasePlans />;
       case "PROCUREMENT-Approvals-Procurement Plan Approvals":
         return <PurchasePlanApproval />;
       case "PROCUREMENT-Approvals-Senior Management Approval":
@@ -449,6 +469,10 @@ export default function App() {
         return <ProcurementReportingAnalytics initialTab="donors" />;
       case "PROCUREMENT-Reporting & Analytics-Combined Analysis Report":
         return <ProcurementReportingAnalytics initialTab="combined" />;
+      case "PROCUREMENT-Contract Repository":
+        return <ContractRepository />;
+      case "PROCUREMENT-Vendor Portal":
+        return <VendorPortal />;
       case "PAYROLL MANAGEMENT-Dashboard":
         return <PayrollManagementDashboard />;
       case "PAYROLL MANAGEMENT-Payroll":
@@ -563,6 +587,7 @@ export default function App() {
           <img alt="Logo" className="h-full w-auto object-contain" src={imgImage35} />
         </div>
         <div className="flex items-center gap-4">
+          <RoleSwitcher />
           <button
             onClick={() => {
               setShowProfileDropdown(false);
