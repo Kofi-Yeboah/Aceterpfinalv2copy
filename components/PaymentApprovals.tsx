@@ -6,7 +6,7 @@ interface PaymentApproval {
   requestNo: string;
   date: string;
   requestedBy: string;
-  vendor: string;
+  supplier: string;
   description: string;
   amount: string;
   category: string;
@@ -15,14 +15,14 @@ interface PaymentApproval {
 }
 
 const approvalData: PaymentApproval[] = [
-  { id: 1, requestNo: "PAY-REQ-001", date: "Dec 02, 2024", requestedBy: "John Smith", vendor: "Tech Solutions Ltd", description: "Software licenses renewal", amount: "$25,000", category: "IT", priority: "High", status: "Pending" },
-  { id: 2, requestNo: "PAY-REQ-002", date: "Dec 01, 2024", requestedBy: "Sarah Johnson", vendor: "Marketing Agency", description: "Campaign development", amount: "$32,000", category: "Marketing", priority: "Medium", status: "Pending" },
-  { id: 3, requestNo: "PAY-REQ-003", date: "Nov 30, 2024", requestedBy: "Mike Brown", vendor: "Office Supplies Co.", description: "Monthly office supplies", amount: "$12,450", category: "Operations", priority: "Low", status: "Approved" },
-  { id: 4, requestNo: "PAY-REQ-004", date: "Nov 28, 2024", requestedBy: "Emily Davis", vendor: "Training Institute", description: "Staff training program", amount: "$15,600", category: "HR", priority: "Medium", status: "Approved" },
-  { id: 5, requestNo: "PAY-REQ-005", date: "Nov 25, 2024", requestedBy: "John Smith", vendor: "Healthcare Plus", description: "Health insurance premiums", amount: "$45,800", category: "Benefits", priority: "High", status: "Approved" },
-  { id: 6, requestNo: "PAY-REQ-006", date: "Nov 22, 2024", requestedBy: "Sarah Johnson", vendor: "Equipment Rentals", description: "Conference equipment rental", amount: "$5,200", category: "Events", priority: "Low", status: "Rejected" },
-  { id: 7, requestNo: "PAY-REQ-007", date: "Nov 20, 2024", requestedBy: "Mike Brown", vendor: "Transport Services", description: "Team travel expenses", amount: "$8,750", category: "Travel", priority: "Medium", status: "Approved" },
-  { id: 8, requestNo: "PAY-REQ-008", date: "Nov 18, 2024", requestedBy: "Emily Davis", vendor: "Consulting Firm", description: "Business consulting services", amount: "$18,500", category: "Professional Services", priority: "High", status: "Pending" },
+  { id: 1, requestNo: "PAY-REQ-001", date: "Dec 02, 2024", requestedBy: "John Smith", supplier: "Tech Solutions Ltd", description: "Software licenses renewal", amount: "$25,000", category: "IT", priority: "High", status: "Pending" },
+  { id: 2, requestNo: "PAY-REQ-002", date: "Dec 01, 2024", requestedBy: "Sarah Johnson", supplier: "Marketing Agency", description: "Campaign development", amount: "$32,000", category: "Marketing", priority: "Medium", status: "Pending" },
+  { id: 3, requestNo: "PAY-REQ-003", date: "Nov 30, 2024", requestedBy: "Mike Brown", supplier: "Office Supplies Co.", description: "Monthly office supplies", amount: "$12,450", category: "Operations", priority: "Low", status: "Approved" },
+  { id: 4, requestNo: "PAY-REQ-004", date: "Nov 28, 2024", requestedBy: "Emily Davis", supplier: "Training Institute", description: "Staff training program", amount: "$15,600", category: "HR", priority: "Medium", status: "Approved" },
+  { id: 5, requestNo: "PAY-REQ-005", date: "Nov 25, 2024", requestedBy: "John Smith", supplier: "Healthcare Plus", description: "Health insurance premiums", amount: "$45,800", category: "Benefits", priority: "High", status: "Approved" },
+  { id: 6, requestNo: "PAY-REQ-006", date: "Nov 22, 2024", requestedBy: "Sarah Johnson", supplier: "Equipment Rentals", description: "Conference equipment rental", amount: "$5,200", category: "Events", priority: "Low", status: "Rejected" },
+  { id: 7, requestNo: "PAY-REQ-007", date: "Nov 20, 2024", requestedBy: "Mike Brown", supplier: "Transport Services", description: "Team travel expenses", amount: "$8,750", category: "Travel", priority: "Medium", status: "Approved" },
+  { id: 8, requestNo: "PAY-REQ-008", date: "Nov 18, 2024", requestedBy: "Emily Davis", supplier: "Consulting Firm", description: "Business consulting services", amount: "$18,500", category: "Professional Services", priority: "High", status: "Pending" },
 ];
 
 export function PaymentApprovals() {
@@ -66,7 +66,7 @@ export function PaymentApprovals() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
                 type="text"
-                placeholder="Search by request no., vendor..."
+                placeholder="Search by request no., supplier..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -125,7 +125,7 @@ export function PaymentApprovals() {
               <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Request No.</th>
               <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Date</th>
               <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Requested By</th>
-              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Vendor</th>
+              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Supplier</th>
               <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Description</th>
               <th className="text-right px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Amount</th>
               <th className="text-center px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Priority</th>
@@ -146,7 +146,7 @@ export function PaymentApprovals() {
                   <p className="text-[12px] text-slate-900">{approval.requestedBy}</p>
                 </td>
                 <td className="px-4 py-4">
-                  <p className="text-[12px] text-slate-900">{approval.vendor}</p>
+                  <p className="text-[12px] text-slate-900">{approval.supplier}</p>
                 </td>
                 <td className="px-4 py-4">
                   <p className="text-[12px] text-slate-600">{approval.description}</p>

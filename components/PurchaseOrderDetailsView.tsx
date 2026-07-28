@@ -5,7 +5,7 @@ import { getSignature, subscribe as subscribeSignature, getCurrentUserId, canUse
 interface PurchaseOrder {
   id: string;
   poNumber: string;
-  vendor: string;
+  supplier: string;
   itemDescription: string;
   orderDate: string;
   deliveryDate: string;
@@ -106,8 +106,8 @@ export function PurchaseOrderDetailsView({ purchaseOrder, onBack }: PurchaseOrde
           {/* Row 1 */}
           <div className="grid grid-cols-4 gap-6 mb-6">
             <div>
-              <p className="text-xs text-slate-500 mb-1">Vendor</p>
-              <p className="text-sm font-medium text-slate-900">{purchaseOrder.vendor}</p>
+              <p className="text-xs text-slate-500 mb-1">Supplier</p>
+              <p className="text-sm font-medium text-slate-900">{purchaseOrder.supplier}</p>
             </div>
             <div>
               <p className="text-xs text-slate-500 mb-1">Order Date</p>
@@ -272,8 +272,8 @@ export function PurchaseOrderDetailsView({ purchaseOrder, onBack }: PurchaseOrde
                   <span className="text-xs text-slate-900">{purchaseOrder.poNumber}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-xs text-slate-500">Vendor</span>
-                  <span className="text-xs text-slate-900">{purchaseOrder.vendor}</span>
+                  <span className="text-xs text-slate-500">Supplier</span>
+                  <span className="text-xs text-slate-900">{purchaseOrder.supplier}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-xs text-slate-500">Amount</span>

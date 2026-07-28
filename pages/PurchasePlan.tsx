@@ -27,7 +27,7 @@ interface PurchaseItem {
   quantity: number;
   unitPrice: number;
   totalCost: number;
-  vendor: string;
+  supplier: string;
   expectedDelivery: string;
   priority: "Critical" | "High" | "Medium" | "Low";
   justification: string;
@@ -60,12 +60,12 @@ const mockPlans: PurchasePlan[] = [
     totalItems: 6,
     status: "Submitted",
     items: [
-      { id: "IT-1", itemName: "Dell PowerEdge R750 Servers", category: "Hardware", quantity: 4, unitPrice: 18500, totalCost: 74000, vendor: "Dell Technologies", expectedDelivery: "Apr 15, 2026", priority: "Critical", justification: "Current servers reaching end-of-life, critical for system uptime." },
-      { id: "IT-2", itemName: "Cisco Meraki Network Switches", category: "Networking", quantity: 8, unitPrice: 3200, totalCost: 25600, vendor: "Cisco Systems", expectedDelivery: "Apr 20, 2026", priority: "High", justification: "Network expansion for new office wing." },
-      { id: "IT-3", itemName: "Microsoft 365 E5 Licenses", category: "Software", quantity: 120, unitPrice: 570, totalCost: 68400, vendor: "Microsoft", expectedDelivery: "Mar 01, 2026", priority: "High", justification: "Annual license renewal for all staff." },
-      { id: "IT-4", itemName: "UPS Battery Systems", category: "Hardware", quantity: 6, unitPrice: 4500, totalCost: 27000, vendor: "APC by Schneider", expectedDelivery: "May 01, 2026", priority: "Medium", justification: "Power backup for server room." },
-      { id: "IT-5", itemName: "Cybersecurity Suite (CrowdStrike)", category: "Software", quantity: 1, unitPrice: 35000, totalCost: 35000, vendor: "CrowdStrike", expectedDelivery: "Mar 15, 2026", priority: "Critical", justification: "Endpoint protection and threat detection." },
-      { id: "IT-6", itemName: "Conference Room AV Equipment", category: "Equipment", quantity: 3, unitPrice: 5000, totalCost: 15000, vendor: "Poly", expectedDelivery: "Jun 01, 2026", priority: "Low", justification: "Upgrade meeting rooms for hybrid work." },
+      { id: "IT-1", itemName: "Dell PowerEdge R750 Servers", category: "Hardware", quantity: 4, unitPrice: 18500, totalCost: 74000, supplier: "Dell Technologies", expectedDelivery: "Apr 15, 2026", priority: "Critical", justification: "Current servers reaching end-of-life, critical for system uptime." },
+      { id: "IT-2", itemName: "Cisco Meraki Network Switches", category: "Networking", quantity: 8, unitPrice: 3200, totalCost: 25600, supplier: "Cisco Systems", expectedDelivery: "Apr 20, 2026", priority: "High", justification: "Network expansion for new office wing." },
+      { id: "IT-3", itemName: "Microsoft 365 E5 Licenses", category: "Software", quantity: 120, unitPrice: 570, totalCost: 68400, supplier: "Microsoft", expectedDelivery: "Mar 01, 2026", priority: "High", justification: "Annual license renewal for all staff." },
+      { id: "IT-4", itemName: "UPS Battery Systems", category: "Hardware", quantity: 6, unitPrice: 4500, totalCost: 27000, supplier: "APC by Schneider", expectedDelivery: "May 01, 2026", priority: "Medium", justification: "Power backup for server room." },
+      { id: "IT-5", itemName: "Cybersecurity Suite (CrowdStrike)", category: "Software", quantity: 1, unitPrice: 35000, totalCost: 35000, supplier: "CrowdStrike", expectedDelivery: "Mar 15, 2026", priority: "Critical", justification: "Endpoint protection and threat detection." },
+      { id: "IT-6", itemName: "Conference Room AV Equipment", category: "Equipment", quantity: 3, unitPrice: 5000, totalCost: 15000, supplier: "Poly", expectedDelivery: "Jun 01, 2026", priority: "Low", justification: "Upgrade meeting rooms for hybrid work." },
     ],
   },
   {
@@ -79,10 +79,10 @@ const mockPlans: PurchasePlan[] = [
     totalItems: 4,
     status: "Draft",
     items: [
-      { id: "IT-7", itemName: "GitHub Enterprise Licenses", category: "Software", quantity: 50, unitPrice: 252, totalCost: 12600, vendor: "GitHub", expectedDelivery: "Mar 10, 2026", priority: "High", justification: "Development team collaboration platform." },
-      { id: "IT-8", itemName: "JetBrains IDE Licenses", category: "Software", quantity: 30, unitPrice: 649, totalCost: 19470, vendor: "JetBrains", expectedDelivery: "Mar 10, 2026", priority: "Medium", justification: "Developer productivity tools." },
-      { id: "IT-9", itemName: "AWS Cloud Credits", category: "Cloud Services", quantity: 1, unitPrice: 42000, totalCost: 42000, vendor: "Amazon Web Services", expectedDelivery: "Mar 01, 2026", priority: "Critical", justification: "Annual cloud infrastructure hosting." },
-      { id: "IT-10", itemName: "Jira & Confluence Licenses", category: "Software", quantity: 80, unitPrice: 193, totalCost: 15430, vendor: "Atlassian", expectedDelivery: "Mar 15, 2026", priority: "Medium", justification: "Project management & documentation." },
+      { id: "IT-7", itemName: "GitHub Enterprise Licenses", category: "Software", quantity: 50, unitPrice: 252, totalCost: 12600, supplier: "GitHub", expectedDelivery: "Mar 10, 2026", priority: "High", justification: "Development team collaboration platform." },
+      { id: "IT-8", itemName: "JetBrains IDE Licenses", category: "Software", quantity: 30, unitPrice: 649, totalCost: 19470, supplier: "JetBrains", expectedDelivery: "Mar 10, 2026", priority: "Medium", justification: "Developer productivity tools." },
+      { id: "IT-9", itemName: "AWS Cloud Credits", category: "Cloud Services", quantity: 1, unitPrice: 42000, totalCost: 42000, supplier: "Amazon Web Services", expectedDelivery: "Mar 01, 2026", priority: "Critical", justification: "Annual cloud infrastructure hosting." },
+      { id: "IT-10", itemName: "Jira & Confluence Licenses", category: "Software", quantity: 80, unitPrice: 193, totalCost: 15430, supplier: "Atlassian", expectedDelivery: "Mar 15, 2026", priority: "Medium", justification: "Project management & documentation." },
     ],
   },
   {
@@ -96,11 +96,11 @@ const mockPlans: PurchasePlan[] = [
     totalItems: 5,
     status: "Submitted",
     items: [
-      { id: "CM-1", itemName: "Canon EOS R5 Camera Kits", category: "Media Equipment", quantity: 2, unitPrice: 8500, totalCost: 17000, vendor: "Canon Ghana", expectedDelivery: "Apr 01, 2026", priority: "High", justification: "Professional content creation for campaigns." },
-      { id: "CM-2", itemName: "Adobe Creative Cloud Licenses", category: "Software", quantity: 15, unitPrice: 840, totalCost: 12600, vendor: "Adobe", expectedDelivery: "Mar 01, 2026", priority: "High", justification: "Annual renewal for design & video team." },
-      { id: "CM-3", itemName: "Social Media Management Platform", category: "Software", quantity: 1, unitPrice: 18000, totalCost: 18000, vendor: "Sprout Social", expectedDelivery: "Mar 10, 2026", priority: "Medium", justification: "Consolidated social media management." },
-      { id: "CM-4", itemName: "Branded Promotional Materials", category: "Print", quantity: 5000, unitPrice: 12, totalCost: 60000, vendor: "PrintMax Ghana", expectedDelivery: "May 15, 2026", priority: "Medium", justification: "Outreach and visibility materials for Q2-Q3." },
-      { id: "CM-5", itemName: "Event Production Equipment", category: "Equipment", quantity: 1, unitPrice: 48400, totalCost: 48400, vendor: "Events Plus", expectedDelivery: "Jun 01, 2026", priority: "Low", justification: "PA system, lighting, and staging for events." },
+      { id: "CM-1", itemName: "Canon EOS R5 Camera Kits", category: "Media Equipment", quantity: 2, unitPrice: 8500, totalCost: 17000, supplier: "Canon Ghana", expectedDelivery: "Apr 01, 2026", priority: "High", justification: "Professional content creation for campaigns." },
+      { id: "CM-2", itemName: "Adobe Creative Cloud Licenses", category: "Software", quantity: 15, unitPrice: 840, totalCost: 12600, supplier: "Adobe", expectedDelivery: "Mar 01, 2026", priority: "High", justification: "Annual renewal for design & video team." },
+      { id: "CM-3", itemName: "Social Media Management Platform", category: "Software", quantity: 1, unitPrice: 18000, totalCost: 18000, supplier: "Sprout Social", expectedDelivery: "Mar 10, 2026", priority: "Medium", justification: "Consolidated social media management." },
+      { id: "CM-4", itemName: "Branded Promotional Materials", category: "Print", quantity: 5000, unitPrice: 12, totalCost: 60000, supplier: "PrintMax Ghana", expectedDelivery: "May 15, 2026", priority: "Medium", justification: "Outreach and visibility materials for Q2-Q3." },
+      { id: "CM-5", itemName: "Event Production Equipment", category: "Equipment", quantity: 1, unitPrice: 48400, totalCost: 48400, supplier: "Events Plus", expectedDelivery: "Jun 01, 2026", priority: "Low", justification: "PA system, lighting, and staging for events." },
     ],
   },
   {
@@ -114,9 +114,9 @@ const mockPlans: PurchasePlan[] = [
     totalItems: 3,
     status: "Approved",
     items: [
-      { id: "CM-6", itemName: "Google Ads Budget Allocation", category: "Digital Advertising", quantity: 1, unitPrice: 36000, totalCost: 36000, vendor: "Google", expectedDelivery: "Mar 01, 2026", priority: "High", justification: "Annual digital advertising campaign budget." },
-      { id: "CM-7", itemName: "Email Marketing Platform (Mailchimp)", category: "Software", quantity: 1, unitPrice: 15600, totalCost: 15600, vendor: "Mailchimp", expectedDelivery: "Mar 01, 2026", priority: "Medium", justification: "Stakeholder and donor communications." },
-      { id: "CM-8", itemName: "Analytics & SEO Tools Bundle", category: "Software", quantity: 1, unitPrice: 15600, totalCost: 15600, vendor: "SEMrush", expectedDelivery: "Mar 05, 2026", priority: "Medium", justification: "Website analytics and search optimization." },
+      { id: "CM-6", itemName: "Google Ads Budget Allocation", category: "Digital Advertising", quantity: 1, unitPrice: 36000, totalCost: 36000, supplier: "Google", expectedDelivery: "Mar 01, 2026", priority: "High", justification: "Annual digital advertising campaign budget." },
+      { id: "CM-7", itemName: "Email Marketing Platform (Mailchimp)", category: "Software", quantity: 1, unitPrice: 15600, totalCost: 15600, supplier: "Mailchimp", expectedDelivery: "Mar 01, 2026", priority: "Medium", justification: "Stakeholder and donor communications." },
+      { id: "CM-8", itemName: "Analytics & SEO Tools Bundle", category: "Software", quantity: 1, unitPrice: 15600, totalCost: 15600, supplier: "SEMrush", expectedDelivery: "Mar 05, 2026", priority: "Medium", justification: "Website analytics and search optimization." },
     ],
   },
   {
@@ -130,11 +130,11 @@ const mockPlans: PurchasePlan[] = [
     totalItems: 5,
     status: "Under Review",
     items: [
-      { id: "HR-1", itemName: "HRIS Platform (BambooHR)", category: "Software", quantity: 1, unitPrice: 48000, totalCost: 48000, vendor: "BambooHR", expectedDelivery: "Apr 01, 2026", priority: "Critical", justification: "Centralized HR management system." },
-      { id: "HR-2", itemName: "Employee Onboarding Kits", category: "Supplies", quantity: 50, unitPrice: 350, totalCost: 17500, vendor: "Office Supplies Ltd", expectedDelivery: "Mar 15, 2026", priority: "Medium", justification: "Welcome kits for new hires in Q2-Q4." },
-      { id: "HR-3", itemName: "Training & Development Platform", category: "Software", quantity: 1, unitPrice: 32000, totalCost: 32000, vendor: "LinkedIn Learning", expectedDelivery: "Mar 01, 2026", priority: "High", justification: "Staff professional development platform." },
-      { id: "HR-4", itemName: "Biometric Access Control System", category: "Hardware", quantity: 4, unitPrice: 5500, totalCost: 22000, vendor: "ZKTeco", expectedDelivery: "May 01, 2026", priority: "Medium", justification: "Office security and attendance tracking." },
-      { id: "HR-5", itemName: "Ergonomic Office Furniture", category: "Furniture", quantity: 20, unitPrice: 650, totalCost: 13000, vendor: "Herman Miller", expectedDelivery: "Jun 15, 2026", priority: "Low", justification: "Workspace ergonomics improvement initiative." },
+      { id: "HR-1", itemName: "HRIS Platform (BambooHR)", category: "Software", quantity: 1, unitPrice: 48000, totalCost: 48000, supplier: "BambooHR", expectedDelivery: "Apr 01, 2026", priority: "Critical", justification: "Centralized HR management system." },
+      { id: "HR-2", itemName: "Employee Onboarding Kits", category: "Supplies", quantity: 50, unitPrice: 350, totalCost: 17500, supplier: "Office Supplies Ltd", expectedDelivery: "Mar 15, 2026", priority: "Medium", justification: "Welcome kits for new hires in Q2-Q4." },
+      { id: "HR-3", itemName: "Training & Development Platform", category: "Software", quantity: 1, unitPrice: 32000, totalCost: 32000, supplier: "LinkedIn Learning", expectedDelivery: "Mar 01, 2026", priority: "High", justification: "Staff professional development platform." },
+      { id: "HR-4", itemName: "Biometric Access Control System", category: "Hardware", quantity: 4, unitPrice: 5500, totalCost: 22000, supplier: "ZKTeco", expectedDelivery: "May 01, 2026", priority: "Medium", justification: "Office security and attendance tracking." },
+      { id: "HR-5", itemName: "Ergonomic Office Furniture", category: "Furniture", quantity: 20, unitPrice: 650, totalCost: 13000, supplier: "Herman Miller", expectedDelivery: "Jun 15, 2026", priority: "Low", justification: "Workspace ergonomics improvement initiative." },
     ],
   },
   {
@@ -148,9 +148,9 @@ const mockPlans: PurchasePlan[] = [
     totalItems: 3,
     status: "Draft",
     items: [
-      { id: "HR-6", itemName: "Applicant Tracking System (Greenhouse)", category: "Software", quantity: 1, unitPrice: 28000, totalCost: 28000, vendor: "Greenhouse", expectedDelivery: "Apr 01, 2026", priority: "High", justification: "Streamline recruitment workflow." },
-      { id: "HR-7", itemName: "Background Check Service Credits", category: "Services", quantity: 200, unitPrice: 85, totalCost: 17000, vendor: "Sterling Check", expectedDelivery: "Mar 15, 2026", priority: "Medium", justification: "Pre-employment screening for new hires." },
-      { id: "HR-8", itemName: "Compliance Training Modules", category: "Software", quantity: 1, unitPrice: 9800, totalCost: 9800, vendor: "SAI360", expectedDelivery: "Mar 20, 2026", priority: "Medium", justification: "Mandatory compliance training for all staff." },
+      { id: "HR-6", itemName: "Applicant Tracking System (Greenhouse)", category: "Software", quantity: 1, unitPrice: 28000, totalCost: 28000, supplier: "Greenhouse", expectedDelivery: "Apr 01, 2026", priority: "High", justification: "Streamline recruitment workflow." },
+      { id: "HR-7", itemName: "Background Check Service Credits", category: "Services", quantity: 200, unitPrice: 85, totalCost: 17000, supplier: "Sterling Check", expectedDelivery: "Mar 15, 2026", priority: "Medium", justification: "Pre-employment screening for new hires." },
+      { id: "HR-8", itemName: "Compliance Training Modules", category: "Software", quantity: 1, unitPrice: 9800, totalCost: 9800, supplier: "SAI360", expectedDelivery: "Mar 20, 2026", priority: "Medium", justification: "Mandatory compliance training for all staff." },
     ],
   },
   {
@@ -164,11 +164,11 @@ const mockPlans: PurchasePlan[] = [
     totalItems: 5,
     status: "Submitted",
     items: [
-      { id: "PMO-1", itemName: "Microsoft Project Online Licenses", category: "Software", quantity: 40, unitPrice: 660, totalCost: 26400, vendor: "Microsoft", expectedDelivery: "Mar 01, 2026", priority: "High", justification: "Project planning and scheduling tool for PMs." },
-      { id: "PMO-2", itemName: "Risk Management Platform (ARM)", category: "Software", quantity: 1, unitPrice: 45000, totalCost: 45000, vendor: "Resolver Inc", expectedDelivery: "Apr 01, 2026", priority: "Critical", justification: "Enterprise risk assessment and tracking." },
-      { id: "PMO-3", itemName: "Data Analytics & BI Licenses (Power BI)", category: "Software", quantity: 25, unitPrice: 1200, totalCost: 30000, vendor: "Microsoft", expectedDelivery: "Mar 10, 2026", priority: "High", justification: "Data visualization for project reporting." },
-      { id: "PMO-4", itemName: "External Consultant Engagement", category: "Services", quantity: 3, unitPrice: 18000, totalCost: 54000, vendor: "Deloitte Ghana", expectedDelivery: "Apr 15, 2026", priority: "Medium", justification: "Specialized consultancy for methodology refinement." },
-      { id: "PMO-5", itemName: "Project Audit & Quality Tools", category: "Software", quantity: 1, unitPrice: 22600, totalCost: 22600, vendor: "Planview", expectedDelivery: "May 01, 2026", priority: "Medium", justification: "Project portfolio audit & quality management." },
+      { id: "PMO-1", itemName: "Microsoft Project Online Licenses", category: "Software", quantity: 40, unitPrice: 660, totalCost: 26400, supplier: "Microsoft", expectedDelivery: "Mar 01, 2026", priority: "High", justification: "Project planning and scheduling tool for PMs." },
+      { id: "PMO-2", itemName: "Risk Management Platform (ARM)", category: "Software", quantity: 1, unitPrice: 45000, totalCost: 45000, supplier: "Resolver Inc", expectedDelivery: "Apr 01, 2026", priority: "Critical", justification: "Enterprise risk assessment and tracking." },
+      { id: "PMO-3", itemName: "Data Analytics & BI Licenses (Power BI)", category: "Software", quantity: 25, unitPrice: 1200, totalCost: 30000, supplier: "Microsoft", expectedDelivery: "Mar 10, 2026", priority: "High", justification: "Data visualization for project reporting." },
+      { id: "PMO-4", itemName: "External Consultant Engagement", category: "Services", quantity: 3, unitPrice: 18000, totalCost: 54000, supplier: "Deloitte Ghana", expectedDelivery: "Apr 15, 2026", priority: "Medium", justification: "Specialized consultancy for methodology refinement." },
+      { id: "PMO-5", itemName: "Project Audit & Quality Tools", category: "Software", quantity: 1, unitPrice: 22600, totalCost: 22600, supplier: "Planview", expectedDelivery: "May 01, 2026", priority: "Medium", justification: "Project portfolio audit & quality management." },
     ],
   },
   {
@@ -182,9 +182,9 @@ const mockPlans: PurchasePlan[] = [
     totalItems: 3,
     status: "Approved",
     items: [
-      { id: "PMO-6", itemName: "PMP Certification Training", category: "Training", quantity: 15, unitPrice: 3200, totalCost: 48000, vendor: "PMI Ghana Chapter", expectedDelivery: "Apr 01, 2026", priority: "High", justification: "Staff certification program for project managers." },
-      { id: "PMO-7", itemName: "Agile/Scrum Master Training", category: "Training", quantity: 10, unitPrice: 2800, totalCost: 28000, vendor: "Scrum Alliance", expectedDelivery: "May 01, 2026", priority: "Medium", justification: "Agile methodology adoption training." },
-      { id: "PMO-8", itemName: "Knowledge Management Platform", category: "Software", quantity: 1, unitPrice: 20000, totalCost: 20000, vendor: "Confluence", expectedDelivery: "Mar 15, 2026", priority: "Medium", justification: "Centralized lessons learned repository." },
+      { id: "PMO-6", itemName: "PMP Certification Training", category: "Training", quantity: 15, unitPrice: 3200, totalCost: 48000, supplier: "PMI Ghana Chapter", expectedDelivery: "Apr 01, 2026", priority: "High", justification: "Staff certification program for project managers." },
+      { id: "PMO-7", itemName: "Agile/Scrum Master Training", category: "Training", quantity: 10, unitPrice: 2800, totalCost: 28000, supplier: "Scrum Alliance", expectedDelivery: "May 01, 2026", priority: "Medium", justification: "Agile methodology adoption training." },
+      { id: "PMO-8", itemName: "Knowledge Management Platform", category: "Software", quantity: 1, unitPrice: 20000, totalCost: 20000, supplier: "Confluence", expectedDelivery: "Mar 15, 2026", priority: "Medium", justification: "Centralized lessons learned repository." },
     ],
   },
 ];
@@ -288,7 +288,7 @@ export function PurchasePlan() {
                 <th className="text-center px-4 py-3 text-white text-[11px] font-semibold">Qty</th>
                 <th className="text-right px-4 py-3 text-white text-[11px] font-semibold">Unit Price</th>
                 <th className="text-right px-4 py-3 text-white text-[11px] font-semibold">Total Cost</th>
-                <th className="text-left px-4 py-3 text-white text-[11px] font-semibold">Vendor</th>
+                <th className="text-left px-4 py-3 text-white text-[11px] font-semibold">Supplier</th>
                 <th className="text-left px-4 py-3 text-white text-[11px] font-semibold">Expected Delivery</th>
                 <th className="text-center px-4 py-3 text-white text-[11px] font-semibold">Priority</th>
               </tr>
@@ -304,7 +304,7 @@ export function PurchasePlan() {
                   <td className="px-4 py-3 text-center text-[11px] text-slate-900 font-medium">{item.quantity}</td>
                   <td className="px-4 py-3 text-right text-[11px] text-slate-900">{formatCurrency(item.unitPrice)}</td>
                   <td className="px-4 py-3 text-right text-[11px] text-slate-900 font-medium">{formatCurrency(item.totalCost)}</td>
-                  <td className="px-4 py-3 text-[11px] text-slate-600">{item.vendor}</td>
+                  <td className="px-4 py-3 text-[11px] text-slate-600">{item.supplier}</td>
                   <td className="px-4 py-3 text-[11px] text-slate-600">{item.expectedDelivery}</td>
                   <td className="px-4 py-3 text-center"><span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${priorityStyle(item.priority)}`}>{item.priority}</span></td>
                 </tr>

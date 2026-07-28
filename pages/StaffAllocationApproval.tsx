@@ -79,7 +79,7 @@ const staffSubmissions: StaffAllocationSubmission[] = [
       {
         name: "Kofi Mensah", role: "Technical Specialist", totalHours: 280, totalTasks: 4, utilization: 95,
         tasks: [
-          { id: "T1-3", taskName: "Evaluate Vendor Submissions", phase: "Procurement & Contracting", startDate: "Feb 01, 2026", endDate: "Feb 28, 2026", hours: 100, priority: "High", status: "Completed" },
+          { id: "T1-3", taskName: "Evaluate Supplier Submissions", phase: "Procurement & Contracting", startDate: "Feb 01, 2026", endDate: "Feb 28, 2026", hours: 100, priority: "High", status: "Completed" },
           { id: "T2-1", taskName: "Conduct Stakeholder Engagement Sessions", phase: "Implementation", startDate: "Feb 15, 2026", endDate: "Mar 15, 2026", hours: 120, priority: "Critical", status: "In Progress" },
           { id: "T2-4", taskName: "Design and Layout Report", phase: "Production & Editorial", startDate: "Mar 10, 2026", endDate: "Apr 05, 2026", hours: 40, priority: "Medium", status: "Not Started" },
           { id: "T4-2", taskName: "Submit Final Technical Report", phase: "Reporting", startDate: "May 01, 2026", endDate: "May 10, 2026", hours: 20, priority: "Low", status: "Not Started" },

@@ -65,9 +65,9 @@ export function Invoices() {
   const [, force] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<InvoiceStatus | "All Statuses">("All Statuses");
-  const [vendorFilter, setVendorFilter] = useState("All Vendors");
+  const [supplierFilter, setSupplierFilter] = useState("All Suppliers");
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
-  const [showVendorDropdown, setShowVendorDropdown] = useState(false);
+  const [showSupplierDropdown, setShowSupplierDropdown] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [selected, setSelected] = useState<Row | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -80,8 +80,8 @@ export function Invoices() {
   }, []);
 
   const rows = getAllInvoices();
-  const vendors = useMemo(
-    () => ["All Vendors", ...Array.from(new Set(rows.map((r) => r.invoice.vendor))).sort()],
+  const suppliers = useMemo(
+    () => ["All Suppliers", ...Array.from(new Set(rows.map((r) => r.invoice.supplier))).sort()],
     [rows]
   );
 
@@ -91,10 +91,10 @@ export function Invoices() {
       !q ||
       invoice.invoiceNumber.toLowerCase().includes(q) ||
       contract.contractNumber.toLowerCase().includes(q) ||
-      invoice.vendor.toLowerCase().includes(q);
+      invoice.supplier.toLowerCase().includes(q);
     const matchesStatus = statusFilter === "All Statuses" || invoice.status === statusFilter;
-    const matchesVendor = vendorFilter === "All Vendors" || invoice.vendor === vendorFilter;
-    return matchesSearch && matchesStatus && matchesVendor;
+    const matchesSupplier = supplierFilter === "All Suppliers" || invoice.supplier === supplierFilter;
+    return matchesSearch && matchesStatus && matchesSupplier;
   });
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
@@ -110,7 +110,7 @@ export function Invoices() {
     { key: "invoiceNumber", header: "Invoice #" },
     { key: "contractNumber", header: "Contract" },
     { key: "contractTitle", header: "Contract Title" },
-    { key: "vendor", header: "Vendor" },
+    { key: "supplier", header: "Supplier" },
     { key: "submittedVia", header: "Received Via" },
     { key: "dateSubmitted", header: "Date Submitted" },
     { key: "amount", header: "Amount (USD)" },
@@ -127,7 +127,7 @@ export function Invoices() {
     invoiceNumber: invoice.invoiceNumber,
     contractNumber: contract.contractNumber,
     contractTitle: contract.title,
-    vendor: invoice.vendor,
+    supplier: invoice.supplier,
     submittedVia: invoice.submittedVia,
     dateSubmitted: invoice.dateSubmitted,
     amount: invoice.amount,
@@ -141,7 +141,7 @@ export function Invoices() {
   }));
 
   const exportMeta = {
-    subtitle: `Status: ${statusFilter} · Vendor: ${vendorFilter}`,
+    subtitle: `Status: ${statusFilter} · Supplier: ${supplierFilter}`,
     generatedBy: getCurrentUser().name,
   };
 
@@ -159,7 +159,7 @@ export function Invoices() {
       <div className="px-6 py-4 border-b border-slate-200 bg-white">
         <h1 className="text-2xl font-semibold text-slate-900">Invoices</h1>
         <p className="text-sm text-slate-500 mt-0.5">
-          Every vendor invoice across all contracts, and the approval stage each one is waiting at.
+          Every supplier invoice across all contracts, and the approval stage each one is waiting at.
         </p>
       </div>
 
@@ -181,7 +181,7 @@ export function Invoices() {
             <Search size={20} className="text-slate-400" />
             <input
               type="text"
-              placeholder="Invoice, contract or vendor"
+              placeholder="Invoice, contract or supplier"
               value={searchQuery}
               onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
               className="flex-1 outline-none text-sm text-slate-900 placeholder:text-slate-400"
@@ -227,18 +227,18 @@ export function Invoices() {
             </div>
 
             <Dropdown
-              value={vendorFilter}
-              options={vendors}
-              open={showVendorDropdown}
-              setOpen={(v) => { setShowVendorDropdown(v); setShowStatusDropdown(false); }}
-              onSelect={(v) => { setVendorFilter(v); setCurrentPage(1); }}
+              value={supplierFilter}
+              options={suppliers}
+              open={showSupplierDropdown}
+              setOpen={(v) => { setShowSupplierDropdown(v); setShowStatusDropdown(false); }}
+              onSelect={(v) => { setSupplierFilter(v); setCurrentPage(1); }}
               width="w-64"
             />
             <Dropdown
               value={statusFilter}
               options={["All Statuses", ...STATUS_ORDER]}
               open={showStatusDropdown}
-              setOpen={(v) => { setShowStatusDropdown(v); setShowVendorDropdown(false); }}
+              setOpen={(v) => { setShowStatusDropdown(v); setShowSupplierDropdown(false); }}
               onSelect={(v) => { setStatusFilter(v as InvoiceStatus | "All Statuses"); setCurrentPage(1); }}
               width="w-52"
             />
@@ -251,14 +251,14 @@ export function Invoices() {
           <div className="h-full flex flex-col items-center justify-center text-center px-6">
             <p className="text-slate-500 text-sm">No invoices match these filters.</p>
             <p className="text-slate-400 text-xs mt-1">
-              Invoices arrive from the vendor portal, or are recorded by a contract coordinator in Contract Management.
+              Invoices arrive from the supplier portal, or are recorded by a contract coordinator in Contract Management.
             </p>
           </div>
         ) : (
           <table className="w-full">
             <thead style={{ backgroundColor: "#0B01D0" }}>
               <tr>
-                {["Invoice #", "Contract", "Vendor", "Received", "Via", "Amount", "Paid", "Awaiting", "Status", ""].map((h) => (
+                {["Invoice #", "Contract", "Supplier", "Received", "Via", "Amount", "Paid", "Awaiting", "Status", ""].map((h) => (
                   <th key={h} className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100 whitespace-nowrap">
                     {h}
                   </th>
@@ -273,7 +273,7 @@ export function Invoices() {
                     <p className="text-[12px] text-slate-900">{contract.contractNumber}</p>
                     <p className="text-[11px] text-slate-400 max-w-[180px] truncate">{contract.title}</p>
                   </td>
-                  <td className="px-4 py-4"><p className="text-[12px] text-slate-500">{invoice.vendor}</p></td>
+                  <td className="px-4 py-4"><p className="text-[12px] text-slate-500">{invoice.supplier}</p></td>
                   <td className="px-4 py-4"><p className="text-[12px] text-slate-500">{formatDate(invoice.dateSubmitted)}</p></td>
                   <td className="px-4 py-4"><p className="text-[12px] text-slate-500">{invoice.submittedVia}</p></td>
                   <td className="px-4 py-4"><p className="text-[12px] text-slate-900 tabular-nums">{formatCurrency(invoice.amount)}</p></td>
@@ -344,7 +344,7 @@ function awaitingLabel(inv: ContractInvoice): string {
     case "CC Reviewed": return "Procurement";
     case "Procurement Approved": return "Supervisor";
     case "Supervisor Approved": return "Finance";
-    case "Queried": return "Vendor / Coordinator";
+    case "Queried": return "Supplier / Coordinator";
     case "Paid": return "—";
   }
 }
@@ -439,7 +439,7 @@ function InvoiceWorkbench({ row, onBack }: { row: Row; onBack: () => void }) {
           </button>
           <h1 className="text-xl font-semibold text-slate-900">{invoice.invoiceNumber}</h1>
           <p className="text-sm text-slate-500">
-            {invoice.vendor} · {contract.contractNumber} — {contract.title}
+            {invoice.supplier} · {contract.contractNumber} — {contract.title}
           </p>
         </div>
         <span className={`px-3 py-1.5 rounded-xl text-sm font-medium ${STATUS_STYLE[invoice.status]}`}>
@@ -668,7 +668,7 @@ function InvoiceWorkbench({ row, onBack }: { row: Row; onBack: () => void }) {
       {queryOpen && (
         <Modal title="Query invoice" onClose={() => setQueryOpen(false)}>
           <p className="text-sm text-slate-600 mb-3">
-            The invoice is returned to the vendor for correction. A reason is required and will be sent with the query.
+            The invoice is returned to the supplier for correction. A reason is required and will be sent with the query.
           </p>
           <textarea
             value={queryReason}
@@ -685,7 +685,7 @@ function InvoiceWorkbench({ row, onBack }: { row: Row; onBack: () => void }) {
               onClick={() => {
                 if (run(
                   queryInvoice(contract.id, invoice.id, queryReason, user.name, user.roles[0]),
-                  "Invoice queried and returned to the vendor."
+                  "Invoice queried and returned to the supplier."
                 )) {
                   setQueryOpen(false);
                   setQueryReason("");

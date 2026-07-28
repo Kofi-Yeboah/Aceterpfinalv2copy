@@ -5,14 +5,14 @@ import {
   Building2, User, Landmark, BadgeCheck, Paperclip, Info, Layers,
 } from "lucide-react";
 import {
-  subscribe as subscribeVendors,
-  getVendorById, vendorDisplayName, vendorEmail, vendorAddress, avgScore,
-  getVendorFlags, checkSourcingEligibility,
-  changeVendorStatus, requestReactivation, approveReactivation, approveVendorRegistration,
-  validateBankingDetails, addVendorDocument, recordVendorEvaluation,
+  subscribe as subscribeSuppliers,
+  getSupplierById, supplierDisplayName, supplierEmail, supplierAddress, avgScore,
+  getSupplierFlags, checkSourcingEligibility,
+  changeSupplierStatus, requestReactivation, approveReactivation, approveSupplierRegistration,
+  validateBankingDetails, addSupplierDocument, recordSupplierEvaluation,
   FIRM_DOC_CHECKLIST, INDIVIDUAL_DOC_CHECKLIST,
-  type Vendor, type PerformanceScore, type VendorStatus, type VendorFlags,
-} from "../lib/vendorStore";
+  type Supplier, type PerformanceScore, type SupplierStatus, type SupplierFlags,
+} from "../lib/supplierStore";
 import {
   can, denialReason, getCurrentUser, hasRole, subscribe as subscribeUser,
 } from "../lib/currentUser";
@@ -23,8 +23,8 @@ import { pickFiles, FileValidationError } from "../lib/fileUpload";
    ══════════════════════════════════════════════════════════════════════════════ */
 
 interface SupplierDetailsViewProps {
-  /** Store id or vendor number (VND-xxxx) of the vendor to display. */
-  vendorId: string;
+  /** Store id or supplier number (SUP-xxxx) of the supplier to display. */
+  supplierId: string;
   onBack: () => void;
 }
 
@@ -112,28 +112,28 @@ function localAvg(p: PerformanceScore) {
  * Mirrors the weighting the store applies in `computeRiskLevel`, so the derived
  * risk rating can be explained rather than just asserted.
  */
-function riskDrivers(v: Vendor, flags: VendorFlags): { label: string; weight: number }[] {
+function riskDrivers(v: Supplier, flags: SupplierFlags): { label: string; weight: number }[] {
   const drivers: { label: string; weight: number }[] = [];
   const avg = avgScore(v.performance);
   if (avg > 0 && avg < 5) drivers.push({ label: `Average performance ${avg}/10 — below the acceptable threshold of 5`, weight: 3 });
   else if (avg > 0 && avg < 7) drivers.push({ label: `Average performance ${avg}/10 — below 7`, weight: 1 });
   if (flags.expiredDocs.length > 0) drivers.push({ label: `Expired compliance documents: ${flags.expiredDocs.join(", ")}`, weight: 2 });
   if (flags.missingDocs.length > 0) drivers.push({ label: `Documents not yet on file: ${flags.missingDocs.join(", ")}`, weight: 1 });
-  if (v.status === "Flagged") drivers.push({ label: "Vendor is flagged for monitoring", weight: 2 });
-  if (v.status === "Suspended") drivers.push({ label: "Vendor is suspended", weight: 3 });
-  if (v.status === "Blacklisted") drivers.push({ label: "Vendor is blacklisted", weight: 4 });
+  if (v.status === "Flagged") drivers.push({ label: "Supplier is flagged for monitoring", weight: 2 });
+  if (v.status === "Suspended") drivers.push({ label: "Supplier is suspended", weight: 3 });
+  if (v.status === "Blacklisted") drivers.push({ label: "Supplier is blacklisted", weight: 4 });
   if (flags.sanctioned) drivers.push({ label: "Name appears on a donor/statutory sanctions list", weight: 4 });
   return drivers;
 }
 
-/** Re-render whenever the vendor register or the signed-in user changes. */
+/** Re-render whenever the supplier register or the signed-in user changes. */
 function useStoreSubscription() {
   const [, setVersion] = useState(0);
   useEffect(() => {
     const bump = () => setVersion((v) => v + 1);
-    const unsubVendors = subscribeVendors(bump);
+    const unsubSuppliers = subscribeSuppliers(bump);
     const unsubUser = subscribeUser(bump);
-    return () => { unsubVendors(); unsubUser(); };
+    return () => { unsubSuppliers(); unsubUser(); };
   }, []);
 }
 
@@ -141,10 +141,10 @@ function useStoreSubscription() {
    COMPONENT
    ══════════════════════════════════════════════════════════════════════════════ */
 
-export function SupplierDetailsView({ vendorId, onBack }: SupplierDetailsViewProps) {
+export function SupplierDetailsView({ supplierId, onBack }: SupplierDetailsViewProps) {
   useStoreSubscription();
   const user = getCurrentUser();
-  const vendor = getVendorById(vendorId);
+  const supplier = getSupplierById(supplierId);
 
   // State
   const [activeSection, setActiveSection] = useState<"overview" | "performance" | "orders" | "documents">("overview");
@@ -173,10 +173,10 @@ export function SupplierDetailsView({ vendorId, onBack }: SupplierDetailsViewPro
   const [evalErrors, setEvalErrors] = useState<Record<string, boolean>>({});
   const [evalSubmitted, setEvalSubmitted] = useState(false);
 
-  if (!vendor) {
+  if (!supplier) {
     return (
       <div className="h-full flex flex-col items-center justify-center bg-slate-50 gap-3" style={{ fontFamily: F }}>
-        <p className="text-[13px] text-slate-500">This vendor record is no longer available.</p>
+        <p className="text-[13px] text-slate-500">This supplier record is no longer available.</p>
         <button onClick={onBack} className="px-4 py-2 border border-slate-200 bg-white rounded-lg text-[12px] text-slate-700 hover:bg-slate-50">
           Back to Supplier Management
         </button>
@@ -184,27 +184,27 @@ export function SupplierDetailsView({ vendorId, onBack }: SupplierDetailsViewPro
     );
   }
 
-  const canSuspend = can("vendor.suspend");
-  const canApproveReactivation = can("vendor.approveReactivation");
+  const canSuspend = can("supplier.suspend");
+  const canApproveReactivation = can("supplier.approveReactivation");
   const canRequestReactivation = hasRole("Procurement") || canApproveReactivation;
-  const canApproveRegistration = can("vendor.approveRegistration");
-  const canValidateBanking = can("vendor.validateBanking");
+  const canApproveRegistration = can("supplier.approveRegistration");
+  const canValidateBanking = can("supplier.validateBanking");
   const canEvaluate = can("contract.evaluatePerformance");
-  const canUploadDocs = can("vendor.create");
+  const canUploadDocs = can("supplier.create");
 
-  const performance = vendor.performance;
+  const performance = supplier.performance;
   const avg = avgScore(performance);
-  const flags = getVendorFlags(vendor);
-  const drivers = riskDrivers(vendor, flags);
+  const flags = getSupplierFlags(supplier);
+  const drivers = riskDrivers(supplier, flags);
   const riskScore = drivers.reduce((sum, d) => sum + d.weight, 0);
-  const eligibility = checkSourcingEligibility(vendor.id);
-  const statusBadge = getStatusBadge(vendor.status);
-  const checklist = vendor.type === "Firm" ? FIRM_DOC_CHECKLIST : INDIVIDUAL_DOC_CHECKLIST;
-  const evaluations = vendor.evaluations ?? [];
-  const contracts = vendor.contractHistory ?? [];
+  const eligibility = checkSourcingEligibility(supplier.id);
+  const statusBadge = getStatusBadge(supplier.status);
+  const checklist = supplier.type === "Firm" ? FIRM_DOC_CHECKLIST : INDIVIDUAL_DOC_CHECKLIST;
+  const evaluations = supplier.evaluations ?? [];
+  const contracts = supplier.contractHistory ?? [];
   const contractCount = contracts.length;
   const contractValue = contracts.reduce((sum, c) => sum + c.value, 0);
-  const name = vendorDisplayName(vendor);
+  const name = supplierDisplayName(supplier);
 
   // ── Handlers ──
 
@@ -213,7 +213,7 @@ export function SupplierDetailsView({ vendorId, onBack }: SupplierDetailsViewPro
     const actor = getCurrentUser();
 
     if (showActionModal === "Approve Reactivation") {
-      approveReactivation(vendor.id, actor.name);
+      approveReactivation(supplier.id, actor.name);
       setNotice({ tone: "success", text: `${name} has been reactivated and is eligible for sourcing again.` });
       setShowActionModal(null);
       return;
@@ -225,13 +225,13 @@ export function SupplierDetailsView({ vendorId, onBack }: SupplierDetailsViewPro
     }
 
     if (showActionModal === "Reactivate") {
-      requestReactivation(vendor.id, actionReason.trim(), actor.name);
+      requestReactivation(supplier.id, actionReason.trim(), actor.name);
       setNotice({ tone: "success", text: "Reactivation requested — Senior Management has been notified for approval." });
     } else {
-      const target: VendorStatus =
+      const target: SupplierStatus =
         showActionModal === "Flag" ? "Flagged" : showActionModal === "Suspend" ? "Suspended" : "Blacklisted";
       const approver = canApproveReactivation ? actor.name : undefined;
-      changeVendorStatus(vendor.id, target, actionReason.trim(), actor.name, approver);
+      changeSupplierStatus(supplier.id, target, actionReason.trim(), actor.name, approver);
       setNotice({ tone: "success", text: `Status updated to ${target}.` });
     }
 
@@ -241,7 +241,7 @@ export function SupplierDetailsView({ vendorId, onBack }: SupplierDetailsViewPro
   };
 
   const handleApproveRegistration = () => {
-    const approved = approveVendorRegistration(vendor.id, getCurrentUser().name);
+    const approved = approveSupplierRegistration(supplier.id, getCurrentUser().name);
     if (!approved) {
       setNotice({
         tone: "error",
@@ -249,12 +249,12 @@ export function SupplierDetailsView({ vendorId, onBack }: SupplierDetailsViewPro
       });
       return;
     }
-    setNotice({ tone: "success", text: `${name} approved and added to the active vendor list.` });
+    setNotice({ tone: "success", text: `${name} approved and added to the active supplier list.` });
   };
 
   const handleValidateBanking = () => {
-    validateBankingDetails(vendor.id, getCurrentUser().name);
-    setNotice({ tone: "success", text: "Banking details confirmed and recorded against the vendor profile." });
+    validateBankingDetails(supplier.id, getCurrentUser().name);
+    setNotice({ tone: "success", text: "Banking details confirmed and recorded against the supplier profile." });
   };
 
   const handleDocumentUpload = async () => {
@@ -271,7 +271,7 @@ export function SupplierDetailsView({ vendorId, onBack }: SupplierDetailsViewPro
         setUploadBusy(false);
         return;
       }
-      addVendorDocument(vendor.id, { label, expiry: docUpload.expiry || undefined }, getCurrentUser().name);
+      addSupplierDocument(supplier.id, { label, expiry: docUpload.expiry || undefined }, getCurrentUser().name);
       setNotice({
         tone: "success",
         text: `${label} uploaded (${files[0].name})${docUpload.expiry ? `, valid until ${docUpload.expiry}` : ""}.`,
@@ -311,7 +311,7 @@ export function SupplierDetailsView({ vendorId, onBack }: SupplierDetailsViewPro
         .map(c => `${c.label}: ${evalComments[c.key].trim()}`),
     ].filter(Boolean).join(" — ");
 
-    recordVendorEvaluation(vendor.id, {
+    recordSupplierEvaluation(supplier.id, {
       contractNumber: evalContractNumber.trim() || "Ad-hoc",
       contractTitle: evalContractTitle.trim() || "Manual performance assessment",
       evaluationType: evalType === "Contract Close-out" ? "Final" : "Mid-Term",
@@ -363,22 +363,22 @@ export function SupplierDetailsView({ vendorId, onBack }: SupplierDetailsViewPro
         </button>
         <div className="flex items-center gap-3 flex-1">
           <div className="w-10 h-10 rounded-full flex items-center justify-center bg-purple-100 text-purple-700 shrink-0">
-            {vendor.type === "Firm" ? <Building2 size={18} /> : <User size={18} />}
+            {supplier.type === "Firm" ? <Building2 size={18} /> : <User size={18} />}
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2.5">
               <h1 className="text-[16px] font-semibold text-slate-900 truncate" style={{ fontFamily: F }}>{name}</h1>
-              <span className="text-[11px] text-purple-600 font-medium bg-purple-50 px-2 py-0.5 rounded shrink-0">{vendor.vendorId}</span>
+              <span className="text-[11px] text-purple-600 font-medium bg-purple-50 px-2 py-0.5 rounded shrink-0">{supplier.supplierId}</span>
             </div>
             <p className="text-[11px] text-slate-500 mt-0.5" style={{ fontFamily: F }}>
-              {vendor.category}{vendor.subCategory ? ` — ${vendor.subCategory}` : ""} &middot; Onboarded {formatDate(vendor.dateOnboarded)}
-              {vendor.registrationSource ? ` · ${vendor.registrationSource}` : ""}
+              {supplier.category}{supplier.subCategory ? ` — ${supplier.subCategory}` : ""} &middot; Onboarded {formatDate(supplier.dateOnboarded)}
+              {supplier.registrationSource ? ` · ${supplier.registrationSource}` : ""}
             </p>
           </div>
         </div>
 
-        <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-[12px] font-medium ${getRiskColor(vendor.riskLevel)}`} style={{ fontFamily: F }}>
-          {vendor.riskLevel} risk
+        <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-[12px] font-medium ${getRiskColor(supplier.riskLevel)}`} style={{ fontFamily: F }}>
+          {supplier.riskLevel} risk
         </div>
 
         {/* ── Prominent Status Badge ── */}
@@ -418,44 +418,44 @@ export function SupplierDetailsView({ vendorId, onBack }: SupplierDetailsViewPro
             <ClipboardCheck size={14} /> Evaluate Performance
           </button>
 
-          {(vendor.status === "Pending Onboarding" || vendor.pendingReview) && (
+          {(supplier.status === "Pending Onboarding" || supplier.pendingReview) && (
             <button onClick={handleApproveRegistration}
               disabled={!canApproveRegistration}
-              title={canApproveRegistration ? undefined : denialReason("vendor.approveRegistration")}
+              title={canApproveRegistration ? undefined : denialReason("supplier.approveRegistration")}
               className="px-3 py-2 rounded-lg text-[12px] font-medium border border-green-300 bg-green-50 text-green-700 hover:bg-green-100 transition-colors flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
               style={{ fontFamily: F }}>
               <BadgeCheck size={13} /> Approve Registration
             </button>
           )}
 
-          {vendor.status === "Active" && (
+          {supplier.status === "Active" && (
             <button onClick={() => openAction("Flag")}
               disabled={!canSuspend}
-              title={canSuspend ? undefined : denialReason("vendor.suspend")}
+              title={canSuspend ? undefined : denialReason("supplier.suspend")}
               className="px-3 py-2 rounded-lg text-[12px] font-medium border border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
               style={{ fontFamily: F }}>
               <AlertTriangle size={13} /> Flag
             </button>
           )}
-          {(vendor.status === "Active" || vendor.status === "Flagged") && (
+          {(supplier.status === "Active" || supplier.status === "Flagged") && (
             <button onClick={() => openAction("Suspend")}
               disabled={!canSuspend}
-              title={canSuspend ? undefined : denialReason("vendor.suspend")}
+              title={canSuspend ? undefined : denialReason("supplier.suspend")}
               className="px-3 py-2 rounded-lg text-[12px] font-medium border border-red-300 bg-red-50 text-red-700 hover:bg-red-100 transition-colors flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
               style={{ fontFamily: F }}>
               <ShieldAlert size={13} /> Suspend
             </button>
           )}
-          {(vendor.status === "Active" || vendor.status === "Flagged" || vendor.status === "Suspended") && (
+          {(supplier.status === "Active" || supplier.status === "Flagged" || supplier.status === "Suspended") && (
             <button onClick={() => openAction("Blacklist")}
               disabled={!canSuspend}
-              title={canSuspend ? undefined : denialReason("vendor.suspend")}
+              title={canSuspend ? undefined : denialReason("supplier.suspend")}
               className="px-3 py-2 rounded-lg text-[12px] font-medium border border-slate-400 bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
               style={{ fontFamily: F }}>
               <ShieldBan size={13} /> Blacklist
             </button>
           )}
-          {(vendor.status === "Flagged" || vendor.status === "Suspended" || vendor.status === "Blacklisted") && (
+          {(supplier.status === "Flagged" || supplier.status === "Suspended" || supplier.status === "Blacklisted") && (
             <button onClick={() => openAction("Reactivate")}
               disabled={!canRequestReactivation}
               title={canRequestReactivation ? undefined : "Requires Procurement or Senior Management role."}
@@ -464,10 +464,10 @@ export function SupplierDetailsView({ vendorId, onBack }: SupplierDetailsViewPro
               <ShieldCheck size={13} /> Request Reactivation
             </button>
           )}
-          {vendor.status === "Pending Reactivation" && (
+          {supplier.status === "Pending Reactivation" && (
             <button onClick={() => openAction("Approve Reactivation")}
               disabled={!canApproveReactivation}
-              title={canApproveReactivation ? undefined : denialReason("vendor.approveReactivation")}
+              title={canApproveReactivation ? undefined : denialReason("supplier.approveReactivation")}
               className="px-3 py-2 rounded-lg text-[12px] font-medium border border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
               style={{ fontFamily: F }}>
               <ShieldCheck size={13} /> Approve Reactivation
@@ -539,18 +539,18 @@ export function SupplierDetailsView({ vendorId, onBack }: SupplierDetailsViewPro
               </div>
               <div className="bg-white rounded-xl border border-slate-200 p-4">
                 <p className="text-[11px] text-slate-500 mb-1" style={{ fontFamily: F }}>Total Orders</p>
-                <p className="text-[22px] font-semibold text-slate-900" style={{ fontFamily: F }}>{vendor.totalOrders}</p>
+                <p className="text-[22px] font-semibold text-slate-900" style={{ fontFamily: F }}>{supplier.totalOrders}</p>
                 <p className="text-[10px] text-slate-400 mt-1" style={{ fontFamily: F }}>{contractCount} contract{contractCount === 1 ? "" : "s"} recorded</p>
               </div>
               <div className="bg-white rounded-xl border border-slate-200 p-4">
                 <p className="text-[11px] text-slate-500 mb-1" style={{ fontFamily: F }}>Total Spend</p>
-                <p className="text-[22px] font-semibold text-slate-900" style={{ fontFamily: F }}>{formatCurrency(vendor.totalSpend)}</p>
+                <p className="text-[22px] font-semibold text-slate-900" style={{ fontFamily: F }}>{formatCurrency(supplier.totalSpend)}</p>
                 <p className="text-[10px] text-slate-400 mt-1" style={{ fontFamily: F }}>{formatCurrency(contractValue)} awarded on file</p>
               </div>
               <div className="bg-white rounded-xl border border-slate-200 p-4">
                 <p className="text-[11px] text-slate-500 mb-1" style={{ fontFamily: F }}>Risk Level (derived)</p>
-                <span className={`inline-flex items-center px-3 py-1 rounded-full text-[12px] font-medium border ${getRiskColor(vendor.riskLevel)}`}>
-                  {vendor.riskLevel}
+                <span className={`inline-flex items-center px-3 py-1 rounded-full text-[12px] font-medium border ${getRiskColor(supplier.riskLevel)}`}>
+                  {supplier.riskLevel}
                 </span>
                 <p className="text-[10px] text-slate-400 mt-1.5" style={{ fontFamily: F }}>Score {riskScore} · High ≥ 4, Medium ≥ 2</p>
               </div>
@@ -587,58 +587,58 @@ export function SupplierDetailsView({ vendorId, onBack }: SupplierDetailsViewPro
               )}
             </div>
 
-            {/* Vendor Information */}
+            {/* Supplier Information */}
             <div className="bg-white rounded-xl border border-slate-200 p-6 mb-6">
-              <h2 className="text-[14px] font-semibold text-slate-900 mb-4" style={{ fontFamily: F }}>Vendor Information</h2>
+              <h2 className="text-[14px] font-semibold text-slate-900 mb-4" style={{ fontFamily: F }}>Supplier Information</h2>
               <div className="grid grid-cols-3 gap-x-8 gap-y-4">
                 <div>
                   <p className="text-[11px] text-slate-500 mb-1" style={{ fontFamily: F }}>Contact Person</p>
-                  <p className="text-[13px] text-slate-900" style={{ fontFamily: F }}>{vendor.type === "Firm" ? vendor.contactPerson : vendor.legalName}</p>
+                  <p className="text-[13px] text-slate-900" style={{ fontFamily: F }}>{supplier.type === "Firm" ? supplier.contactPerson : supplier.legalName}</p>
                 </div>
                 <div>
                   <p className="text-[11px] text-slate-500 mb-1" style={{ fontFamily: F }}>Email</p>
-                  <p className="text-[13px] text-slate-900" style={{ fontFamily: F }}>{vendorEmail(vendor)}</p>
+                  <p className="text-[13px] text-slate-900" style={{ fontFamily: F }}>{supplierEmail(supplier)}</p>
                 </div>
                 <div>
                   <p className="text-[11px] text-slate-500 mb-1" style={{ fontFamily: F }}>Phone</p>
-                  <p className="text-[13px] text-slate-900" style={{ fontFamily: F }}>{vendor.type === "Firm" ? vendor.phone : vendor.contactPhone}</p>
+                  <p className="text-[13px] text-slate-900" style={{ fontFamily: F }}>{supplier.type === "Firm" ? supplier.phone : supplier.contactPhone}</p>
                 </div>
-                {vendor.type === "Firm" ? (
+                {supplier.type === "Firm" ? (
                   <>
                     <div>
                       <p className="text-[11px] text-slate-500 mb-1" style={{ fontFamily: F }}>Registration #</p>
-                      <p className="text-[13px] text-slate-900" style={{ fontFamily: F }}>{vendor.registrationNumber}</p>
+                      <p className="text-[13px] text-slate-900" style={{ fontFamily: F }}>{supplier.registrationNumber}</p>
                     </div>
                     <div>
                       <p className="text-[11px] text-slate-500 mb-1" style={{ fontFamily: F }}>Tax ID</p>
-                      <p className="text-[13px] text-slate-900" style={{ fontFamily: F }}>{vendor.taxId}</p>
+                      <p className="text-[13px] text-slate-900" style={{ fontFamily: F }}>{supplier.taxId}</p>
                     </div>
                   </>
                 ) : (
                   <div>
-                    <p className="text-[11px] text-slate-500 mb-1" style={{ fontFamily: F }}>ID ({vendor.idType})</p>
-                    <p className="text-[13px] text-slate-900" style={{ fontFamily: F }}>{vendor.idNumber}</p>
+                    <p className="text-[11px] text-slate-500 mb-1" style={{ fontFamily: F }}>ID ({supplier.idType})</p>
+                    <p className="text-[13px] text-slate-900" style={{ fontFamily: F }}>{supplier.idNumber}</p>
                   </div>
                 )}
                 <div>
-                  <p className="text-[11px] text-slate-500 mb-1" style={{ fontFamily: F }}>{vendor.type === "Firm" ? "Registered Address" : "Residential Address"}</p>
-                  <p className="text-[13px] text-slate-900" style={{ fontFamily: F }}>{vendorAddress(vendor)}</p>
+                  <p className="text-[11px] text-slate-500 mb-1" style={{ fontFamily: F }}>{supplier.type === "Firm" ? "Registered Address" : "Residential Address"}</p>
+                  <p className="text-[13px] text-slate-900" style={{ fontFamily: F }}>{supplierAddress(supplier)}</p>
                 </div>
               </div>
 
-              {vendor.type === "Firm" && (vendor.ownershipDetails || (vendor.specialization && vendor.specialization.length > 0)) && (
+              {supplier.type === "Firm" && (supplier.ownershipDetails || (supplier.specialization && supplier.specialization.length > 0)) && (
                 <div className="mt-5 pt-5 border-t border-slate-100 grid grid-cols-2 gap-x-8 gap-y-4">
-                  {vendor.ownershipDetails && (
+                  {supplier.ownershipDetails && (
                     <div>
                       <p className="text-[11px] text-slate-500 mb-1" style={{ fontFamily: F }}>Ownership &amp; Beneficial Ownership</p>
-                      <p className="text-[12px] text-slate-700 leading-relaxed" style={{ fontFamily: F }}>{vendor.ownershipDetails}</p>
+                      <p className="text-[12px] text-slate-700 leading-relaxed" style={{ fontFamily: F }}>{supplier.ownershipDetails}</p>
                     </div>
                   )}
-                  {vendor.specialization && vendor.specialization.length > 0 && (
+                  {supplier.specialization && supplier.specialization.length > 0 && (
                     <div>
                       <p className="text-[11px] text-slate-500 mb-1.5" style={{ fontFamily: F }}>Specialization</p>
                       <div className="flex flex-wrap gap-1.5">
-                        {vendor.specialization.map(s => (
+                        {supplier.specialization.map(s => (
                           <span key={s} className="px-2.5 py-1 bg-purple-50 text-purple-700 border border-purple-200 rounded-full text-[11px] font-medium" style={{ fontFamily: F }}>{s}</span>
                         ))}
                       </div>
@@ -655,15 +655,15 @@ export function SupplierDetailsView({ vendorId, onBack }: SupplierDetailsViewPro
                   <Landmark size={16} className="text-purple-700" />
                   <h2 className="text-[14px] font-semibold text-slate-900" style={{ fontFamily: F }}>Banking Details</h2>
                 </div>
-                {vendor.bankValidated ? (
+                {supplier.bankValidated ? (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-medium bg-green-50 text-green-700 border border-green-200" style={{ fontFamily: F }}>
-                    <BadgeCheck size={12} /> Validated{vendor.bankValidatedBy ? ` by ${vendor.bankValidatedBy}` : ""}
+                    <BadgeCheck size={12} /> Validated{supplier.bankValidatedBy ? ` by ${supplier.bankValidatedBy}` : ""}
                   </span>
                 ) : (
                   <button
                     onClick={handleValidateBanking}
                     disabled={!canValidateBanking}
-                    title={canValidateBanking ? undefined : denialReason("vendor.validateBanking")}
+                    title={canValidateBanking ? undefined : denialReason("supplier.validateBanking")}
                     className="px-3 py-1.5 rounded-lg text-[11px] font-medium border border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
                     style={{ fontFamily: F }}>
                     <BadgeCheck size={12} /> Validate Banking Details
@@ -673,38 +673,38 @@ export function SupplierDetailsView({ vendorId, onBack }: SupplierDetailsViewPro
               <div className="grid grid-cols-3 gap-x-8 gap-y-4">
                 <div>
                   <p className="text-[11px] text-slate-500 mb-1" style={{ fontFamily: F }}>Bank</p>
-                  <p className="text-[13px] text-slate-900" style={{ fontFamily: F }}>{vendor.bankName}</p>
+                  <p className="text-[13px] text-slate-900" style={{ fontFamily: F }}>{supplier.bankName}</p>
                 </div>
                 <div>
                   <p className="text-[11px] text-slate-500 mb-1" style={{ fontFamily: F }}>Account Number</p>
                   <div className="flex items-center gap-2">
                     <p className="text-[13px] text-slate-900" style={{ fontFamily: F }}>
-                      {revealAccount && canValidateBanking ? vendor.bankAccountNumber : maskAccount(vendor.bankAccountNumber)}
+                      {revealAccount && canValidateBanking ? supplier.bankAccountNumber : maskAccount(supplier.bankAccountNumber)}
                     </p>
                     {canValidateBanking ? (
                       <button onClick={() => setRevealAccount(!revealAccount)} className="text-[10px] text-purple-700 hover:underline" style={{ fontFamily: F }}>
                         {revealAccount ? "Hide" : "Reveal"}
                       </button>
                     ) : (
-                      <span className="text-[10px] text-slate-400" style={{ fontFamily: F }} title={denialReason("vendor.validateBanking")}>Masked</span>
+                      <span className="text-[10px] text-slate-400" style={{ fontFamily: F }} title={denialReason("supplier.validateBanking")}>Masked</span>
                     )}
                   </div>
                 </div>
                 <div>
                   <p className="text-[11px] text-slate-500 mb-1" style={{ fontFamily: F }}>Validation Status</p>
-                  <p className={`text-[13px] ${vendor.bankValidated ? "text-green-700" : "text-amber-700"}`} style={{ fontFamily: F }}>
-                    {vendor.bankValidated ? "Confirmed by Finance" : "Awaiting Finance validation"}
+                  <p className={`text-[13px] ${supplier.bankValidated ? "text-green-700" : "text-amber-700"}`} style={{ fontFamily: F }}>
+                    {supplier.bankValidated ? "Confirmed by Finance" : "Awaiting Finance validation"}
                   </p>
                 </div>
               </div>
             </div>
 
             {/* Expert Areas (Individual only) */}
-            {vendor.type === "Individual" && vendor.expertAreas.length > 0 && (
+            {supplier.type === "Individual" && supplier.expertAreas.length > 0 && (
               <div className="bg-white rounded-xl border border-slate-200 p-6 mb-6">
                 <h2 className="text-[14px] font-semibold text-slate-900 mb-3" style={{ fontFamily: F }}>Expert Areas</h2>
                 <div className="flex flex-wrap gap-2">
-                  {vendor.expertAreas.map(area => (
+                  {supplier.expertAreas.map(area => (
                     <span key={area} className="px-3 py-1 bg-purple-50 text-purple-700 border border-purple-200 rounded-full text-[11px] font-medium" style={{ fontFamily: F }}>
                       {area}
                     </span>
@@ -714,7 +714,7 @@ export function SupplierDetailsView({ vendorId, onBack }: SupplierDetailsViewPro
             )}
 
             {/* Historical Rates (Individual only) */}
-            {vendor.type === "Individual" && vendor.historicalRates.length > 0 && (
+            {supplier.type === "Individual" && supplier.historicalRates.length > 0 && (
               <div className="bg-white rounded-xl border border-slate-200 p-6 mb-6">
                 <h2 className="text-[14px] font-semibold text-slate-900 mb-3" style={{ fontFamily: F }}>Historical Rates</h2>
                 <table className="w-full">
@@ -727,7 +727,7 @@ export function SupplierDetailsView({ vendorId, onBack }: SupplierDetailsViewPro
                     </tr>
                   </thead>
                   <tbody>
-                    {vendor.historicalRates.map((hr, i) => (
+                    {supplier.historicalRates.map((hr, i) => (
                       <tr key={i} className={`border-b border-slate-100 ${i % 2 === 0 ? "" : "bg-slate-50/50"}`}>
                         <td className="py-2 px-3 text-[12px] text-slate-900" style={{ fontFamily: F }}>{hr.assignment}</td>
                         <td className="py-2 px-3 text-[12px] text-slate-900 text-right font-medium" style={{ fontFamily: F }}>{formatCurrency(hr.rate)}</td>
@@ -773,11 +773,11 @@ export function SupplierDetailsView({ vendorId, onBack }: SupplierDetailsViewPro
                 <History size={16} className="text-purple-700" />
                 <h2 className="text-[14px] font-semibold text-slate-900" style={{ fontFamily: F }}>Status History</h2>
               </div>
-              {(vendor.statusHistory ?? []).length === 0 ? (
-                <p className="text-[13px] text-slate-400 text-center py-6" style={{ fontFamily: F }}>No status changes recorded — the vendor has held its original status since onboarding.</p>
+              {(supplier.statusHistory ?? []).length === 0 ? (
+                <p className="text-[13px] text-slate-400 text-center py-6" style={{ fontFamily: F }}>No status changes recorded — the supplier has held its original status since onboarding.</p>
               ) : (
                 <div className="space-y-3">
-                  {[...(vendor.statusHistory ?? [])].reverse().map(change => (
+                  {[...(supplier.statusHistory ?? [])].reverse().map(change => (
                     <div key={change.id} className="border border-slate-200 rounded-lg p-4">
                       <div className="flex items-center justify-between mb-1.5">
                         <div className="flex items-center gap-2">
@@ -844,7 +844,7 @@ export function SupplierDetailsView({ vendorId, onBack }: SupplierDetailsViewPro
                 <History size={16} className="text-purple-700" />
                 <h2 className="text-[14px] font-semibold text-slate-900" style={{ fontFamily: F }}>Evaluation History</h2>
                 <span className="text-[10px] text-slate-400" style={{ fontFamily: F }}>
-                  Mid-term and close-out evaluations recorded against this vendor's contracts
+                  Mid-term and close-out evaluations recorded against this supplier's contracts
                 </span>
               </div>
               {evaluations.length > 0 ? (
@@ -905,7 +905,7 @@ export function SupplierDetailsView({ vendorId, onBack }: SupplierDetailsViewPro
             <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
               <div>
                 <h2 className="text-[14px] font-semibold text-slate-900" style={{ fontFamily: F }}>Contract &amp; Award History</h2>
-                <p className="text-[11px] text-slate-500 mt-0.5" style={{ fontFamily: F }}>Every award registered against this vendor in Contract Management.</p>
+                <p className="text-[11px] text-slate-500 mt-0.5" style={{ fontFamily: F }}>Every award registered against this supplier in Contract Management.</p>
               </div>
               <div className="flex items-center gap-6">
                 <div className="text-right">
@@ -919,7 +919,7 @@ export function SupplierDetailsView({ vendorId, onBack }: SupplierDetailsViewPro
               </div>
             </div>
             {contractCount === 0 ? (
-              <p className="text-center py-12 text-[13px] text-slate-400" style={{ fontFamily: F }}>No contracts have been awarded to this vendor yet.</p>
+              <p className="text-center py-12 text-[13px] text-slate-400" style={{ fontFamily: F }}>No contracts have been awarded to this supplier yet.</p>
             ) : (
               <table className="w-full">
                 <thead style={{ backgroundColor: "#0B01D0" }}>
@@ -970,23 +970,23 @@ export function SupplierDetailsView({ vendorId, onBack }: SupplierDetailsViewPro
               <div>
                 <h2 className="text-[14px] font-semibold text-slate-900" style={{ fontFamily: F }}>Onboarding &amp; Compliance Documents</h2>
                 <p className="text-[11px] text-slate-500 mt-0.5" style={{ fontFamily: F }}>
-                  {vendor.documents.length} of {checklist.length} checklist items on file · renewal reminders are raised automatically
+                  {supplier.documents.length} of {checklist.length} checklist items on file · renewal reminders are raised automatically
                 </p>
               </div>
               <button
                 onClick={() => setDocUpload({ label: flags.missingDocs[0] ?? checklist[0], customLabel: "", expiry: "" })}
                 disabled={!canUploadDocs}
-                title={canUploadDocs ? undefined : denialReason("vendor.create")}
+                title={canUploadDocs ? undefined : denialReason("supplier.create")}
                 className="px-3.5 py-2 rounded-lg text-[12px] font-medium text-white flex items-center gap-1.5 hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
                 style={{ backgroundColor: "#0B01D0", fontFamily: F }}>
                 <Paperclip size={14} /> Upload / Renew Document
               </button>
             </div>
 
-            {vendor.documents.length > 0 ? (
+            {supplier.documents.length > 0 ? (
               <div className="space-y-2">
-                {vendor.documents.map((doc, i) => {
-                  const expiry = vendor.documentExpiry[doc];
+                {supplier.documents.map((doc, i) => {
+                  const expiry = supplier.documentExpiry[doc];
                   const isExpired = flags.expiredDocs.includes(doc);
                   const expiringEntry = flags.expiringDocs.find(d => d.doc === doc);
                   return (
@@ -1019,7 +1019,7 @@ export function SupplierDetailsView({ vendorId, onBack }: SupplierDetailsViewPro
                         <button
                           onClick={() => setDocUpload({ label: doc, customLabel: "", expiry: expiry ?? "" })}
                           disabled={!canUploadDocs}
-                          title={canUploadDocs ? undefined : denialReason("vendor.create")}
+                          title={canUploadDocs ? undefined : denialReason("supplier.create")}
                           className="text-[11px] text-purple-700 hover:underline disabled:opacity-40 disabled:no-underline disabled:cursor-not-allowed"
                           style={{ fontFamily: F }}>
                           Replace
@@ -1049,7 +1049,7 @@ export function SupplierDetailsView({ vendorId, onBack }: SupplierDetailsViewPro
                       <button
                         onClick={() => setDocUpload({ label: doc, customLabel: "", expiry: "" })}
                         disabled={!canUploadDocs}
-                        title={canUploadDocs ? undefined : denialReason("vendor.create")}
+                        title={canUploadDocs ? undefined : denialReason("supplier.create")}
                         className="text-[11px] text-purple-700 hover:underline flex items-center gap-1 disabled:opacity-40 disabled:no-underline disabled:cursor-not-allowed"
                         style={{ fontFamily: F }}>
                         <Paperclip size={12} /> Upload
@@ -1075,7 +1075,7 @@ export function SupplierDetailsView({ vendorId, onBack }: SupplierDetailsViewPro
             <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
               <div>
                 <h3 className="text-[15px] font-semibold text-slate-900" style={{ fontFamily: F }}>Upload Document</h3>
-                <p className="text-[11px] text-slate-500" style={{ fontFamily: F }}>{name} ({vendor.vendorId})</p>
+                <p className="text-[11px] text-slate-500" style={{ fontFamily: F }}>{name} ({supplier.supplierId})</p>
               </div>
               <button onClick={() => setDocUpload(null)} className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors">
                 <X size={18} className="text-slate-500" />
@@ -1089,7 +1089,7 @@ export function SupplierDetailsView({ vendorId, onBack }: SupplierDetailsViewPro
                   onChange={e => setDocUpload({ ...docUpload, label: e.target.value })}
                   className="bg-slate-50 border border-slate-200 rounded-lg h-[36px] px-3 text-[12px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
                   style={{ fontFamily: F }}>
-                  {Array.from(new Set([...checklist, ...vendor.documents])).map(d => (
+                  {Array.from(new Set([...checklist, ...supplier.documents])).map(d => (
                     <option key={d} value={d}>{d}</option>
                   ))}
                   <option value="__other">Other (specify)</option>
@@ -1139,10 +1139,10 @@ export function SupplierDetailsView({ vendorId, onBack }: SupplierDetailsViewPro
             <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between shrink-0">
               <div>
                 <h2 className="text-[16px] font-semibold text-slate-900" style={{ fontFamily: F }}>
-                  Vendor Performance Evaluation
+                  Supplier Performance Evaluation
                 </h2>
                 <p className="text-[11px] text-slate-500 mt-0.5" style={{ fontFamily: F }}>
-                  {name} &middot; {vendor.vendorId} &middot; evaluator {user.name}
+                  {name} &middot; {supplier.supplierId} &middot; evaluator {user.name}
                 </p>
               </div>
               <button onClick={() => { setShowEvalForm(false); setEvalSubmitted(false); }} className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors">
@@ -1183,7 +1183,7 @@ export function SupplierDetailsView({ vendorId, onBack }: SupplierDetailsViewPro
                   <div className="grid grid-cols-2 gap-4 mb-6">
                     <div className="flex flex-col gap-1.5">
                       <label className="text-[11px] text-slate-600" style={{ fontFamily: F }}>Contract Number</label>
-                      <input list="vendor-contract-numbers" type="text" value={evalContractNumber} onChange={e => {
+                      <input list="supplier-contract-numbers" type="text" value={evalContractNumber} onChange={e => {
                         const value = e.target.value;
                         setEvalContractNumber(value);
                         const match = contracts.find(c => c.contractNumber === value);
@@ -1192,7 +1192,7 @@ export function SupplierDetailsView({ vendorId, onBack }: SupplierDetailsViewPro
                         placeholder="e.g., CNT-2025-003"
                         className="bg-slate-50 border border-slate-200 rounded-lg h-[36px] px-3 text-[12px] text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
                         style={{ fontFamily: F }} />
-                      <datalist id="vendor-contract-numbers">
+                      <datalist id="supplier-contract-numbers">
                         {contracts.map(c => <option key={c.contractNumber} value={c.contractNumber} />)}
                       </datalist>
                     </div>
@@ -1320,7 +1320,7 @@ export function SupplierDetailsView({ vendorId, onBack }: SupplierDetailsViewPro
                   {localAvg(evalScores) < 5 && (
                     <div className="mt-4 px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-lg">
                       <p className="text-[11px] text-amber-700 flex items-center gap-1.5" style={{ fontFamily: F }}>
-                        <AlertTriangle size={12} /> An overall score below 5 automatically flags this vendor — future shortlisting will require Senior Management approval.
+                        <AlertTriangle size={12} /> An overall score below 5 automatically flags this supplier — future shortlisting will require Senior Management approval.
                       </p>
                     </div>
                   )}
@@ -1375,10 +1375,10 @@ export function SupplierDetailsView({ vendorId, onBack }: SupplierDetailsViewPro
                 {(showActionModal === "Reactivate" || showActionModal === "Approve Reactivation") && <ShieldCheck size={20} className="text-green-600" />}
                 <div>
                   <h3 className="text-[15px] font-semibold text-slate-900" style={{ fontFamily: F }}>
-                    {showActionModal} Vendor
+                    {showActionModal} Supplier
                   </h3>
                   <p className="text-[11px] text-slate-500" style={{ fontFamily: F }}>
-                    {name} ({vendor.vendorId})
+                    {name} ({supplier.supplierId})
                   </p>
                 </div>
               </div>
@@ -1387,11 +1387,11 @@ export function SupplierDetailsView({ vendorId, onBack }: SupplierDetailsViewPro
             {/* Body */}
             <div className="px-6 py-5">
               <p className="text-[12px] text-slate-600 mb-1" style={{ fontFamily: F }}>
-                {showActionModal === "Flag" && "Flagging this vendor will mark them for review. They will remain in the register but shortlisting will require Senior Management approval."}
-                {showActionModal === "Suspend" && "Suspending this vendor will immediately restrict them from participating in any active sourcing. This action can be reversed."}
-                {showActionModal === "Blacklist" && "Blacklisting permanently restricts this vendor from all procurement activities. This is a severe action typically reserved for fraud or gross misconduct."}
-                {showActionModal === "Reactivate" && "Reactivation requires management approval. Submitting will set the vendor status to Pending Reactivation. The vendor will not be eligible for sourcing until management approves."}
-                {showActionModal === "Approve Reactivation" && "Approving returns this vendor to Active status and restores their eligibility for solicitation and award."}
+                {showActionModal === "Flag" && "Flagging this supplier will mark them for review. They will remain in the register but shortlisting will require Senior Management approval."}
+                {showActionModal === "Suspend" && "Suspending this supplier will immediately restrict them from participating in any active sourcing. This action can be reversed."}
+                {showActionModal === "Blacklist" && "Blacklisting permanently restricts this supplier from all procurement activities. This is a severe action typically reserved for fraud or gross misconduct."}
+                {showActionModal === "Reactivate" && "Reactivation requires management approval. Submitting will set the supplier status to Pending Reactivation. The supplier will not be eligible for sourcing until management approves."}
+                {showActionModal === "Approve Reactivation" && "Approving returns this supplier to Active status and restores their eligibility for solicitation and award."}
               </p>
 
               {showActionModal !== "Approve Reactivation" && (
@@ -1407,7 +1407,7 @@ export function SupplierDetailsView({ vendorId, onBack }: SupplierDetailsViewPro
                       showActionModal === "Flag" ? "e.g., Repeated late deliveries on CNT-2025-014..." :
                       showActionModal === "Suspend" ? "e.g., Under investigation for invoice irregularities..." :
                       showActionModal === "Blacklist" ? "e.g., Confirmed fraudulent documentation submitted..." :
-                      "e.g., Investigation concluded, vendor cleared of allegations..."
+                      "e.g., Investigation concluded, supplier cleared of allegations..."
                     }
                     className={`w-full border rounded-lg px-3 py-2.5 text-[12px] text-slate-900 placeholder:text-slate-400 outline-none resize-none ${
                       actionReasonError ? "border-red-400 bg-red-50 focus:border-red-500" : "border-slate-200 focus:border-purple-400"
@@ -1416,7 +1416,7 @@ export function SupplierDetailsView({ vendorId, onBack }: SupplierDetailsViewPro
                   />
                   {actionReasonError && (
                     <p className="text-[10px] text-red-500 mt-1 flex items-center gap-1" style={{ fontFamily: F }}>
-                      <XCircle size={10} /> A reason is mandatory before updating vendor status.
+                      <XCircle size={10} /> A reason is mandatory before updating supplier status.
                     </p>
                   )}
                 </div>

@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 const imgImage35 = "/acet-logo-white.png";
 import { NavigationSidebar } from "./components/NavigationSidebar";
-import { VendorPortal } from "./components/VendorPortal";
+import { SupplierPortal } from "./components/SupplierPortal";
 import { ContractRepository } from "./pages/ContractRepository";
 import { ProjectPurchasePlans } from "./pages/ProjectPurchasePlans";
 import { RoleSwitcher } from "./components/RoleSwitcher";
 import { startReminderSweep } from "./lib/notificationStore";
-import { syncAllDocumentReminders } from "./lib/vendorStore";
+import { syncAllDocumentReminders } from "./lib/supplierStore";
 import { syncAllContractReminders } from "./lib/contractStore";
 import { detectOverduePlanItems } from "./lib/procurementStore";
 import { Login } from "./components/Login";
@@ -461,8 +461,8 @@ export default function App() {
         return <ProcurementReportingAnalytics initialTab="planning" />;
       case "PROCUREMENT-Reporting & Analytics-Sourcing & Contracts Report":
         return <ProcurementReportingAnalytics initialTab="sourcing" />;
-      case "PROCUREMENT-Reporting & Analytics-Vendors & KPIs Report":
-        return <ProcurementReportingAnalytics initialTab="vendors" />;
+      case "PROCUREMENT-Reporting & Analytics-Suppliers & KPIs Report":
+        return <ProcurementReportingAnalytics initialTab="suppliers" />;
       case "PROCUREMENT-Reporting & Analytics-Contract Reports":
         return <ProcurementReportingAnalytics initialTab="contracts" />;
       case "PROCUREMENT-Reporting & Analytics-Donor Reports":
@@ -471,8 +471,8 @@ export default function App() {
         return <ProcurementReportingAnalytics initialTab="combined" />;
       case "PROCUREMENT-Contract Repository":
         return <ContractRepository />;
-      case "PROCUREMENT-Vendor Portal":
-        return <VendorPortal />;
+      case "PROCUREMENT-Supplier Portal":
+        return <SupplierPortal />;
       case "PAYROLL MANAGEMENT-Dashboard":
         return <PayrollManagementDashboard />;
       case "PAYROLL MANAGEMENT-Payroll":

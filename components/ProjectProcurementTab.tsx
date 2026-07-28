@@ -12,7 +12,7 @@ interface ProcurementLineItem {
   actual: number;
   procurementMethod: "Direct Purchase" | "Competitive Bidding" | "Request for Quotation" | "Single Source" | "Framework Agreement";
   category: "Goods/Equipment" | "Services" | "Works" | "Consulting";
-  vendor: string | null;
+  supplier: string | null;
   procurementStatus: "Not Started" | "Requisition Raised" | "RFQ Issued" | "Evaluation" | "PO Issued" | "Delivered" | "Completed" | "Cancelled";
   poNumber: string | null;
   contractId: string | null;
@@ -40,26 +40,26 @@ const PROCUREMENT_DATA: ProcurementPhase[] = [
         taskId: "T001",
         taskName: "Draft Request for Proposals (RFP)",
         lineItems: [
-          { budgetLineId: "L001", name: "Consultant Fees - Survey Design", planned: 8000, actual: 8000, procurementMethod: "Single Source", category: "Consulting", vendor: "Dr. Kwesi Appiah", procurementStatus: "Completed", poNumber: "PO-10001", contractId: "CTR-2025-001", expectedDelivery: "2025-02-28" },
-          { budgetLineId: "L002", name: "Printing & Materials", planned: 1200, actual: 1050, procurementMethod: "Direct Purchase", category: "Goods/Equipment", vendor: "PrintWorks Ghana Ltd", procurementStatus: "Completed", poNumber: "PO-10002", contractId: null, expectedDelivery: "2025-01-30" },
-          { budgetLineId: "L003", name: "Stakeholder Workshop", planned: 3500, actual: 3500, procurementMethod: "Request for Quotation", category: "Services", vendor: "La Palm Royal Beach Hotel", procurementStatus: "Completed", poNumber: "PO-10003", contractId: null, expectedDelivery: "2025-02-15" },
+          { budgetLineId: "L001", name: "Consultant Fees - Survey Design", planned: 8000, actual: 8000, procurementMethod: "Single Source", category: "Consulting", supplier: "Dr. Kwesi Appiah", procurementStatus: "Completed", poNumber: "PO-10001", contractId: "CTR-2025-001", expectedDelivery: "2025-02-28" },
+          { budgetLineId: "L002", name: "Printing & Materials", planned: 1200, actual: 1050, procurementMethod: "Direct Purchase", category: "Goods/Equipment", supplier: "PrintWorks Ghana Ltd", procurementStatus: "Completed", poNumber: "PO-10002", contractId: null, expectedDelivery: "2025-01-30" },
+          { budgetLineId: "L003", name: "Stakeholder Workshop", planned: 3500, actual: 3500, procurementMethod: "Request for Quotation", category: "Services", supplier: "La Palm Royal Beach Hotel", procurementStatus: "Completed", poNumber: "PO-10003", contractId: null, expectedDelivery: "2025-02-15" },
         ],
       },
       {
         taskId: "T002",
-        taskName: "Evaluate Vendor Submissions",
+        taskName: "Evaluate Supplier Submissions",
         lineItems: [
-          { budgetLineId: "L004", name: "External Reviewer Honoraria", planned: 4000, actual: 4000, procurementMethod: "Single Source", category: "Consulting", vendor: "Prof. Ama Benyiwa", procurementStatus: "Completed", poNumber: "PO-10004", contractId: "CTR-2025-002", expectedDelivery: "2025-03-15" },
-          { budgetLineId: "L005", name: "Review Meeting Logistics", planned: 1500, actual: 1200, procurementMethod: "Direct Purchase", category: "Services", vendor: "Accra Events Hub", procurementStatus: "Completed", poNumber: "PO-10005", contractId: null, expectedDelivery: "2025-03-10" },
+          { budgetLineId: "L004", name: "External Reviewer Honoraria", planned: 4000, actual: 4000, procurementMethod: "Single Source", category: "Consulting", supplier: "Prof. Ama Benyiwa", procurementStatus: "Completed", poNumber: "PO-10004", contractId: "CTR-2025-002", expectedDelivery: "2025-03-15" },
+          { budgetLineId: "L005", name: "Review Meeting Logistics", planned: 1500, actual: 1200, procurementMethod: "Direct Purchase", category: "Services", supplier: "Accra Events Hub", procurementStatus: "Completed", poNumber: "PO-10005", contractId: null, expectedDelivery: "2025-03-10" },
         ],
       },
       {
         taskId: "T003",
         taskName: "Finalize Service Agreements",
         lineItems: [
-          { budgetLineId: "L006", name: "Research Assistant Stipends", planned: 6000, actual: 6000, procurementMethod: "Direct Purchase", category: "Services", vendor: "University of Ghana - Dept of Economics", procurementStatus: "Completed", poNumber: "PO-10006", contractId: "CTR-2025-003", expectedDelivery: "2025-04-01" },
-          { budgetLineId: "L007", name: "Database Subscriptions", planned: 2000, actual: 1800, procurementMethod: "Framework Agreement", category: "Services", vendor: "JSTOR / Elsevier", procurementStatus: "Completed", poNumber: "PO-10007", contractId: null, expectedDelivery: "2025-01-15" },
-          { budgetLineId: "L008", name: "Reference Materials", planned: 800, actual: 650, procurementMethod: "Direct Purchase", category: "Goods/Equipment", vendor: "Bookshop Ghana Ltd", procurementStatus: "Completed", poNumber: "PO-10008", contractId: null, expectedDelivery: "2025-02-10" },
+          { budgetLineId: "L006", name: "Research Assistant Stipends", planned: 6000, actual: 6000, procurementMethod: "Direct Purchase", category: "Services", supplier: "University of Ghana - Dept of Economics", procurementStatus: "Completed", poNumber: "PO-10006", contractId: "CTR-2025-003", expectedDelivery: "2025-04-01" },
+          { budgetLineId: "L007", name: "Database Subscriptions", planned: 2000, actual: 1800, procurementMethod: "Framework Agreement", category: "Services", supplier: "JSTOR / Elsevier", procurementStatus: "Completed", poNumber: "PO-10007", contractId: null, expectedDelivery: "2025-01-15" },
+          { budgetLineId: "L008", name: "Reference Materials", planned: 800, actual: 650, procurementMethod: "Direct Purchase", category: "Goods/Equipment", supplier: "Bookshop Ghana Ltd", procurementStatus: "Completed", poNumber: "PO-10008", contractId: null, expectedDelivery: "2025-02-10" },
         ],
       },
     ],
@@ -72,27 +72,27 @@ const PROCUREMENT_DATA: ProcurementPhase[] = [
         taskId: "T004",
         taskName: "Coordinate Field Data Collection",
         lineItems: [
-          { budgetLineId: "L009", name: "Venue & Catering", planned: 5000, actual: 4800, procurementMethod: "Request for Quotation", category: "Services", vendor: "Kempinski Hotel Gold Coast", procurementStatus: "Completed", poNumber: "PO-10009", contractId: null, expectedDelivery: "2025-05-01" },
-          { budgetLineId: "L010", name: "Audio-Visual Equipment Rental", planned: 2000, actual: 1950, procurementMethod: "Direct Purchase", category: "Services", vendor: "AV Solutions Accra", procurementStatus: "Completed", poNumber: "PO-10010", contractId: null, expectedDelivery: "2025-05-01" },
-          { budgetLineId: "L011", name: "Facilitator Fees", planned: 3000, actual: 3000, procurementMethod: "Single Source", category: "Consulting", vendor: "Nana Yaw Mensah", procurementStatus: "Completed", poNumber: "PO-10011", contractId: null, expectedDelivery: "2025-05-01" },
+          { budgetLineId: "L009", name: "Venue & Catering", planned: 5000, actual: 4800, procurementMethod: "Request for Quotation", category: "Services", supplier: "Kempinski Hotel Gold Coast", procurementStatus: "Completed", poNumber: "PO-10009", contractId: null, expectedDelivery: "2025-05-01" },
+          { budgetLineId: "L010", name: "Audio-Visual Equipment Rental", planned: 2000, actual: 1950, procurementMethod: "Direct Purchase", category: "Services", supplier: "AV Solutions Accra", procurementStatus: "Completed", poNumber: "PO-10010", contractId: null, expectedDelivery: "2025-05-01" },
+          { budgetLineId: "L011", name: "Facilitator Fees", planned: 3000, actual: 3000, procurementMethod: "Single Source", category: "Consulting", supplier: "Nana Yaw Mensah", procurementStatus: "Completed", poNumber: "PO-10011", contractId: null, expectedDelivery: "2025-05-01" },
         ],
       },
       {
         taskId: "T005",
         taskName: "Conduct Stakeholder Engagement Sessions",
         lineItems: [
-          { budgetLineId: "L012", name: "Consultant Fees - Engagement", planned: 7000, actual: 5600, procurementMethod: "Competitive Bidding", category: "Consulting", vendor: "Ghana Research Associates", procurementStatus: "PO Issued", poNumber: "PO-10012", contractId: "CTR-2025-004", expectedDelivery: "2025-07-15" },
-          { budgetLineId: "L013", name: "Community Outreach Materials", planned: 3000, actual: 2100, procurementMethod: "Request for Quotation", category: "Goods/Equipment", vendor: "CreativeEdge Designs", procurementStatus: "Delivered", poNumber: "PO-10013", contractId: null, expectedDelivery: "2025-06-30" },
-          { budgetLineId: "L014", name: "Travel - Stakeholder Visits", planned: 4500, actual: 3200, procurementMethod: "Direct Purchase", category: "Services", vendor: null, procurementStatus: "Requisition Raised", poNumber: null, contractId: null, expectedDelivery: "2025-08-01" },
+          { budgetLineId: "L012", name: "Consultant Fees - Engagement", planned: 7000, actual: 5600, procurementMethod: "Competitive Bidding", category: "Consulting", supplier: "Ghana Research Associates", procurementStatus: "PO Issued", poNumber: "PO-10012", contractId: "CTR-2025-004", expectedDelivery: "2025-07-15" },
+          { budgetLineId: "L013", name: "Community Outreach Materials", planned: 3000, actual: 2100, procurementMethod: "Request for Quotation", category: "Goods/Equipment", supplier: "CreativeEdge Designs", procurementStatus: "Delivered", poNumber: "PO-10013", contractId: null, expectedDelivery: "2025-06-30" },
+          { budgetLineId: "L014", name: "Travel - Stakeholder Visits", planned: 4500, actual: 3200, procurementMethod: "Direct Purchase", category: "Services", supplier: null, procurementStatus: "Requisition Raised", poNumber: null, contractId: null, expectedDelivery: "2025-08-01" },
         ],
       },
       {
         taskId: "T009",
         taskName: "Procure IT Equipment",
         lineItems: [
-          { budgetLineId: "L015", name: "Laptops (50x Dell Latitude)", planned: 47500, actual: 47500, procurementMethod: "Competitive Bidding", category: "Goods/Equipment", vendor: "Dell Inc. (via Telefonika Ghana)", procurementStatus: "Delivered", poNumber: "PO-10014", contractId: "CTR-2025-005", expectedDelivery: "2025-06-15" },
-          { budgetLineId: "L016", name: "Networking Equipment", planned: 3500, actual: 0, procurementMethod: "Request for Quotation", category: "Goods/Equipment", vendor: null, procurementStatus: "RFQ Issued", poNumber: null, contractId: null, expectedDelivery: "2025-09-01" },
-          { budgetLineId: "L017", name: "Software Licences", planned: 8000, actual: 0, procurementMethod: "Framework Agreement", category: "Services", vendor: null, procurementStatus: "Evaluation", poNumber: null, contractId: null, expectedDelivery: "2025-09-15" },
+          { budgetLineId: "L015", name: "Laptops (50x Dell Latitude)", planned: 47500, actual: 47500, procurementMethod: "Competitive Bidding", category: "Goods/Equipment", supplier: "Dell Inc. (via Telefonika Ghana)", procurementStatus: "Delivered", poNumber: "PO-10014", contractId: "CTR-2025-005", expectedDelivery: "2025-06-15" },
+          { budgetLineId: "L016", name: "Networking Equipment", planned: 3500, actual: 0, procurementMethod: "Request for Quotation", category: "Goods/Equipment", supplier: null, procurementStatus: "RFQ Issued", poNumber: null, contractId: null, expectedDelivery: "2025-09-01" },
+          { budgetLineId: "L017", name: "Software Licences", planned: 8000, actual: 0, procurementMethod: "Framework Agreement", category: "Services", supplier: null, procurementStatus: "Evaluation", poNumber: null, contractId: null, expectedDelivery: "2025-09-15" },
         ],
       },
     ],
@@ -105,8 +105,8 @@ const PROCUREMENT_DATA: ProcurementPhase[] = [
         taskId: "T006",
         taskName: "Conduct Internal Peer Review of Draft",
         lineItems: [
-          { budgetLineId: "L018", name: "QA Reviewer Wages", planned: 12000, actual: 0, procurementMethod: "Request for Quotation", category: "Services", vendor: null, procurementStatus: "Not Started", poNumber: null, contractId: null, expectedDelivery: "2026-01-15" },
-          { budgetLineId: "L019", name: "Testing Tools & Subscriptions", planned: 5000, actual: 0, procurementMethod: "Direct Purchase", category: "Services", vendor: null, procurementStatus: "Not Started", poNumber: null, contractId: null, expectedDelivery: "2026-01-15" },
+          { budgetLineId: "L018", name: "QA Reviewer Wages", planned: 12000, actual: 0, procurementMethod: "Request for Quotation", category: "Services", supplier: null, procurementStatus: "Not Started", poNumber: null, contractId: null, expectedDelivery: "2026-01-15" },
+          { budgetLineId: "L019", name: "Testing Tools & Subscriptions", planned: 5000, actual: 0, procurementMethod: "Direct Purchase", category: "Services", supplier: null, procurementStatus: "Not Started", poNumber: null, contractId: null, expectedDelivery: "2026-01-15" },
         ],
       },
     ],
@@ -119,8 +119,8 @@ const PROCUREMENT_DATA: ProcurementPhase[] = [
         taskId: "T007",
         taskName: "Design and Layout Report",
         lineItems: [
-          { budgetLineId: "L020", name: "Graphic Design Services", planned: 6000, actual: 0, procurementMethod: "Single Source", category: "Consulting", vendor: null, procurementStatus: "Not Started", poNumber: null, contractId: null, expectedDelivery: "2026-03-01" },
-          { budgetLineId: "L021", name: "Editorial Review Services", planned: 4000, actual: 0, procurementMethod: "Request for Quotation", category: "Services", vendor: null, procurementStatus: "Not Started", poNumber: null, contractId: null, expectedDelivery: "2026-04-01" },
+          { budgetLineId: "L020", name: "Graphic Design Services", planned: 6000, actual: 0, procurementMethod: "Single Source", category: "Consulting", supplier: null, procurementStatus: "Not Started", poNumber: null, contractId: null, expectedDelivery: "2026-03-01" },
+          { budgetLineId: "L021", name: "Editorial Review Services", planned: 4000, actual: 0, procurementMethod: "Request for Quotation", category: "Services", supplier: null, procurementStatus: "Not Started", poNumber: null, contractId: null, expectedDelivery: "2026-04-01" },
         ],
       },
     ],
@@ -133,7 +133,7 @@ const PROCUREMENT_DATA: ProcurementPhase[] = [
         taskId: "T010",
         taskName: "Plan Distribution Channels",
         lineItems: [
-          { budgetLineId: "L022", name: "Distribution Platform Fees", planned: 3500, actual: 0, procurementMethod: "Direct Purchase", category: "Services", vendor: null, procurementStatus: "Not Started", poNumber: null, contractId: null, expectedDelivery: "2026-05-01" },
+          { budgetLineId: "L022", name: "Distribution Platform Fees", planned: 3500, actual: 0, procurementMethod: "Direct Purchase", category: "Services", supplier: null, procurementStatus: "Not Started", poNumber: null, contractId: null, expectedDelivery: "2026-05-01" },
         ],
       },
     ],
@@ -146,9 +146,9 @@ const PROCUREMENT_DATA: ProcurementPhase[] = [
         taskId: "T008",
         taskName: "Submit Final Technical Report",
         lineItems: [
-          { budgetLineId: "L023", name: "Report Design & Layout", planned: 3000, actual: 0, procurementMethod: "Request for Quotation", category: "Services", vendor: null, procurementStatus: "Not Started", poNumber: null, contractId: null, expectedDelivery: "2026-07-01" },
-          { budgetLineId: "L024", name: "Printing & Distribution", planned: 2000, actual: 0, procurementMethod: "Direct Purchase", category: "Goods/Equipment", vendor: null, procurementStatus: "Not Started", poNumber: null, contractId: null, expectedDelivery: "2026-08-01" },
-          { budgetLineId: "L025", name: "Final Audit Fees", planned: 4500, actual: 0, procurementMethod: "Single Source", category: "Consulting", vendor: null, procurementStatus: "Not Started", poNumber: null, contractId: null, expectedDelivery: "2026-08-15" },
+          { budgetLineId: "L023", name: "Report Design & Layout", planned: 3000, actual: 0, procurementMethod: "Request for Quotation", category: "Services", supplier: null, procurementStatus: "Not Started", poNumber: null, contractId: null, expectedDelivery: "2026-07-01" },
+          { budgetLineId: "L024", name: "Printing & Distribution", planned: 2000, actual: 0, procurementMethod: "Direct Purchase", category: "Goods/Equipment", supplier: null, procurementStatus: "Not Started", poNumber: null, contractId: null, expectedDelivery: "2026-08-01" },
+          { budgetLineId: "L025", name: "Final Audit Fees", planned: 4500, actual: 0, procurementMethod: "Single Source", category: "Consulting", supplier: null, procurementStatus: "Not Started", poNumber: null, contractId: null, expectedDelivery: "2026-08-15" },
         ],
       },
     ],
@@ -161,7 +161,7 @@ const PROCUREMENT_DATA: ProcurementPhase[] = [
         taskId: "T015",
         taskName: "Sign-off and Handover",
         lineItems: [
-          { budgetLineId: "L026", name: "Final Review & Sign-off Meeting", planned: 1500, actual: 0, procurementMethod: "Direct Purchase", category: "Services", vendor: null, procurementStatus: "Not Started", poNumber: null, contractId: null, expectedDelivery: "2026-09-01" },
+          { budgetLineId: "L026", name: "Final Review & Sign-off Meeting", planned: 1500, actual: 0, procurementMethod: "Direct Purchase", category: "Services", supplier: null, procurementStatus: "Not Started", poNumber: null, contractId: null, expectedDelivery: "2026-09-01" },
         ],
       },
     ],
@@ -172,7 +172,7 @@ const PROCUREMENT_DATA: ProcurementPhase[] = [
 
 interface Contract {
   contractId: string;
-  vendor: string;
+  supplier: string;
   service: string;
   linkedBudgetLines: string[];
   startDate: string;
@@ -183,11 +183,11 @@ interface Contract {
 }
 
 const CONTRACTS: Contract[] = [
-  { contractId: "CTR-2025-001", vendor: "Dr. Kwesi Appiah", service: "Survey Design Consultancy", linkedBudgetLines: ["L001"], startDate: "Jan 10, 2025", endDate: "Feb 28, 2025", contractValue: 8000, amountPaid: 8000, status: "Completed" },
-  { contractId: "CTR-2025-002", vendor: "Prof. Ama Benyiwa", service: "External Peer Review", linkedBudgetLines: ["L004"], startDate: "Feb 15, 2025", endDate: "Mar 15, 2025", contractValue: 4000, amountPaid: 4000, status: "Completed" },
-  { contractId: "CTR-2025-003", vendor: "University of Ghana", service: "Research Assistant Services", linkedBudgetLines: ["L006"], startDate: "Jan 20, 2025", endDate: "Apr 1, 2025", contractValue: 6000, amountPaid: 6000, status: "Completed" },
-  { contractId: "CTR-2025-004", vendor: "Ghana Research Associates", service: "Stakeholder Engagement Consultancy", linkedBudgetLines: ["L012"], startDate: "May 1, 2025", endDate: "Jul 31, 2025", contractValue: 7000, amountPaid: 5600, status: "Active" },
-  { contractId: "CTR-2025-005", vendor: "Dell Inc. (via Telefonika Ghana)", service: "IT Equipment Supply", linkedBudgetLines: ["L015"], startDate: "Apr 15, 2025", endDate: "Jun 15, 2025", contractValue: 47500, amountPaid: 47500, status: "Completed" },
+  { contractId: "CTR-2025-001", supplier: "Dr. Kwesi Appiah", service: "Survey Design Consultancy", linkedBudgetLines: ["L001"], startDate: "Jan 10, 2025", endDate: "Feb 28, 2025", contractValue: 8000, amountPaid: 8000, status: "Completed" },
+  { contractId: "CTR-2025-002", supplier: "Prof. Ama Benyiwa", service: "External Peer Review", linkedBudgetLines: ["L004"], startDate: "Feb 15, 2025", endDate: "Mar 15, 2025", contractValue: 4000, amountPaid: 4000, status: "Completed" },
+  { contractId: "CTR-2025-003", supplier: "University of Ghana", service: "Research Assistant Services", linkedBudgetLines: ["L006"], startDate: "Jan 20, 2025", endDate: "Apr 1, 2025", contractValue: 6000, amountPaid: 6000, status: "Completed" },
+  { contractId: "CTR-2025-004", supplier: "Ghana Research Associates", service: "Stakeholder Engagement Consultancy", linkedBudgetLines: ["L012"], startDate: "May 1, 2025", endDate: "Jul 31, 2025", contractValue: 7000, amountPaid: 5600, status: "Active" },
+  { contractId: "CTR-2025-005", supplier: "Dell Inc. (via Telefonika Ghana)", service: "IT Equipment Supply", linkedBudgetLines: ["L015"], startDate: "Apr 15, 2025", endDate: "Jun 15, 2025", contractValue: 47500, amountPaid: 47500, status: "Completed" },
 ];
 
 // ─── Purchase Orders derived from budget line items ────────────────────────
@@ -196,7 +196,7 @@ interface PurchaseOrder {
   poNumber: string;
   linkedBudgetLine: string;
   linkedBudgetLineName: string;
-  vendor: string;
+  supplier: string;
   description: string;
   qty: number;
   unitPrice: number;
@@ -206,60 +206,60 @@ interface PurchaseOrder {
 }
 
 const PURCHASE_ORDERS: PurchaseOrder[] = [
-  { poNumber: "PO-10001", linkedBudgetLine: "L001", linkedBudgetLineName: "Consultant Fees - Survey Design", vendor: "Dr. Kwesi Appiah", description: "Survey design consultancy - full engagement", qty: 1, unitPrice: 8000, total: 8000, dateIssued: "Jan 12, 2025", status: "Paid" },
-  { poNumber: "PO-10002", linkedBudgetLine: "L002", linkedBudgetLineName: "Printing & Materials", vendor: "PrintWorks Ghana Ltd", description: "Survey instrument printing (200 copies)", qty: 200, unitPrice: 5.25, total: 1050, dateIssued: "Jan 25, 2025", status: "Paid" },
-  { poNumber: "PO-10003", linkedBudgetLine: "L003", linkedBudgetLineName: "Stakeholder Workshop", vendor: "La Palm Royal Beach Hotel", description: "Full-day workshop venue + catering (40 pax)", qty: 1, unitPrice: 3500, total: 3500, dateIssued: "Feb 5, 2025", status: "Paid" },
-  { poNumber: "PO-10006", linkedBudgetLine: "L006", linkedBudgetLineName: "Research Assistant Stipends", vendor: "University of Ghana", description: "3 Research Assistants - 3 months", qty: 3, unitPrice: 2000, total: 6000, dateIssued: "Jan 22, 2025", status: "Paid" },
-  { poNumber: "PO-10009", linkedBudgetLine: "L009", linkedBudgetLineName: "Venue & Catering", vendor: "Kempinski Hotel Gold Coast", description: "Kick-off meeting venue + catering (60 pax)", qty: 1, unitPrice: 4800, total: 4800, dateIssued: "Apr 20, 2025", status: "Paid" },
-  { poNumber: "PO-10010", linkedBudgetLine: "L010", linkedBudgetLineName: "Audio-Visual Equipment Rental", vendor: "AV Solutions Accra", description: "Projector, PA system, recording equipment", qty: 1, unitPrice: 1950, total: 1950, dateIssued: "Apr 22, 2025", status: "Paid" },
-  { poNumber: "PO-10012", linkedBudgetLine: "L012", linkedBudgetLineName: "Consultant Fees - Engagement", vendor: "Ghana Research Associates", description: "Stakeholder engagement consultancy (Phase 1)", qty: 1, unitPrice: 5600, total: 5600, dateIssued: "May 5, 2025", status: "Issued" },
-  { poNumber: "PO-10013", linkedBudgetLine: "L013", linkedBudgetLineName: "Community Outreach Materials", vendor: "CreativeEdge Designs", description: "Brochures, banners, IEC materials", qty: 500, unitPrice: 4.20, total: 2100, dateIssued: "May 15, 2025", status: "Received" },
-  { poNumber: "PO-10014", linkedBudgetLine: "L015", linkedBudgetLineName: "Laptops (50x Dell Latitude)", vendor: "Dell Inc. (via Telefonika Ghana)", description: "Dell Latitude 5520, 16GB RAM, 512GB SSD", qty: 50, unitPrice: 950, total: 47500, dateIssued: "Apr 18, 2025", status: "Received" },
+  { poNumber: "PO-10001", linkedBudgetLine: "L001", linkedBudgetLineName: "Consultant Fees - Survey Design", supplier: "Dr. Kwesi Appiah", description: "Survey design consultancy - full engagement", qty: 1, unitPrice: 8000, total: 8000, dateIssued: "Jan 12, 2025", status: "Paid" },
+  { poNumber: "PO-10002", linkedBudgetLine: "L002", linkedBudgetLineName: "Printing & Materials", supplier: "PrintWorks Ghana Ltd", description: "Survey instrument printing (200 copies)", qty: 200, unitPrice: 5.25, total: 1050, dateIssued: "Jan 25, 2025", status: "Paid" },
+  { poNumber: "PO-10003", linkedBudgetLine: "L003", linkedBudgetLineName: "Stakeholder Workshop", supplier: "La Palm Royal Beach Hotel", description: "Full-day workshop venue + catering (40 pax)", qty: 1, unitPrice: 3500, total: 3500, dateIssued: "Feb 5, 2025", status: "Paid" },
+  { poNumber: "PO-10006", linkedBudgetLine: "L006", linkedBudgetLineName: "Research Assistant Stipends", supplier: "University of Ghana", description: "3 Research Assistants - 3 months", qty: 3, unitPrice: 2000, total: 6000, dateIssued: "Jan 22, 2025", status: "Paid" },
+  { poNumber: "PO-10009", linkedBudgetLine: "L009", linkedBudgetLineName: "Venue & Catering", supplier: "Kempinski Hotel Gold Coast", description: "Kick-off meeting venue + catering (60 pax)", qty: 1, unitPrice: 4800, total: 4800, dateIssued: "Apr 20, 2025", status: "Paid" },
+  { poNumber: "PO-10010", linkedBudgetLine: "L010", linkedBudgetLineName: "Audio-Visual Equipment Rental", supplier: "AV Solutions Accra", description: "Projector, PA system, recording equipment", qty: 1, unitPrice: 1950, total: 1950, dateIssued: "Apr 22, 2025", status: "Paid" },
+  { poNumber: "PO-10012", linkedBudgetLine: "L012", linkedBudgetLineName: "Consultant Fees - Engagement", supplier: "Ghana Research Associates", description: "Stakeholder engagement consultancy (Phase 1)", qty: 1, unitPrice: 5600, total: 5600, dateIssued: "May 5, 2025", status: "Issued" },
+  { poNumber: "PO-10013", linkedBudgetLine: "L013", linkedBudgetLineName: "Community Outreach Materials", supplier: "CreativeEdge Designs", description: "Brochures, banners, IEC materials", qty: 500, unitPrice: 4.20, total: 2100, dateIssued: "May 15, 2025", status: "Received" },
+  { poNumber: "PO-10014", linkedBudgetLine: "L015", linkedBudgetLineName: "Laptops (50x Dell Latitude)", supplier: "Dell Inc. (via Telefonika Ghana)", description: "Dell Latitude 5520, 16GB RAM, 512GB SSD", qty: 50, unitPrice: 950, total: 47500, dateIssued: "Apr 18, 2025", status: "Received" },
 ];
 
 // ─── Implementation stage overrides ─────────────────────────────────────────
 // When in Implementation stage, procurement is mostly done
 
 const IMPL_PROCUREMENT_OVERRIDES: Record<string, Partial<ProcurementLineItem>> = {
-  L012: { actual: 7000, procurementStatus: "Completed", poNumber: "PO-10012", vendor: "Ghana Research Associates" },
-  L013: { actual: 2800, procurementStatus: "Completed", poNumber: "PO-10013", vendor: "CreativeEdge Designs" },
-  L014: { actual: 4200, procurementStatus: "Completed", poNumber: "PO-10015", vendor: "GH Transport Services", contractId: null },
-  L016: { actual: 3200, procurementStatus: "Delivered", poNumber: "PO-10016", vendor: "Cisco Systems (via CompuGhana)", contractId: "CTR-2025-006" },
-  L017: { actual: 7500, procurementStatus: "Completed", poNumber: "PO-10017", vendor: "Microsoft (via SoftLogic Ghana)", contractId: "CTR-2025-007" },
-  L018: { actual: 8400, procurementStatus: "PO Issued", poNumber: "PO-10018", vendor: "Ghana Field Services Ltd", contractId: "CTR-2025-008" },
-  L019: { actual: 3200, procurementStatus: "PO Issued", poNumber: "PO-10019", vendor: "Star Transport Co." },
-  L020: { actual: 3500, procurementStatus: "Delivered", poNumber: "PO-10020", vendor: "SurveyGo Technologies", contractId: "CTR-2025-009" },
-  L021: { actual: 2400, procurementStatus: "PO Issued", poNumber: "PO-10021", vendor: "Dr. Kwame Boakye", contractId: "CTR-2025-010" },
-  L022: { actual: 0, procurementStatus: "Requisition Raised", vendor: null, poNumber: null },
+  L012: { actual: 7000, procurementStatus: "Completed", poNumber: "PO-10012", supplier: "Ghana Research Associates" },
+  L013: { actual: 2800, procurementStatus: "Completed", poNumber: "PO-10013", supplier: "CreativeEdge Designs" },
+  L014: { actual: 4200, procurementStatus: "Completed", poNumber: "PO-10015", supplier: "GH Transport Services", contractId: null },
+  L016: { actual: 3200, procurementStatus: "Delivered", poNumber: "PO-10016", supplier: "Cisco Systems (via CompuGhana)", contractId: "CTR-2025-006" },
+  L017: { actual: 7500, procurementStatus: "Completed", poNumber: "PO-10017", supplier: "Microsoft (via SoftLogic Ghana)", contractId: "CTR-2025-007" },
+  L018: { actual: 8400, procurementStatus: "PO Issued", poNumber: "PO-10018", supplier: "Ghana Field Services Ltd", contractId: "CTR-2025-008" },
+  L019: { actual: 3200, procurementStatus: "PO Issued", poNumber: "PO-10019", supplier: "Star Transport Co." },
+  L020: { actual: 3500, procurementStatus: "Delivered", poNumber: "PO-10020", supplier: "SurveyGo Technologies", contractId: "CTR-2025-009" },
+  L021: { actual: 2400, procurementStatus: "PO Issued", poNumber: "PO-10021", supplier: "Dr. Kwame Boakye", contractId: "CTR-2025-010" },
+  L022: { actual: 0, procurementStatus: "Requisition Raised", supplier: null, poNumber: null },
 };
 
 function getProcurementData(projectStage: string): ProcurementPhase[] {
   if (projectStage === "Closure") {
     // In Closure, all procurement items are completed with full spend
-    const closureVendors: Record<string, { vendor: string; poNumber: string; contractId: string | null }> = {
-      L014: { vendor: "GH Transport Services", poNumber: "PO-10015", contractId: null },
-      L016: { vendor: "Cisco Systems (via CompuGhana)", poNumber: "PO-10016", contractId: "CTR-2025-006" },
-      L017: { vendor: "Microsoft (via SoftLogic Ghana)", poNumber: "PO-10017", contractId: "CTR-2025-007" },
-      L018: { vendor: "Ghana Field Services Ltd", poNumber: "PO-10018", contractId: "CTR-2025-008" },
-      L019: { vendor: "Star Transport Co.", poNumber: "PO-10019", contractId: null },
-      L020: { vendor: "SurveyGo Technologies", poNumber: "PO-10020", contractId: "CTR-2025-009" },
-      L021: { vendor: "Dr. Kwame Boakye", poNumber: "PO-10021", contractId: "CTR-2025-010" },
-      L022: { vendor: "Accra International Conference Centre", poNumber: "PO-10022", contractId: null },
-      L023: { vendor: "GraphicDesign Pro", poNumber: "PO-10023", contractId: null },
-      L024: { vendor: "PrintWorks Ghana Ltd", poNumber: "PO-10024", contractId: null },
-      L025: { vendor: "KPMG Ghana", poNumber: "PO-10025", contractId: "CTR-2025-011" },
+    const closureSuppliers: Record<string, { supplier: string; poNumber: string; contractId: string | null }> = {
+      L014: { supplier: "GH Transport Services", poNumber: "PO-10015", contractId: null },
+      L016: { supplier: "Cisco Systems (via CompuGhana)", poNumber: "PO-10016", contractId: "CTR-2025-006" },
+      L017: { supplier: "Microsoft (via SoftLogic Ghana)", poNumber: "PO-10017", contractId: "CTR-2025-007" },
+      L018: { supplier: "Ghana Field Services Ltd", poNumber: "PO-10018", contractId: "CTR-2025-008" },
+      L019: { supplier: "Star Transport Co.", poNumber: "PO-10019", contractId: null },
+      L020: { supplier: "SurveyGo Technologies", poNumber: "PO-10020", contractId: "CTR-2025-009" },
+      L021: { supplier: "Dr. Kwame Boakye", poNumber: "PO-10021", contractId: "CTR-2025-010" },
+      L022: { supplier: "Accra International Conference Centre", poNumber: "PO-10022", contractId: null },
+      L023: { supplier: "GraphicDesign Pro", poNumber: "PO-10023", contractId: null },
+      L024: { supplier: "PrintWorks Ghana Ltd", poNumber: "PO-10024", contractId: null },
+      L025: { supplier: "KPMG Ghana", poNumber: "PO-10025", contractId: "CTR-2025-011" },
     };
     return PROCUREMENT_DATA.map(phase => ({
       ...phase,
       tasks: phase.tasks.map(task => ({
         ...task,
         lineItems: task.lineItems.map(li => {
-          const closureOverride = closureVendors[li.budgetLineId];
+          const closureOverride = closureSuppliers[li.budgetLineId];
           return {
             ...li,
             actual: li.planned,
             procurementStatus: "Completed" as const,
-            vendor: closureOverride?.vendor || li.vendor,
+            supplier: closureOverride?.supplier || li.supplier,
             poNumber: closureOverride?.poNumber || li.poNumber,
             contractId: closureOverride?.contractId !== undefined ? closureOverride.contractId : li.contractId,
           };
@@ -284,11 +284,11 @@ function getProcurementData(projectStage: string): ProcurementPhase[] {
 
 const IMPL_CONTRACTS: Contract[] = [
   ...CONTRACTS.map(c => c.contractId === "CTR-2025-004" ? { ...c, amountPaid: 7000, status: "Completed" as const } : c),
-  { contractId: "CTR-2025-006", vendor: "Cisco Systems (via CompuGhana)", service: "Network Infrastructure Supply", linkedBudgetLines: ["L016"], startDate: "Jul 1, 2025", endDate: "Sep 15, 2025", contractValue: 3500, amountPaid: 3200, status: "Completed" },
-  { contractId: "CTR-2025-007", vendor: "Microsoft (via SoftLogic Ghana)", service: "Enterprise Software Licences", linkedBudgetLines: ["L017"], startDate: "Jul 15, 2025", endDate: "Jul 15, 2026", contractValue: 8000, amountPaid: 7500, status: "Active" },
-  { contractId: "CTR-2025-008", vendor: "Ghana Field Services Ltd", service: "Field Data Collection Services", linkedBudgetLines: ["L018"], startDate: "Oct 1, 2025", endDate: "Mar 31, 2026", contractValue: 12000, amountPaid: 8400, status: "Active" },
-  { contractId: "CTR-2025-009", vendor: "SurveyGo Technologies", service: "Mobile Data Collection Platform", linkedBudgetLines: ["L020"], startDate: "Sep 15, 2025", endDate: "Sep 14, 2026", contractValue: 3500, amountPaid: 3500, status: "Active" },
-  { contractId: "CTR-2025-010", vendor: "Dr. Kwame Boakye", service: "Policy Expert Consultation", linkedBudgetLines: ["L021"], startDate: "Nov 1, 2025", endDate: "Apr 30, 2026", contractValue: 6000, amountPaid: 2400, status: "Active" },
+  { contractId: "CTR-2025-006", supplier: "Cisco Systems (via CompuGhana)", service: "Network Infrastructure Supply", linkedBudgetLines: ["L016"], startDate: "Jul 1, 2025", endDate: "Sep 15, 2025", contractValue: 3500, amountPaid: 3200, status: "Completed" },
+  { contractId: "CTR-2025-007", supplier: "Microsoft (via SoftLogic Ghana)", service: "Enterprise Software Licences", linkedBudgetLines: ["L017"], startDate: "Jul 15, 2025", endDate: "Jul 15, 2026", contractValue: 8000, amountPaid: 7500, status: "Active" },
+  { contractId: "CTR-2025-008", supplier: "Ghana Field Services Ltd", service: "Field Data Collection Services", linkedBudgetLines: ["L018"], startDate: "Oct 1, 2025", endDate: "Mar 31, 2026", contractValue: 12000, amountPaid: 8400, status: "Active" },
+  { contractId: "CTR-2025-009", supplier: "SurveyGo Technologies", service: "Mobile Data Collection Platform", linkedBudgetLines: ["L020"], startDate: "Sep 15, 2025", endDate: "Sep 14, 2026", contractValue: 3500, amountPaid: 3500, status: "Active" },
+  { contractId: "CTR-2025-010", supplier: "Dr. Kwame Boakye", service: "Policy Expert Consultation", linkedBudgetLines: ["L021"], startDate: "Nov 1, 2025", endDate: "Apr 30, 2026", contractValue: 6000, amountPaid: 2400, status: "Active" },
 ];
 
 const IMPL_PURCHASE_ORDERS: PurchaseOrder[] = [
@@ -298,28 +298,28 @@ const IMPL_PURCHASE_ORDERS: PurchaseOrder[] = [
     if (po.poNumber === "PO-10014") return { ...po, status: "Paid" as const };
     return po;
   }),
-  { poNumber: "PO-10015", linkedBudgetLine: "L014", linkedBudgetLineName: "Travel - Stakeholder Visits", vendor: "GH Transport Services", description: "Regional travel for stakeholder engagement", qty: 1, unitPrice: 4200, total: 4200, dateIssued: "Jun 10, 2025", status: "Paid" },
-  { poNumber: "PO-10016", linkedBudgetLine: "L016", linkedBudgetLineName: "Networking Equipment", vendor: "Cisco Systems (via CompuGhana)", description: "Switches, routers, cabling (8 sites)", qty: 8, unitPrice: 400, total: 3200, dateIssued: "Jul 5, 2025", status: "Received" },
-  { poNumber: "PO-10017", linkedBudgetLine: "L017", linkedBudgetLineName: "Software Licences", vendor: "Microsoft (via SoftLogic Ghana)", description: "Office 365 + Azure AD licences (50 users)", qty: 50, unitPrice: 150, total: 7500, dateIssued: "Jul 18, 2025", status: "Paid" },
-  { poNumber: "PO-10018", linkedBudgetLine: "L018", linkedBudgetLineName: "Field Enumerator Wages", vendor: "Ghana Field Services Ltd", description: "20 enumerators - monthly wages", qty: 20, unitPrice: 420, total: 8400, dateIssued: "Oct 5, 2025", status: "Issued" },
-  { poNumber: "PO-10019", linkedBudgetLine: "L019", linkedBudgetLineName: "Transport & Fuel", vendor: "Star Transport Co.", description: "Vehicle hire + fuel for field operations", qty: 1, unitPrice: 3200, total: 3200, dateIssued: "Oct 8, 2025", status: "Issued" },
-  { poNumber: "PO-10020", linkedBudgetLine: "L020", linkedBudgetLineName: "Mobile Data Collection Tools", vendor: "SurveyGo Technologies", description: "20x tablets + SurveyGo licences", qty: 20, unitPrice: 175, total: 3500, dateIssued: "Sep 20, 2025", status: "Received" },
-  { poNumber: "PO-10021", linkedBudgetLine: "L021", linkedBudgetLineName: "Policy Expert Consultation", vendor: "Dr. Kwame Boakye", description: "Policy review consultancy - Phase 1", qty: 1, unitPrice: 2400, total: 2400, dateIssued: "Nov 5, 2025", status: "Issued" },
+  { poNumber: "PO-10015", linkedBudgetLine: "L014", linkedBudgetLineName: "Travel - Stakeholder Visits", supplier: "GH Transport Services", description: "Regional travel for stakeholder engagement", qty: 1, unitPrice: 4200, total: 4200, dateIssued: "Jun 10, 2025", status: "Paid" },
+  { poNumber: "PO-10016", linkedBudgetLine: "L016", linkedBudgetLineName: "Networking Equipment", supplier: "Cisco Systems (via CompuGhana)", description: "Switches, routers, cabling (8 sites)", qty: 8, unitPrice: 400, total: 3200, dateIssued: "Jul 5, 2025", status: "Received" },
+  { poNumber: "PO-10017", linkedBudgetLine: "L017", linkedBudgetLineName: "Software Licences", supplier: "Microsoft (via SoftLogic Ghana)", description: "Office 365 + Azure AD licences (50 users)", qty: 50, unitPrice: 150, total: 7500, dateIssued: "Jul 18, 2025", status: "Paid" },
+  { poNumber: "PO-10018", linkedBudgetLine: "L018", linkedBudgetLineName: "Field Enumerator Wages", supplier: "Ghana Field Services Ltd", description: "20 enumerators - monthly wages", qty: 20, unitPrice: 420, total: 8400, dateIssued: "Oct 5, 2025", status: "Issued" },
+  { poNumber: "PO-10019", linkedBudgetLine: "L019", linkedBudgetLineName: "Transport & Fuel", supplier: "Star Transport Co.", description: "Vehicle hire + fuel for field operations", qty: 1, unitPrice: 3200, total: 3200, dateIssued: "Oct 8, 2025", status: "Issued" },
+  { poNumber: "PO-10020", linkedBudgetLine: "L020", linkedBudgetLineName: "Mobile Data Collection Tools", supplier: "SurveyGo Technologies", description: "20x tablets + SurveyGo licences", qty: 20, unitPrice: 175, total: 3500, dateIssued: "Sep 20, 2025", status: "Received" },
+  { poNumber: "PO-10021", linkedBudgetLine: "L021", linkedBudgetLineName: "Policy Expert Consultation", supplier: "Dr. Kwame Boakye", description: "Policy review consultancy - Phase 1", qty: 1, unitPrice: 2400, total: 2400, dateIssued: "Nov 5, 2025", status: "Issued" },
 ];
 
 // Closure-stage contracts: all completed
 const CLOSURE_CONTRACTS: Contract[] = [
   ...IMPL_CONTRACTS.map(c => ({ ...c, amountPaid: c.contractValue, status: "Completed" as const })),
-  { contractId: "CTR-2025-011", vendor: "KPMG Ghana", service: "Final Project Audit", linkedBudgetLines: ["L025"], startDate: "Jun 1, 2026", endDate: "Aug 15, 2026", contractValue: 4500, amountPaid: 4500, status: "Completed" },
+  { contractId: "CTR-2025-011", supplier: "KPMG Ghana", service: "Final Project Audit", linkedBudgetLines: ["L025"], startDate: "Jun 1, 2026", endDate: "Aug 15, 2026", contractValue: 4500, amountPaid: 4500, status: "Completed" },
 ];
 
 // Closure-stage POs: all paid
 const CLOSURE_PURCHASE_ORDERS: PurchaseOrder[] = [
   ...IMPL_PURCHASE_ORDERS.map(po => ({ ...po, status: "Paid" as const })),
-  { poNumber: "PO-10022", linkedBudgetLine: "L022", linkedBudgetLineName: "Validation Workshop", vendor: "Accra International Conference Centre", description: "Workshop venue + catering (50 pax)", qty: 1, unitPrice: 4000, total: 4000, dateIssued: "Mar 10, 2026", status: "Paid" },
-  { poNumber: "PO-10023", linkedBudgetLine: "L023", linkedBudgetLineName: "Report Design & Layout", vendor: "GraphicDesign Pro", description: "Final report design and layout services", qty: 1, unitPrice: 3000, total: 3000, dateIssued: "Jun 5, 2026", status: "Paid" },
-  { poNumber: "PO-10024", linkedBudgetLine: "L024", linkedBudgetLineName: "Printing & Distribution", vendor: "PrintWorks Ghana Ltd", description: "Final report printing (500 copies)", qty: 500, unitPrice: 4, total: 2000, dateIssued: "Jul 1, 2026", status: "Paid" },
-  { poNumber: "PO-10025", linkedBudgetLine: "L025", linkedBudgetLineName: "Final Audit Fees", vendor: "KPMG Ghana", description: "Independent project audit", qty: 1, unitPrice: 4500, total: 4500, dateIssued: "Jun 1, 2026", status: "Paid" },
+  { poNumber: "PO-10022", linkedBudgetLine: "L022", linkedBudgetLineName: "Validation Workshop", supplier: "Accra International Conference Centre", description: "Workshop venue + catering (50 pax)", qty: 1, unitPrice: 4000, total: 4000, dateIssued: "Mar 10, 2026", status: "Paid" },
+  { poNumber: "PO-10023", linkedBudgetLine: "L023", linkedBudgetLineName: "Report Design & Layout", supplier: "GraphicDesign Pro", description: "Final report design and layout services", qty: 1, unitPrice: 3000, total: 3000, dateIssued: "Jun 5, 2026", status: "Paid" },
+  { poNumber: "PO-10024", linkedBudgetLine: "L024", linkedBudgetLineName: "Printing & Distribution", supplier: "PrintWorks Ghana Ltd", description: "Final report printing (500 copies)", qty: 500, unitPrice: 4, total: 2000, dateIssued: "Jul 1, 2026", status: "Paid" },
+  { poNumber: "PO-10025", linkedBudgetLine: "L025", linkedBudgetLineName: "Final Audit Fees", supplier: "KPMG Ghana", description: "Independent project audit", qty: 1, unitPrice: 4500, total: 4500, dateIssued: "Jun 1, 2026", status: "Paid" },
 ];
 
 function getContracts(projectStage: string) {
@@ -613,7 +613,7 @@ export function ProjectProcurementTab({ projectStage }: ProjectProcurementTabPro
                 <th className="text-right px-4 py-3 text-white text-[12px] font-semibold">Actual</th>
                 <th className="text-left px-4 py-3 text-white text-[12px] font-semibold w-[10%]">% Used</th>
                 <th className="text-left px-4 py-3 text-white text-[12px] font-semibold">Method</th>
-                <th className="text-left px-4 py-3 text-white text-[12px] font-semibold">Vendor</th>
+                <th className="text-left px-4 py-3 text-white text-[12px] font-semibold">Supplier</th>
                 <th className="text-left px-4 py-3 text-white text-[12px] font-semibold">Status</th>
                 <th className="text-center px-4 py-3 text-white text-[12px] font-semibold w-10"></th>
               </tr>
@@ -687,7 +687,7 @@ export function ProjectProcurementTab({ projectStage }: ProjectProcurementTabPro
               <thead style={{ backgroundColor: "#0B01D0" }}>
                 <tr>
                   <th className="px-4 py-3 text-left text-[12px] font-semibold text-white">Contract ID</th>
-                  <th className="px-4 py-3 text-left text-[12px] font-semibold text-white">Vendor</th>
+                  <th className="px-4 py-3 text-left text-[12px] font-semibold text-white">Supplier</th>
                   <th className="px-4 py-3 text-left text-[12px] font-semibold text-white">Service / Good</th>
                   <th className="px-4 py-3 text-left text-[12px] font-semibold text-white">Budget Line</th>
                   <th className="px-4 py-3 text-left text-[12px] font-semibold text-white">Period</th>
@@ -704,7 +704,7 @@ export function ProjectProcurementTab({ projectStage }: ProjectProcurementTabPro
                   return (
                     <tr key={c.contractId} className={`border-b border-slate-100 hover:bg-slate-50 ${idx % 2 === 1 ? "bg-slate-50/50" : ""}`}>
                       <td className="px-4 py-3 text-[12px] font-medium text-slate-900">{c.contractId}</td>
-                      <td className="px-4 py-3 text-[12px] text-slate-700">{c.vendor}</td>
+                      <td className="px-4 py-3 text-[12px] text-slate-700">{c.supplier}</td>
                       <td className="px-4 py-3 text-[12px] text-slate-600">{c.service}</td>
                       <td className="px-4 py-3 text-[12px] text-[#0B01D0] font-medium">{c.linkedBudgetLines.join(", ")}</td>
                       <td className="px-4 py-3 text-[12px] text-slate-600 whitespace-nowrap">{c.startDate} — {c.endDate}</td>
@@ -751,7 +751,7 @@ export function ProjectProcurementTab({ projectStage }: ProjectProcurementTabPro
                 <tr>
                   <th className="px-4 py-3 text-left text-[12px] font-semibold text-white">PO Number</th>
                   <th className="px-4 py-3 text-left text-[12px] font-semibold text-white">Budget Line</th>
-                  <th className="px-4 py-3 text-left text-[12px] font-semibold text-white">Vendor</th>
+                  <th className="px-4 py-3 text-left text-[12px] font-semibold text-white">Supplier</th>
                   <th className="px-4 py-3 text-left text-[12px] font-semibold text-white">Description</th>
                   <th className="px-4 py-3 text-right text-[12px] font-semibold text-white">Qty</th>
                   <th className="px-4 py-3 text-right text-[12px] font-semibold text-white">Unit Price</th>
@@ -771,7 +771,7 @@ export function ProjectProcurementTab({ projectStage }: ProjectProcurementTabPro
                         <span className="text-[11px] text-slate-500 truncate max-w-[140px]">{po.linkedBudgetLineName}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-[12px] text-slate-700">{po.vendor}</td>
+                    <td className="px-4 py-3 text-[12px] text-slate-700">{po.supplier}</td>
                     <td className="px-4 py-3 text-[12px] text-slate-600 max-w-[200px] truncate">{po.description}</td>
                     <td className="px-4 py-3 text-right text-[12px] text-slate-700">{po.qty}</td>
                     <td className="px-4 py-3 text-right text-[12px] text-slate-700">{formatCurrency(po.unitPrice)}</td>
@@ -969,7 +969,7 @@ function TaskSection({
             </td>
             <td className="px-4 py-2.5">{getMethodBadge(li.procurementMethod)}</td>
             <td className="px-4 py-2.5">
-              <span className="text-[12px] text-slate-600">{li.vendor || "—"}</span>
+              <span className="text-[12px] text-slate-600">{li.supplier || "—"}</span>
             </td>
             <td className="px-4 py-2.5">{getStatusBadge(li.procurementStatus)}</td>
             <td className="px-4 py-2.5 text-center">

@@ -359,11 +359,11 @@ export const mockJournalEntries: SRDJournalEntry[] = [
     date: "2026-03-02", description: "IT equipment purchase", reference: "PO-2026-0045",
     lines: [
       { id: "jl11", accountId: "a7", accountCode: "01-02-01-1500-001-00", accountName: "Fixed Assets Control", description: "Dell servers x3", debit: 45000, credit: 0, currency: "USD" },
-      { id: "jl12", accountId: "a8", accountCode: "01-03-01-2001-001-00", accountName: "Accounts Payable Control", description: "Vendor: TechPro Solutions", debit: 0, credit: 45000, currency: "USD" },
+      { id: "jl12", accountId: "a8", accountCode: "01-03-01-2001-001-00", accountName: "Accounts Payable Control", description: "Supplier: TechPro Solutions", debit: 0, credit: 45000, currency: "USD" },
     ],
     totalDebit: 45000, totalCredit: 45000, isBalanced: true,
     createdBy: "Mike Brown", createdDate: "2026-03-02", submittedBy: "Mike Brown", submittedDate: "2026-03-02",
-    attachments: ["purchase_order_0045.pdf", "vendor_quote.pdf"], periodId: "p2026-03"
+    attachments: ["purchase_order_0045.pdf", "supplier_quote.pdf"], periodId: "p2026-03"
   },
   {
     id: "je7", entryNo: "2026-5003-07", entryType: "Accrual", ledgerType: "Primary", status: "Draft",

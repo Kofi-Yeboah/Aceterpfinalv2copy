@@ -30,15 +30,15 @@ import {
 import { getCurrentUser, subscribe as subscribeUser } from "../lib/currentUser";
 import { pickFiles, FileValidationError, openFile, type UploadedFile } from "../lib/fileUpload";
 import {
-  getVendors,
-  getEligibleVendors,
-  vendorDisplayName,
-  vendorEmail,
-  vendorAddress,
+  getSuppliers,
+  getEligibleSuppliers,
+  supplierDisplayName,
+  supplierEmail,
+  supplierAddress,
   avgScore,
   checkSourcingEligibility,
-  type Vendor,
-} from "../lib/vendorStore";
+  type Supplier,
+} from "../lib/supplierStore";
 import { subscribe as subscribeContracts } from "../lib/contractStore";
 import { ProcurementItemDetailView } from "../components/ProcurementItemDetailView";
 
@@ -445,9 +445,9 @@ export function ESSProcurementPlan() {
   const [prSupportingDocs, setPrSupportingDocs] = useState<UploadedFile[]>([]);
   const [prFormErrors, setPrFormErrors] = useState<Record<string, string>>({});
   const [prSubmitting, setPrSubmitting] = useState(false);
-  const [vendorSearchOpen, setVendorSearchOpen] = useState(false);
-  const [vendorSearchQuery, setVendorSearchQuery] = useState("");
-  const [vendorSearchTarget, setVendorSearchTarget] = useState(0);
+  const [supplierSearchOpen, setSupplierSearchOpen] = useState(false);
+  const [supplierSearchQuery, setSupplierSearchQuery] = useState("");
+  const [supplierSearchTarget, setSupplierSearchTarget] = useState(0);
 
   // Version history
   const [showVersionHistory, setShowVersionHistory] = useState<string | null>(null);
@@ -644,20 +644,20 @@ export function ESSProcurementPlan() {
     setPrSupportingDocs(fromAttachmentRecords(draft?.attachmentFiles, "Supporting Document"));
     setPrFormErrors({});
     setPrSubmitting(false);
-    setVendorSearchOpen(false);
+    setSupplierSearchOpen(false);
   };
 
   const closePRForm = () => {
     setPrFormOpen(null);
     setPrDraftId(null);
     setPrFormErrors({});
-    setVendorSearchOpen(false);
+    setSupplierSearchOpen(false);
   };
 
   /**
    * Everything the requester entered, shaped for the store. The previous build
    * collected all of this and then passed only the ten base arguments, so the
-   * funding source, dates, justification, vendor details and every attachment
+   * funding source, dates, justification, supplier details and every attachment
    * were discarded on submission.
    */
   const buildPRPayload = (plan: ProcurementPlan, item: ProcurementItem) => {
@@ -1753,7 +1753,7 @@ export function ESSProcurementPlan() {
                             "w-full border rounded-lg px-3 py-2.5 text-[12px] text-slate-900 placeholder:text-slate-400 outline-none transition-colors resize-none",
                             prFormErrors.directSelectionJustification ? "border-red-300 bg-red-50/50" : "border-slate-200 focus:border-[#0B01D0]"
                           )}
-                          placeholder="Why are we requesting procurement from only this vendor? (e.g., sole distributor, proprietary technology, continuation of existing engagement...)"
+                          placeholder="Why are we requesting procurement from only this supplier? (e.g., sole distributor, proprietary technology, continuation of existing engagement...)"
                         />
                         {prFormErrors.directSelectionJustification && (
                           <p className="text-[10px] text-red-500 mt-1 flex items-center gap-1"><AlertCircle size={10} /> {prFormErrors.directSelectionJustification}</p>
@@ -1775,22 +1775,22 @@ export function ESSProcurementPlan() {
                         <div className="relative">
                           <button
                             type="button"
-                            onClick={() => { setVendorSearchOpen(!vendorSearchOpen); setVendorSearchQuery(""); }}
+                            onClick={() => { setSupplierSearchOpen(!supplierSearchOpen); setSupplierSearchQuery(""); }}
                             className="flex items-center gap-1.5 px-3 py-2 border border-slate-200 bg-white rounded-lg text-[11px] text-[#0B01D0] hover:bg-slate-50 transition-colors font-medium"
                           >
-                            <Search size={12} /> Search Vendor Database
+                            <Search size={12} /> Search Supplier Database
                           </button>
-                          {vendorSearchOpen && (() => {
-                            const query = vendorSearchQuery.trim().toLowerCase();
-                            const eligibleIds = new Set(getEligibleVendors().map(v => v.id));
-                            const matches = getVendors()
+                          {supplierSearchOpen && (() => {
+                            const query = supplierSearchQuery.trim().toLowerCase();
+                            const eligibleIds = new Set(getEligibleSuppliers().map(v => v.id));
+                            const matches = getSuppliers()
                               .filter(v => {
                                 if (!query) return true;
                                 return (
-                                  vendorDisplayName(v).toLowerCase().includes(query) ||
+                                  supplierDisplayName(v).toLowerCase().includes(query) ||
                                   v.category.toLowerCase().includes(query) ||
                                   v.subCategory.toLowerCase().includes(query) ||
-                                  vendorEmail(v).toLowerCase().includes(query)
+                                  supplierEmail(v).toLowerCase().includes(query)
                                 );
                               })
                               .sort((a, b) => {
@@ -1804,18 +1804,18 @@ export function ESSProcurementPlan() {
                                     <Search size={12} className="text-slate-400 shrink-0" />
                                     <input
                                       autoFocus
-                                      value={vendorSearchQuery}
-                                      onChange={e => setVendorSearchQuery(e.target.value)}
-                                      placeholder="Search the vendor register by name, category or email…"
+                                      value={supplierSearchQuery}
+                                      onChange={e => setSupplierSearchQuery(e.target.value)}
+                                      placeholder="Search the supplier register by name, category or email…"
                                       className="flex-1 bg-transparent text-[11px] text-slate-900 outline-none placeholder:text-slate-400"
                                     />
-                                    <button type="button" onClick={() => setVendorSearchOpen(false)} className="text-slate-400 hover:text-slate-600">
+                                    <button type="button" onClick={() => setSupplierSearchOpen(false)} className="text-slate-400 hover:text-slate-600">
                                       <X size={12} />
                                     </button>
                                   </div>
                                 </div>
                                 <div className="max-h-56 overflow-y-auto">
-                                  {matches.map((v: Vendor) => {
+                                  {matches.map((v: Supplier) => {
                                     const eligible = eligibleIds.has(v.id);
                                     const rating = avgScore(v.performance);
                                     const blocked = eligible ? [] : checkSourcingEligibility(v.id).blockingReasons;
@@ -1830,17 +1830,17 @@ export function ESSProcurementPlan() {
                                           eligible ? "hover:bg-indigo-50" : "opacity-60 cursor-not-allowed bg-slate-50/60"
                                         )}
                                         onClick={() => {
-                                          updateShortlistEntry(vendorSearchTarget, {
-                                            name: vendorDisplayName(v),
-                                            address: vendorAddress(v),
-                                            email: vendorEmail(v),
+                                          updateShortlistEntry(supplierSearchTarget, {
+                                            name: supplierDisplayName(v),
+                                            address: supplierAddress(v),
+                                            email: supplierEmail(v),
                                           });
-                                          setVendorSearchOpen(false);
-                                          setVendorSearchQuery("");
+                                          setSupplierSearchOpen(false);
+                                          setSupplierSearchQuery("");
                                         }}
                                       >
                                         <div className="flex items-center justify-between gap-2">
-                                          <p className="text-[11px] font-medium text-slate-900">{vendorDisplayName(v)}</p>
+                                          <p className="text-[11px] font-medium text-slate-900">{supplierDisplayName(v)}</p>
                                           <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-medium shrink-0">{v.category}</span>
                                         </div>
                                         <div className="flex items-center gap-2 mt-0.5">
@@ -1850,7 +1850,7 @@ export function ESSProcurementPlan() {
                                           )}>
                                             {rating > 0 ? `Performance ${rating}/10` : "Not yet rated"}
                                           </span>
-                                          <span className="text-[10px] text-slate-400">· {v.vendorId} · {v.status}</span>
+                                          <span className="text-[10px] text-slate-400">· {v.supplierId} · {v.status}</span>
                                         </div>
                                         {!eligible && (
                                           <p className="text-[9px] text-red-500 mt-0.5">{blocked[0] ?? "Not eligible for sourcing."}</p>
@@ -1859,7 +1859,7 @@ export function ESSProcurementPlan() {
                                     );
                                   })}
                                   {matches.length === 0 && (
-                                    <p className="text-[11px] text-slate-400 text-center py-4">No vendors found matching "{vendorSearchQuery}"</p>
+                                    <p className="text-[11px] text-slate-400 text-center py-4">No suppliers found matching "{supplierSearchQuery}"</p>
                                   )}
                                 </div>
                               </div>
@@ -1877,7 +1877,7 @@ export function ESSProcurementPlan() {
                                 <div className="flex items-center gap-1">
                                   <button
                                     type="button"
-                                    onClick={() => { setVendorSearchTarget(idx); setVendorSearchOpen(true); setVendorSearchQuery(""); }}
+                                    onClick={() => { setSupplierSearchTarget(idx); setSupplierSearchOpen(true); setSupplierSearchQuery(""); }}
                                     className="text-[10px] text-[#0B01D0] font-medium hover:underline"
                                   >
                                     Fill from register
@@ -1987,7 +1987,7 @@ export function ESSProcurementPlan() {
                     {/* Supporting Docs — Optional */}
                     <div>
                       <label className="text-[12px] font-medium text-slate-700 mb-1.5 block">
-                        Supporting Documents <span className="text-[10px] text-slate-400 font-normal">(Optional — e.g., email approvals, vendor quotes)</span>
+                        Supporting Documents <span className="text-[10px] text-slate-400 font-normal">(Optional — e.g., email approvals, supplier quotes)</span>
                       </label>
                       <div className="border border-dashed border-slate-300 rounded-lg p-4 bg-slate-50/50">
                         {prSupportingDocs.length > 0 && (

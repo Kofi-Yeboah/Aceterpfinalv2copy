@@ -13,14 +13,14 @@ import {
   subscribe as subscribeProcurement,
   type ProcurementPlanItem,
 } from "../lib/procurementStore";
-import { getVendorStats, subscribe as subscribeVendors } from "../lib/vendorStore";
+import { getSupplierStats, subscribe as subscribeSuppliers } from "../lib/supplierStore";
 import { getContractStats, subscribe as subscribeContracts } from "../lib/contractStore";
 
 const PROC_SECTIONS = [
   { id: "kpis", label: "KPI Cards" },
   { id: "poTrend", label: "Purchase Orders Trend" },
   { id: "spending", label: "Spending by Category" },
-  { id: "supplierPerf", label: "Vendor Performance" },
+  { id: "supplierPerf", label: "Supplier Performance" },
   { id: "recentPOs", label: "Recent Purchase Orders" },
   { id: "donorSpend", label: "Spend by Donor" },
   { id: "activeCompleted", label: "Active vs Completed" },
@@ -49,14 +49,14 @@ export function ProcurementDashboard() {
 
   useEffect(() => {
     const bump = () => setRevision((r) => r + 1);
-    const unsubs = [subscribeProcurement(bump), subscribeVendors(bump), subscribeContracts(bump)];
+    const unsubs = [subscribeProcurement(bump), subscribeSuppliers(bump), subscribeContracts(bump)];
     return () => unsubs.forEach((u) => u());
   }, []);
 
   const data = useMemo(() => {
     const planStats = getPlanStats();
     const prStats = getPRStats();
-    const vendorStats = getVendorStats();
+    const supplierStats = getSupplierStats();
     const contractStats = getContractStats();
     const planItems = getProcurementPlanItems();
     const pos = getGeneratedPOs();
@@ -83,16 +83,16 @@ export function ProcurementDashboard() {
         value: row.value,
       }));
 
-    // ── Vendor status distribution ──────────────────────────────────────────
-    const otherVendors = Math.max(
-      vendorStats.total - vendorStats.active - vendorStats.pending - vendorStats.flagged,
+    // ── Supplier status distribution ──────────────────────────────────────────
+    const otherSuppliers = Math.max(
+      supplierStats.total - supplierStats.active - supplierStats.pending - supplierStats.flagged,
       0
     );
     const supplierData = [
-      { name: "Active", value: vendorStats.active, color: "#10b981" },
-      { name: "Pending", value: vendorStats.pending, color: "#f59e0b" },
-      { name: "Flagged", value: vendorStats.flagged, color: "#ef4444" },
-      { name: "Other", value: otherVendors, color: "#6b7280" },
+      { name: "Active", value: supplierStats.active, color: "#10b981" },
+      { name: "Pending", value: supplierStats.pending, color: "#f59e0b" },
+      { name: "Flagged", value: supplierStats.flagged, color: "#ef4444" },
+      { name: "Other", value: otherSuppliers, color: "#6b7280" },
     ].filter((d) => d.value > 0);
 
     // ── Spend by category and donor, from approved plan items ───────────────
@@ -143,7 +143,7 @@ export function ProcurementDashboard() {
       .slice(0, 5)
       .map((po) => ({
         id: po.poNumber,
-        supplier: po.vendor,
+        supplier: po.supplier,
         amount: po.amount,
         status: po.status ?? "Signed",
         date: po.orderDate,
@@ -152,7 +152,7 @@ export function ProcurementDashboard() {
     return {
       planStats,
       prStats,
-      vendorStats,
+      supplierStats,
       contractStats,
       executedValue,
       executionRate,
@@ -215,11 +215,11 @@ export function ProcurementDashboard() {
         <ProcurementStatCards
           stats={[
             {
-              label: "Total Vendors",
-              value: data.vendorStats.total,
+              label: "Total Suppliers",
+              value: data.supplierStats.total,
               icon: <Users size={14} />,
               tone: "accent",
-              sub: `${data.vendorStats.active} active, ${data.vendorStats.pending} pending`,
+              sub: `${data.supplierStats.active} active, ${data.supplierStats.pending} pending`,
             },
             {
               label: "Purchase Orders",
@@ -293,8 +293,8 @@ export function ProcurementDashboard() {
           {isVisible("supplierPerf") && (
           <div className="bg-white rounded-lg border border-slate-200 p-5">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-slate-900">Vendor Status Distribution</h3>
-              <span className="text-xs text-slate-500">Avg performance {data.vendorStats.avgPerformance}/5</span>
+              <h3 className="text-sm font-semibold text-slate-900">Supplier Status Distribution</h3>
+              <span className="text-xs text-slate-500">Avg performance {data.supplierStats.avgPerformance}/5</span>
             </div>
             <ResponsiveContainer width="100%" height={250}>
               <PieChart id="proc-dash-pie">
@@ -322,10 +322,10 @@ export function ProcurementDashboard() {
                   <span className="text-sm text-slate-600">{item.name}: {item.value}</span>
                 </div>
               ))}
-              {data.vendorStats.expiring > 0 && (
+              {data.supplierStats.expiring > 0 && (
                 <div className="col-span-2 flex items-center gap-2 text-xs text-amber-700 bg-amber-50 rounded-lg px-2 py-1.5">
                   <AlertTriangle className="w-3.5 h-3.5" />
-                  {data.vendorStats.expiring} vendor{data.vendorStats.expiring === 1 ? " has" : "s have"} expiring or expired documents
+                  {data.supplierStats.expiring} supplier{data.supplierStats.expiring === 1 ? " has" : "s have"} expiring or expired documents
                 </div>
               )}
             </div>

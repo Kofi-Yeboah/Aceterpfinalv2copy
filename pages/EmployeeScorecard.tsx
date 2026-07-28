@@ -320,7 +320,7 @@ const MOCK_SCORECARDS: EmployeeScorecardData[] = [
         target: "Deploy digital leave/timesheet system with 100% staff adoption by Q3",
         weight: 15,
         dueDate: "2025-09-30",
-        midYearEmployeeComment: "System selected and vendor contracted. UAT scheduled for July.",
+        midYearEmployeeComment: "System selected and supplier contracted. UAT scheduled for July.",
         midYearManagerComment: "On track. Ensure training plan is ready before go-live.",
         midYearManagerRating: 3,
         endYearEmployeeComment: "",

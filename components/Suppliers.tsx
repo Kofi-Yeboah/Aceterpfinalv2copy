@@ -9,18 +9,18 @@ import { SupplierDetailsView } from "./SupplierDetailsView";
 import { ProcurementTabs, ProcurementTabBar, type ProcurementTab } from "./procurement/ProcurementTabs";
 import { ProcurementStatCards } from "./procurement/ProcurementStatCards";
 import {
-  subscribe as subscribeVendors,
-  getVendors, getVendorStats, getPerformanceRanking, getVendorsByCategory,
-  getBlockedVendors, getVendorsWithDocumentIssues, getVendorFlags, hasVendorWarning,
-  avgScore, vendorDisplayName, vendorEmail, vendorAddress, peekNextVendorId,
-  registerVendor, updateVendor, approveVendorRegistration, changeVendorStatus,
+  subscribe as subscribeSuppliers,
+  getSuppliers, getSupplierStats, getPerformanceRanking, getSuppliersByCategory,
+  getBlockedSuppliers, getSuppliersWithDocumentIssues, getSupplierFlags, hasSupplierWarning,
+  avgScore, supplierDisplayName, supplierEmail, supplierAddress, peekNextSupplierId,
+  registerSupplier, updateSupplier, approveSupplierRegistration, changeSupplierStatus,
   requestReactivation, approveReactivation,
   findPotentialDuplicates, isSanctioned,
-  VENDOR_CATEGORIES, SUB_CATEGORIES, VENDOR_STATUSES,
+  SUPPLIER_CATEGORIES, SUB_CATEGORIES, SUPPLIER_STATUSES,
   FIRM_DOC_CHECKLIST, INDIVIDUAL_DOC_CHECKLIST, EXPERT_AREAS_OPTIONS,
-  type Vendor, type FirmVendor, type IndividualVendor,
-  type VendorType, type VendorStatus, type RiskLevel, type VendorFlags,
-} from "../lib/vendorStore";
+  type Supplier, type FirmSupplier, type IndividualSupplier,
+  type SupplierType, type SupplierStatus, type RiskLevel, type SupplierFlags,
+} from "../lib/supplierStore";
 import {
   can, denialReason, getCurrentUser, hasRole, subscribe as subscribeUser,
 } from "../lib/currentUser";
@@ -33,15 +33,15 @@ import { exportToCSV, exportToExcel, exportToPDF, type ExportColumn } from "../l
 
 const F = "'Montserrat Variable', sans-serif";
 
-const CATEGORY_FILTERS = ["All Categories", ...VENDOR_CATEGORIES];
-const STATUS_FILTERS: string[] = ["All Statuses", ...VENDOR_STATUSES];
+const CATEGORY_FILTERS = ["All Categories", ...SUPPLIER_CATEGORIES];
+const STATUS_FILTERS: string[] = ["All Statuses", ...SUPPLIER_STATUSES];
 
 type TabKey = "firms" | "individuals" | "pending" | "performance" | "blocked" | "expiring";
 type StatusAction = "Flag" | "Suspend" | "Blacklist" | "Reactivate" | "Approve Reactivation";
 
 /** Row shape handed to the export helpers — a type alias so it satisfies Record<string, unknown>. */
-type VendorExportRow = {
-  vendorId: string;
+type SupplierExportRow = {
+  supplierId: string;
   name: string;
   type: string;
   category: string;
@@ -58,8 +58,8 @@ type VendorExportRow = {
   dateOnboarded: string;
 };
 
-const EXPORT_COLUMNS: ExportColumn<VendorExportRow>[] = [
-  { key: "vendorId", header: "Vendor ID" },
+const EXPORT_COLUMNS: ExportColumn<SupplierExportRow>[] = [
+  { key: "supplierId", header: "Supplier ID" },
   { key: "name", header: "Name" },
   { key: "type", header: "Type" },
   { key: "category", header: "Category" },
@@ -80,7 +80,7 @@ const EXPORT_COLUMNS: ExportColumn<VendorExportRow>[] = [
    HELPERS
    ══════════════════════════════════════════════════════════════════════════════ */
 
-function getStatusColor(s: VendorStatus) {
+function getStatusColor(s: SupplierStatus) {
   switch (s) {
     case "Active": return "bg-green-50 text-green-600";
     case "Pending Onboarding": return "bg-amber-50 text-amber-600";
@@ -116,27 +116,27 @@ function maskAccount(account: string) {
   return `••••${value.slice(-4)}`;
 }
 
-/** Re-render whenever the vendor register or the signed-in user changes. */
+/** Re-render whenever the supplier register or the signed-in user changes. */
 function useStoreSubscription() {
   const [, setVersion] = useState(0);
   useEffect(() => {
     const bump = () => setVersion((v) => v + 1);
-    const unsubVendors = subscribeVendors(bump);
+    const unsubSuppliers = subscribeSuppliers(bump);
     const unsubUser = subscribeUser(bump);
-    return () => { unsubVendors(); unsubUser(); };
+    return () => { unsubSuppliers(); unsubUser(); };
   }, []);
 }
 
-function toExportRow(v: Vendor): VendorExportRow {
-  const flags = getVendorFlags(v);
+function toExportRow(v: Supplier): SupplierExportRow {
+  const flags = getSupplierFlags(v);
   return {
-    vendorId: v.vendorId,
-    name: vendorDisplayName(v),
+    supplierId: v.supplierId,
+    name: supplierDisplayName(v),
     type: v.type,
     category: v.category,
     subCategory: v.subCategory,
     contact: v.type === "Firm" ? v.contactPerson : v.legalName,
-    email: vendorEmail(v),
+    email: supplierEmail(v),
     status: v.status,
     riskLevel: v.riskLevel,
     rating: avgScore(v.performance) > 0 ? `${avgScore(v.performance)}/10` : "Not rated",
@@ -172,7 +172,7 @@ function NameScreening({ name, excludeId }: { name: string; excludeId?: string }
       {duplicates.length > 0 && (
         <p className="text-[10px] text-amber-600 flex items-start gap-1" style={{ fontFamily: F }}>
           <AlertTriangle size={11} className="mt-px shrink-0" />
-          Possible duplicate of {duplicates.map((d) => `${vendorDisplayName(d)} (${d.vendorId})`).join(", ")}.
+          Possible duplicate of {duplicates.map((d) => `${supplierDisplayName(d)} (${d.supplierId})`).join(", ")}.
         </p>
       )}
     </div>
@@ -187,10 +187,10 @@ export function Suppliers() {
   useStoreSubscription();
   const user = getCurrentUser();
 
-  const canCreate = can("vendor.create");
-  const canApproveRegistration = can("vendor.approveRegistration");
-  const canSuspend = can("vendor.suspend");
-  const canApproveReactivation = can("vendor.approveReactivation");
+  const canCreate = can("supplier.create");
+  const canApproveRegistration = can("supplier.approveRegistration");
+  const canSuspend = can("supplier.suspend");
+  const canApproveReactivation = can("supplier.approveReactivation");
   const canRequestReactivation = hasRole("Procurement") || canApproveReactivation;
   const canExport = can("report.export");
 
@@ -202,11 +202,11 @@ export function Suppliers() {
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [showExportDropdown, setShowExportDropdown] = useState(false);
   const [openActionMenuId, setOpenActionMenuId] = useState<string | null>(null);
-  const [showOnboardModal, setShowOnboardModal] = useState<VendorType | null>(null);
+  const [showOnboardModal, setShowOnboardModal] = useState<SupplierType | null>(null);
   const [notice, setNotice] = useState<{ tone: "error" | "success"; text: string } | null>(null);
 
   // Detail view
-  const [detailVendorId, setDetailVendorId] = useState<string | null>(null);
+  const [detailSupplierId, setDetailSupplierId] = useState<string | null>(null);
 
   // Onboard form states — Firm
   const [firmForm, setFirmForm] = useState({
@@ -235,18 +235,18 @@ export function Suppliers() {
 
   const [formError, setFormError] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
-  const [onboardResult, setOnboardResult] = useState<{ vendor: Vendor; flags: VendorFlags } | null>(null);
+  const [onboardResult, setOnboardResult] = useState<{ supplier: Supplier; flags: SupplierFlags } | null>(null);
 
   const [formCategoryDropdown, setFormCategoryDropdown] = useState(false);
   const [formSubCategoryDropdown, setFormSubCategoryDropdown] = useState(false);
 
   // Status action modal (Flag / Suspend / Blacklist / Reactivate)
-  const [statusAction, setStatusAction] = useState<{ vendor: Vendor; action: StatusAction } | null>(null);
+  const [statusAction, setStatusAction] = useState<{ supplier: Supplier; action: StatusAction } | null>(null);
   const [actionReason, setActionReason] = useState("");
   const [actionReasonError, setActionReasonError] = useState(false);
 
   // Edit modal
-  const [editVendor, setEditVendor] = useState<Vendor | null>(null);
+  const [editSupplier, setEditSupplier] = useState<Supplier | null>(null);
   const [editForm, setEditForm] = useState({
     contactPerson: "", email: "", phone: "", address: "",
     bankName: "", bankAccountNumber: "", category: "", subCategory: "", ownershipDetails: "",
@@ -260,19 +260,19 @@ export function Suppliers() {
   const [editError, setEditError] = useState<string | null>(null);
 
   // ── Store reads ────────────────────────────────────────────────────────────
-  const vendors = getVendors();
-  const stats = getVendorStats();
+  const suppliers = getSuppliers();
+  const stats = getSupplierStats();
   const ranking = getPerformanceRanking();
-  const categoryBreakdown = getVendorsByCategory();
-  const blockedVendors = getBlockedVendors();
-  const documentIssues = getVendorsWithDocumentIssues();
-  const pendingQueue = vendors.filter((v) => v.pendingReview === true || v.status === "Pending Onboarding");
+  const categoryBreakdown = getSuppliersByCategory();
+  const blockedSuppliers = getBlockedSuppliers();
+  const documentIssues = getSuppliersWithDocumentIssues();
+  const pendingQueue = suppliers.filter((v) => v.pendingReview === true || v.status === "Pending Onboarding");
 
   // ── Filtering ──────────────────────────────────────────────────────────────
-  const matchesFilters = (v: Vendor) => {
+  const matchesFilters = (v: Supplier) => {
     const q = searchQuery.trim().toLowerCase();
     const haystack = [
-      vendorDisplayName(v), v.vendorId, vendorEmail(v),
+      supplierDisplayName(v), v.supplierId, supplierEmail(v),
       v.type === "Firm" ? v.contactPerson : v.idNumber,
     ].join(" ").toLowerCase();
     const matchesSearch = !q || haystack.includes(q);
@@ -281,27 +281,27 @@ export function Suppliers() {
     return matchesSearch && matchesCat && matchesStat;
   };
 
-  const firms = vendors.filter((v): v is FirmVendor => v.type === "Firm");
-  const individuals = vendors.filter((v): v is IndividualVendor => v.type === "Individual");
+  const firms = suppliers.filter((v): v is FirmSupplier => v.type === "Firm");
+  const individuals = suppliers.filter((v): v is IndividualSupplier => v.type === "Individual");
   const filteredFirms = firms.filter(matchesFilters);
   const filteredIndividuals = individuals.filter(matchesFilters);
 
   /** The list the export buttons act on — always what the current tab is showing. */
-  const visibleVendors: Vendor[] =
+  const visibleSuppliers: Supplier[] =
     activeTab === "firms" ? filteredFirms
       : activeTab === "individuals" ? filteredIndividuals
         : activeTab === "pending" ? pendingQueue
-          : activeTab === "blocked" ? blockedVendors
-            : activeTab === "expiring" ? documentIssues.map((d) => d.vendor)
-              : ranking.map((r) => r.vendor);
+          : activeTab === "blocked" ? blockedSuppliers
+            : activeTab === "expiring" ? documentIssues.map((d) => d.supplier)
+              : ranking.map((r) => r.supplier);
 
   const exportTitle =
-    activeTab === "firms" ? "Vendor Register — Firms"
-      : activeTab === "individuals" ? "Vendor Register — Individual Consultants"
-        : activeTab === "pending" ? "Vendor Registrations Pending Review"
-          : activeTab === "blocked" ? "Blocked & Restricted Vendors"
-            : activeTab === "expiring" ? "Vendors with Document Issues"
-              : "Vendor Performance Ranking";
+    activeTab === "firms" ? "Supplier Register — Firms"
+      : activeTab === "individuals" ? "Supplier Register — Individual Consultants"
+        : activeTab === "pending" ? "Supplier Registrations Pending Review"
+          : activeTab === "blocked" ? "Blocked & Restricted Suppliers"
+            : activeTab === "expiring" ? "Suppliers with Document Issues"
+              : "Supplier Performance Ranking";
 
   const exportSubtitle = [
     selectedCategory !== "All Categories" ? `Category: ${selectedCategory}` : null,
@@ -311,7 +311,7 @@ export function Suppliers() {
 
   const runExport = (format: "excel" | "pdf" | "csv") => {
     setShowExportDropdown(false);
-    const rows = visibleVendors.map(toExportRow);
+    const rows = visibleSuppliers.map(toExportRow);
     const meta = { subtitle: exportSubtitle, generatedBy: user.name };
     if (format === "excel") exportToExcel(exportTitle, EXPORT_COLUMNS, rows, meta);
     else if (format === "pdf") exportToPDF(exportTitle, EXPORT_COLUMNS, rows, { ...meta, orientation: "landscape" });
@@ -320,21 +320,21 @@ export function Suppliers() {
 
   // ── Actions ────────────────────────────────────────────────────────────────
 
-  const openStatusAction = (vendor: Vendor, action: StatusAction) => {
+  const openStatusAction = (supplier: Supplier, action: StatusAction) => {
     setOpenActionMenuId(null);
     setActionReason("");
     setActionReasonError(false);
-    setStatusAction({ vendor, action });
+    setStatusAction({ supplier, action });
   };
 
   const confirmStatusAction = () => {
     if (!statusAction) return;
-    const { vendor, action } = statusAction;
+    const { supplier, action } = statusAction;
     const actor = getCurrentUser();
 
     if (action === "Approve Reactivation") {
-      approveReactivation(vendor.id, actor.name);
-      setNotice({ tone: "success", text: `${vendorDisplayName(vendor)} reactivated and returned to the approved vendor list.` });
+      approveReactivation(supplier.id, actor.name);
+      setNotice({ tone: "success", text: `${supplierDisplayName(supplier)} reactivated and returned to the approved supplier list.` });
       setStatusAction(null);
       return;
     }
@@ -345,14 +345,14 @@ export function Suppliers() {
     }
 
     if (action === "Reactivate") {
-      requestReactivation(vendor.id, actionReason.trim(), actor.name);
-      setNotice({ tone: "success", text: `Reactivation requested for ${vendorDisplayName(vendor)} — awaiting Senior Management approval.` });
+      requestReactivation(supplier.id, actionReason.trim(), actor.name);
+      setNotice({ tone: "success", text: `Reactivation requested for ${supplierDisplayName(supplier)} — awaiting Senior Management approval.` });
     } else {
-      const target: VendorStatus = action === "Flag" ? "Flagged" : action === "Suspend" ? "Suspended" : "Blacklisted";
+      const target: SupplierStatus = action === "Flag" ? "Flagged" : action === "Suspend" ? "Suspended" : "Blacklisted";
       // A Senior Management actor is both the performer and the approver of record.
       const approver = canApproveReactivation ? actor.name : undefined;
-      changeVendorStatus(vendor.id, target, actionReason.trim(), actor.name, approver);
-      setNotice({ tone: "success", text: `${vendorDisplayName(vendor)} is now ${target}.` });
+      changeSupplierStatus(supplier.id, target, actionReason.trim(), actor.name, approver);
+      setNotice({ tone: "success", text: `${supplierDisplayName(supplier)} is now ${target}.` });
     }
 
     setStatusAction(null);
@@ -360,29 +360,29 @@ export function Suppliers() {
     setActionReasonError(false);
   };
 
-  const handleApproveRegistration = (vendor: Vendor) => {
+  const handleApproveRegistration = (supplier: Supplier) => {
     setOpenActionMenuId(null);
-    const approved = approveVendorRegistration(vendor.id, getCurrentUser().name);
+    const approved = approveSupplierRegistration(supplier.id, getCurrentUser().name);
     if (!approved) {
-      const missing = getVendorFlags(vendor).missingDocs;
+      const missing = getSupplierFlags(supplier).missingDocs;
       setNotice({
         tone: "error",
-        text: `${vendorDisplayName(vendor)} cannot be approved yet — outstanding documents: ${missing.join(", ")}.`,
+        text: `${supplierDisplayName(supplier)} cannot be approved yet — outstanding documents: ${missing.join(", ")}.`,
       });
       return;
     }
-    setNotice({ tone: "success", text: `${vendorDisplayName(approved)} approved and added to the active vendor list.` });
+    setNotice({ tone: "success", text: `${supplierDisplayName(approved)} approved and added to the active supplier list.` });
   };
 
-  const openEdit = (v: Vendor) => {
+  const openEdit = (v: Supplier) => {
     setOpenActionMenuId(null);
     setEditError(null);
-    setEditVendor(v);
+    setEditSupplier(v);
     setEditForm({
       contactPerson: v.type === "Firm" ? v.contactPerson : v.legalName,
-      email: vendorEmail(v),
+      email: supplierEmail(v),
       phone: v.type === "Firm" ? v.phone : v.contactPhone,
-      address: vendorAddress(v),
+      address: supplierAddress(v),
       bankName: v.bankName,
       bankAccountNumber: v.bankAccountNumber,
       category: v.category,
@@ -398,7 +398,7 @@ export function Suppliers() {
   };
 
   const saveEdit = () => {
-    if (!editVendor) return;
+    if (!editSupplier) return;
     const required: [string, string][] = [
       ["Email", editForm.email],
       ["Phone", editForm.phone],
@@ -407,7 +407,7 @@ export function Suppliers() {
       ["Account number", editForm.bankAccountNumber],
       ["Category", editForm.category],
     ];
-    if (editVendor.type === "Firm") required.unshift(["Contact person", editForm.contactPerson]);
+    if (editSupplier.type === "Firm") required.unshift(["Contact person", editForm.contactPerson]);
     const missing = required.filter(([, value]) => !value.trim()).map(([label]) => label);
     if (missing.length > 0) {
       setEditError(`Complete the required fields: ${missing.join(", ")}.`);
@@ -415,11 +415,11 @@ export function Suppliers() {
     }
 
     // A changed account number invalidates the Finance confirmation on file.
-    const accountChanged = editForm.bankAccountNumber.trim() !== editVendor.bankAccountNumber;
+    const accountChanged = editForm.bankAccountNumber.trim() !== editSupplier.bankAccountNumber;
     const bankingReset = accountChanged ? { bankValidated: false, bankValidatedBy: undefined } : {};
 
-    if (editVendor.type === "Firm") {
-      updateVendor(editVendor.id, {
+    if (editSupplier.type === "Firm") {
+      updateSupplier(editSupplier.id, {
         contactPerson: editForm.contactPerson.trim(),
         email: editForm.email.trim(),
         phone: editForm.phone.trim(),
@@ -433,7 +433,7 @@ export function Suppliers() {
         ...bankingReset,
       }, getCurrentUser().name);
     } else {
-      updateVendor(editVendor.id, {
+      updateSupplier(editSupplier.id, {
         contactEmail: editForm.email.trim(),
         contactPhone: editForm.phone.trim(),
         residentialAddress: editForm.address.trim(),
@@ -448,9 +448,9 @@ export function Suppliers() {
 
     setNotice({
       tone: "success",
-      text: `${vendorDisplayName(editVendor)} updated.${accountChanged ? " Banking details must be re-validated by Finance." : ""}`,
+      text: `${supplierDisplayName(editSupplier)} updated.${accountChanged ? " Banking details must be re-validated by Finance." : ""}`,
     });
-    setEditVendor(null);
+    setEditSupplier(null);
     setEditError(null);
   };
 
@@ -506,7 +506,7 @@ export function Suppliers() {
         return;
       }
       const { documents, documentExpiry } = collectDocs(firmDocFiles, firmDocExpiry);
-      const result = registerVendor("Firm", {
+      const result = registerSupplier("Firm", {
         legalBusinessName: firmForm.legalBusinessName.trim(),
         registrationNumber: firmForm.registrationNumber.trim(),
         taxId: firmForm.taxId.trim(),
@@ -547,7 +547,7 @@ export function Suppliers() {
       return;
     }
     const { documents, documentExpiry } = collectDocs(indDocFiles, indDocExpiry);
-    const result = registerVendor("Individual", {
+    const result = registerSupplier("Individual", {
       legalName: indForm.legalName.trim(),
       contactEmail: indForm.contactEmail.trim(),
       contactPhone: indForm.contactPhone.trim(),
@@ -595,8 +595,8 @@ export function Suppliers() {
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
-  if (detailVendorId) {
-    return <SupplierDetailsView vendorId={detailVendorId} onBack={() => setDetailVendorId(null)} />;
+  if (detailSupplierId) {
+    return <SupplierDetailsView supplierId={detailSupplierId} onBack={() => setDetailSupplierId(null)} />;
   }
 
   const tabs: ProcurementTab<TabKey>[] = [
@@ -607,7 +607,7 @@ export function Suppliers() {
   const showFilters = activeTab === "firms" || activeTab === "individuals";
 
   /** Row action menu shared by the firms and individuals tables. */
-  const renderActionMenu = (v: Vendor) => (
+  const renderActionMenu = (v: Supplier) => (
     <div className="relative">
       <button onClick={() => setOpenActionMenuId(openActionMenuId === v.id ? null : v.id)} className="inline-flex items-center justify-center w-8 h-8 hover:bg-slate-100 rounded transition-colors">
         <MoreHorizontal size={16} className="text-slate-600" />
@@ -616,19 +616,19 @@ export function Suppliers() {
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpenActionMenuId(null)} />
           <div className="absolute right-0 top-full mt-1 w-52 bg-white border border-slate-200 rounded-lg shadow-lg z-20 overflow-hidden">
-            <button onClick={() => { setDetailVendorId(v.id); setOpenActionMenuId(null); }} className="w-full px-3 py-2 text-left text-[12px] text-slate-700 hover:bg-slate-50 flex items-center gap-2" style={{ fontFamily: F }}><Eye size={13} /> View Details</button>
+            <button onClick={() => { setDetailSupplierId(v.id); setOpenActionMenuId(null); }} className="w-full px-3 py-2 text-left text-[12px] text-slate-700 hover:bg-slate-50 flex items-center gap-2" style={{ fontFamily: F }}><Eye size={13} /> View Details</button>
 
             <button
               disabled={!canCreate}
-              title={canCreate ? undefined : denialReason("vendor.create")}
+              title={canCreate ? undefined : denialReason("supplier.create")}
               onClick={() => openEdit(v)}
               className="w-full px-3 py-2 text-left text-[12px] text-slate-700 hover:bg-slate-50 flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
-              style={{ fontFamily: F }}><Edit2 size={13} /> Edit Vendor</button>
+              style={{ fontFamily: F }}><Edit2 size={13} /> Edit Supplier</button>
 
             {(v.status === "Pending Onboarding" || v.pendingReview) && (
               <button
                 disabled={!canApproveRegistration}
-                title={canApproveRegistration ? undefined : denialReason("vendor.approveRegistration")}
+                title={canApproveRegistration ? undefined : denialReason("supplier.approveRegistration")}
                 onClick={() => handleApproveRegistration(v)}
                 className="w-full px-3 py-2 text-left text-[12px] text-green-700 hover:bg-green-50 flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
                 style={{ fontFamily: F }}><BadgeCheck size={13} /> Approve Registration</button>
@@ -637,16 +637,16 @@ export function Suppliers() {
             {v.status === "Active" && (
               <button
                 disabled={!canSuspend}
-                title={canSuspend ? undefined : denialReason("vendor.suspend")}
+                title={canSuspend ? undefined : denialReason("supplier.suspend")}
                 onClick={() => openStatusAction(v, "Flag")}
                 className="w-full px-3 py-2 text-left text-[12px] text-amber-700 hover:bg-amber-50 flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
-                style={{ fontFamily: F }}><AlertTriangle size={13} /> Flag Vendor</button>
+                style={{ fontFamily: F }}><AlertTriangle size={13} /> Flag Supplier</button>
             )}
 
             {(v.status === "Active" || v.status === "Flagged") && (
               <button
                 disabled={!canSuspend}
-                title={canSuspend ? undefined : denialReason("vendor.suspend")}
+                title={canSuspend ? undefined : denialReason("supplier.suspend")}
                 onClick={() => openStatusAction(v, "Suspend")}
                 className="w-full px-3 py-2 text-left text-[12px] text-slate-600 hover:bg-slate-50 flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
                 style={{ fontFamily: F }}><ShieldAlert size={13} /> Suspend</button>
@@ -655,7 +655,7 @@ export function Suppliers() {
             {(v.status === "Active" || v.status === "Flagged" || v.status === "Suspended") && (
               <button
                 disabled={!canSuspend}
-                title={canSuspend ? undefined : denialReason("vendor.suspend")}
+                title={canSuspend ? undefined : denialReason("supplier.suspend")}
                 onClick={() => openStatusAction(v, "Blacklist")}
                 className="w-full px-3 py-2 text-left text-[12px] text-red-700 hover:bg-red-50 flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
                 style={{ fontFamily: F }}><ShieldBan size={13} /> Blacklist</button>
@@ -673,7 +673,7 @@ export function Suppliers() {
             {v.status === "Pending Reactivation" && (
               <button
                 disabled={!canApproveReactivation}
-                title={canApproveReactivation ? undefined : denialReason("vendor.approveReactivation")}
+                title={canApproveReactivation ? undefined : denialReason("supplier.approveReactivation")}
                 onClick={() => openStatusAction(v, "Approve Reactivation")}
                 className="w-full px-3 py-2 text-left text-[12px] text-green-700 hover:bg-green-50 flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
                 style={{ fontFamily: F }}><ShieldCheck size={13} /> Approve Reactivation</button>
@@ -691,14 +691,14 @@ export function Suppliers() {
         <div>
           <h1 className="text-[18px] font-semibold text-slate-900" style={{ fontFamily: F }}>Supplier Management</h1>
           <p className="text-[12px] text-slate-500 mt-0.5" style={{ fontFamily: F }}>
-            Vendor registration, onboarding, categorization &amp; performance
+            Supplier registration, onboarding, categorization &amp; performance
             <span className="text-slate-400"> &middot; signed in as {user.name} ({user.roles.join(", ")})</span>
           </p>
         </div>
         <button
           onClick={() => { resetForms(); setShowOnboardModal(activeTab === "individuals" ? "Individual" : "Firm"); }}
           disabled={!canCreate}
-          title={canCreate ? undefined : denialReason("vendor.create")}
+          title={canCreate ? undefined : denialReason("supplier.create")}
           className="px-4 py-2 text-white rounded-lg text-[12px] font-medium hover:opacity-90 transition-opacity shadow-sm flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
           style={{ backgroundColor: "#0B01D0", fontFamily: F }}
         >
@@ -710,7 +710,7 @@ export function Suppliers() {
       {/* ── Dashboard Summary Cards ── */}
       <ProcurementStatCards
         stats={[
-          { label: "Active Vendors", value: stats.active, icon: <Users size={14} />, tone: "success" },
+          { label: "Active Suppliers", value: stats.active, icon: <Users size={14} />, tone: "success" },
           { label: "Pending Onboarding", value: stats.pending, icon: <Loader size={14} />, tone: "warning" },
           { label: "Flagged / Suspended", value: stats.flagged, icon: <Flag size={14} />, tone: "danger" },
           { label: "Expiring Documents", value: stats.expiring, icon: <CalendarClock size={14} />, tone: "warning" },
@@ -750,7 +750,7 @@ export function Suppliers() {
                   <div className="fixed inset-0 z-10" onClick={() => setShowExportDropdown(false)} />
                   <div className="absolute right-0 top-full mt-1 w-52 bg-white border border-slate-200 rounded-lg shadow-lg z-20 overflow-hidden">
                     <p className="px-3 py-2 text-[10px] text-slate-400 border-b border-slate-100" style={{ fontFamily: F }}>
-                      {visibleVendors.length} record{visibleVendors.length === 1 ? "" : "s"} · {exportTitle}
+                      {visibleSuppliers.length} record{visibleSuppliers.length === 1 ? "" : "s"} · {exportTitle}
                     </p>
                     <button onClick={() => runExport("excel")} className="w-full px-3 py-2 text-left text-[12px] text-slate-700 hover:bg-slate-50 flex items-center gap-2" style={{ fontFamily: F }}><FileSpreadsheet size={13} className="text-green-600" /> Export to Excel</button>
                     <button onClick={() => runExport("pdf")} className="w-full px-3 py-2 text-left text-[12px] text-slate-700 hover:bg-slate-50 flex items-center gap-2" style={{ fontFamily: F }}><Printer size={13} className="text-red-600" /> Export to PDF</button>
@@ -825,7 +825,7 @@ export function Suppliers() {
           <table className="w-full">
             <thead style={{ backgroundColor: "#0B01D0" }} className="sticky top-0 z-[5]">
               <tr>
-                <th className="text-left px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: F }}>Vendor ID</th>
+                <th className="text-left px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: F }}>Supplier ID</th>
                 <th className="text-left px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: F }}>Legal Business Name</th>
                 <th className="text-left px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: F }}>Registration #</th>
                 <th className="text-left px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: F }}>Tax ID</th>
@@ -842,11 +842,11 @@ export function Suppliers() {
               {filteredFirms.length === 0 ? (
                 <tr><td colSpan={11} className="text-center py-12 text-[13px] text-slate-400" style={{ fontFamily: F }}>No firms found.</td></tr>
               ) : filteredFirms.map((v, i) => (
-                <tr key={v.id} className={`border-b border-slate-100 hover:bg-slate-50 transition-colors cursor-pointer ${i % 2 === 0 ? "bg-white" : "bg-slate-50/50"}`} onClick={() => setDetailVendorId(v.id)}>
+                <tr key={v.id} className={`border-b border-slate-100 hover:bg-slate-50 transition-colors cursor-pointer ${i % 2 === 0 ? "bg-white" : "bg-slate-50/50"}`} onClick={() => setDetailSupplierId(v.id)}>
                   <td className="px-4 py-3 text-[12px] text-purple-700 font-medium" style={{ fontFamily: F }}>
                     <div className="flex items-center gap-1.5">
-                      {v.vendorId}
-                      {hasVendorWarning(v) && <AlertTriangle size={12} className="text-amber-500" />}
+                      {v.supplierId}
+                      {hasSupplierWarning(v) && <AlertTriangle size={12} className="text-amber-500" />}
                     </div>
                   </td>
                   <td className="px-4 py-3">
@@ -892,7 +892,7 @@ export function Suppliers() {
           <table className="w-full">
             <thead style={{ backgroundColor: "#0B01D0" }} className="sticky top-0 z-[5]">
               <tr>
-                <th className="text-left px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: F }}>Vendor ID</th>
+                <th className="text-left px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: F }}>Supplier ID</th>
                 <th className="text-left px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: F }}>Legal Name</th>
                 <th className="text-left px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: F }}>Contact</th>
                 <th className="text-left px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: F }}>ID Type</th>
@@ -909,11 +909,11 @@ export function Suppliers() {
               {filteredIndividuals.length === 0 ? (
                 <tr><td colSpan={11} className="text-center py-12 text-[13px] text-slate-400" style={{ fontFamily: F }}>No individual consultants found.</td></tr>
               ) : filteredIndividuals.map((v, i) => (
-                <tr key={v.id} className={`border-b border-slate-100 hover:bg-slate-50 transition-colors cursor-pointer ${i % 2 === 0 ? "bg-white" : "bg-slate-50/50"}`} onClick={() => setDetailVendorId(v.id)}>
+                <tr key={v.id} className={`border-b border-slate-100 hover:bg-slate-50 transition-colors cursor-pointer ${i % 2 === 0 ? "bg-white" : "bg-slate-50/50"}`} onClick={() => setDetailSupplierId(v.id)}>
                   <td className="px-4 py-3 text-[12px] text-purple-700 font-medium" style={{ fontFamily: F }}>
                     <div className="flex items-center gap-1.5">
-                      {v.vendorId}
-                      {hasVendorWarning(v) && <AlertTriangle size={12} className="text-amber-500" />}
+                      {v.supplierId}
+                      {hasSupplierWarning(v) && <AlertTriangle size={12} className="text-amber-500" />}
                     </div>
                   </td>
                   <td className="px-4 py-3 text-[12px] text-slate-900 font-medium" style={{ fontFamily: F }}>{v.legalName}</td>
@@ -979,8 +979,8 @@ export function Suppliers() {
                 </h2>
                 <p className="text-[11px] text-slate-500 mt-0.5" style={{ fontFamily: F }}>
                   {onboardResult
-                    ? <>Vendor ID <span className="font-medium text-purple-700">{onboardResult.vendor.vendorId}</span> · registered by {user.name}</>
-                    : <>Generated Vendor ID: <span className="font-medium text-purple-700">{peekNextVendorId(showOnboardModal)}</span></>}
+                    ? <>Supplier ID <span className="font-medium text-purple-700">{onboardResult.supplier.supplierId}</span> · registered by {user.name}</>
+                    : <>Generated Supplier ID: <span className="font-medium text-purple-700">{peekNextSupplierId(showOnboardModal)}</span></>}
                 </p>
               </div>
               <button onClick={closeOnboarding} className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors">
@@ -995,16 +995,16 @@ export function Suppliers() {
                 <div className="flex flex-col gap-4">
                   <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-slate-50 border border-slate-200">
                     <div className="w-10 h-10 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center shrink-0">
-                      {onboardResult.vendor.type === "Firm" ? <Building2 size={18} /> : <User size={18} />}
+                      {onboardResult.supplier.type === "Firm" ? <Building2 size={18} /> : <User size={18} />}
                     </div>
                     <div className="flex-1">
-                      <p className="text-[13px] font-semibold text-slate-900" style={{ fontFamily: F }}>{vendorDisplayName(onboardResult.vendor)}</p>
+                      <p className="text-[13px] font-semibold text-slate-900" style={{ fontFamily: F }}>{supplierDisplayName(onboardResult.supplier)}</p>
                       <p className="text-[11px] text-slate-500" style={{ fontFamily: F }}>
-                        {onboardResult.vendor.category}{onboardResult.vendor.subCategory ? ` — ${onboardResult.vendor.subCategory}` : ""} · {onboardResult.vendor.status}
+                        {onboardResult.supplier.category}{onboardResult.supplier.subCategory ? ` — ${onboardResult.supplier.subCategory}` : ""} · {onboardResult.supplier.status}
                       </p>
                     </div>
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${getRiskColor(onboardResult.vendor.riskLevel)}`}>
-                      {onboardResult.vendor.riskLevel} risk
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${getRiskColor(onboardResult.supplier.riskLevel)}`}>
+                      {onboardResult.supplier.riskLevel} risk
                     </span>
                   </div>
 
@@ -1029,7 +1029,7 @@ export function Suppliers() {
                       <ul className="mt-1 space-y-0.5">
                         {onboardResult.flags.duplicates.map(d => (
                           <li key={d.id} className="text-[11px] text-amber-700" style={{ fontFamily: F }}>
-                            · {vendorDisplayName(d)} ({d.vendorId}) — {d.status}
+                            · {supplierDisplayName(d)} ({d.supplierId}) — {d.status}
                           </li>
                         ))}
                       </ul>
@@ -1061,7 +1061,7 @@ export function Suppliers() {
                   <div className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg">
                     <p className="text-[11px] text-slate-600 flex items-start gap-1.5" style={{ fontFamily: F }}>
                       <Info size={12} className="mt-px shrink-0" />
-                      The vendor is recorded as <span className="font-medium">Pending Onboarding</span> and will not appear in sourcing until Procurement approves the registration. Banking details still require Finance validation.
+                      The supplier is recorded as <span className="font-medium">Pending Onboarding</span> and will not appear in sourcing until Procurement approves the registration. Banking details still require Finance validation.
                     </p>
                   </div>
                 </div>
@@ -1138,7 +1138,7 @@ export function Suppliers() {
                           <>
                             <div className="fixed inset-0 z-10" onClick={() => setFormCategoryDropdown(false)} />
                             <div className="absolute top-full mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg z-20">
-                              {VENDOR_CATEGORIES.map(c => (
+                              {SUPPLIER_CATEGORIES.map(c => (
                                 <button key={c} onClick={() => { setFirmForm({ ...firmForm, category: c, subCategory: "" }); setFormCategoryDropdown(false); }} className="w-full px-3 py-2 text-left text-[12px] text-slate-900 hover:bg-slate-50" style={{ fontFamily: F }}>{c}</button>
                               ))}
                             </div>
@@ -1321,7 +1321,7 @@ export function Suppliers() {
                           <>
                             <div className="fixed inset-0 z-10" onClick={() => setFormCategoryDropdown(false)} />
                             <div className="absolute top-full mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg z-20">
-                              {VENDOR_CATEGORIES.map(c => (
+                              {SUPPLIER_CATEGORIES.map(c => (
                                 <button key={c} onClick={() => { setIndForm({ ...indForm, category: c, subCategory: "" }); setFormCategoryDropdown(false); }} className="w-full px-3 py-2 text-left text-[12px] text-slate-900 hover:bg-slate-50" style={{ fontFamily: F }}>{c}</button>
                               ))}
                             </div>
@@ -1423,9 +1423,9 @@ export function Suppliers() {
               <p className="text-[11px] text-red-600 flex-1" style={{ fontFamily: F }}>{formError}</p>
               {onboardResult ? (
                 <div className="flex items-center gap-3">
-                  <button onClick={() => { const id = onboardResult.vendor.id; closeOnboarding(); setDetailVendorId(id); }}
+                  <button onClick={() => { const id = onboardResult.supplier.id; closeOnboarding(); setDetailSupplierId(id); }}
                     className="px-4 py-2 border border-slate-200 rounded-lg text-[12px] text-slate-700 hover:bg-slate-50 transition-colors" style={{ fontFamily: F }}>
-                    Open Vendor Profile
+                    Open Supplier Profile
                   </button>
                   <button onClick={closeOnboarding}
                     className="px-4 py-2 text-white rounded-lg text-[12px] font-medium hover:opacity-90 transition-opacity"
@@ -1439,7 +1439,7 @@ export function Suppliers() {
                   <button
                     onClick={handleCompleteOnboarding}
                     disabled={!canCreate}
-                    title={canCreate ? undefined : denialReason("vendor.create")}
+                    title={canCreate ? undefined : denialReason("supplier.create")}
                     className="px-4 py-2 text-white rounded-lg text-[12px] font-medium hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
                     style={{ backgroundColor: "#0B01D0", fontFamily: F }}
                   >
@@ -1453,19 +1453,19 @@ export function Suppliers() {
       )}
 
       {/* ══════════════════════════════════════════════════════════════════════
-         EDIT VENDOR MODAL
+         EDIT SUPPLIER MODAL
          ══════════════════════════════════════════════════════════════════════ */}
-      {editVendor && (
+      {editSupplier && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-[640px] max-h-[90vh] overflow-hidden flex flex-col">
             <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between shrink-0">
               <div>
-                <h2 className="text-[16px] font-semibold text-slate-900" style={{ fontFamily: F }}>Edit Vendor Record</h2>
+                <h2 className="text-[16px] font-semibold text-slate-900" style={{ fontFamily: F }}>Edit Supplier Record</h2>
                 <p className="text-[11px] text-slate-500 mt-0.5" style={{ fontFamily: F }}>
-                  {vendorDisplayName(editVendor)} · <span className="font-medium text-purple-700">{editVendor.vendorId}</span> · legal name and identifiers are fixed after registration
+                  {supplierDisplayName(editSupplier)} · <span className="font-medium text-purple-700">{editSupplier.supplierId}</span> · legal name and identifiers are fixed after registration
                 </p>
               </div>
-              <button onClick={() => { setEditVendor(null); setEditError(null); }} className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors">
+              <button onClick={() => { setEditSupplier(null); setEditError(null); }} className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors">
                 <X size={18} className="text-slate-500" />
               </button>
             </div>
@@ -1473,7 +1473,7 @@ export function Suppliers() {
             <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-5">
               <p className="text-[13px] font-semibold text-slate-800" style={{ fontFamily: F }}>Contact Information</p>
               <div className="grid grid-cols-3 gap-4">
-                {editVendor.type === "Firm" && (
+                {editSupplier.type === "Firm" && (
                   <div className="flex flex-col gap-1.5">
                     <label className="text-[11px] text-slate-600" style={{ fontFamily: F }}>Contact Person *</label>
                     <input type="text" value={editForm.contactPerson} onChange={e => setEditForm({ ...editForm, contactPerson: e.target.value })} className="bg-slate-50 border border-slate-200 rounded-lg h-[36px] px-3 text-[12px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500" style={{ fontFamily: F }} />
@@ -1487,8 +1487,8 @@ export function Suppliers() {
                   <label className="text-[11px] text-slate-600" style={{ fontFamily: F }}>Phone *</label>
                   <input type="tel" value={editForm.phone} onChange={e => setEditForm({ ...editForm, phone: e.target.value })} className="bg-slate-50 border border-slate-200 rounded-lg h-[36px] px-3 text-[12px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500" style={{ fontFamily: F }} />
                 </div>
-                <div className={`flex flex-col gap-1.5 ${editVendor.type === "Firm" ? "col-span-3" : "col-span-1"}`}>
-                  <label className="text-[11px] text-slate-600" style={{ fontFamily: F }}>{editVendor.type === "Firm" ? "Registered Address *" : "Residential Address *"}</label>
+                <div className={`flex flex-col gap-1.5 ${editSupplier.type === "Firm" ? "col-span-3" : "col-span-1"}`}>
+                  <label className="text-[11px] text-slate-600" style={{ fontFamily: F }}>{editSupplier.type === "Firm" ? "Registered Address *" : "Residential Address *"}</label>
                   <input type="text" value={editForm.address} onChange={e => setEditForm({ ...editForm, address: e.target.value })} className="bg-slate-50 border border-slate-200 rounded-lg h-[36px] px-3 text-[12px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500" style={{ fontFamily: F }} />
                 </div>
               </div>
@@ -1502,7 +1502,7 @@ export function Suppliers() {
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[11px] text-slate-600" style={{ fontFamily: F }}>Account Number *</label>
                   <input type="text" value={editForm.bankAccountNumber} onChange={e => setEditForm({ ...editForm, bankAccountNumber: e.target.value })} className="bg-slate-50 border border-slate-200 rounded-lg h-[36px] px-3 text-[12px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500" style={{ fontFamily: F }} />
-                  {editForm.bankAccountNumber.trim() !== editVendor.bankAccountNumber && (
+                  {editForm.bankAccountNumber.trim() !== editSupplier.bankAccountNumber && (
                     <p className="text-[10px] text-amber-600 flex items-center gap-1" style={{ fontFamily: F }}>
                       <AlertTriangle size={11} /> Changing the account clears the Finance validation on file.
                     </p>
@@ -1523,7 +1523,7 @@ export function Suppliers() {
                       <>
                         <div className="fixed inset-0 z-10" onClick={() => setEditCategoryDropdown(false)} />
                         <div className="absolute top-full mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg z-20">
-                          {VENDOR_CATEGORIES.map(c => (
+                          {SUPPLIER_CATEGORIES.map(c => (
                             <button key={c} onClick={() => { setEditForm({ ...editForm, category: c, subCategory: "" }); setEditCategoryDropdown(false); }} className="w-full px-3 py-2 text-left text-[12px] text-slate-900 hover:bg-slate-50" style={{ fontFamily: F }}>{c}</button>
                           ))}
                         </div>
@@ -1552,7 +1552,7 @@ export function Suppliers() {
                 </div>
               </div>
 
-              {editVendor.type === "Firm" ? (
+              {editSupplier.type === "Firm" ? (
                 <>
                   <div className="flex flex-col gap-1.5">
                     <label className="text-[11px] text-slate-600" style={{ fontFamily: F }}>Ownership &amp; Beneficial Ownership</label>
@@ -1630,10 +1630,10 @@ export function Suppliers() {
             <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-between gap-3 shrink-0">
               <p className="text-[11px] text-red-600 flex-1" style={{ fontFamily: F }}>{editError}</p>
               <div className="flex items-center gap-3">
-                <button onClick={() => { setEditVendor(null); setEditError(null); }} className="px-4 py-2 border border-slate-200 rounded-lg text-[12px] text-slate-700 hover:bg-slate-50 transition-colors" style={{ fontFamily: F }}>Cancel</button>
+                <button onClick={() => { setEditSupplier(null); setEditError(null); }} className="px-4 py-2 border border-slate-200 rounded-lg text-[12px] text-slate-700 hover:bg-slate-50 transition-colors" style={{ fontFamily: F }}>Cancel</button>
                 <button onClick={saveEdit}
                   disabled={!canCreate}
-                  title={canCreate ? undefined : denialReason("vendor.create")}
+                  title={canCreate ? undefined : denialReason("supplier.create")}
                   className="px-4 py-2 text-white rounded-lg text-[12px] font-medium hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
                   style={{ backgroundColor: "#0B01D0", fontFamily: F }}>
                   Save Changes
@@ -1663,10 +1663,10 @@ export function Suppliers() {
                 {(statusAction.action === "Reactivate" || statusAction.action === "Approve Reactivation") && <ShieldCheck size={20} className="text-blue-600" />}
                 <div>
                   <h3 className="text-[15px] font-semibold text-slate-900" style={{ fontFamily: F }}>
-                    {statusAction.action === "Reactivate" ? "Reactivation Requires Approval" : `${statusAction.action} Vendor`}
+                    {statusAction.action === "Reactivate" ? "Reactivation Requires Approval" : `${statusAction.action} Supplier`}
                   </h3>
                   <p className="text-[11px] text-slate-500" style={{ fontFamily: F }}>
-                    {vendorDisplayName(statusAction.vendor)} ({statusAction.vendor.vendorId})
+                    {supplierDisplayName(statusAction.supplier)} ({statusAction.supplier.supplierId})
                   </p>
                 </div>
               </div>
@@ -1674,11 +1674,11 @@ export function Suppliers() {
 
             <div className="px-6 py-5">
               <p className="text-[12px] text-slate-600" style={{ fontFamily: F }}>
-                {statusAction.action === "Flag" && "Flagging this vendor marks them for monitoring. They remain in the register but shortlisting will require Senior Management approval."}
-                {statusAction.action === "Suspend" && "Suspending this vendor immediately blocks them from all solicitations and awards. This action can be reversed through reactivation."}
-                {statusAction.action === "Blacklist" && "Blacklisting permanently restricts this vendor from all procurement activity. Reserved for fraud, gross misconduct or debarment."}
-                {statusAction.action === "Reactivate" && "Reactivation of blacklisted or suspended vendors requires management approval. Submitting sets the status to Pending Reactivation and notifies Senior Management."}
-                {statusAction.action === "Approve Reactivation" && "Approving returns this vendor to Active status and restores their eligibility for solicitation and award."}
+                {statusAction.action === "Flag" && "Flagging this supplier marks them for monitoring. They remain in the register but shortlisting will require Senior Management approval."}
+                {statusAction.action === "Suspend" && "Suspending this supplier immediately blocks them from all solicitations and awards. This action can be reversed through reactivation."}
+                {statusAction.action === "Blacklist" && "Blacklisting permanently restricts this supplier from all procurement activity. Reserved for fraud, gross misconduct or debarment."}
+                {statusAction.action === "Reactivate" && "Reactivation of blacklisted or suspended suppliers requires management approval. Submitting sets the status to Pending Reactivation and notifies Senior Management."}
+                {statusAction.action === "Approve Reactivation" && "Approving returns this supplier to Active status and restores their eligibility for solicitation and award."}
               </p>
 
               {statusAction.action !== "Approve Reactivation" && (
@@ -1694,7 +1694,7 @@ export function Suppliers() {
                       statusAction.action === "Flag" ? "e.g., Repeated late deliveries on CNT-2025-014..." :
                       statusAction.action === "Suspend" ? "e.g., Under investigation for invoice irregularities..." :
                       statusAction.action === "Blacklist" ? "e.g., Confirmed fraudulent documentation submitted..." :
-                      "e.g., Investigation concluded, vendor cleared of allegations..."
+                      "e.g., Investigation concluded, supplier cleared of allegations..."
                     }
                     className={`w-full border rounded-lg px-3 py-2.5 text-[12px] text-slate-900 placeholder:text-slate-400 outline-none resize-none ${
                       actionReasonError ? "border-red-400 bg-red-50 focus:border-red-500" : "border-slate-200 focus:border-purple-400"
@@ -1703,7 +1703,7 @@ export function Suppliers() {
                   />
                   {actionReasonError && (
                     <p className="text-[10px] text-red-500 mt-1 flex items-center gap-1" style={{ fontFamily: F }}>
-                      <XCircle size={10} /> A reason is mandatory before updating vendor status.
+                      <XCircle size={10} /> A reason is mandatory before updating supplier status.
                     </p>
                   )}
                 </div>
@@ -1719,7 +1719,7 @@ export function Suppliers() {
               {statusAction.action === "Reactivate" && (
                 <div className="mt-3 px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-lg">
                   <p className="text-[11px] text-amber-700 flex items-center gap-1.5" style={{ fontFamily: F }}>
-                    <AlertTriangle size={12} /> The vendor will not be eligible for sourcing until Senior Management approves the reactivation.
+                    <AlertTriangle size={12} /> The supplier will not be eligible for sourcing until Senior Management approves the reactivation.
                   </p>
                 </div>
               )}

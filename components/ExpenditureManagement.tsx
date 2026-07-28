@@ -5,7 +5,7 @@ interface Expenditure {
   id: number;
   referenceNo: string;
   date: string;
-  vendor: string;
+  supplier: string;
   category: string;
   description: string;
   amount: string;
@@ -15,14 +15,14 @@ interface Expenditure {
 }
 
 const initialExpenditureData: Expenditure[] = [
-  { id: 1, referenceNo: "EXP-2024-001", date: "Dec 01, 2024", vendor: "Office Supplies Co.", category: "Office Expenses", description: "Monthly office supplies", amount: "$12,450", budget: "Operations", status: "Approved", paymentStatus: "Paid" },
-  { id: 2, referenceNo: "EXP-2024-002", date: "Nov 28, 2024", vendor: "Tech Solutions Ltd", category: "IT & Software", description: "Software licenses renewal", amount: "$25,000", budget: "IT", status: "Approved", paymentStatus: "Paid" },
-  { id: 3, referenceNo: "EXP-2024-003", date: "Nov 25, 2024", vendor: "Healthcare Plus", category: "Employee Benefits", description: "Health insurance premiums", amount: "$45,800", budget: "HR", status: "Approved", paymentStatus: "Paid" },
-  { id: 4, referenceNo: "EXP-2024-004", date: "Nov 22, 2024", vendor: "City Properties", category: "Rent & Utilities", description: "Office rent - November", amount: "$18,500", budget: "Operations", status: "Approved", paymentStatus: "Paid" },
-  { id: 5, referenceNo: "EXP-2024-005", date: "Nov 20, 2024", vendor: "Marketing Agency", category: "Marketing", description: "Campaign development", amount: "$32,000", budget: "Marketing", status: "Pending", paymentStatus: "Unpaid" },
-  { id: 6, referenceNo: "EXP-2024-006", date: "Nov 18, 2024", vendor: "Training Institute", category: "Training", description: "Staff training program", amount: "$15,600", budget: "HR", status: "Approved", paymentStatus: "Partial" },
-  { id: 7, referenceNo: "EXP-2024-007", date: "Nov 15, 2024", vendor: "Transport Services", category: "Travel", description: "Team travel expenses", amount: "$8,750", budget: "Operations", status: "Approved", paymentStatus: "Paid" },
-  { id: 8, referenceNo: "EXP-2024-008", date: "Nov 12, 2024", vendor: "Equipment Rentals", category: "Equipment", description: "Conference equipment rental", amount: "$5,200", budget: "Events", status: "Rejected", paymentStatus: "Unpaid" },
+  { id: 1, referenceNo: "EXP-2024-001", date: "Dec 01, 2024", supplier: "Office Supplies Co.", category: "Office Expenses", description: "Monthly office supplies", amount: "$12,450", budget: "Operations", status: "Approved", paymentStatus: "Paid" },
+  { id: 2, referenceNo: "EXP-2024-002", date: "Nov 28, 2024", supplier: "Tech Solutions Ltd", category: "IT & Software", description: "Software licenses renewal", amount: "$25,000", budget: "IT", status: "Approved", paymentStatus: "Paid" },
+  { id: 3, referenceNo: "EXP-2024-003", date: "Nov 25, 2024", supplier: "Healthcare Plus", category: "Employee Benefits", description: "Health insurance premiums", amount: "$45,800", budget: "HR", status: "Approved", paymentStatus: "Paid" },
+  { id: 4, referenceNo: "EXP-2024-004", date: "Nov 22, 2024", supplier: "City Properties", category: "Rent & Utilities", description: "Office rent - November", amount: "$18,500", budget: "Operations", status: "Approved", paymentStatus: "Paid" },
+  { id: 5, referenceNo: "EXP-2024-005", date: "Nov 20, 2024", supplier: "Marketing Agency", category: "Marketing", description: "Campaign development", amount: "$32,000", budget: "Marketing", status: "Pending", paymentStatus: "Unpaid" },
+  { id: 6, referenceNo: "EXP-2024-006", date: "Nov 18, 2024", supplier: "Training Institute", category: "Training", description: "Staff training program", amount: "$15,600", budget: "HR", status: "Approved", paymentStatus: "Partial" },
+  { id: 7, referenceNo: "EXP-2024-007", date: "Nov 15, 2024", supplier: "Transport Services", category: "Travel", description: "Team travel expenses", amount: "$8,750", budget: "Operations", status: "Approved", paymentStatus: "Paid" },
+  { id: 8, referenceNo: "EXP-2024-008", date: "Nov 12, 2024", supplier: "Equipment Rentals", category: "Equipment", description: "Conference equipment rental", amount: "$5,200", budget: "Events", status: "Rejected", paymentStatus: "Unpaid" },
 ];
 
 export function ExpenditureManagement() {
@@ -36,7 +36,7 @@ export function ExpenditureManagement() {
   const [formData, setFormData] = useState({
     referenceNo: "",
     date: "",
-    vendor: "",
+    supplier: "",
     category: "",
     description: "",
     amount: "",
@@ -52,7 +52,7 @@ export function ExpenditureManagement() {
     setFormData({
       referenceNo: generateReferenceNo(),
       date: "",
-      vendor: "",
+      supplier: "",
       category: "",
       description: "",
       amount: "",
@@ -70,7 +70,7 @@ export function ExpenditureManagement() {
       id: expenditureData.length + 1,
       referenceNo: formData.referenceNo,
       date: new Date(formData.date).toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }),
-      vendor: formData.vendor,
+      supplier: formData.supplier,
       category: formData.category,
       description: formData.description,
       amount: `$${Number(formData.amount).toLocaleString()}`,
@@ -116,7 +116,7 @@ export function ExpenditureManagement() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
                 type="text"
-                placeholder="Search by reference, vendor..."
+                placeholder="Search by reference, supplier..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -182,7 +182,7 @@ export function ExpenditureManagement() {
             <tr>
               <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Reference No.</th>
               <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Date</th>
-              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Vendor</th>
+              <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Supplier</th>
               <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Category</th>
               <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Description</th>
               <th className="text-right px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Amount</th>
@@ -201,7 +201,7 @@ export function ExpenditureManagement() {
                   <p className="text-[12px] text-slate-600">{expenditure.date}</p>
                 </td>
                 <td className="px-4 py-4">
-                  <p className="text-[12px] text-slate-900">{expenditure.vendor}</p>
+                  <p className="text-[12px] text-slate-900">{expenditure.supplier}</p>
                 </td>
                 <td className="px-4 py-4">
                   <p className="text-[12px] text-slate-600">{expenditure.category}</p>
@@ -250,14 +250,14 @@ export function ExpenditureManagement() {
 
             {/* Body */}
             <div className="flex-1 overflow-y-auto p-6 space-y-5">
-              {/* Vendor */}
+              {/* Supplier */}
               <div>
-                <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1.5 block">Vendor</label>
+                <label className="text-[11px] text-slate-500 uppercase tracking-wider mb-1.5 block">Supplier</label>
                 <input
                   type="text"
-                  value={formData.vendor}
-                  onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
-                  placeholder="Enter vendor name"
+                  value={formData.supplier}
+                  onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
+                  placeholder="Enter supplier name"
                   className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[13px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
                 />
               </div>

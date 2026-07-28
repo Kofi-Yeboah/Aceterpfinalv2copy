@@ -10,7 +10,7 @@
 // ──────────────────────────────────────────────────────────────────────────────
 
 import { notify, scheduleReminder, resolveReminder } from "./notificationStore";
-import { recordVendorEvaluation, recordContractAward } from "./vendorStore";
+import { recordSupplierEvaluation, recordContractAward } from "./supplierStore";
 
 export interface ContractDocument {
   id: string;
@@ -102,7 +102,7 @@ export interface InvoiceApprovalEntry {
 export interface ContractInvoice {
   id: string;
   invoiceNumber: string;
-  vendor: string;
+  supplier: string;
   amount: number;
   dateSubmitted: string;
   datePaid?: string;
@@ -110,7 +110,7 @@ export interface ContractInvoice {
   deliverableId?: string;
   status: InvoiceStatus;
   paymentInfo?: string;
-  submittedVia: "Vendor Portal" | "Email" | "Manual";
+  submittedVia: "Supplier Portal" | "Email" | "Manual";
   reviewedBy?: string;
   approvedBy?: string;
   paymentMethod?: "Wire Transfer" | "Cheque" | "Mobile Money";
@@ -152,7 +152,7 @@ export interface ContractChangeRequest {
   originalEndDate?: string;
 }
 
-// ── NEW: Vendor Performance Evaluation ──
+// ── NEW: Supplier Performance Evaluation ──
 export interface PerformanceEvaluation {
   id: string;
   evaluationType: "Mid-Term" | "Final";
@@ -163,7 +163,7 @@ export interface PerformanceEvaluation {
   criteria: { name: string; score: number; maxScore: number }[];
   overallScore: number;
   comments: string;
-  vendorFlagged?: boolean;
+  supplierFlagged?: boolean;
 }
 
 // ── NEW: Contract Coordinator ──
@@ -283,8 +283,8 @@ let contracts: AwardedContract[] = [
       { id: "del-3", milestoneRef: "ms-3", description: "Final Survey Package with Training Manual", dueDate: "2025-05-15", status: "Pending", documents: [], comments: "", amount: 3000 },
     ],
     invoices: [
-      { id: "inv-1", invoiceNumber: "INV-KA-001", vendor: "Dr. Kwesi Appiah", amount: 2000, dateSubmitted: "2025-01-16", datePaid: "2025-02-01", amountPaid: 2000, deliverableId: "del-1", status: "Paid", submittedVia: "Email", reviewedBy: "Ama Darko", approvedBy: "James Owusu", paymentInfo: "Wire transfer 01-Feb-2025" },
-      { id: "inv-2", invoiceNumber: "INV-KA-002", vendor: "Dr. Kwesi Appiah", amount: 3000, dateSubmitted: "2025-03-05", datePaid: "2025-03-20", amountPaid: 3000, deliverableId: "del-2", status: "Paid", submittedVia: "Email", reviewedBy: "Ama Darko", approvedBy: "James Owusu", paymentInfo: "Wire transfer 20-Mar-2025" },
+      { id: "inv-1", invoiceNumber: "INV-KA-001", supplier: "Dr. Kwesi Appiah", amount: 2000, dateSubmitted: "2025-01-16", datePaid: "2025-02-01", amountPaid: 2000, deliverableId: "del-1", status: "Paid", submittedVia: "Email", reviewedBy: "Ama Darko", approvedBy: "James Owusu", paymentInfo: "Wire transfer 01-Feb-2025" },
+      { id: "inv-2", invoiceNumber: "INV-KA-002", supplier: "Dr. Kwesi Appiah", amount: 3000, dateSubmitted: "2025-03-05", datePaid: "2025-03-20", amountPaid: 3000, deliverableId: "del-2", status: "Paid", submittedVia: "Email", reviewedBy: "Ama Darko", approvedBy: "James Owusu", paymentInfo: "Wire transfer 20-Mar-2025" },
     ],
     changeRequests: [],
     performanceEvaluations: [],
@@ -309,7 +309,7 @@ let contracts: AwardedContract[] = [
     id: "AC-2",
     contractNumber: "CNT-2024-002",
     title: "Printing & Materials",
-    type: "Vendor",
+    type: "Supplier",
     party: "PrintWorks Ghana Ltd",
     sourcePR: "PR-2024-001",
     sourceSourcingCase: "SRC-2024-002",
@@ -339,7 +339,7 @@ let contracts: AwardedContract[] = [
       { id: "del-4", milestoneRef: "ms-4", description: "200 sets of training materials delivered", dueDate: "2025-02-15", actualDate: "2025-02-14", status: "Accepted", documents: ["DeliveryNote_PrintWorks.pdf", "GoodsReceivedNote.pdf"], comments: "All materials inspected and accepted", amount: 1050 },
     ],
     invoices: [
-      { id: "inv-3", invoiceNumber: "INV-PW-001", vendor: "PrintWorks Ghana Ltd", amount: 1050, dateSubmitted: "2025-02-16", datePaid: "2025-03-01", amountPaid: 1050, deliverableId: "del-4", status: "Paid", submittedVia: "Manual", reviewedBy: "Ama Darko", approvedBy: "James Owusu", paymentInfo: "Cheque #2345" },
+      { id: "inv-3", invoiceNumber: "INV-PW-001", supplier: "PrintWorks Ghana Ltd", amount: 1050, dateSubmitted: "2025-02-16", datePaid: "2025-03-01", amountPaid: 1050, deliverableId: "del-4", status: "Paid", submittedVia: "Manual", reviewedBy: "Ama Darko", approvedBy: "James Owusu", paymentInfo: "Cheque #2345" },
     ],
     changeRequests: [],
     performanceEvaluations: [
@@ -353,7 +353,7 @@ let contracts: AwardedContract[] = [
     id: "AC-3",
     contractNumber: "CNT-2025-003",
     title: "IT Infrastructure Upgrade — Phase 1",
-    type: "Vendor",
+    type: "Supplier",
     party: "TechSolutions Africa Ltd",
     sourcePR: "PR-2025-010",
     sourceSourcingCase: "SRC-2025-005",
@@ -390,11 +390,11 @@ let contracts: AwardedContract[] = [
       { id: "del-7", milestoneRef: "ms-7", description: "UAT, documentation, and handover", dueDate: "2025-08-30", status: "Pending", documents: [], comments: "", amount: 12500 },
     ],
     invoices: [
-      { id: "inv-4", invoiceNumber: "INV-TS-001", vendor: "TechSolutions Africa Ltd", amount: 75000, dateSubmitted: "2025-03-14", datePaid: "2025-04-01", amountPaid: 75000, deliverableId: "del-5", status: "Paid", submittedVia: "Vendor Portal", reviewedBy: "Eric Boateng", approvedBy: "Nana Esi", paymentInfo: "Wire transfer 01-Apr-2025" },
-      { id: "inv-5", invoiceNumber: "INV-TS-002", vendor: "TechSolutions Africa Ltd", amount: 37500, dateSubmitted: "2025-06-10", deliverableId: "del-6", status: "CC Reviewed", submittedVia: "Vendor Portal", reviewedBy: "Eric Boateng" },
+      { id: "inv-4", invoiceNumber: "INV-TS-001", supplier: "TechSolutions Africa Ltd", amount: 75000, dateSubmitted: "2025-03-14", datePaid: "2025-04-01", amountPaid: 75000, deliverableId: "del-5", status: "Paid", submittedVia: "Supplier Portal", reviewedBy: "Eric Boateng", approvedBy: "Nana Esi", paymentInfo: "Wire transfer 01-Apr-2025" },
+      { id: "inv-5", invoiceNumber: "INV-TS-002", supplier: "TechSolutions Africa Ltd", amount: 37500, dateSubmitted: "2025-06-10", deliverableId: "del-6", status: "CC Reviewed", submittedVia: "Supplier Portal", reviewedBy: "Eric Boateng" },
     ],
     changeRequests: [
-      { id: "cr-1", changeNumber: 1, contractRef: "CNT-2025-003", types: ["Scope Change", "Cost Variation"], reason: "Additional UPS units required for extended server room", description: "Add 4x 3kVA UPS units and cabling for redundancy in the new server room wing", supportingDocs: ["VendorQuote_UPS.pdf", "JustificationMemo.pdf"], estimatedCostImpact: 18000, estimatedTimeImpact: "2 weeks", revisedValue: 143000, status: "Approved", requestedBy: "Nana Esi", requestedDate: "2025-04-10", approvedBy: "Management Committee", approvedDate: "2025-04-20" },
+      { id: "cr-1", changeNumber: 1, contractRef: "CNT-2025-003", types: ["Scope Change", "Cost Variation"], reason: "Additional UPS units required for extended server room", description: "Add 4x 3kVA UPS units and cabling for redundancy in the new server room wing", supportingDocs: ["SupplierQuote_UPS.pdf", "JustificationMemo.pdf"], estimatedCostImpact: 18000, estimatedTimeImpact: "2 weeks", revisedValue: 143000, status: "Approved", requestedBy: "Nana Esi", requestedDate: "2025-04-10", approvedBy: "Management Committee", approvedDate: "2025-04-20" },
     ],
     performanceEvaluations: [],
     closeOut: { allDeliverablesCompleted: false, procurementCompliance: false, allPaymentsCompleted: false, performanceFinalized: false, allDocsUploaded: false },
@@ -443,10 +443,10 @@ let contracts: AwardedContract[] = [
       { id: "del-11", milestoneRef: "ms-11", description: "UAT, training, and deployment", dueDate: "2025-10-01", status: "Pending", documents: [], comments: "", amount: 13000 },
     ],
     invoices: [
-      { id: "inv-6", invoiceNumber: "INV-DV-001", vendor: "DataViz Consulting", amount: 5000, dateSubmitted: "2025-02-28", datePaid: "2025-03-15", amountPaid: 5000, status: "Paid", submittedVia: "Email", reviewedBy: "Grace Tetteh", approvedBy: "James Owusu" },
-      { id: "inv-7", invoiceNumber: "INV-DV-002", vendor: "DataViz Consulting", amount: 5000, dateSubmitted: "2025-03-31", datePaid: "2025-04-15", amountPaid: 5000, status: "Paid", submittedVia: "Email", reviewedBy: "Grace Tetteh", approvedBy: "James Owusu" },
-      { id: "inv-8", invoiceNumber: "INV-DV-003", vendor: "DataViz Consulting", amount: 5000, dateSubmitted: "2025-04-30", datePaid: "2025-05-15", amountPaid: 5000, status: "Paid", submittedVia: "Email", reviewedBy: "Grace Tetteh", approvedBy: "James Owusu" },
-      { id: "inv-9", invoiceNumber: "INV-DV-004", vendor: "DataViz Consulting", amount: 5000, dateSubmitted: "2025-05-31", status: "Procurement Approved", submittedVia: "Email", reviewedBy: "Grace Tetteh" },
+      { id: "inv-6", invoiceNumber: "INV-DV-001", supplier: "DataViz Consulting", amount: 5000, dateSubmitted: "2025-02-28", datePaid: "2025-03-15", amountPaid: 5000, status: "Paid", submittedVia: "Email", reviewedBy: "Grace Tetteh", approvedBy: "James Owusu" },
+      { id: "inv-7", invoiceNumber: "INV-DV-002", supplier: "DataViz Consulting", amount: 5000, dateSubmitted: "2025-03-31", datePaid: "2025-04-15", amountPaid: 5000, status: "Paid", submittedVia: "Email", reviewedBy: "Grace Tetteh", approvedBy: "James Owusu" },
+      { id: "inv-8", invoiceNumber: "INV-DV-003", supplier: "DataViz Consulting", amount: 5000, dateSubmitted: "2025-04-30", datePaid: "2025-05-15", amountPaid: 5000, status: "Paid", submittedVia: "Email", reviewedBy: "Grace Tetteh", approvedBy: "James Owusu" },
+      { id: "inv-9", invoiceNumber: "INV-DV-004", supplier: "DataViz Consulting", amount: 5000, dateSubmitted: "2025-05-31", status: "Procurement Approved", submittedVia: "Email", reviewedBy: "Grace Tetteh" },
     ],
     changeRequests: [
       { id: "cr-2", changeNumber: 1, contractRef: "CNT-2025-004", types: ["Scope Change", "Cost Variation", "Time Extension"], reason: "Donor requested additional beneficiary tracking module", description: "Add beneficiary tracking with GPS coordinates, photo verification, and offline sync capability", supportingDocs: ["DonorRequest_BenTracking.pdf", "TechnicalProposal_Addendum.pdf", "CostEstimate_v2.pdf"], estimatedCostImpact: 15000, estimatedTimeImpact: "3 months", revisedValue: 60000, revisedEndDate: "2026-03-31", status: "Pending Approval", requestedBy: "Grace Tetteh", requestedDate: "2025-06-01" },
@@ -499,7 +499,7 @@ let contracts: AwardedContract[] = [
       { id: "del-13", milestoneRef: "ms-13", description: "Electrical wiring and plumbing installation", dueDate: "2025-07-31", status: "Pending", documents: [], comments: "Suspended pending permit resolution", amount: 112000 },
     ],
     invoices: [
-      { id: "inv-10", invoiceNumber: "INV-BR-001", vendor: "BuildRight Construction Co.", amount: 84000, dateSubmitted: "2025-04-30", datePaid: "2025-05-20", amountPaid: 84000, deliverableId: "del-12", status: "Paid", submittedVia: "Manual", reviewedBy: "Felix Addo", approvedBy: "Kwame Asante", paymentInfo: "Wire transfer 20-May-2025" },
+      { id: "inv-10", invoiceNumber: "INV-BR-001", supplier: "BuildRight Construction Co.", amount: 84000, dateSubmitted: "2025-04-30", datePaid: "2025-05-20", amountPaid: 84000, deliverableId: "del-12", status: "Paid", submittedVia: "Manual", reviewedBy: "Felix Addo", approvedBy: "Kwame Asante", paymentInfo: "Wire transfer 20-May-2025" },
     ],
     changeRequests: [],
     performanceEvaluations: [],
@@ -549,7 +549,7 @@ export function pushContract(opts: {
   const typeMap: Record<string, string> = {
     Consultancy: "Consultant",
     Services: "Service",
-    Goods: "Vendor",
+    Goods: "Supplier",
     Works: "Works",
   };
 
@@ -558,7 +558,7 @@ export function pushContract(opts: {
     id: `AC-${Date.now()}-${nextContractSeq}`,
     contractNumber: opts.contractNumber,
     title: opts.title,
-    type: typeMap[opts.category] || "Vendor",
+    type: typeMap[opts.category] || "Supplier",
     party: opts.party,
     sourcePR: opts.sourcePR,
     sourceSourcingCase: opts.sourceSourcingCase,
@@ -617,14 +617,14 @@ export function registerContract(data: {
   fundingSource?: string;
 }): AwardedContract {
   const contractNumber = generateContractNumber(data.sourcePR);
-  const typeMap: Record<string, string> = { Consultancy: "Consultant", Services: "Service", Goods: "Vendor", Works: "Works" };
+  const typeMap: Record<string, string> = { Consultancy: "Consultant", Services: "Service", Goods: "Supplier", Works: "Works" };
   const today = new Date().toISOString().split("T")[0];
 
   const newContract: AwardedContract = {
     id: `AC-${Date.now()}-${++nextContractSeq}`,
     contractNumber,
     title: data.title,
-    type: typeMap[data.category] || "Vendor",
+    type: typeMap[data.category] || "Supplier",
     party: data.party,
     sourcePR: data.sourcePR,
     sourceSourcingCase: "",
@@ -956,12 +956,12 @@ export function getInvoice(contractId: string, invoiceId: string): ContractInvoi
 }
 
 /**
- * Records a vendor invoice against the contract.
+ * Records a supplier invoice against the contract.
  *
  * A deliverable link is mandatory: "Before payment, the Contract Coordinator
  * must upload related deliverables, link each invoice to the corresponding
  * deliverable". Enforcing it here rather than in the form means an invoice
- * arriving from the vendor portal is held to the same rule.
+ * arriving from the supplier portal is held to the same rule.
  */
 export function addInvoice(
   contractId: string,
@@ -1002,7 +1002,7 @@ export function addInvoice(
         stage: "Submitted",
         action: "Submitted",
         by: submittedBy,
-        role: invoice.submittedVia === "Vendor Portal" ? "Vendor" : "Contract Coordinator",
+        role: invoice.submittedVia === "Supplier Portal" ? "Supplier" : "Contract Coordinator",
         date: today(),
         comments: `Invoice received via ${invoice.submittedVia}`,
       },
@@ -1019,7 +1019,7 @@ export function addInvoice(
     category: "Approval",
     module: "Invoices & Payments",
     subject: `Invoice ${created.invoiceNumber} awaiting deliverable matching`,
-    body: `${created.vendor} submitted ${created.invoiceNumber} for $${created.amount.toLocaleString()} against ${contract.contractNumber}. The Contract Coordinator must match it to a deliverable and confirm the deliverable meets contract specifications before it can progress.`,
+    body: `${created.supplier} submitted ${created.invoiceNumber} for $${created.amount.toLocaleString()} against ${contract.contractNumber}. The Contract Coordinator must match it to a deliverable and confirm the deliverable meets contract specifications before it can progress.`,
     recipientRole: "Contract Coordinator",
     entityRef: created.invoiceNumber,
   });
@@ -1029,7 +1029,7 @@ export function addInvoice(
     entityType: "Invoice",
     module: "Invoices & Payments",
     subject: `Invoice ${created.invoiceNumber} awaiting Contract Coordinator review`,
-    body: `${created.vendor}'s invoice for $${created.amount.toLocaleString()} on ${contract.contractNumber} has not yet been matched to a deliverable.`,
+    body: `${created.supplier}'s invoice for $${created.amount.toLocaleString()} on ${contract.contractNumber} has not yet been matched to a deliverable.`,
     recipientRole: "Contract Coordinator",
     dueDate: today(),
     reminderAfterHours: 48,
@@ -1117,7 +1117,7 @@ export function ccReviewInvoice(
     entityType: "Invoice",
     module: "Invoices & Payments",
     subject: `Invoice ${invoice.invoiceNumber} awaiting Procurement review`,
-    body: `${invoice.vendor}'s invoice on ${contract.contractNumber} has been matched and is awaiting Procurement validation.`,
+    body: `${invoice.supplier}'s invoice on ${contract.contractNumber} has been matched and is awaiting Procurement validation.`,
     recipientRole: "Procurement",
     dueDate: today(),
     reminderAfterHours: 48,
@@ -1237,7 +1237,7 @@ export function supervisorApproveInvoice(
     category: "Approval",
     module: "Invoices & Payments",
     subject: `Invoice ${invoice.invoiceNumber} cleared for payment`,
-    body: `${invoice.vendor}'s invoice for $${invoice.amount.toLocaleString()} on ${contract.contractNumber} has completed all approvals. Finance may now process payment.`,
+    body: `${invoice.supplier}'s invoice for $${invoice.amount.toLocaleString()} on ${contract.contractNumber} has completed all approvals. Finance may now process payment.`,
     recipientRole: "Finance",
     entityRef: invoice.invoiceNumber,
     priority: "High",
@@ -1258,7 +1258,7 @@ export function supervisorApproveInvoice(
   return { ok: true };
 }
 
-/** Any reviewer can query an invoice back to the vendor with a documented reason. */
+/** Any reviewer can query an invoice back to the supplier with a documented reason. */
 export function queryInvoice(
   contractId: string,
   invoiceId: string,
@@ -1398,7 +1398,7 @@ export function recordInvoicePayment(
     category: "Info",
     module: "Invoices & Payments",
     subject: `Payment processed — ${invoice.invoiceNumber}`,
-    body: `$${payment.amountPaid.toLocaleString()} paid to ${invoice.vendor} on ${payment.datePaid} via ${payment.paymentMethod} (ref ${payment.referenceNumber}).`,
+    body: `$${payment.amountPaid.toLocaleString()} paid to ${invoice.supplier} on ${payment.datePaid} via ${payment.paymentMethod} (ref ${payment.referenceNumber}).`,
     recipientRole: "Contract Coordinator",
     entityRef: invoice.invoiceNumber,
   });
@@ -1432,7 +1432,7 @@ export function submitChangeRequest(
   if (!cr.description.trim()) return { ok: false, error: "A detailed description of the change is required." };
   if (!cr.types.length) return { ok: false, error: "Select at least one change type." };
   if (!cr.supportingDocs.length) {
-    return { ok: false, error: "At least one supporting document is required (vendor proposal, justification memo, or an approved change document)." };
+    return { ok: false, error: "At least one supporting document is required (supplier proposal, justification memo, or an approved change document)." };
   }
 
   const existing = contract.changeRequests ?? [];
@@ -1729,8 +1729,8 @@ export function addPerformanceEvaluation(
     return pushAudit(next, "Performance Evaluation", evaluation.evaluator, `${evaluation.evaluationType} evaluation scored ${evaluation.overallScore}/10${evaluation.supervisorApproval ? `, approved by ${evaluation.supervisorApproval}` : " (awaiting supervisor approval)"}`);
   });
 
-  // Push the scorecard onto the vendor profile so it informs future sourcing.
-  recordVendorEvaluation(contract.party, {
+  // Push the scorecard onto the supplier profile so it informs future sourcing.
+  recordSupplierEvaluation(contract.party, {
     contractNumber: contract.contractNumber,
     contractTitle: contract.title,
     evaluationType: evaluation.evaluationType,
@@ -1797,7 +1797,7 @@ export function verifyCloseOutReadiness(c: AwardedContract): { key: keyof Contra
     },
     {
       key: "performanceFinalized",
-      label: "Final vendor performance evaluation completed",
+      label: "Final supplier performance evaluation completed",
       satisfied: !!finalEval && !!finalEval.supervisorApproval,
       detail: !finalEval
         ? "No final evaluation recorded."
@@ -2099,10 +2099,10 @@ export function getContractRisks(): { contract: AwardedContract; risks: string[]
     .sort((a, b) => b.risks.length - a.risks.length);
 }
 
-// ── Award registration into the vendor profile ──────────────────────────────
+// ── Award registration into the supplier profile ──────────────────────────────
 
-/** Called after an award so the vendor's contract history and totals update. */
-export function registerAwardWithVendor(c: AwardedContract) {
+/** Called after an award so the supplier's contract history and totals update. */
+export function registerAwardWithSupplier(c: AwardedContract) {
   recordContractAward(c.party, {
     contractNumber: c.contractNumber,
     title: c.title,

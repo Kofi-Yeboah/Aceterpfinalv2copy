@@ -53,7 +53,7 @@ export interface BaselineVersion {
 
 const MOCK_WBS_LINES: DeltaLineItem[] = [
   { id: "wbs-1", selected: false, category: "wbs", phase: "Procurement & Contracting", lineLabel: "Draft RFP Documents", currentBaseline: 120, proposedValue: 120, committed: 120, unit: "hours" },
-  { id: "wbs-2", selected: false, category: "wbs", phase: "Procurement & Contracting", lineLabel: "Evaluate Vendor Submissions", currentBaseline: 80, proposedValue: 80, committed: 80, unit: "hours" },
+  { id: "wbs-2", selected: false, category: "wbs", phase: "Procurement & Contracting", lineLabel: "Evaluate Supplier Submissions", currentBaseline: 80, proposedValue: 80, committed: 80, unit: "hours" },
   { id: "wbs-3", selected: false, category: "wbs", phase: "Procurement & Contracting", lineLabel: "Finalize Service Agreements", currentBaseline: 100, proposedValue: 100, committed: 100, unit: "hours" },
   { id: "wbs-4", selected: false, category: "wbs", phase: "Implementation", lineLabel: "Coordinate Field Data Collection", currentBaseline: 200, proposedValue: 200, committed: 140, unit: "hours" },
   { id: "wbs-5", selected: false, category: "wbs", phase: "Implementation", lineLabel: "Conduct Stakeholder Engagement", currentBaseline: 150, proposedValue: 150, committed: 80, unit: "hours" },
@@ -66,7 +66,7 @@ const MOCK_WBS_LINES: DeltaLineItem[] = [
 
 const MOCK_BUDGET_LINES: DeltaLineItem[] = [
   { id: "bgt-1", selected: false, category: "budget", phase: "Procurement & Contracting", lineLabel: "Consultant Fees — RFP Specialist", currentBaseline: 15000, proposedValue: 15000, committed: 15000, unit: "$" },
-  { id: "bgt-2", selected: false, category: "budget", phase: "Procurement & Contracting", lineLabel: "Vendor Evaluation Services", currentBaseline: 8000, proposedValue: 8000, committed: 8000, unit: "$" },
+  { id: "bgt-2", selected: false, category: "budget", phase: "Procurement & Contracting", lineLabel: "Supplier Evaluation Services", currentBaseline: 8000, proposedValue: 8000, committed: 8000, unit: "$" },
   { id: "bgt-3", selected: false, category: "budget", phase: "Implementation", lineLabel: "Field Data Collection Costs", currentBaseline: 25000, proposedValue: 25000, committed: 18200, unit: "$" },
   { id: "bgt-4", selected: false, category: "budget", phase: "Implementation", lineLabel: "Stakeholder Workshop Expenses", currentBaseline: 12000, proposedValue: 12000, committed: 4500, unit: "$" },
   { id: "bgt-5", selected: false, category: "budget", phase: "Implementation", lineLabel: "IT Equipment Procurement", currentBaseline: 35000, proposedValue: 35000, committed: 28000, unit: "$" },
@@ -85,7 +85,7 @@ const MOCK_EXISTING_CRS: ChangeRequest[] = [
   {
     id: "CR-001",
     type: "Budget Reallocation",
-    justification: "Reallocate $5,000 from Dissemination Events to Implementation IT Equipment due to increased laptop costs from vendor price adjustments.",
+    justification: "Reallocate $5,000 from Dissemination Events to Implementation IT Equipment due to increased laptop costs from supplier price adjustments.",
     status: "Approved",
     createdBy: "Kwame Asante",
     createdDate: "Feb 10, 2026",

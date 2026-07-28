@@ -19,7 +19,7 @@ export type ProcurementRole =
   | "Contract Coordinator"
   | "Supervisor"
   | "Audit"
-  | "Vendor";
+  | "Supplier";
 
 export interface AppUser {
   id: string;
@@ -46,12 +46,12 @@ export type Capability =
   | "pr.approveProcurement"
   | "pr.approveFinance"
   | "pr.approveSenior"
-  // Vendors
-  | "vendor.create"
-  | "vendor.approveRegistration"
-  | "vendor.suspend"
-  | "vendor.approveReactivation"
-  | "vendor.validateBanking"
+  // Suppliers
+  | "supplier.create"
+  | "supplier.approveRegistration"
+  | "supplier.suspend"
+  | "supplier.approveReactivation"
+  | "supplier.validateBanking"
   // Sourcing
   | "sourcing.manage"
   | "sourcing.award"
@@ -81,19 +81,19 @@ const ROLE_CAPABILITIES: Record<ProcurementRole, Capability[]> = {
   Procurement: [
     "plan.create", "plan.edit", "plan.submitForReview", "plan.reviewProcurement", "plan.emergencyOverride",
     "pr.create", "pr.approveProcurement",
-    "vendor.create", "vendor.approveRegistration", "vendor.suspend",
+    "supplier.create", "supplier.approveRegistration", "supplier.suspend",
     "sourcing.manage", "sourcing.award",
     "contract.register", "contract.reviewDeliverable", "contract.invoiceProcurementReview",
     "contract.approveChange", "contract.close",
     "report.view", "report.export",
   ],
   Finance: [
-    "plan.reviewFinance", "pr.approveFinance", "vendor.validateBanking",
+    "plan.reviewFinance", "pr.approveFinance", "supplier.validateBanking",
     "contract.processPayment", "contract.close",
     "report.view", "report.export",
   ],
   "Senior Management": [
-    "pr.approveSenior", "vendor.approveReactivation", "vendor.suspend",
+    "pr.approveSenior", "supplier.approveReactivation", "supplier.suspend",
     "contract.approveChange", "contract.approveEvaluation", "contract.close",
     "plan.emergencyOverride", "report.view", "report.export", "audit.view",
   ],
@@ -106,7 +106,7 @@ const ROLE_CAPABILITIES: Record<ProcurementRole, Capability[]> = {
     "report.view", "report.export",
   ],
   Audit: ["report.view", "report.export", "audit.view"],
-  Vendor: [],
+  Supplier: [],
 };
 
 /** Demo directory — one representative user per approval station. */

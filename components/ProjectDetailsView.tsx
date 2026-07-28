@@ -155,7 +155,7 @@ const getProjectPhases = (projectId: string): Phase[] => {
           },
           {
             id: "T1-2",
-            name: "Evaluate Vendor Submissions",
+            name: "Evaluate Supplier Submissions",
             assignedTo: "Yaw Osei",
             startDate: "Jan 20, 2025",
             endDate: "Feb 10, 2025",
@@ -337,7 +337,7 @@ const getProjectPhases = (projectId: string): Phase[] => {
         },
         {
           id: "T1-2",
-          name: "Evaluate Vendor Submissions",
+          name: "Evaluate Supplier Submissions",
           assignedTo: "Research Team",
           startDate: "Jan 15, 2025",
           endDate: "Feb 15, 2025",
@@ -548,10 +548,10 @@ const folderDocuments: Record<string, Array<{
     { name: "CTR-2025-001 DataTech Contract.pdf", type: "PDF", size: "3.5 MB", uploadedBy: "Nana Yaw", uploadDate: "Jan 14, 2025" },
     { name: "CTR-2025-002 Research Associates.pdf", type: "PDF", size: "4.1 MB", uploadedBy: "Yaw Osei", uploadDate: "Feb 28, 2025" },
     { name: "CTR-2025-003 Equipment Supplies.pdf", type: "PDF", size: "2.8 MB", uploadedBy: "Kofi Mensah", uploadDate: "Feb 9, 2025" },
-    { name: "Vendor Agreement Template.docx", type: "DOCX", size: "756 KB", uploadedBy: "Ama Darko", uploadDate: "Jan 5, 2025" },
+    { name: "Supplier Agreement Template.docx", type: "DOCX", size: "756 KB", uploadedBy: "Ama Darko", uploadDate: "Jan 5, 2025" },
     { name: "Consultant Contract - KPMG.pdf", type: "PDF", size: "5.2 MB", uploadedBy: "Yaw Osei", uploadDate: "Mar 10, 2025" },
     { name: "Service Level Agreement.pdf", type: "PDF", size: "1.9 MB", uploadedBy: "Nana Yaw", uploadDate: "Jan 20, 2025" },
-    { name: "NDA - All Vendors.pdf", type: "PDF", size: "1.2 MB", uploadedBy: "Ama Darko", uploadDate: "Jan 8, 2025" },
+    { name: "NDA - All Suppliers.pdf", type: "PDF", size: "1.2 MB", uploadedBy: "Ama Darko", uploadDate: "Jan 8, 2025" },
     { name: "Amendment CTR-2025-001.pdf", type: "PDF", size: "892 KB", uploadedBy: "Kofi Mensah", uploadDate: "Apr 15, 2025" }
   ],
   "Reports": [
@@ -1967,7 +1967,7 @@ export function ProjectDetailsView({ project, onBack, onNavigateToWBS, onNavigat
                   </thead>
                   <tbody>
                     {[
-                      { id: "RSK-001", desc: "Vendor delivery delays for IT equipment", task: "T009 — Procure IT Equipment", likelihood: "High", impact: "High", rating: "Critical", mitigation: "Pre-qualify multiple vendors; include penalty clauses in contracts", owner: "Kwame Asante", status: "Active" },
+                      { id: "RSK-001", desc: "Supplier delivery delays for IT equipment", task: "T009 — Procure IT Equipment", likelihood: "High", impact: "High", rating: "Critical", mitigation: "Pre-qualify multiple suppliers; include penalty clauses in contracts", owner: "Kwame Asante", status: "Active" },
                       { id: "RSK-002", desc: "Budget overrun on consultant fees", task: "T005 — Draft Stakeholder Engagement", likelihood: "Medium", impact: "High", rating: "High", mitigation: "Cap consultant days; require monthly spend reports", owner: "Abena Serwaa", status: "Active" },
                       { id: "RSK-003", desc: "Key staff turnover during procurement", task: "T004 — Project Kick-off Meeting", likelihood: "Low", impact: "High", rating: "High", mitigation: "Cross-train team members; maintain succession plan", owner: "Kwame Asante", status: "Monitoring" },
                       { id: "RSK-004", desc: "Exchange rate fluctuations on intl purchases", task: "T009 — Procure IT Equipment", likelihood: "Medium", impact: "Medium", rating: "Medium", mitigation: "Lock exchange rates via forward contracts", owner: "Abena Serwaa", status: "Active" },

@@ -64,7 +64,7 @@ const MOCK_DATA: TimelineItem[] = [
         isExpanded: true,
         children: [
           { id: "t1", name: "Draft Request for Proposals (RFP)", type: "task", startDate: "2025-01-15", endDate: "2025-02-15", duration: 120, status: "Completed", assignees: ["Ama Darko"] },
-          { id: "t2", name: "Evaluate Vendor Submissions", type: "task", startDate: "2025-01-20", endDate: "2025-02-10", duration: 80, status: "Completed", assignees: ["Yaw Osei"] },
+          { id: "t2", name: "Evaluate Supplier Submissions", type: "task", startDate: "2025-01-20", endDate: "2025-02-10", duration: 80, status: "Completed", assignees: ["Yaw Osei"] },
           { id: "t3", name: "Finalize Service Agreements", type: "task", startDate: "2025-02-01", endDate: "2025-02-28", duration: 100, status: "Completed", assignees: ["Kofi Mensah"] },
         ],
       },
@@ -155,7 +155,7 @@ const MOCK_DATA: TimelineItem[] = [
         status: "Delayed",
         isExpanded: false,
         children: [
-          { id: "t10", name: "Vendor Selection", type: "task", startDate: "2025-02-01", endDate: "2025-02-20", duration: 80, status: "Delayed", assignees: ["Nana Yaw"] },
+          { id: "t10", name: "Supplier Selection", type: "task", startDate: "2025-02-01", endDate: "2025-02-20", duration: 80, status: "Delayed", assignees: ["Nana Yaw"] },
           { id: "t11", name: "Contract Negotiation", type: "task", startDate: "2025-02-21", endDate: "2025-03-15", duration: 80, status: "At Risk", assignees: ["Kwame Asante"] },
         ],
       },

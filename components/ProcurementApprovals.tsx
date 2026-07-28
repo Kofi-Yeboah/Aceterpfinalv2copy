@@ -363,7 +363,7 @@ function toSourcingExportRow(item: SourcingApprovalItem) {
     title: item.title,
     sourcePR: item.sourcePR,
     projectName: item.projectName,
-    vendor: item.vendor,
+    supplier: item.supplier,
     estimatedValue: item.estimatedValue,
     dateSubmitted: item.dateSubmitted,
     approvalStatus: item.approvalStatus,
@@ -377,7 +377,7 @@ const SOURCING_EXPORT_COLUMNS: ExportColumn<SourcingExportRow>[] = [
   { key: "title", header: "Title" },
   { key: "sourcePR", header: "Source PR" },
   { key: "projectName", header: "Project" },
-  { key: "vendor", header: "Vendor" },
+  { key: "supplier", header: "Supplier" },
   { key: "estimatedValue", header: "Estimated Value (USD)" },
   { key: "dateSubmitted", header: "Date Submitted" },
   { key: "approvalStatus", header: "Status" },
@@ -462,7 +462,7 @@ export function ProcurementApprovals() {
       item.rfqNumber.toLowerCase().includes(needle) ||
       item.title.toLowerCase().includes(needle) ||
       item.projectName.toLowerCase().includes(needle) ||
-      item.vendor.toLowerCase().includes(needle);
+      item.supplier.toLowerCase().includes(needle);
     const matchesStatus = selectedStatus === "All Statuses" || item.approvalStatus === selectedStatus;
     return matchesSearch && matchesStatus;
   });
@@ -1310,7 +1310,7 @@ export function ProcurementApprovals() {
                 <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Title</th>
                 <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Source PR</th>
                 <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Project</th>
-                <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Vendor</th>
+                <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Supplier</th>
                 <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Est. Value</th>
                 <th className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Date Submitted</th>
                 <th className="text-center px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100">Status</th>
@@ -1342,7 +1342,7 @@ export function ProcurementApprovals() {
                       <p className="text-[12px] text-slate-600">{item.projectName}</p>
                     </td>
                     <td className="px-4 py-4">
-                      <p className="text-[12px] text-slate-500">{item.vendor}</p>
+                      <p className="text-[12px] text-slate-500">{item.supplier}</p>
                     </td>
                     <td className="px-4 py-4">
                       <p className="text-[12px] text-slate-900">{formatCurrency(item.estimatedValue)}</p>

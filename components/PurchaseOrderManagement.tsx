@@ -6,7 +6,7 @@ import { getGeneratedPOs, subscribe, type POStatus } from "../lib/procurementSto
 interface PurchaseOrder {
   id: string;
   poNumber: string;
-  vendor: string;
+  supplier: string;
   itemDescription: string;
   orderDate: string;
   deliveryDate: string;
@@ -19,14 +19,14 @@ interface PurchaseOrder {
   signatureAuthority?: string;
 }
 
-const VENDORS = ["All Vendors", "Dr. Kwesi Appiah", "PrintWorks Ghana Ltd", "La Palm Royal Beach Hotel", "Dell Inc. (via Telefonika Ghana)", "CreativeEdge Designs", "MedSupply GH", "Acer Distributors", "Prof. Ama Benyiwa", "University of Ghana", "Ghana Research Associates"];
+const SUPPLIERS = ["All Suppliers", "Dr. Kwesi Appiah", "PrintWorks Ghana Ltd", "La Palm Royal Beach Hotel", "Dell Inc. (via Telefonika Ghana)", "CreativeEdge Designs", "MedSupply GH", "Acer Distributors", "Prof. Ama Benyiwa", "University of Ghana", "Ghana Research Associates"];
 const PROJECTS = ["All Projects", "Youth Employment Skills Development", "Digital Literacy Initiative", "Community Health Project"];
 
 export function PurchaseOrderManagement() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedVendor, setSelectedVendor] = useState("All Vendors");
+  const [selectedSupplier, setSelectedSupplier] = useState("All Suppliers");
   const [selectedProject, setSelectedProject] = useState("All Projects");
-  const [showVendorDropdown, setShowVendorDropdown] = useState(false);
+  const [showSupplierDropdown, setShowSupplierDropdown] = useState(false);
   const [showProjectDropdown, setShowProjectDropdown] = useState(false);
   const [showDetailView, setShowDetailView] = useState(false);
   const [selectedPO, setSelectedPO] = useState<PurchaseOrder | null>(null);
@@ -46,7 +46,7 @@ export function PurchaseOrderManagement() {
   const purchaseOrders: PurchaseOrder[] = storePOs.map((po) => ({
     id: po.id,
     poNumber: po.poNumber,
-    vendor: po.vendor,
+    supplier: po.supplier,
     itemDescription: po.itemDescription,
     orderDate: po.orderDate,
     deliveryDate: po.deliveryDate,
@@ -61,9 +61,9 @@ export function PurchaseOrderManagement() {
 
   const filteredPOs = purchaseOrders.filter((po) => {
     const matchesSearch = po.poNumber.toLowerCase().includes(searchQuery.toLowerCase()) || po.itemDescription.toLowerCase().includes(searchQuery.toLowerCase()) || po.sourcePR.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesVendor = selectedVendor === "All Vendors" || po.vendor === selectedVendor;
+    const matchesSupplier = selectedSupplier === "All Suppliers" || po.supplier === selectedSupplier;
     const matchesProject = selectedProject === "All Projects" || po.projectName === selectedProject;
-    return matchesSearch && matchesVendor && matchesProject;
+    return matchesSearch && matchesSupplier && matchesProject;
   });
 
   const formatCurrency = (amount: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0 }).format(amount);
@@ -103,18 +103,18 @@ export function PurchaseOrderManagement() {
                   <Upload size={16} className="text-purple-700" />
                 </button>
 
-                {/* Vendor Filter */}
+                {/* Supplier Filter */}
                 <div className="relative">
-                  <button onClick={() => { setShowVendorDropdown(!showVendorDropdown); setShowProjectDropdown(false); }} className="flex items-center gap-3 px-3 py-2.5 border border-slate-200 rounded-lg bg-white hover:bg-slate-50 transition-colors shadow-sm">
-                    <span className="text-sm text-slate-900">{selectedVendor}</span>
+                  <button onClick={() => { setShowSupplierDropdown(!showSupplierDropdown); setShowProjectDropdown(false); }} className="flex items-center gap-3 px-3 py-2.5 border border-slate-200 rounded-lg bg-white hover:bg-slate-50 transition-colors shadow-sm">
+                    <span className="text-sm text-slate-900">{selectedSupplier}</span>
                     <ChevronDown size={16} className="text-purple-700" />
                   </button>
-                  {showVendorDropdown && (
+                  {showSupplierDropdown && (
                     <>
-                      <div className="fixed inset-0 z-10" onClick={() => setShowVendorDropdown(false)} />
+                      <div className="fixed inset-0 z-10" onClick={() => setShowSupplierDropdown(false)} />
                       <div className="absolute right-0 top-full mt-1 w-64 bg-white border border-slate-200 rounded-lg shadow-lg z-20 overflow-hidden max-h-[300px] overflow-y-auto">
-                        {VENDORS.map((vendor) => (
-                          <button key={vendor} onClick={() => { setSelectedVendor(vendor); setShowVendorDropdown(false); }} className="w-full px-4 py-2 text-left text-sm text-slate-900 hover:bg-slate-50 transition-colors">{vendor}</button>
+                        {SUPPLIERS.map((supplier) => (
+                          <button key={supplier} onClick={() => { setSelectedSupplier(supplier); setShowSupplierDropdown(false); }} className="w-full px-4 py-2 text-left text-sm text-slate-900 hover:bg-slate-50 transition-colors">{supplier}</button>
                         ))}
                       </div>
                     </>
@@ -123,7 +123,7 @@ export function PurchaseOrderManagement() {
 
                 {/* Project Filter */}
                 <div className="relative">
-                  <button onClick={() => { setShowProjectDropdown(!showProjectDropdown); setShowVendorDropdown(false); }} className="flex items-center gap-3 px-3 py-2.5 border border-slate-200 rounded-lg bg-white hover:bg-slate-50 transition-colors shadow-sm">
+                  <button onClick={() => { setShowProjectDropdown(!showProjectDropdown); setShowSupplierDropdown(false); }} className="flex items-center gap-3 px-3 py-2.5 border border-slate-200 rounded-lg bg-white hover:bg-slate-50 transition-colors shadow-sm">
                     <span className="text-sm text-slate-900">{selectedProject}</span>
                     <ChevronDown size={16} className="text-purple-700" />
                   </button>
@@ -149,7 +149,7 @@ export function PurchaseOrderManagement() {
                   <th className="text-left px-4 py-3 text-white text-[12px] font-semibold">PO Number</th>
                   <th className="text-left px-4 py-3 text-white text-[12px] font-semibold">Source PR</th>
                   <th className="text-left px-4 py-3 text-white text-[12px] font-semibold">Project</th>
-                  <th className="text-left px-4 py-3 text-white text-[12px] font-semibold">Vendor</th>
+                  <th className="text-left px-4 py-3 text-white text-[12px] font-semibold">Supplier</th>
                   <th className="text-left px-4 py-3 text-white text-[12px] font-semibold">Item Description</th>
                   <th className="text-left px-4 py-3 text-white text-[12px] font-semibold">Order Date</th>
                   <th className="text-left px-4 py-3 text-white text-[12px] font-semibold">Delivery Date</th>
@@ -168,7 +168,7 @@ export function PurchaseOrderManagement() {
                       </span>
                     </td>
                     <td className="px-4 py-4"><p className="text-[12px] text-slate-600">{po.projectName}</p></td>
-                    <td className="px-4 py-4"><p className="text-[12px] text-slate-500">{po.vendor}</p></td>
+                    <td className="px-4 py-4"><p className="text-[12px] text-slate-500">{po.supplier}</p></td>
                     <td className="px-4 py-4"><p className="text-[12px] text-slate-900">{po.itemDescription}</p></td>
                     <td className="px-4 py-4"><p className="text-[12px] text-slate-500">{formatDate(po.orderDate)}</p></td>
                     <td className="px-4 py-4"><p className="text-[12px] text-slate-500">{formatDate(po.deliveryDate)}</p></td>

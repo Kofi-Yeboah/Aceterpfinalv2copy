@@ -56,8 +56,8 @@ const userData: UserRecord[] = [
   { id: 33, name: "Michael Chen", email: "m.chen@deloitte.com", avatar: imgAvatar, role: "Auditor", status: "Inactive", type: "guest", guestType: "auditor", organization: "Deloitte", accessGranted: "Nov 03, 2024" },
   { id: 34, name: "Fatima Al-Hassan", email: "f.alhassan@techplus.io", avatar: imgAvatar1, role: "Contractor / Consultant", status: "Active", type: "guest", guestType: "contractor", organization: "TechPlus Solutions", accessGranted: "May 15, 2025" },
   { id: 35, name: "Kwaku Anane", email: "k.anane@greendev.org", avatar: imgAvatar, role: "Contractor / Consultant", status: "Active", type: "guest", guestType: "contractor", organization: "GreenDev Consulting", accessGranted: "Jun 01, 2025" },
-  { id: 36, name: "Linda Owusu-Mensah", email: "l.owusu@globaltech.com", avatar: imgAvatar1, role: "Vendor / Supplier", status: "Active", type: "guest", guestType: "vendor", organization: "GlobalTech Ltd", accessGranted: "Jul 12, 2025" },
-  { id: 37, name: "Peter Adjei", email: "p.adjei@officemax.gh", avatar: imgAvatar, role: "Vendor / Supplier", status: "Active", type: "guest", guestType: "vendor", organization: "OfficeMax Ghana", accessGranted: "Aug 20, 2025" },
+  { id: 36, name: "Linda Owusu-Mensah", email: "l.owusu@globaltech.com", avatar: imgAvatar1, role: "Supplier", status: "Active", type: "guest", guestType: "supplier", organization: "GlobalTech Ltd", accessGranted: "Jul 12, 2025" },
+  { id: 37, name: "Peter Adjei", email: "p.adjei@officemax.gh", avatar: imgAvatar, role: "Supplier", status: "Active", type: "guest", guestType: "supplier", organization: "OfficeMax Ghana", accessGranted: "Aug 20, 2025" },
   { id: 38, name: "Sandra Kim", email: "s.kim@cloudops.io", avatar: imgAvatar1, role: "External IT", status: "Active", type: "guest", guestType: "external_it", organization: "CloudOps International", accessGranted: "Sep 08, 2025" },
 ];
 
@@ -141,8 +141,8 @@ const guestTypes: GuestTypeOption[] = [
     needsProjectAccess: true,
   },
   {
-    key: "vendor",
-    label: "Vendor / Supplier",
+    key: "supplier",
+    label: "Supplier",
     description: "Supplier or service provider participating in procurement.",
     accessNote: "Access to the Sourcing / Supplier portal to submit bids or invoices.",
     badgeColor: "bg-pink-50 text-pink-700 border-pink-200",
@@ -372,7 +372,7 @@ export function UserManagement() {
     donor: "bg-green-50 text-green-700 border-green-200",
     auditor: "bg-purple-50 text-purple-700 border-purple-200",
     contractor: "bg-amber-50 text-amber-700 border-amber-200",
-    vendor: "bg-pink-50 text-pink-700 border-pink-200",
+    supplier: "bg-pink-50 text-pink-700 border-pink-200",
     external_it: "bg-cyan-50 text-cyan-700 border-cyan-200",
   };
 
@@ -380,7 +380,7 @@ export function UserManagement() {
     donor: "Partner",
     auditor: "Auditor",
     contractor: "Contractor",
-    vendor: "Vendor",
+    supplier: "Supplier",
     external_it: "External IT",
   };
 
@@ -958,7 +958,7 @@ export function UserManagement() {
                           <Building2 size={20} className="text-amber-600" />
                         </div>
                         <p className="text-sm text-slate-900">Guest</p>
-                        <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">External person — donor, consultant, auditor, vendor, or IT.</p>
+                        <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">External person — donor, consultant, auditor, supplier, or IT.</p>
                         <div className="mt-3 flex items-center gap-1 text-[10px] text-amber-600">
                           <Clock size={10} /> Time-limited access with role assignment
                         </div>

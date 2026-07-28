@@ -4,8 +4,8 @@ import {
   Activity, CheckCircle2, Clock, FileText, FileSpreadsheet, UserCircle,
 } from "lucide-react";
 import { getGeneratedPRs, subscribe, markPRConvertedToSourcing } from "../lib/procurementStore";
-import { pushContract, registerAwardWithVendor } from "../lib/contractStore";
-import { recordConsultantRate } from "../lib/vendorStore";
+import { pushContract, registerAwardWithSupplier } from "../lib/contractStore";
+import { recordConsultantRate } from "../lib/supplierStore";
 import { notifyAll } from "../lib/notificationStore";
 import { can, getCurrentUser, denialReason, subscribe as subscribeUser, type AppUser } from "../lib/currentUser";
 import {
@@ -23,7 +23,7 @@ import {
   type StepStatus,
   type ContractAwardPayload,
   type DocUploadPayload,
-  type VendorBidUpdatePayload,
+  type SupplierBidUpdatePayload,
   type UploadedDoc,
   type MethodChangeRecord,
 } from "./SourcingCaseDetail";
@@ -102,7 +102,7 @@ function buildSteps(
       label: "Advertisement",
       icon: null,
       status: "locked",
-      description: "Publish to the vendor portal / ACET website and upload external ad proof.",
+      description: "Publish to the supplier portal / ACET website and upload external ad proof.",
       documents: [],
     });
   }
@@ -135,18 +135,18 @@ function buildSteps(
   if (!individualRoute) {
     steps.push({
       key: "invitation",
-      label: direct ? "Select Vendor" : "Invite Bidders",
+      label: direct ? "Select Supplier" : "Invite Bidders",
       icon: null,
       status: "locked",
       description: direct
-        ? "Select the vendor directly from the approved supplier register."
+        ? "Select the supplier directly from the approved supplier register."
         : "Select bidders from the supplier register, issue invitations and upload the letters.",
       // "Invitation to Shortlisted Bidders: optional" for RFQ.
       optional: rfq,
       documents: [],
     });
 
-    // 6. Online Submission Portal — wherever a tender is published to vendors.
+    // 6. Online Submission Portal — wherever a tender is published to suppliers.
     // Direct Selection is a single negotiated engagement, so it has no portal step.
     if (!direct) {
       steps.push({
@@ -155,8 +155,8 @@ function buildSteps(
         icon: null,
         status: "locked",
         description: isService
-          ? "Vendors submit electronically. Technical and financial envelopes open separately."
-          : "Vendors submit bids electronically. Sealed, timestamped and opened on the record.",
+          ? "Suppliers submit electronically. Technical and financial envelopes open separately."
+          : "Suppliers submit bids electronically. Sealed, timestamped and opened on the record.",
         optional: true,
         documents: [],
       });
@@ -305,11 +305,11 @@ function buildSeedCases(): SourcingCase[] {
       completedDate: "2024-12-18",
       currentStepKey: "contract_award",
       overallStatus: "Completed",
-      awardedVendor: "Dr. Kwesi Appiah",
+      awardedSupplier: "Dr. Kwesi Appiah",
       contractNumber: "CNT-2024-001",
       steps: buildCompletedSteps("Direct Selection", "Consultancy"),
-      vendorsBidding: [
-        { id: "bid-s1-1", vendorName: "Dr. Kwesi Appiah", dateReceived: "2024-12-05", bidReference: "BID-DS-001", notes: "Direct selection — single vendor" },
+      suppliersBidding: [
+        { id: "bid-s1-1", supplierName: "Dr. Kwesi Appiah", dateReceived: "2024-12-05", bidReference: "BID-DS-001", notes: "Direct selection — single supplier" },
       ],
     },
     {
@@ -327,13 +327,13 @@ function buildSeedCases(): SourcingCase[] {
       completedDate: "2024-12-20",
       currentStepKey: "contract_award",
       overallStatus: "Completed",
-      awardedVendor: "PrintWorks Ghana Ltd",
+      awardedSupplier: "PrintWorks Ghana Ltd",
       contractNumber: "CNT-2024-002",
       steps: buildCompletedSteps("Request for Quotation", "Goods"),
-      vendorsBidding: [
-        { id: "bid-s2-1", vendorName: "PrintWorks Ghana Ltd", dateReceived: "2024-12-08", bidReference: "BID-RFQ-001", notes: "Received via email" },
-        { id: "bid-s2-2", vendorName: "Office Depot Ltd.", dateReceived: "2024-12-09", bidReference: "BID-RFQ-002", notes: "Sealed envelope, hand-delivered" },
-        { id: "bid-s2-3", vendorName: "QuickPrint Services", dateReceived: "2024-12-10", bidReference: "BID-RFQ-003", notes: "Courier delivery" },
+      suppliersBidding: [
+        { id: "bid-s2-1", supplierName: "PrintWorks Ghana Ltd", dateReceived: "2024-12-08", bidReference: "BID-RFQ-001", notes: "Received via email" },
+        { id: "bid-s2-2", supplierName: "Office Depot Ltd.", dateReceived: "2024-12-09", bidReference: "BID-RFQ-002", notes: "Sealed envelope, hand-delivered" },
+        { id: "bid-s2-3", supplierName: "QuickPrint Services", dateReceived: "2024-12-10", bidReference: "BID-RFQ-003", notes: "Courier delivery" },
       ],
     },
     {
@@ -351,11 +351,11 @@ function buildSeedCases(): SourcingCase[] {
       currentStepKey: "evaluation",
       overallStatus: "In Progress",
       steps: buildInProgressSteps("Limited Competition", "Consultancy", "evaluation"),
-      vendorsBidding: [
-        { id: "bid-s3-1", vendorName: "Prof. Ama Benyiwa", dateReceived: "2025-02-01", bidReference: "BID-LC-001", notes: "Technical & financial proposals, sealed" },
-        { id: "bid-s3-2", vendorName: "Nana Yaw Mensah", dateReceived: "2025-02-02", bidReference: "BID-LC-002", notes: "Hand-delivered, 3 copies" },
-        { id: "bid-s3-3", vendorName: "Dr. Kwesi Appiah", dateReceived: "2025-02-03", bidReference: "BID-LC-003", notes: "Received via courier" },
-        { id: "bid-s3-4", vendorName: "Akosua Frimpong", dateReceived: "2025-02-03", bidReference: "BID-LC-004", notes: "Email submission, PDF attached" },
+      suppliersBidding: [
+        { id: "bid-s3-1", supplierName: "Prof. Ama Benyiwa", dateReceived: "2025-02-01", bidReference: "BID-LC-001", notes: "Technical & financial proposals, sealed" },
+        { id: "bid-s3-2", supplierName: "Nana Yaw Mensah", dateReceived: "2025-02-02", bidReference: "BID-LC-002", notes: "Hand-delivered, 3 copies" },
+        { id: "bid-s3-3", supplierName: "Dr. Kwesi Appiah", dateReceived: "2025-02-03", bidReference: "BID-LC-003", notes: "Received via courier" },
+        { id: "bid-s3-4", supplierName: "Akosua Frimpong", dateReceived: "2025-02-03", bidReference: "BID-LC-004", notes: "Email submission, PDF attached" },
       ],
     },
     {
@@ -373,12 +373,12 @@ function buildSeedCases(): SourcingCase[] {
       currentStepKey: "bid_opening",
       overallStatus: "In Progress",
       steps: buildInProgressSteps("Open Competition", "Goods", "bid_opening"),
-      vendorsBidding: [
-        { id: "bid-s4-1", vendorName: "Tech Solutions Inc.", dateReceived: "2025-02-15", bidReference: "BID-OC-001", notes: "Sealed bid box, 2 copies" },
-        { id: "bid-s4-2", vendorName: "CompuTech Ghana", dateReceived: "2025-02-15", bidReference: "BID-OC-002", notes: "Courier delivery" },
-        { id: "bid-s4-3", vendorName: "Dell Direct Sales", dateReceived: "2025-02-16", bidReference: "BID-OC-003", notes: "Hand-delivered by agent" },
-        { id: "bid-s4-4", vendorName: "Electromart Ltd", dateReceived: "2025-02-16", bidReference: "BID-OC-004", notes: "Sealed envelope via post" },
-        { id: "bid-s4-5", vendorName: "Office Depot Ltd.", dateReceived: "2025-02-17", bidReference: "BID-OC-005", notes: "Email confirmation + physical copy" },
+      suppliersBidding: [
+        { id: "bid-s4-1", supplierName: "Tech Solutions Inc.", dateReceived: "2025-02-15", bidReference: "BID-OC-001", notes: "Sealed bid box, 2 copies" },
+        { id: "bid-s4-2", supplierName: "CompuTech Ghana", dateReceived: "2025-02-15", bidReference: "BID-OC-002", notes: "Courier delivery" },
+        { id: "bid-s4-3", supplierName: "Dell Direct Sales", dateReceived: "2025-02-16", bidReference: "BID-OC-003", notes: "Hand-delivered by agent" },
+        { id: "bid-s4-4", supplierName: "Electromart Ltd", dateReceived: "2025-02-16", bidReference: "BID-OC-004", notes: "Sealed envelope via post" },
+        { id: "bid-s4-5", supplierName: "Office Depot Ltd.", dateReceived: "2025-02-17", bidReference: "BID-OC-005", notes: "Email confirmation + physical copy" },
       ],
     },
     {
@@ -396,7 +396,7 @@ function buildSeedCases(): SourcingCase[] {
       currentStepKey: "invitation",
       overallStatus: "In Progress",
       steps: buildInProgressSteps("Open Competition", "Goods", "invitation"),
-      vendorsBidding: [],
+      suppliersBidding: [],
     },
   ];
   return seeds;
@@ -466,7 +466,7 @@ const EXPORT_COLUMNS: ExportColumn<Record<string, unknown>>[] = [
   { key: "bids", header: "Bids" },
   { key: "status", header: "Status" },
   { key: "processingDays", header: "Days Elapsed" },
-  { key: "awardedVendor", header: "Awarded Vendor" },
+  { key: "awardedSupplier", header: "Awarded Supplier" },
   { key: "contractNumber", header: "Contract #" },
 ];
 
@@ -602,7 +602,7 @@ export function Sourcing({ onNavigate }: SourcingProps) {
   };
 
   const bidCountFor = (sc: SourcingCase) =>
-    (sc.vendorsBidding?.length ?? 0) + getOpenedSubmissions(sc.caseNumber).length;
+    (sc.suppliersBidding?.length ?? 0) + getOpenedSubmissions(sc.caseNumber).length;
 
   /* ── Method change ── */
   const handleMethodChange = (caseId: string, newMethod: SourcingMethod, justification: string) => {
@@ -669,7 +669,7 @@ export function Sourcing({ onNavigate }: SourcingProps) {
     const contract = pushContract({
       contractNumber: payload.contractNumber,
       title: sc.description,
-      party: payload.vendor,
+      party: payload.supplier,
       sourcePR: sc.sourcePR,
       sourceSourcingCase: sc.caseNumber,
       category: sc.category,
@@ -680,15 +680,15 @@ export function Sourcing({ onNavigate }: SourcingProps) {
       comments: payload.comments,
     });
 
-    // The vendor profile gains the contract history and updated totals.
-    registerAwardWithVendor(contract);
+    // The supplier profile gains the contract history and updated totals.
+    registerAwardWithSupplier(contract);
 
     // The requisition is now shown as Converted to Sourcing.
     markPRConvertedToSourcing(sc.sourcePR, sc.caseNumber);
 
     // An individual consultant's agreed rate joins their rate history.
-    if (payload.consultantRate && payload.vendorRef) {
-      recordConsultantRate(payload.vendorRef, {
+    if (payload.consultantRate && payload.supplierRef) {
+      recordConsultantRate(payload.supplierRef, {
         assignment: sc.description,
         rate: payload.consultantRate.rate,
         rateType: payload.consultantRate.rateType,
@@ -700,7 +700,7 @@ export function Sourcing({ onNavigate }: SourcingProps) {
     mutateCase(payload.caseId, c => ({
       ...c,
       steps: c.steps.map(s => (s.key === "contract_award" ? { ...s, status: "completed" as StepStatus } : s)),
-      awardedVendor: payload.vendor,
+      awardedSupplier: payload.supplier,
       contractNumber: payload.contractNumber,
       overallStatus: "Completed" as const,
       currentStepKey: "contract_award",
@@ -709,10 +709,10 @@ export function Sourcing({ onNavigate }: SourcingProps) {
 
     announce(
       sc,
-      `${sc.caseNumber} — contract ${payload.contractNumber} awarded to ${payload.vendor}`,
+      `${sc.caseNumber} — contract ${payload.contractNumber} awarded to ${payload.supplier}`,
       [
-        `${payload.awardedBy} awarded "${sc.description}" (${formatCurrency(sc.budget)}) to ${payload.vendor} under ${sc.method}.`,
-        `Contract ${payload.contractNumber} is registered in Contract Management and against the vendor's profile.`,
+        `${payload.awardedBy} awarded "${sc.description}" (${formatCurrency(sc.budget)}) to ${payload.supplier} under ${sc.method}.`,
+        `Contract ${payload.contractNumber} is registered in Contract Management and against the supplier's profile.`,
         `Requisition ${sc.sourcePR} is now marked Converted to Sourcing.`,
         payload.consultantRate
           ? `Agreed consultant rate: ${formatCurrency(payload.consultantRate.rate)} ${payload.consultantRate.rateType.toLowerCase()} — recorded in the rate history.`
@@ -726,9 +726,9 @@ export function Sourcing({ onNavigate }: SourcingProps) {
     );
   };
 
-  /* ── Vendor bid update ── */
-  const handleVendorBidUpdate = (payload: VendorBidUpdatePayload) => {
-    mutateCase(payload.caseId, sc => ({ ...sc, vendorsBidding: payload.vendorsBidding }));
+  /* ── Supplier bid update ── */
+  const handleSupplierBidUpdate = (payload: SupplierBidUpdatePayload) => {
+    mutateCase(payload.caseId, sc => ({ ...sc, suppliersBidding: payload.suppliersBidding }));
   };
 
   /* ── Document upload ── */
@@ -853,7 +853,7 @@ export function Sourcing({ onNavigate }: SourcingProps) {
       bids: bidCountFor(sc),
       status: sc.overallStatus,
       processingDays: daysBetween(sc.dateCreated, sc.completedDate ?? today),
-      awardedVendor: sc.awardedVendor ?? "—",
+      awardedSupplier: sc.awardedSupplier ?? "—",
       contractNumber: sc.contractNumber ?? "—",
     }));
   };
@@ -902,12 +902,12 @@ export function Sourcing({ onNavigate }: SourcingProps) {
   };
 
   // ── PO Generation Flow ──
-  if (showPOFlow && selectedCase && selectedCase.contractNumber && selectedCase.awardedVendor) {
+  if (showPOFlow && selectedCase && selectedCase.contractNumber && selectedCase.awardedSupplier) {
     return (
       <POGenerationFlow
         sourcePR={selectedCase.sourcePR}
         sourceSourcingCase={selectedCase.caseNumber}
-        vendor={selectedCase.awardedVendor}
+        supplier={selectedCase.awardedSupplier}
         itemDescription={selectedCase.description}
         budget={selectedCase.budget}
         category={selectedCase.category}
@@ -935,7 +935,7 @@ export function Sourcing({ onNavigate }: SourcingProps) {
         onStepAdvance={handleStepAdvance}
         onContractAward={handleContractAward}
         onDocUpload={handleDocUpload}
-        onVendorBidUpdate={handleVendorBidUpdate}
+        onSupplierBidUpdate={handleSupplierBidUpdate}
         onCaseUpdate={handleCaseUpdate}
         onNavigateToContract={onNavigate ? () => onNavigate("LEGAL & CONTRACTS-Contract Repository") : undefined}
         onGeneratePO={() => setShowPOFlow(true)}
@@ -1141,7 +1141,7 @@ export function Sourcing({ onNavigate }: SourcingProps) {
               <th className="text-left px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: F }}>Method</th>
               <th className="text-right px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: F }}>Budget</th>
               <th className="text-left px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: F }}>Current Step</th>
-              <th className="text-center px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: F }}>Vendors Bidding</th>
+              <th className="text-center px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: F }}>Suppliers Bidding</th>
               <th className="text-center px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: F }}>Status</th>
               <th className="text-center px-4 py-3 text-white text-[12px] font-semibold" style={{ fontFamily: F }}>Actions</th>
             </tr>

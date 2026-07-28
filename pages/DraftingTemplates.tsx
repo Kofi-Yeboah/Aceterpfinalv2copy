@@ -18,7 +18,7 @@ const mockTemplates: Template[] = [
     id: "TPL-001",
     name: "Standard NDA",
     category: "Non-Disclosure",
-    description: "Standard non-disclosure agreement for vendors and partners",
+    description: "Standard non-disclosure agreement for suppliers and partners",
     lastModified: "Jan 15, 2026",
     modifiedBy: "David Wilson",
     usageCount: 45,
@@ -56,9 +56,9 @@ const mockTemplates: Template[] = [
   },
   {
     id: "TPL-005",
-    name: "Vendor Service Agreement",
+    name: "Supplier Service Agreement",
     category: "Service Agreement",
-    description: "General service agreement for recurring vendor services",
+    description: "General service agreement for recurring supplier services",
     lastModified: "Nov 30, 2025",
     modifiedBy: "David Wilson",
     usageCount: 34,
@@ -87,8 +87,8 @@ const mockTemplates: Template[] = [
   {
     id: "TPL-008",
     name: "Software License Agreement",
-    category: "Vendor",
-    description: "Standard software licensing agreement for vendors",
+    category: "Supplier",
+    description: "Standard software licensing agreement for suppliers",
     lastModified: "Jan 25, 2026",
     modifiedBy: "Michael Chen",
     usageCount: 22,
@@ -193,7 +193,7 @@ export function DraftingTemplates() {
             <option>Non-Disclosure</option>
             <option>Service Agreement</option>
             <option>Lease</option>
-            <option>Vendor</option>
+            <option>Supplier</option>
             <option>Partnership</option>
           </select>
         </div>
@@ -404,7 +404,7 @@ export function DraftingTemplates() {
                   <option value="Non-Disclosure">Non-Disclosure</option>
                   <option value="Service Agreement">Service Agreement</option>
                   <option value="Lease">Lease</option>
-                  <option value="Vendor">Vendor</option>
+                  <option value="Supplier">Supplier</option>
                   <option value="Partnership">Partnership</option>
                 </select>
               </div>

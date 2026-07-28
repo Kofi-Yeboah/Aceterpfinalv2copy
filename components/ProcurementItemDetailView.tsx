@@ -60,7 +60,7 @@ const statusMeta: Record<ItemStatus, { bg: string; icon: React.ReactNode }> = {
 /* ─── Mock procurement data for completed items ──────────────────────────── */
 
 interface CompletedProcData {
-  vendor: string;
+  supplier: string;
   poNumber: string;
   contractNumber: string;
   completedDate: string;
@@ -73,7 +73,7 @@ interface CompletedProcData {
 
 const completedDataMap: Record<string, CompletedProcData> = {
   "PI-001": {
-    vendor: "Tech Solutions Inc.", poNumber: "PO-2026-001", contractNumber: "CNT-2026-001",
+    supplier: "Tech Solutions Inc.", poNumber: "PO-2026-001", contractNumber: "CNT-2026-001",
     completedDate: "Feb 20, 2026", method: "Competitive Bidding", awardDate: "Feb 05, 2026",
     contractValue: 45000, sourcingCase: "SRC-2026-001",
     documents: [
@@ -87,7 +87,7 @@ const completedDataMap: Record<string, CompletedProcData> = {
     ],
   },
   "PI-002": {
-    vendor: "Tech Solutions Inc.", poNumber: "PO-2026-002", contractNumber: "CNT-2026-002",
+    supplier: "Tech Solutions Inc.", poNumber: "PO-2026-002", contractNumber: "CNT-2026-002",
     completedDate: "Jan 28, 2026", method: "Direct Selection", awardDate: "Jan 15, 2026",
     contractValue: 24000, sourcingCase: "SRC-2026-002",
     documents: [
@@ -99,7 +99,7 @@ const completedDataMap: Record<string, CompletedProcData> = {
     ],
   },
   "PI-007": {
-    vendor: "Office Depot Ltd.", poNumber: "PO-2026-007", contractNumber: "CNT-2026-007",
+    supplier: "Office Depot Ltd.", poNumber: "PO-2026-007", contractNumber: "CNT-2026-007",
     completedDate: "Feb 10, 2026", method: "Request for Quotation", awardDate: "Jan 30, 2026",
     contractValue: 8500, sourcingCase: "SRC-2026-007",
     documents: [
@@ -112,7 +112,7 @@ const completedDataMap: Record<string, CompletedProcData> = {
     ],
   },
   "PI-101": {
-    vendor: "Tech Solutions Inc.", poNumber: "PO-2025-011", contractNumber: "CNT-2025-001",
+    supplier: "Tech Solutions Inc.", poNumber: "PO-2025-011", contractNumber: "CNT-2025-001",
     completedDate: "Feb 25, 2025", method: "Competitive Bidding", awardDate: "Feb 10, 2025",
     contractValue: 32000, sourcingCase: "SRC-2025-001",
     documents: [
@@ -124,7 +124,7 @@ const completedDataMap: Record<string, CompletedProcData> = {
     ],
   },
   "PI-102": {
-    vendor: "Tech Solutions Inc.", poNumber: "PO-2025-012", contractNumber: "CNT-2025-002",
+    supplier: "Tech Solutions Inc.", poNumber: "PO-2025-012", contractNumber: "CNT-2025-002",
     completedDate: "Jan 30, 2025", method: "Direct Selection", awardDate: "Jan 20, 2025",
     contractValue: 22000, sourcingCase: "SRC-2025-002",
     documents: [
@@ -135,7 +135,7 @@ const completedDataMap: Record<string, CompletedProcData> = {
     ],
   },
   "PI-103": {
-    vendor: "Premier Supplies", poNumber: "PO-2025-013", contractNumber: "CNT-2025-003",
+    supplier: "Premier Supplies", poNumber: "PO-2025-013", contractNumber: "CNT-2025-003",
     completedDate: "Mar 12, 2025", method: "Request for Quotation", awardDate: "Feb 28, 2025",
     contractValue: 16000, sourcingCase: "SRC-2025-003",
     documents: [
@@ -148,7 +148,7 @@ const completedDataMap: Record<string, CompletedProcData> = {
     ],
   },
   "PI-104": {
-    vendor: "Elite Partners", poNumber: "PO-2025-014", contractNumber: "CNT-2025-004",
+    supplier: "Elite Partners", poNumber: "PO-2025-014", contractNumber: "CNT-2025-004",
     completedDate: "Jun 28, 2025", method: "Direct Selection", awardDate: "Mar 15, 2025",
     contractValue: 30000, sourcingCase: "SRC-2025-004",
     documents: [
@@ -160,7 +160,7 @@ const completedDataMap: Record<string, CompletedProcData> = {
     ],
   },
   "PI-105": {
-    vendor: "Facilities Management Pro", poNumber: "PO-2025-015", contractNumber: "CNT-2025-005",
+    supplier: "Facilities Management Pro", poNumber: "PO-2025-015", contractNumber: "CNT-2025-005",
     completedDate: "Apr 28, 2025", method: "Request for Quotation", awardDate: "Mar 20, 2025",
     contractValue: 16000, sourcingCase: "SRC-2025-005",
     documents: [
@@ -173,7 +173,7 @@ const completedDataMap: Record<string, CompletedProcData> = {
     ],
   },
   "PI-106": {
-    vendor: "La Palm Royal Beach Hotel", poNumber: "PO-2025-016", contractNumber: "CNT-2025-006",
+    supplier: "La Palm Royal Beach Hotel", poNumber: "PO-2025-016", contractNumber: "CNT-2025-006",
     completedDate: "Sep 10, 2025", method: "Request for Quotation", awardDate: "Aug 01, 2025",
     contractValue: 14000, sourcingCase: "SRC-2025-006",
     documents: [
@@ -185,7 +185,7 @@ const completedDataMap: Record<string, CompletedProcData> = {
     ],
   },
   "PI-107": {
-    vendor: "Various", poNumber: "—", contractNumber: "—",
+    supplier: "Various", poNumber: "—", contractNumber: "—",
     completedDate: "Dec 20, 2025", method: "Multiple Methods", awardDate: "—",
     contractValue: 12000, sourcingCase: "—",
     documents: [
@@ -193,7 +193,7 @@ const completedDataMap: Record<string, CompletedProcData> = {
     ],
   },
   "PI-201": {
-    vendor: "Tech Innovators LLC", poNumber: "PO-2024-021", contractNumber: "CNT-2024-003",
+    supplier: "Tech Innovators LLC", poNumber: "PO-2024-021", contractNumber: "CNT-2024-003",
     completedDate: "Feb 28, 2024", method: "Competitive Bidding", awardDate: "Feb 15, 2024",
     contractValue: 36000, sourcingCase: "SRC-2024-010",
     documents: [
@@ -206,7 +206,7 @@ const completedDataMap: Record<string, CompletedProcData> = {
     ],
   },
   "PI-202": {
-    vendor: "Tech Solutions Inc.", poNumber: "PO-2024-022", contractNumber: "CNT-2024-004",
+    supplier: "Tech Solutions Inc.", poNumber: "PO-2024-022", contractNumber: "CNT-2024-004",
     completedDate: "Feb 12, 2024", method: "Direct Selection", awardDate: "Jan 28, 2024",
     contractValue: 18000, sourcingCase: "SRC-2024-011",
     documents: [
@@ -216,7 +216,7 @@ const completedDataMap: Record<string, CompletedProcData> = {
     ],
   },
   "PI-203": {
-    vendor: "Ghana Research Associates", poNumber: "PO-2024-023", contractNumber: "CNT-2024-005",
+    supplier: "Ghana Research Associates", poNumber: "PO-2024-023", contractNumber: "CNT-2024-005",
     completedDate: "May 25, 2024", method: "Direct Selection", awardDate: "Mar 10, 2024",
     contractValue: 25000, sourcingCase: "SRC-2024-012",
     documents: [
@@ -228,7 +228,7 @@ const completedDataMap: Record<string, CompletedProcData> = {
     ],
   },
   "PI-204": {
-    vendor: "Facilities Management Pro", poNumber: "PO-2024-024", contractNumber: "CNT-2024-006",
+    supplier: "Facilities Management Pro", poNumber: "PO-2024-024", contractNumber: "CNT-2024-006",
     completedDate: "Jul 28, 2024", method: "Competitive Bidding", awardDate: "Apr 15, 2024",
     contractValue: 20000, sourcingCase: "SRC-2024-013",
     documents: [
@@ -241,7 +241,7 @@ const completedDataMap: Record<string, CompletedProcData> = {
     ],
   },
   "PI-205": {
-    vendor: "Various", poNumber: "—", contractNumber: "—",
+    supplier: "Various", poNumber: "—", contractNumber: "—",
     completedDate: "Dec 15, 2024", method: "Multiple Methods", awardDate: "—",
     contractValue: 19500, sourcingCase: "—",
     documents: [
@@ -250,8 +250,8 @@ const completedDataMap: Record<string, CompletedProcData> = {
   },
 };
 
-/* Vendor DB (same as ESSProcurementPlan) */
-const VENDOR_DATABASE = [
+/* Supplier DB (same as ESSProcurementPlan) */
+const SUPPLIER_DATABASE = [
   { id: "V-001", name: "Tech Solutions Inc.", contactPerson: "John Smith", email: "john@techsolutions.com", phone: "+1 (555) 123-4567", category: "IT Equipment", rating: 4.8, status: "Active", address: "12 Innovation Drive, Accra" },
   { id: "V-002", name: "Office Depot Ltd.", contactPerson: "Sarah Johnson", email: "sarah@officedepot.com", phone: "+1 (555) 234-5678", category: "Office Supplies", rating: 4.5, status: "Active", address: "45 Commerce St, Tema" },
   { id: "V-003", name: "Global Services Co.", contactPerson: "Michael Brown", email: "michael@globalservices.com", phone: "+1 (555) 345-6789", category: "Professional Services", rating: 4.9, status: "Active", address: "8 Partnership Ave, Kumasi" },
@@ -300,8 +300,8 @@ export function ProcurementItemDetailView({ item, planId, planYear, planDepartme
   const matchingPO = matchingPR ? allPOs.find(po => po.sourcePR === matchingPR.requisitionNumber) : null;
   const matchingContract = matchingPR ? allContracts.find(c => c.sourcePR === matchingPR.requisitionNumber) : null;
   const completedData = completedDataMap[item.id] || null;
-  const vendorName = matchingPO?.vendor || matchingContract?.party || completedData?.vendor;
-  const vendorRecord = vendorName ? VENDOR_DATABASE.find(v => v.name === vendorName) : null;
+  const supplierName = matchingPO?.supplier || matchingContract?.party || completedData?.supplier;
+  const supplierRecord = supplierName ? SUPPLIER_DATABASE.find(v => v.name === supplierName) : null;
 
   const cc = categoryMeta[item.category];
   const sc = statusMeta[item.status];
@@ -358,7 +358,7 @@ export function ProcurementItemDetailView({ item, planId, planYear, planDepartme
     });
   }
   if (completedData) {
-    timeline.push({ date: completedData.awardDate, event: `Contract awarded to ${completedData.vendor}`, status: "done" });
+    timeline.push({ date: completedData.awardDate, event: `Contract awarded to ${completedData.supplier}`, status: "done" });
     timeline.push({ date: completedData.completedDate, event: "Procurement completed", status: "done" });
   }
 
@@ -428,7 +428,7 @@ export function ProcurementItemDetailView({ item, planId, planYear, planDepartme
                 <div>
                   <p className="text-[13px] font-medium text-emerald-800">Procurement Completed</p>
                   <p className="text-[11px] text-emerald-600">
-                    Awarded to <span className="font-medium">{vendorName || "—"}</span>
+                    Awarded to <span className="font-medium">{supplierName || "—"}</span>
                     {completedData && <> on {completedData.awardDate} &middot; {completedData.method}</>}
                   </p>
                 </div>
@@ -516,7 +516,7 @@ export function ProcurementItemDetailView({ item, planId, planYear, planDepartme
                     <DetailRow icon={<ClipboardList size={13} />} label="Sourcing Case" value={completedData?.sourcingCase || (matchingPO?.sourceSourcingCase) || "—"} mono />
                     <DetailRow icon={<Handshake size={13} />} label="Contract" value={matchingContract?.contractNumber || completedData?.contractNumber || "—"} mono />
                     <DetailRow icon={<DollarSign size={13} />} label="Purchase Order" value={matchingPO?.poNumber || completedData?.poNumber || "—"} mono />
-                    <DetailRow icon={<Award size={13} />} label="Vendor" value={vendorName || "—"} />
+                    <DetailRow icon={<Award size={13} />} label="Supplier" value={supplierName || "—"} />
                   </div>
                 </div>
               </div>
@@ -697,32 +697,32 @@ export function ProcurementItemDetailView({ item, planId, planYear, planDepartme
                       <DetailRow icon={<ClipboardList size={13} />} label="Sourcing Case" value={completedData?.sourcingCase || matchingPO?.sourceSourcingCase || "—"} mono />
                       <DetailRow icon={<Globe size={13} />} label="Sourcing Method" value={completedData?.method || matchingContract?.method || matchingPO?.method || "—"} />
                       <DetailRow icon={<Tag size={13} />} label="Category" value={item.category} />
-                      <DetailRow icon={<Award size={13} />} label="Awarded Vendor" value={vendorName || "—"} />
+                      <DetailRow icon={<Award size={13} />} label="Awarded Supplier" value={supplierName || "—"} />
                       <DetailRow icon={<Calendar size={13} />} label="Award Date" value={completedData?.awardDate || matchingContract?.awardDate || "—"} />
                       <DetailRow icon={<DollarSign size={13} />} label="Contract Value" value={fmt(completedData?.contractValue || matchingContract?.value || matchingPO?.amount || item.estimatedCost)} bold />
                     </div>
                   </div>
 
-                  {/* Vendor Details */}
+                  {/* Supplier Details */}
                   <div className="bg-slate-50 border border-slate-200 rounded-xl p-5">
-                    <p className="text-[10px] text-[#0B01D0] uppercase tracking-widest mb-4 font-medium">Vendor Details</p>
-                    {vendorRecord ? (
+                    <p className="text-[10px] text-[#0B01D0] uppercase tracking-widest mb-4 font-medium">Supplier Details</p>
+                    {supplierRecord ? (
                       <div className="space-y-3">
-                        <DetailRow icon={<Building2 size={13} />} label="Company" value={vendorRecord.name} />
-                        <DetailRow icon={<User size={13} />} label="Contact Person" value={vendorRecord.contactPerson} />
-                        <DetailRow icon={<Globe size={13} />} label="Email" value={vendorRecord.email} />
-                        <DetailRow icon={<FileText size={13} />} label="Phone" value={vendorRecord.phone} />
-                        <DetailRow icon={<MapPin size={13} />} label="Address" value={vendorRecord.address} />
-                        <DetailRow icon={<Tag size={13} />} label="Category" value={vendorRecord.category} />
-                        <DetailRow icon={<Award size={13} />} label="Rating" value={`${vendorRecord.rating} / 5.0`} />
+                        <DetailRow icon={<Building2 size={13} />} label="Company" value={supplierRecord.name} />
+                        <DetailRow icon={<User size={13} />} label="Contact Person" value={supplierRecord.contactPerson} />
+                        <DetailRow icon={<Globe size={13} />} label="Email" value={supplierRecord.email} />
+                        <DetailRow icon={<FileText size={13} />} label="Phone" value={supplierRecord.phone} />
+                        <DetailRow icon={<MapPin size={13} />} label="Address" value={supplierRecord.address} />
+                        <DetailRow icon={<Tag size={13} />} label="Category" value={supplierRecord.category} />
+                        <DetailRow icon={<Award size={13} />} label="Rating" value={`${supplierRecord.rating} / 5.0`} />
                       </div>
-                    ) : vendorName ? (
+                    ) : supplierName ? (
                       <div className="space-y-3">
-                        <DetailRow icon={<Building2 size={13} />} label="Vendor" value={vendorName} />
-                        <p className="text-[11px] text-slate-400 italic">Detailed vendor information not available in the supplier database.</p>
+                        <DetailRow icon={<Building2 size={13} />} label="Supplier" value={supplierName} />
+                        <p className="text-[11px] text-slate-400 italic">Detailed supplier information not available in the supplier database.</p>
                       </div>
                     ) : (
-                      <p className="text-[12px] text-slate-400 italic">No vendor assigned yet.</p>
+                      <p className="text-[12px] text-slate-400 italic">No supplier assigned yet.</p>
                     )}
                   </div>
                 </div>
@@ -761,7 +761,7 @@ export function ProcurementItemDetailView({ item, planId, planYear, planDepartme
                     <p className="text-[10px] text-[#0B01D0] uppercase tracking-widest mb-4 font-medium">Purchase Order</p>
                     <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                       <DetailRow icon={<DollarSign size={13} />} label="PO Number" value={matchingPO?.poNumber || completedData?.poNumber || "—"} mono />
-                      <DetailRow icon={<Award size={13} />} label="Vendor" value={matchingPO?.vendor || vendorName || "—"} />
+                      <DetailRow icon={<Award size={13} />} label="Supplier" value={matchingPO?.supplier || supplierName || "—"} />
                       <DetailRow icon={<DollarSign size={13} />} label="Amount" value={fmt(matchingPO?.amount || completedData?.contractValue || 0)} bold />
                       <DetailRow icon={<Calendar size={13} />} label="Order Date" value={matchingPO?.orderDate || "—"} />
                       <DetailRow icon={<Calendar size={13} />} label="Delivery Date" value={matchingPO?.deliveryDate || "—"} />

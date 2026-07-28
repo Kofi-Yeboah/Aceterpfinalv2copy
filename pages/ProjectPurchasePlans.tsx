@@ -16,7 +16,7 @@ interface PurchaseItem {
   quantity: number;
   unitPrice: number;
   totalCost: number;
-  vendor: string;
+  supplier: string;
   expectedDelivery: string;
   priority: "Critical" | "High" | "Medium" | "Low";
 }
@@ -50,12 +50,12 @@ const mockPlans: ProjectPlan[] = [
     totalItems: 6,
     status: "Approved",
     items: [
-      { id: "YES-1", itemName: "Training Materials & Workbooks", category: "Goods", quantity: 500, unitPrice: 9, totalCost: 4500, vendor: "PrintWorks Ghana Ltd", expectedDelivery: "Apr 15, 2026", priority: "High" },
-      { id: "YES-2", itemName: "Laptops for Field Officers", category: "Goods", quantity: 20, unitPrice: 1200, totalCost: 24000, vendor: "Tech Solutions Inc.", expectedDelivery: "Jun 01, 2026", priority: "Critical" },
-      { id: "YES-3", itemName: "M&E Framework Review Consultancy", category: "Consultancy", quantity: 1, unitPrice: 15000, totalCost: 15000, vendor: "To be sourced", expectedDelivery: "Jun 30, 2026", priority: "High" },
-      { id: "YES-4", itemName: "Workshop Venue & Catering (6 regions)", category: "Services", quantity: 6, unitPrice: 3500, totalCost: 21000, vendor: "To be sourced", expectedDelivery: "May 30, 2026", priority: "Medium" },
-      { id: "YES-5", itemName: "Baseline Survey Design Consultancy", category: "Consultancy", quantity: 1, unitPrice: 8000, totalCost: 8000, vendor: "Dr. Kwesi Appiah", expectedDelivery: "May 15, 2026", priority: "High" },
-      { id: "YES-6", itemName: "Vocational Training Sub-grants", category: "Services", quantity: 1, unitPrice: 122000, totalCost: 122000, vendor: "Multiple providers", expectedDelivery: "Sep 30, 2026", priority: "Critical" },
+      { id: "YES-1", itemName: "Training Materials & Workbooks", category: "Goods", quantity: 500, unitPrice: 9, totalCost: 4500, supplier: "PrintWorks Ghana Ltd", expectedDelivery: "Apr 15, 2026", priority: "High" },
+      { id: "YES-2", itemName: "Laptops for Field Officers", category: "Goods", quantity: 20, unitPrice: 1200, totalCost: 24000, supplier: "Tech Solutions Inc.", expectedDelivery: "Jun 01, 2026", priority: "Critical" },
+      { id: "YES-3", itemName: "M&E Framework Review Consultancy", category: "Consultancy", quantity: 1, unitPrice: 15000, totalCost: 15000, supplier: "To be sourced", expectedDelivery: "Jun 30, 2026", priority: "High" },
+      { id: "YES-4", itemName: "Workshop Venue & Catering (6 regions)", category: "Services", quantity: 6, unitPrice: 3500, totalCost: 21000, supplier: "To be sourced", expectedDelivery: "May 30, 2026", priority: "Medium" },
+      { id: "YES-5", itemName: "Baseline Survey Design Consultancy", category: "Consultancy", quantity: 1, unitPrice: 8000, totalCost: 8000, supplier: "Dr. Kwesi Appiah", expectedDelivery: "May 15, 2026", priority: "High" },
+      { id: "YES-6", itemName: "Vocational Training Sub-grants", category: "Services", quantity: 1, unitPrice: 122000, totalCost: 122000, supplier: "Multiple providers", expectedDelivery: "Sep 30, 2026", priority: "Critical" },
     ],
   },
   {
@@ -70,11 +70,11 @@ const mockPlans: ProjectPlan[] = [
     totalItems: 5,
     status: "Approved",
     items: [
-      { id: "DLI-1", itemName: "Chromebooks for Computer Labs", category: "Goods", quantity: 40, unitPrice: 350, totalCost: 14000, vendor: "Acer Distributors", expectedDelivery: "Apr 30, 2026", priority: "Critical" },
-      { id: "DLI-2", itemName: "Lab Furniture & Installation", category: "Works", quantity: 4, unitPrice: 12000, totalCost: 48000, vendor: "To be sourced", expectedDelivery: "May 15, 2026", priority: "High" },
-      { id: "DLI-3", itemName: "Networking & Internet Connectivity", category: "Services", quantity: 4, unitPrice: 8000, totalCost: 32000, vendor: "To be sourced", expectedDelivery: "May 30, 2026", priority: "High" },
-      { id: "DLI-4", itemName: "Curriculum Development & Trainer Fees", category: "Consultancy", quantity: 1, unitPrice: 120000, totalCost: 120000, vendor: "To be sourced", expectedDelivery: "Aug 31, 2026", priority: "Critical" },
-      { id: "DLI-5", itemName: "Community Outreach Media & Print", category: "Goods", quantity: 1, unitPrice: 12500, totalCost: 12500, vendor: "CreativeEdge Designs", expectedDelivery: "Apr 10, 2026", priority: "Medium" },
+      { id: "DLI-1", itemName: "Chromebooks for Computer Labs", category: "Goods", quantity: 40, unitPrice: 350, totalCost: 14000, supplier: "Acer Distributors", expectedDelivery: "Apr 30, 2026", priority: "Critical" },
+      { id: "DLI-2", itemName: "Lab Furniture & Installation", category: "Works", quantity: 4, unitPrice: 12000, totalCost: 48000, supplier: "To be sourced", expectedDelivery: "May 15, 2026", priority: "High" },
+      { id: "DLI-3", itemName: "Networking & Internet Connectivity", category: "Services", quantity: 4, unitPrice: 8000, totalCost: 32000, supplier: "To be sourced", expectedDelivery: "May 30, 2026", priority: "High" },
+      { id: "DLI-4", itemName: "Curriculum Development & Trainer Fees", category: "Consultancy", quantity: 1, unitPrice: 120000, totalCost: 120000, supplier: "To be sourced", expectedDelivery: "Aug 31, 2026", priority: "Critical" },
+      { id: "DLI-5", itemName: "Community Outreach Media & Print", category: "Goods", quantity: 1, unitPrice: 12500, totalCost: 12500, supplier: "CreativeEdge Designs", expectedDelivery: "Apr 10, 2026", priority: "Medium" },
     ],
   },
   {
@@ -89,11 +89,11 @@ const mockPlans: ProjectPlan[] = [
     totalItems: 5,
     status: "Under Review",
     items: [
-      { id: "CHP-1", itemName: "Medical Supplies Kits", category: "Goods", quantity: 60, unitPrice: 200, totalCost: 12000, vendor: "MedSupply GH", expectedDelivery: "Apr 20, 2026", priority: "Critical" },
-      { id: "CHP-2", itemName: "Cold Chain Equipment", category: "Goods", quantity: 5, unitPrice: 7500, totalCost: 37500, vendor: "To be sourced", expectedDelivery: "Jun 01, 2026", priority: "Critical" },
-      { id: "CHP-3", itemName: "Health Worker Training Programme", category: "Services", quantity: 1, unitPrice: 48000, totalCost: 48000, vendor: "To be sourced", expectedDelivery: "Aug 15, 2026", priority: "High" },
-      { id: "CHP-4", itemName: "M&E Data Management Platform", category: "Services", quantity: 1, unitPrice: 45000, totalCost: 45000, vendor: "DataViz Consulting", expectedDelivery: "Oct 01, 2026", priority: "High" },
-      { id: "CHP-5", itemName: "Tablets for Health Volunteers", category: "Goods", quantity: 40, unitPrice: 400, totalCost: 16000, vendor: "To be sourced", expectedDelivery: "Jul 01, 2026", priority: "Medium" },
+      { id: "CHP-1", itemName: "Medical Supplies Kits", category: "Goods", quantity: 60, unitPrice: 200, totalCost: 12000, supplier: "MedSupply GH", expectedDelivery: "Apr 20, 2026", priority: "Critical" },
+      { id: "CHP-2", itemName: "Cold Chain Equipment", category: "Goods", quantity: 5, unitPrice: 7500, totalCost: 37500, supplier: "To be sourced", expectedDelivery: "Jun 01, 2026", priority: "Critical" },
+      { id: "CHP-3", itemName: "Health Worker Training Programme", category: "Services", quantity: 1, unitPrice: 48000, totalCost: 48000, supplier: "To be sourced", expectedDelivery: "Aug 15, 2026", priority: "High" },
+      { id: "CHP-4", itemName: "M&E Data Management Platform", category: "Services", quantity: 1, unitPrice: 45000, totalCost: 45000, supplier: "DataViz Consulting", expectedDelivery: "Oct 01, 2026", priority: "High" },
+      { id: "CHP-5", itemName: "Tablets for Health Volunteers", category: "Goods", quantity: 40, unitPrice: 400, totalCost: 16000, supplier: "To be sourced", expectedDelivery: "Jul 01, 2026", priority: "Medium" },
     ],
   },
 ];
@@ -181,7 +181,7 @@ export function ProjectPurchasePlans() {
                 <th className="text-center px-4 py-3 text-white text-[11px] font-semibold">Qty</th>
                 <th className="text-right px-4 py-3 text-white text-[11px] font-semibold">Unit Price</th>
                 <th className="text-right px-4 py-3 text-white text-[11px] font-semibold">Total Cost</th>
-                <th className="text-left px-4 py-3 text-white text-[11px] font-semibold">Vendor</th>
+                <th className="text-left px-4 py-3 text-white text-[11px] font-semibold">Supplier</th>
                 <th className="text-left px-4 py-3 text-white text-[11px] font-semibold">Expected Delivery</th>
                 <th className="text-center px-4 py-3 text-white text-[11px] font-semibold">Priority</th>
               </tr>
@@ -194,7 +194,7 @@ export function ProjectPurchasePlans() {
                   <td className="px-4 py-3 text-center text-[12px] text-slate-600">{item.quantity}</td>
                   <td className="px-4 py-3 text-right text-[12px] text-slate-600">{formatCurrency(item.unitPrice)}</td>
                   <td className="px-4 py-3 text-right text-[12px] text-slate-900 font-medium">{formatCurrency(item.totalCost)}</td>
-                  <td className="px-4 py-3 text-[12px] text-slate-600">{item.vendor}</td>
+                  <td className="px-4 py-3 text-[12px] text-slate-600">{item.supplier}</td>
                   <td className="px-4 py-3 text-[12px] text-slate-600">{item.expectedDelivery}</td>
                   <td className="px-4 py-3 text-center"><span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${priorityStyle(item.priority)}`}>{item.priority}</span></td>
                 </tr>

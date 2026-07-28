@@ -119,7 +119,7 @@ const MOCK_PROJECTS: Project[] = [
     startDate: "May 15, 2025",
     endDate: "Oct 30, 2025",
     progress: 44,
-    milestoneStatus: "Procurement phase — vendor selection in progress",
+    milestoneStatus: "Procurement phase — supplier selection in progress",
     riskLevel: "Medium",
     estimatedBudget: "$150,000",
     status: "Active",

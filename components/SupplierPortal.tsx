@@ -5,14 +5,14 @@ import {
   CalendarClock, BadgeCheck, ArrowLeft, Paperclip, Ban,
 } from "lucide-react";
 import {
-  getVendors, getVendorById, vendorDisplayName, vendorEmail, getVendorFlags,
-  registerVendor, addVendorDocument, avgScore,
-  FIRM_DOC_CHECKLIST, INDIVIDUAL_DOC_CHECKLIST, VENDOR_CATEGORIES, SUB_CATEGORIES,
-  EXPERT_AREAS_OPTIONS, subscribe as subscribeVendors,
-  type Vendor, type VendorType,
-} from "../lib/vendorStore";
+  getSuppliers, getSupplierById, supplierDisplayName, supplierEmail, getSupplierFlags,
+  registerSupplier, addSupplierDocument, avgScore,
+  FIRM_DOC_CHECKLIST, INDIVIDUAL_DOC_CHECKLIST, SUPPLIER_CATEGORIES, SUB_CATEGORIES,
+  EXPERT_AREAS_OPTIONS, subscribe as subscribeSuppliers,
+  type Supplier, type SupplierType,
+} from "../lib/supplierStore";
 import {
-  getTendersForVendor, getSubmissionsByVendor, submitBid, withdrawSubmission,
+  getTendersForSupplier, getSubmissionsBySupplier, submitBid, withdrawSubmission,
   isTenderOpen, requestProfileUpdate, subscribe as subscribeTenders,
   type PublishedTender, type EnvelopeType, type SubmissionReceipt, type TenderDocument,
 } from "../lib/tenderPortalStore";
@@ -23,7 +23,7 @@ import { ProcurementTabs, ProcurementTabBar, type ProcurementTab } from "./procu
 import { ProcurementStatCards } from "./procurement/ProcurementStatCards";
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   The vendor-facing side of the procurement suite: self-registration, tender
+   The supplier-facing side of the procurement suite: self-registration, tender
    download, sealed electronic bid submission, invoice submission against a
    contract, and profile updates that go to Procurement for review rather than
    editing the live record directly.
@@ -35,7 +35,7 @@ function useStoreSync() {
   const [, force] = useState(0);
   useEffect(() => {
     const bump = () => force((n) => n + 1);
-    const unsubs = [subscribeVendors(bump), subscribeTenders(bump), subscribeContracts(bump), subscribeNotifications(bump)];
+    const unsubs = [subscribeSuppliers(bump), subscribeTenders(bump), subscribeContracts(bump), subscribeNotifications(bump)];
     return () => unsubs.forEach((u) => u());
   }, []);
 }
@@ -60,30 +60,30 @@ const input =
   "w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500";
 const label = "block text-xs font-medium text-slate-600 mb-1";
 
-export function VendorPortal() {
+export function SupplierPortal() {
   useStoreSync();
-  const [vendorId, setVendorId] = useState<string | null>(null);
+  const [supplierId, setSupplierId] = useState<string | null>(null);
   const [tab, setTab] = useState<PortalTab>("home");
   const [registering, setRegistering] = useState(false);
 
-  const vendor = vendorId ? getVendorById(vendorId) : undefined;
+  const supplier = supplierId ? getSupplierById(supplierId) : undefined;
 
-  if (!vendor) {
+  if (!supplier) {
     return registering ? (
       <SelfRegistration
         onBack={() => setRegistering(false)}
         onRegistered={(id) => {
           setRegistering(false);
-          setVendorId(id);
+          setSupplierId(id);
         }}
       />
     ) : (
-      <PortalSignIn onSignIn={setVendorId} onRegister={() => setRegistering(true)} />
+      <PortalSignIn onSignIn={setSupplierId} onRegister={() => setRegistering(true)} />
     );
   }
 
-  const flags = getVendorFlags(vendor);
-  const unread = getNotifications({ unreadOnly: true, name: vendorDisplayName(vendor) }).length;
+  const flags = getSupplierFlags(supplier);
+  const unread = getNotifications({ unreadOnly: true, name: supplierDisplayName(supplier) }).length;
 
   const tabs: ProcurementTab<PortalTab>[] = [
     { key: "home", label: "Overview" },
@@ -101,22 +101,22 @@ export function VendorPortal() {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="size-12 rounded-xl bg-emerald-100 grid place-items-center">
-              {vendor.type === "Firm" ? (
+              {supplier.type === "Firm" ? (
                 <Building2 className="size-6 text-emerald-700" />
               ) : (
                 <User className="size-6 text-emerald-700" />
               )}
             </div>
             <div>
-              <h1 className="text-xl font-semibold text-slate-900">{vendorDisplayName(vendor)}</h1>
+              <h1 className="text-xl font-semibold text-slate-900">{supplierDisplayName(supplier)}</h1>
               <p className="text-sm text-slate-500">
-                {vendor.vendorId} &middot; {vendor.category} &middot; {vendorEmail(vendor)}
+                {supplier.supplierId} &middot; {supplier.category} &middot; {supplierEmail(supplier)}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <StatusPill status={vendor.status} />
-            <button onClick={() => setVendorId(null)} className={btnGhost}>
+            <StatusPill status={supplier.status} />
+            <button onClick={() => setSupplierId(null)} className={btnGhost}>
               <LogOut className="size-4" /> Sign out
             </button>
           </div>
@@ -143,12 +143,12 @@ export function VendorPortal() {
         <ProcurementTabs tabs={tabs} active={tab} onChange={setTab} minWidth={80} />
       </div>
 
-      {tab === "home" && <PortalHome vendor={vendor} onOpenTenders={() => setTab("tenders")} />}
-      {tab === "tenders" && <TenderList vendor={vendor} />}
-      {tab === "submissions" && <SubmissionHistory vendor={vendor} />}
-      {tab === "contracts" && <ContractsAndInvoices vendor={vendor} />}
-      {tab === "profile" && <ProfileTab vendor={vendor} />}
-      {tab === "notifications" && <NotificationsTab vendor={vendor} />}
+      {tab === "home" && <PortalHome supplier={supplier} onOpenTenders={() => setTab("tenders")} />}
+      {tab === "tenders" && <TenderList supplier={supplier} />}
+      {tab === "submissions" && <SubmissionHistory supplier={supplier} />}
+      {tab === "contracts" && <ContractsAndInvoices supplier={supplier} />}
+      {tab === "profile" && <ProfileTab supplier={supplier} />}
+      {tab === "notifications" && <NotificationsTab supplier={supplier} />}
     </div>
   );
 }
@@ -158,10 +158,10 @@ export function VendorPortal() {
    ──────────────────────────────────────────────────────────────────────────── */
 
 function PortalSignIn({ onSignIn, onRegister }: { onSignIn: (id: string) => void; onRegister: () => void }) {
-  const vendors = getVendors();
+  const suppliers = getSuppliers();
   const [query, setQuery] = useState("");
 
-  const filtered = vendors.filter((v) => vendorDisplayName(v).toLowerCase().includes(query.toLowerCase()));
+  const filtered = suppliers.filter((v) => supplierDisplayName(v).toLowerCase().includes(query.toLowerCase()));
 
   return (
     <div className="p-6 bg-slate-50 min-h-screen">
@@ -170,14 +170,14 @@ function PortalSignIn({ onSignIn, onRegister }: { onSignIn: (id: string) => void
           <div className="size-14 rounded-2xl bg-emerald-600 grid place-items-center mx-auto mb-4">
             <ShieldCheck className="size-7 text-white" />
           </div>
-          <h1 className="text-2xl font-semibold text-slate-900">ACET Vendor &amp; Consultant Portal</h1>
+          <h1 className="text-2xl font-semibold text-slate-900">ACET Supplier &amp; Consultant Portal</h1>
           <p className="text-slate-500 mt-1 text-sm">
             Download tender documents, submit bids securely, track your submissions and invoices.
           </p>
         </div>
 
         <div className={`${card} p-6`}>
-          <h2 className="font-semibold text-slate-900 mb-1">Sign in to your vendor account</h2>
+          <h2 className="font-semibold text-slate-900 mb-1">Sign in to your supplier account</h2>
           <p className="text-sm text-slate-500 mb-4">
             Select your registered organisation or consultant profile to continue.
           </p>
@@ -192,7 +192,7 @@ function PortalSignIn({ onSignIn, onRegister }: { onSignIn: (id: string) => void
           </div>
           <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 border border-slate-200 rounded-xl">
             {filtered.length === 0 && (
-              <p className="p-6 text-sm text-slate-500 text-center">No registered vendor matches that name.</p>
+              <p className="p-6 text-sm text-slate-500 text-center">No registered supplier matches that name.</p>
             )}
             {filtered.map((v) => (
               <button
@@ -205,9 +205,9 @@ function PortalSignIn({ onSignIn, onRegister }: { onSignIn: (id: string) => void
                     {v.type === "Firm" ? <Building2 className="size-4 text-slate-600" /> : <User className="size-4 text-slate-600" />}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-slate-900 truncate">{vendorDisplayName(v)}</p>
+                    <p className="text-sm font-medium text-slate-900 truncate">{supplierDisplayName(v)}</p>
                     <p className="text-xs text-slate-500 truncate">
-                      {v.vendorId} &middot; {v.category}
+                      {v.supplierId} &middot; {v.category}
                     </p>
                   </div>
                 </div>
@@ -220,7 +220,7 @@ function PortalSignIn({ onSignIn, onRegister }: { onSignIn: (id: string) => void
         <div className={`${card} p-6 text-center`}>
           <p className="text-sm text-slate-600 mb-3">Not registered with ACET yet?</p>
           <button onClick={onRegister} className={`${btnPrimary} mx-auto`}>
-            <FilePlus2 className="size-4" /> Register as a vendor or consultant
+            <FilePlus2 className="size-4" /> Register as a supplier or consultant
           </button>
         </div>
       </div>
@@ -233,13 +233,13 @@ function PortalSignIn({ onSignIn, onRegister }: { onSignIn: (id: string) => void
    ──────────────────────────────────────────────────────────────────────────── */
 
 function SelfRegistration({ onBack, onRegistered }: { onBack: () => void; onRegistered: (id: string) => void }) {
-  const [type, setType] = useState<VendorType>("Firm");
+  const [type, setType] = useState<SupplierType>("Firm");
   const [form, setForm] = useState<Record<string, string>>({});
   const [expertAreas, setExpertAreas] = useState<string[]>([]);
   const [docs, setDocs] = useState<Record<string, { file: UploadedFile; expiry: string }>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [uploadError, setUploadError] = useState("");
-  const [result, setResult] = useState<{ vendorId: string; id: string; warnings: string[] } | null>(null);
+  const [result, setResult] = useState<{ supplierId: string; id: string; warnings: string[] } | null>(null);
 
   const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
   const checklist = type === "Firm" ? FIRM_DOC_CHECKLIST : INDIVIDUAL_DOC_CHECKLIST;
@@ -247,7 +247,7 @@ function SelfRegistration({ onBack, onRegistered }: { onBack: () => void; onRegi
   async function attach(docLabel: string) {
     setUploadError("");
     try {
-      const files = await pickFiles({ multiple: false, uploadedBy: form.name || "Vendor" });
+      const files = await pickFiles({ multiple: false, uploadedBy: form.name || "Supplier" });
       if (files.length) setDocs((d) => ({ ...d, [docLabel]: { file: files[0], expiry: d[docLabel]?.expiry ?? "" } }));
     } catch (err) {
       setUploadError(err instanceof FileValidationError ? err.message : "That file could not be attached.");
@@ -301,9 +301,9 @@ function SelfRegistration({ onBack, onRegistered }: { onBack: () => void; onRegi
       bankAccountNumber: form.bankAccountNumber || "",
     };
 
-    const { vendor, flags } =
+    const { supplier, flags } =
       type === "Firm"
-        ? registerVendor(
+        ? registerSupplier(
             "Firm",
             {
               ...common,
@@ -319,7 +319,7 @@ function SelfRegistration({ onBack, onRegistered }: { onBack: () => void; onRegi
             },
             { registeredBy: form.name, source: "Self-Registration" }
           )
-        : registerVendor(
+        : registerSupplier(
             "Individual",
             {
               ...common,
@@ -338,11 +338,11 @@ function SelfRegistration({ onBack, onRegistered }: { onBack: () => void; onRegi
     const warnings: string[] = [];
     if (flags.duplicates.length)
       warnings.push(
-        `A similar name is already registered (${flags.duplicates.map((d) => vendorDisplayName(d)).join(", ")}). Procurement will confirm whether this is a duplicate.`
+        `A similar name is already registered (${flags.duplicates.map((d) => supplierDisplayName(d)).join(", ")}). Procurement will confirm whether this is a duplicate.`
       );
     if (flags.missingDocs.length) warnings.push(`Still outstanding: ${flags.missingDocs.join(", ")}.`);
 
-    setResult({ vendorId: vendor.vendorId, id: vendor.id, warnings });
+    setResult({ supplierId: supplier.supplierId, id: supplier.id, warnings });
   }
 
   if (result) {
@@ -354,7 +354,7 @@ function SelfRegistration({ onBack, onRegistered }: { onBack: () => void; onRegi
           </div>
           <h2 className="text-xl font-semibold text-slate-900">Registration submitted</h2>
           <p className="text-sm text-slate-600 mt-2">
-            Your vendor identification number is <span className="font-semibold text-slate-900">{result.vendorId}</span>.
+            Your supplier identification number is <span className="font-semibold text-slate-900">{result.supplierId}</span>.
             Procurement will review your submission and supporting documents before your account becomes active. You will
             be notified by email once the review is complete.
           </p>
@@ -381,14 +381,14 @@ function SelfRegistration({ onBack, onRegistered }: { onBack: () => void; onRegi
         </button>
 
         <div className={`${card} p-6`}>
-          <h1 className="text-lg font-semibold text-slate-900">Vendor &amp; consultant registration</h1>
+          <h1 className="text-lg font-semibold text-slate-900">Supplier &amp; consultant registration</h1>
           <p className="text-sm text-slate-500 mt-1">
             Complete this form to join the ACET supplier database. Your registration becomes active once Procurement has
             reviewed the information and documents you provide.
           </p>
 
           <div className="flex gap-2 mt-5">
-            {(["Firm", "Individual"] as VendorType[]).map((t) => (
+            {(["Firm", "Individual"] as SupplierType[]).map((t) => (
               <button
                 key={t}
                 onClick={() => setType(t)}
@@ -458,7 +458,7 @@ function SelfRegistration({ onBack, onRegistered }: { onBack: () => void; onRegi
             <Field label="Procurement category *" error={errors.category}>
               <select className={input} value={form.category ?? ""} onChange={(e) => set("category", e.target.value)}>
                 <option value="">Select…</option>
-                {VENDOR_CATEGORIES.map((c) => (
+                {SUPPLIER_CATEGORIES.map((c) => (
                   <option key={c}>{c}</option>
                 ))}
               </select>
@@ -556,11 +556,11 @@ function SelfRegistration({ onBack, onRegistered }: { onBack: () => void; onRegi
    Portal tabs
    ──────────────────────────────────────────────────────────────────────────── */
 
-function PortalHome({ vendor, onOpenTenders }: { vendor: Vendor; onOpenTenders: () => void }) {
-  const tenders = getTendersForVendor(vendor.id).filter(isTenderOpen);
-  const subs = getSubmissionsByVendor(vendor.id);
-  const contracts = getContracts().filter((c) => c.party === vendorDisplayName(vendor));
-  const score = avgScore(vendor.performance);
+function PortalHome({ supplier, onOpenTenders }: { supplier: Supplier; onOpenTenders: () => void }) {
+  const tenders = getTendersForSupplier(supplier.id).filter(isTenderOpen);
+  const subs = getSubmissionsBySupplier(supplier.id);
+  const contracts = getContracts().filter((c) => c.party === supplierDisplayName(supplier));
+  const score = avgScore(supplier.performance);
 
   return (
     <div className="space-y-5">
@@ -579,7 +579,7 @@ function PortalHome({ vendor, onOpenTenders }: { vendor: Vendor; onOpenTenders: 
         ]}
       />
 
-      {vendor.status === "Pending Onboarding" && (
+      {supplier.status === "Pending Onboarding" && (
         <div className="rounded-2xl border border-sky-300 bg-sky-50 p-4 flex gap-3">
           <Clock className="size-5 text-sky-600 shrink-0 mt-0.5" />
           <div className="text-sm text-sky-900">
@@ -592,11 +592,11 @@ function PortalHome({ vendor, onOpenTenders }: { vendor: Vendor; onOpenTenders: 
         </div>
       )}
 
-      {(vendor.status === "Suspended" || vendor.status === "Blacklisted") && (
+      {(supplier.status === "Suspended" || supplier.status === "Blacklisted") && (
         <div className="rounded-2xl border border-rose-300 bg-rose-50 p-4 flex gap-3">
           <Ban className="size-5 text-rose-600 shrink-0 mt-0.5" />
           <div className="text-sm text-rose-900">
-            <p className="font-medium">Your account is {vendor.status.toLowerCase()}</p>
+            <p className="font-medium">Your account is {supplier.status.toLowerCase()}</p>
             <p>You cannot participate in solicitations at present. Contact procurement@acet.org for guidance.</p>
           </div>
         </div>
@@ -630,11 +630,11 @@ function PortalHome({ vendor, onOpenTenders }: { vendor: Vendor; onOpenTenders: 
   );
 }
 
-function TenderList({ vendor }: { vendor: Vendor }) {
+function TenderList({ supplier }: { supplier: Supplier }) {
   const [selected, setSelected] = useState<PublishedTender | null>(null);
-  const tenders = getTendersForVendor(vendor.id);
+  const tenders = getTendersForSupplier(supplier.id);
 
-  if (selected) return <TenderDetail vendor={vendor} tender={selected} onBack={() => setSelected(null)} />;
+  if (selected) return <TenderDetail supplier={supplier} tender={selected} onBack={() => setSelected(null)} />;
 
   return (
     <div className="space-y-4">
@@ -656,7 +656,7 @@ function TenderList({ vendor }: { vendor: Vendor }) {
                   }`}>
                     {open ? "Open" : t.status}
                   </span>
-                  {t.invitedVendorIds.length > 0 && (
+                  {t.invitedSupplierIds.length > 0 && (
                     <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-violet-100 text-violet-700">
                       Invitation only
                     </span>
@@ -684,7 +684,7 @@ function TenderList({ vendor }: { vendor: Vendor }) {
   );
 }
 
-function TenderDetail({ vendor, tender, onBack }: { vendor: Vendor; tender: PublishedTender; onBack: () => void }) {
+function TenderDetail({ supplier, tender, onBack }: { supplier: Supplier; tender: PublishedTender; onBack: () => void }) {
   const [envelope, setEnvelope] = useState<EnvelopeType>(
     tender.requiresTechnical && tender.requiresFinancial ? "Technical" : tender.requiresFinancial ? "Quotation" : "EOI"
   );
@@ -696,8 +696,8 @@ function TenderDetail({ vendor, tender, onBack }: { vendor: Vendor; tender: Publ
   const [receipt, setReceipt] = useState<SubmissionReceipt | null>(null);
 
   const open = isTenderOpen(tender);
-  const canBid = vendor.status === "Active";
-  const mySubs = getSubmissionsByVendor(vendor.id).filter((s) => s.tenderRef === tender.tenderRef && !s.withdrawn);
+  const canBid = supplier.status === "Active";
+  const mySubs = getSubmissionsBySupplier(supplier.id).filter((s) => s.tenderRef === tender.tenderRef && !s.withdrawn);
 
   const envelopeOptions: EnvelopeType[] = useMemo(() => {
     if (tender.requiresTechnical && tender.requiresFinancial) return ["Technical", "Financial", "Combined"];
@@ -709,7 +709,7 @@ function TenderDetail({ vendor, tender, onBack }: { vendor: Vendor; tender: Publ
   async function attach() {
     setError("");
     try {
-      const picked = await pickFiles({ multiple: true, uploadedBy: vendorDisplayName(vendor) });
+      const picked = await pickFiles({ multiple: true, uploadedBy: supplierDisplayName(supplier) });
       setFiles((f) => [...f, ...picked]);
     } catch (err) {
       setError(err instanceof FileValidationError ? err.message : "That file could not be attached.");
@@ -720,7 +720,7 @@ function TenderDetail({ vendor, tender, onBack }: { vendor: Vendor; tender: Publ
     setError("");
     const res = submitBid({
       tenderRef: tender.tenderRef,
-      vendorId: vendor.id,
+      supplierId: supplier.id,
       envelope,
       documents: toTenderDocs(files),
       proposedRate: rate ? { amount: Number(rate), rateType } : undefined,
@@ -808,7 +808,7 @@ function TenderDetail({ vendor, tender, onBack }: { vendor: Vendor; tender: Publ
                   </span>
                   {open && (
                     <button
-                      onClick={() => withdrawSubmission(s.submissionId, vendor.id)}
+                      onClick={() => withdrawSubmission(s.submissionId, supplier.id)}
                       className="text-xs text-rose-600 hover:underline"
                     >
                       Withdraw
@@ -830,7 +830,7 @@ function TenderDetail({ vendor, tender, onBack }: { vendor: Vendor; tender: Publ
 
         {!canBid && (
           <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 mb-4">
-            Your account status is <strong>{vendor.status}</strong>, so you cannot submit a bid at this time.
+            Your account status is <strong>{supplier.status}</strong>, so you cannot submit a bid at this time.
           </div>
         )}
         {!open && (
@@ -874,7 +874,7 @@ function TenderDetail({ vendor, tender, onBack }: { vendor: Vendor; tender: Publ
             )}
           </Field>
 
-          {tender.requestRateQuote && vendor.type === "Individual" && (
+          {tender.requestRateQuote && supplier.type === "Individual" && (
             <Field label="Proposed consultancy rate (optional)">
               <div className="flex gap-2">
                 <input
@@ -931,8 +931,8 @@ function TenderDetail({ vendor, tender, onBack }: { vendor: Vendor; tender: Publ
   );
 }
 
-function SubmissionHistory({ vendor }: { vendor: Vendor }) {
-  const subs = getSubmissionsByVendor(vendor.id);
+function SubmissionHistory({ supplier }: { supplier: Supplier }) {
+  const subs = getSubmissionsBySupplier(supplier.id);
 
   return (
     <div className={`${card} overflow-hidden`}>
@@ -982,8 +982,8 @@ function SubmissionHistory({ vendor }: { vendor: Vendor }) {
   );
 }
 
-function ContractsAndInvoices({ vendor }: { vendor: Vendor }) {
-  const name = vendorDisplayName(vendor);
+function ContractsAndInvoices({ supplier }: { supplier: Supplier }) {
+  const name = supplierDisplayName(supplier);
   const contracts = getContracts().filter((c) => c.party === name);
   const [openFor, setOpenFor] = useState<string | null>(null);
   const [form, setForm] = useState({ invoiceNumber: "", amount: "", note: "" });
@@ -1008,10 +1008,10 @@ function ContractsAndInvoices({ vendor }: { vendor: Vendor }) {
       contractId,
       {
         invoiceNumber: form.invoiceNumber.trim(),
-        vendor: name,
+        supplier: name,
         amount: Number(form.amount),
         dateSubmitted: new Date().toISOString().split("T")[0],
-        submittedVia: "Vendor Portal",
+        submittedVia: "Supplier Portal",
         documents: files.map((f) => f.name),
       },
       name
@@ -1133,36 +1133,36 @@ function ContractsAndInvoices({ vendor }: { vendor: Vendor }) {
   );
 }
 
-function ProfileTab({ vendor }: { vendor: Vendor }) {
+function ProfileTab({ supplier }: { supplier: Supplier }) {
   const [changes, setChanges] = useState<Record<string, string>>({});
   const [note, setNote] = useState("");
   const [message, setMessage] = useState("");
   const [uploadError, setUploadError] = useState("");
-  const flags = getVendorFlags(vendor);
+  const flags = getSupplierFlags(supplier);
 
   const editable: { key: string; label: string; current: string }[] =
-    vendor.type === "Firm"
+    supplier.type === "Firm"
       ? [
-          { key: "email", label: "Email address", current: vendor.email },
-          { key: "phone", label: "Phone number", current: vendor.phone },
-          { key: "registeredAddress", label: "Registered address", current: vendor.registeredAddress },
-          { key: "contactPerson", label: "Contact person", current: vendor.contactPerson },
-          { key: "bankName", label: "Bank name", current: vendor.bankName },
+          { key: "email", label: "Email address", current: supplier.email },
+          { key: "phone", label: "Phone number", current: supplier.phone },
+          { key: "registeredAddress", label: "Registered address", current: supplier.registeredAddress },
+          { key: "contactPerson", label: "Contact person", current: supplier.contactPerson },
+          { key: "bankName", label: "Bank name", current: supplier.bankName },
         ]
       : [
-          { key: "contactEmail", label: "Email address", current: vendor.contactEmail },
-          { key: "contactPhone", label: "Phone number", current: vendor.contactPhone },
-          { key: "residentialAddress", label: "Residential address", current: vendor.residentialAddress },
-          { key: "bankName", label: "Bank name", current: vendor.bankName },
+          { key: "contactEmail", label: "Email address", current: supplier.contactEmail },
+          { key: "contactPhone", label: "Phone number", current: supplier.contactPhone },
+          { key: "residentialAddress", label: "Residential address", current: supplier.residentialAddress },
+          { key: "bankName", label: "Bank name", current: supplier.bankName },
         ];
 
   async function uploadDoc(docLabel: string) {
     setUploadError("");
     try {
-      const files = await pickFiles({ multiple: false, uploadedBy: vendorDisplayName(vendor) });
+      const files = await pickFiles({ multiple: false, uploadedBy: supplierDisplayName(supplier) });
       if (!files.length) return;
       const expiry = window.prompt(`Expiry date for "${docLabel}" (YYYY-MM-DD), or leave blank if it does not expire:`) ?? "";
-      addVendorDocument(vendor.id, { label: docLabel, expiry: expiry.trim() || undefined }, vendorDisplayName(vendor));
+      addSupplierDocument(supplier.id, { label: docLabel, expiry: expiry.trim() || undefined }, supplierDisplayName(supplier));
       setMessage(`${docLabel} uploaded. Procurement will verify it.`);
     } catch (err) {
       setUploadError(err instanceof FileValidationError ? err.message : "That file could not be attached.");
@@ -1170,7 +1170,7 @@ function ProfileTab({ vendor }: { vendor: Vendor }) {
   }
 
   function submit() {
-    const res = requestProfileUpdate({ vendorId: vendor.id, fields: changes, note });
+    const res = requestProfileUpdate({ supplierId: supplier.id, fields: changes, note });
     setMessage(res.ok ? "Your changes have been sent to Procurement for review." : res.error ?? "");
     if (res.ok) {
       setChanges({});
@@ -1178,7 +1178,7 @@ function ProfileTab({ vendor }: { vendor: Vendor }) {
     }
   }
 
-  const requiredDocs = vendor.type === "Firm" ? FIRM_DOC_CHECKLIST : INDIVIDUAL_DOC_CHECKLIST;
+  const requiredDocs = supplier.type === "Firm" ? FIRM_DOC_CHECKLIST : INDIVIDUAL_DOC_CHECKLIST;
 
   return (
     <div className="space-y-5">
@@ -1226,8 +1226,8 @@ function ProfileTab({ vendor }: { vendor: Vendor }) {
         {uploadError && <p className="text-xs text-rose-600 mb-3">{uploadError}</p>}
         <div className="space-y-2">
           {requiredDocs.map((d) => {
-            const held = vendor.documents.includes(d);
-            const expiry = vendor.documentExpiry[d];
+            const held = supplier.documents.includes(d);
+            const expiry = supplier.documentExpiry[d];
             const expired = flags.expiredDocs.includes(d);
             const expiring = flags.expiringDocs.find((x) => x.doc === d);
             return (
@@ -1249,11 +1249,11 @@ function ProfileTab({ vendor }: { vendor: Vendor }) {
         </div>
       </div>
 
-      {(vendor.evaluations?.length ?? 0) > 0 && (
+      {(supplier.evaluations?.length ?? 0) > 0 && (
         <div className={`${card} p-6`}>
           <h2 className="font-semibold text-slate-900 mb-3">Your performance record</h2>
           <div className="space-y-2">
-            {vendor.evaluations!.map((e) => (
+            {supplier.evaluations!.map((e) => (
               <div key={e.id} className="p-3 rounded-xl border border-slate-200">
                 <div className="flex items-center justify-between gap-3">
                   <div>
@@ -1278,8 +1278,8 @@ function ProfileTab({ vendor }: { vendor: Vendor }) {
   );
 }
 
-function NotificationsTab({ vendor }: { vendor: Vendor }) {
-  const items = getNotifications({ name: vendorDisplayName(vendor) });
+function NotificationsTab({ supplier }: { supplier: Supplier }) {
+  const items = getNotifications({ name: supplierDisplayName(supplier) });
 
   return (
     <div className={`${card} overflow-hidden`}>
@@ -1332,7 +1332,7 @@ function Detail({ label: text, value }: { label: string; value: string }) {
   );
 }
 
-function StatusPill({ status }: { status: Vendor["status"] }) {
+function StatusPill({ status }: { status: Supplier["status"] }) {
   const tone =
     status === "Active"
       ? "bg-emerald-100 text-emerald-700"

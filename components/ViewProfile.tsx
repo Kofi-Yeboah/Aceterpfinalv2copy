@@ -237,7 +237,7 @@ export function ViewProfile({ user, onBack }: ViewProfileProps) {
     donor: "Partner",
     auditor: "Auditor",
     contractor: "Contractor / Consultant",
-    vendor: "Vendor / Supplier",
+    supplier: "Supplier",
     external_it: "External IT",
   };
 
@@ -245,7 +245,7 @@ export function ViewProfile({ user, onBack }: ViewProfileProps) {
     donor: "bg-green-50 text-green-700 border-green-200",
     auditor: "bg-purple-50 text-purple-700 border-purple-200",
     contractor: "bg-amber-50 text-amber-700 border-amber-200",
-    vendor: "bg-pink-50 text-pink-700 border-pink-200",
+    supplier: "bg-pink-50 text-pink-700 border-pink-200",
     external_it: "bg-cyan-50 text-cyan-700 border-cyan-200",
   };
 

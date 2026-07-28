@@ -66,12 +66,12 @@ const mockTaskCompletionRequests: TaskCompletionRequest[] = [
     status: "Approved"
   },
   {
-    id: "6", requestId: "TC-2026-006", taskName: "Vendor Onboarding Process", project: "Logistics Improvement",
+    id: "6", requestId: "TC-2026-006", taskName: "Supplier Onboarding Process", project: "Logistics Improvement",
     phase: "Procurement", assignee: "Kojo Mensah", department: "Operations",
     completionDate: "Mar 01, 2026", submittedDate: "Mar 02, 2026",
     hoursSpent: 20, estimatedHours: 24, completionPercentage: 100,
-    deliverables: ["Vendor contracts", "Onboarding checklist", "System setup confirmation"],
-    notes: "Three new vendors onboarded successfully.",
+    deliverables: ["Supplier contracts", "Onboarding checklist", "System setup confirmation"],
+    notes: "Three new suppliers onboarded successfully.",
     status: "Rejected"
   },
   {

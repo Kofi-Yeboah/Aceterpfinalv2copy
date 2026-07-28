@@ -63,7 +63,7 @@ const trayNotifications: TrayNotification[] = [
   {
     id: "compliance",
     title: "Compliance document expiring",
-    detail: "One vendor tax clearance certificate expires this week and needs legal review.",
+    detail: "One supplier tax clearance certificate expires this week and needs legal review.",
     timeLabel: "Expires in 2 days",
     pill: "Compliance",
     pillClassName: "bg-rose-50 text-rose-700 border border-rose-100",

@@ -31,9 +31,9 @@ export type POStatus = "Draft" | "Pending Signature" | "Signed" | "Dispatched";
 export interface GeneratedPO {
   id: string;
   poNumber: string;
-  vendor: string;
-  vendorEmail?: string;
-  vendorAddress?: string;
+  supplier: string;
+  supplierEmail?: string;
+  supplierAddress?: string;
   itemDescription: string;
   orderDate: string;
   deliveryDate: string;
@@ -53,7 +53,7 @@ export interface GeneratedPO {
   signatureAuthority?: string;
   signatureDataUrl?: string;
   dispatchedAt?: string;
-  vendorNotifiedAt?: string;
+  supplierNotifiedAt?: string;
   contractNumber?: string;
   sourceSourcingCase?: string;
   category?: string;
@@ -66,7 +66,7 @@ export interface SourcingApprovalItem {
   id: string;
   rfqNumber: string;
   title: string;
-  vendor: string;
+  supplier: string;
   projectName: string;
   sourcePR: string;
   estimatedValue: number;
@@ -167,25 +167,25 @@ let listeners: Listener[] = [];
 
 // Sourcing items pending approval (from "Awarded" RFQs that need final approval before PO)
 let sourcingApprovals: SourcingApprovalItem[] = [
-  { id: "SA-1", rfqNumber: "RFQ-2024-001", title: "Consultant Fees - Survey Design", vendor: "Dr. Kwesi Appiah", projectName: "Youth Employment Skills Development", sourcePR: "PR-2024-001", estimatedValue: 8000, dateSubmitted: "2024-12-16", approvalStatus: "Approved" },
-  { id: "SA-2", rfqNumber: "RFQ-2024-002", title: "Printing & Materials", vendor: "PrintWorks Ghana Ltd", projectName: "Youth Employment Skills Development", sourcePR: "PR-2024-001", estimatedValue: 1050, dateSubmitted: "2024-12-13", approvalStatus: "Approved" },
-  { id: "SA-3", rfqNumber: "RFQ-2024-003", title: "Stakeholder Workshop Venue & Catering", vendor: "La Palm Royal Beach Hotel", projectName: "Youth Employment Skills Development", sourcePR: "PR-2024-001", estimatedValue: 3500, dateSubmitted: "2024-12-21", approvalStatus: "Approved" },
-  { id: "SA-4", rfqNumber: "RFQ-2024-004", title: "External Reviewer Honoraria", vendor: "Prof. Ama Benyiwa", projectName: "Youth Employment Skills Development", sourcePR: "PR-2024-003", estimatedValue: 4000, dateSubmitted: "2024-12-26", approvalStatus: "Approved" },
-  { id: "SA-5", rfqNumber: "RFQ-2024-005", title: "Research Assistant Stipends", vendor: "University of Ghana", projectName: "Youth Employment Skills Development", sourcePR: "PR-2024-004", estimatedValue: 6000, dateSubmitted: "2024-12-29", approvalStatus: "Approved" },
-  { id: "SA-6", rfqNumber: "RFQ-2024-006", title: "Consultant Fees - Stakeholder Engagement", vendor: "Ghana Research Associates", projectName: "Youth Employment Skills Development", sourcePR: "PR-2024-010", estimatedValue: 5600, dateSubmitted: "2025-02-06", approvalStatus: "Pending" },
-  { id: "SA-7", rfqNumber: "RFQ-2024-010", title: "Chromebooks for Computer Labs", vendor: "Acer Distributors", projectName: "Digital Literacy Initiative", sourcePR: "PR-2024-014", estimatedValue: 14000, dateSubmitted: "2025-01-26", approvalStatus: "Approved" },
-  { id: "SA-8", rfqNumber: "RFQ-2024-008", title: "Laptops (50x Dell Latitude)", vendor: "Dell Inc. (via Telefonika Ghana)", projectName: "Youth Employment Skills Development", sourcePR: "PR-2024-012", estimatedValue: 47500, dateSubmitted: "2025-02-16", approvalStatus: "Pending" },
-  { id: "SA-9", rfqNumber: "RFQ-2024-011", title: "Medical Supplies Kit", vendor: "MedSupply GH", projectName: "Community Health Project", sourcePR: "PR-2024-015", estimatedValue: 12000, dateSubmitted: "2025-01-31", approvalStatus: "Pending" },
+  { id: "SA-1", rfqNumber: "RFQ-2024-001", title: "Consultant Fees - Survey Design", supplier: "Dr. Kwesi Appiah", projectName: "Youth Employment Skills Development", sourcePR: "PR-2024-001", estimatedValue: 8000, dateSubmitted: "2024-12-16", approvalStatus: "Approved" },
+  { id: "SA-2", rfqNumber: "RFQ-2024-002", title: "Printing & Materials", supplier: "PrintWorks Ghana Ltd", projectName: "Youth Employment Skills Development", sourcePR: "PR-2024-001", estimatedValue: 1050, dateSubmitted: "2024-12-13", approvalStatus: "Approved" },
+  { id: "SA-3", rfqNumber: "RFQ-2024-003", title: "Stakeholder Workshop Venue & Catering", supplier: "La Palm Royal Beach Hotel", projectName: "Youth Employment Skills Development", sourcePR: "PR-2024-001", estimatedValue: 3500, dateSubmitted: "2024-12-21", approvalStatus: "Approved" },
+  { id: "SA-4", rfqNumber: "RFQ-2024-004", title: "External Reviewer Honoraria", supplier: "Prof. Ama Benyiwa", projectName: "Youth Employment Skills Development", sourcePR: "PR-2024-003", estimatedValue: 4000, dateSubmitted: "2024-12-26", approvalStatus: "Approved" },
+  { id: "SA-5", rfqNumber: "RFQ-2024-005", title: "Research Assistant Stipends", supplier: "University of Ghana", projectName: "Youth Employment Skills Development", sourcePR: "PR-2024-004", estimatedValue: 6000, dateSubmitted: "2024-12-29", approvalStatus: "Approved" },
+  { id: "SA-6", rfqNumber: "RFQ-2024-006", title: "Consultant Fees - Stakeholder Engagement", supplier: "Ghana Research Associates", projectName: "Youth Employment Skills Development", sourcePR: "PR-2024-010", estimatedValue: 5600, dateSubmitted: "2025-02-06", approvalStatus: "Pending" },
+  { id: "SA-7", rfqNumber: "RFQ-2024-010", title: "Chromebooks for Computer Labs", supplier: "Acer Distributors", projectName: "Digital Literacy Initiative", sourcePR: "PR-2024-014", estimatedValue: 14000, dateSubmitted: "2025-01-26", approvalStatus: "Approved" },
+  { id: "SA-8", rfqNumber: "RFQ-2024-008", title: "Laptops (50x Dell Latitude)", supplier: "Dell Inc. (via Telefonika Ghana)", projectName: "Youth Employment Skills Development", sourcePR: "PR-2024-012", estimatedValue: 47500, dateSubmitted: "2025-02-16", approvalStatus: "Pending" },
+  { id: "SA-9", rfqNumber: "RFQ-2024-011", title: "Medical Supplies Kit", supplier: "MedSupply GH", projectName: "Community Health Project", sourcePR: "PR-2024-015", estimatedValue: 12000, dateSubmitted: "2025-01-31", approvalStatus: "Pending" },
 ];
 
 // POs auto-generated from approved sourcing (these are the "seed" POs that already existed)
 let generatedPOs: GeneratedPO[] = [
-  { id: "GPO-1", poNumber: "PO-2024-156", vendor: "Dr. Kwesi Appiah", itemDescription: "Consultant Fees - Survey Design", orderDate: "2024-12-20", deliveryDate: "2025-02-28", amount: 8000, sourcePR: "PR-2024-001", projectName: "Youth Employment Skills Development", sourceRFQ: "RFQ-2024-001" },
-  { id: "GPO-2", poNumber: "PO-2024-157", vendor: "PrintWorks Ghana Ltd", itemDescription: "Printing & Materials (200 units)", orderDate: "2024-12-18", deliveryDate: "2025-01-30", amount: 1050, sourcePR: "PR-2024-001", projectName: "Youth Employment Skills Development", sourceRFQ: "RFQ-2024-002" },
-  { id: "GPO-3", poNumber: "PO-2024-158", vendor: "La Palm Royal Beach Hotel", itemDescription: "Stakeholder Workshop Venue & Catering", orderDate: "2024-12-22", deliveryDate: "2025-02-15", amount: 3500, sourcePR: "PR-2024-001", projectName: "Youth Employment Skills Development", sourceRFQ: "RFQ-2024-003" },
-  { id: "GPO-4", poNumber: "PO-2024-159", vendor: "Prof. Ama Benyiwa", itemDescription: "External Reviewer Honoraria", orderDate: "2024-12-28", deliveryDate: "2025-03-15", amount: 4000, sourcePR: "PR-2024-003", projectName: "Youth Employment Skills Development", sourceRFQ: "RFQ-2024-004" },
-  { id: "GPO-5", poNumber: "PO-2024-160", vendor: "University of Ghana", itemDescription: "Research Assistant Stipends (3 assistants)", orderDate: "2025-01-02", deliveryDate: "2025-04-01", amount: 6000, sourcePR: "PR-2024-004", projectName: "Youth Employment Skills Development", sourceRFQ: "RFQ-2024-005" },
-  { id: "GPO-6", poNumber: "PO-2024-163", vendor: "Acer Distributors", itemDescription: "Chromebooks for Computer Labs (40 units)", orderDate: "2025-01-28", deliveryDate: "2025-02-20", amount: 14000, sourcePR: "PR-2024-014", projectName: "Digital Literacy Initiative", sourceRFQ: "RFQ-2024-010" },
+  { id: "GPO-1", poNumber: "PO-2024-156", supplier: "Dr. Kwesi Appiah", itemDescription: "Consultant Fees - Survey Design", orderDate: "2024-12-20", deliveryDate: "2025-02-28", amount: 8000, sourcePR: "PR-2024-001", projectName: "Youth Employment Skills Development", sourceRFQ: "RFQ-2024-001" },
+  { id: "GPO-2", poNumber: "PO-2024-157", supplier: "PrintWorks Ghana Ltd", itemDescription: "Printing & Materials (200 units)", orderDate: "2024-12-18", deliveryDate: "2025-01-30", amount: 1050, sourcePR: "PR-2024-001", projectName: "Youth Employment Skills Development", sourceRFQ: "RFQ-2024-002" },
+  { id: "GPO-3", poNumber: "PO-2024-158", supplier: "La Palm Royal Beach Hotel", itemDescription: "Stakeholder Workshop Venue & Catering", orderDate: "2024-12-22", deliveryDate: "2025-02-15", amount: 3500, sourcePR: "PR-2024-001", projectName: "Youth Employment Skills Development", sourceRFQ: "RFQ-2024-003" },
+  { id: "GPO-4", poNumber: "PO-2024-159", supplier: "Prof. Ama Benyiwa", itemDescription: "External Reviewer Honoraria", orderDate: "2024-12-28", deliveryDate: "2025-03-15", amount: 4000, sourcePR: "PR-2024-003", projectName: "Youth Employment Skills Development", sourceRFQ: "RFQ-2024-004" },
+  { id: "GPO-5", poNumber: "PO-2024-160", supplier: "University of Ghana", itemDescription: "Research Assistant Stipends (3 assistants)", orderDate: "2025-01-02", deliveryDate: "2025-04-01", amount: 6000, sourcePR: "PR-2024-004", projectName: "Youth Employment Skills Development", sourceRFQ: "RFQ-2024-005" },
+  { id: "GPO-6", poNumber: "PO-2024-163", supplier: "Acer Distributors", itemDescription: "Chromebooks for Computer Labs (40 units)", orderDate: "2025-01-28", deliveryDate: "2025-02-20", amount: 14000, sourcePR: "PR-2024-014", projectName: "Digital Literacy Initiative", sourceRFQ: "RFQ-2024-010" },
 ];
 
 let nextPONumber = 165;
@@ -227,7 +227,7 @@ export function approveSourcing(id: string) {
   const newPO: GeneratedPO = {
     id: `GPO-${Date.now()}`,
     poNumber: `PO-2024-${nextPONumber}`,
-    vendor: item.vendor,
+    supplier: item.supplier,
     itemDescription: item.title,
     orderDate: today,
     deliveryDate: deliveryDate.toISOString().split("T")[0],
@@ -732,9 +732,9 @@ export function rejectPRSeniorMgmt(prId: string, comments: string = "", rejected
 export interface POGenerationInput {
   sourcePR: string;
   sourceSourcingCase: string;
-  vendor: string;
-  vendorEmail: string;
-  vendorAddress: string;
+  supplier: string;
+  supplierEmail: string;
+  supplierAddress: string;
   itemDescription: string;
   lineItems: POLineItem[];
   totalAmount: number;
@@ -759,9 +759,9 @@ export function generatePOFromSourcing(input: POGenerationInput): GeneratedPO {
   const newPO: GeneratedPO = {
     id: `GPO-${Date.now()}`,
     poNumber,
-    vendor: input.vendor,
-    vendorEmail: input.vendorEmail,
-    vendorAddress: input.vendorAddress,
+    supplier: input.supplier,
+    supplierEmail: input.supplierEmail,
+    supplierAddress: input.supplierAddress,
     itemDescription: input.itemDescription,
     orderDate: today,
     deliveryDate: input.deliveryDate,
@@ -810,7 +810,7 @@ export function dispatchPO(poId: string): void {
   const now = new Date().toISOString();
   generatedPOs = generatedPOs.map(po => {
     if (po.id !== poId) return po;
-    return { ...po, status: "Dispatched" as POStatus, dispatchedAt: now, vendorNotifiedAt: now };
+    return { ...po, status: "Dispatched" as POStatus, dispatchedAt: now, supplierNotifiedAt: now };
   });
   notifyListeners();
 }

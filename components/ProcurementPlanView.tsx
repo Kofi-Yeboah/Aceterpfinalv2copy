@@ -47,7 +47,7 @@ interface ProcurementLineItem {
   actual: number;
   procurementMethod: string;
   category: string;
-  vendor: string | null;
+  supplier: string | null;
   status: string;
   expectedDelivery: string;
 }
@@ -73,26 +73,26 @@ const PROCUREMENT_DATA: ProcurementPhase[] = [
         taskId: "T001",
         taskName: "Draft Request for Proposals (RFP)",
         lineItems: [
-          { budgetLineId: "L001", name: "Consultant Fees - Survey Design", planned: 8000, actual: 8000, procurementMethod: "Single Source", category: "Consulting", vendor: "Dr. Kwesi Appiah", status: "Completed", expectedDelivery: "2025-02-28" },
-          { budgetLineId: "L002", name: "Printing & Materials", planned: 1200, actual: 1050, procurementMethod: "Direct Purchase", category: "Goods/Equipment", vendor: "PrintWorks Ghana Ltd", status: "Completed", expectedDelivery: "2025-01-30" },
-          { budgetLineId: "L003", name: "Stakeholder Workshop", planned: 3500, actual: 3500, procurementMethod: "Request for Quotation", category: "Services", vendor: "La Palm Royal Beach Hotel", status: "Completed", expectedDelivery: "2025-02-15" },
+          { budgetLineId: "L001", name: "Consultant Fees - Survey Design", planned: 8000, actual: 8000, procurementMethod: "Single Source", category: "Consulting", supplier: "Dr. Kwesi Appiah", status: "Completed", expectedDelivery: "2025-02-28" },
+          { budgetLineId: "L002", name: "Printing & Materials", planned: 1200, actual: 1050, procurementMethod: "Direct Purchase", category: "Goods/Equipment", supplier: "PrintWorks Ghana Ltd", status: "Completed", expectedDelivery: "2025-01-30" },
+          { budgetLineId: "L003", name: "Stakeholder Workshop", planned: 3500, actual: 3500, procurementMethod: "Request for Quotation", category: "Services", supplier: "La Palm Royal Beach Hotel", status: "Completed", expectedDelivery: "2025-02-15" },
         ],
       },
       {
         taskId: "T002",
-        taskName: "Evaluate Vendor Submissions",
+        taskName: "Evaluate Supplier Submissions",
         lineItems: [
-          { budgetLineId: "L004", name: "External Reviewer Honoraria", planned: 4000, actual: 4000, procurementMethod: "Single Source", category: "Consulting", vendor: "Prof. Ama Benyiwa", status: "Completed", expectedDelivery: "2025-03-15" },
-          { budgetLineId: "L005", name: "Review Meeting Logistics", planned: 1500, actual: 1200, procurementMethod: "Direct Purchase", category: "Services", vendor: "Accra Events Hub", status: "Completed", expectedDelivery: "2025-03-10" },
+          { budgetLineId: "L004", name: "External Reviewer Honoraria", planned: 4000, actual: 4000, procurementMethod: "Single Source", category: "Consulting", supplier: "Prof. Ama Benyiwa", status: "Completed", expectedDelivery: "2025-03-15" },
+          { budgetLineId: "L005", name: "Review Meeting Logistics", planned: 1500, actual: 1200, procurementMethod: "Direct Purchase", category: "Services", supplier: "Accra Events Hub", status: "Completed", expectedDelivery: "2025-03-10" },
         ],
       },
       {
         taskId: "T003",
         taskName: "Finalize Service Agreements",
         lineItems: [
-          { budgetLineId: "L006", name: "Research Assistant Stipends", planned: 6000, actual: 6000, procurementMethod: "Direct Purchase", category: "Services", vendor: "University of Ghana", status: "Completed", expectedDelivery: "2025-04-01" },
-          { budgetLineId: "L007", name: "Database Subscriptions", planned: 2000, actual: 1800, procurementMethod: "Framework Agreement", category: "Services", vendor: "JSTOR / Elsevier", status: "Completed", expectedDelivery: "2025-01-15" },
-          { budgetLineId: "L008", name: "Reference Materials", planned: 800, actual: 650, procurementMethod: "Direct Purchase", category: "Goods/Equipment", vendor: "Bookshop Ghana Ltd", status: "Completed", expectedDelivery: "2025-02-10" },
+          { budgetLineId: "L006", name: "Research Assistant Stipends", planned: 6000, actual: 6000, procurementMethod: "Direct Purchase", category: "Services", supplier: "University of Ghana", status: "Completed", expectedDelivery: "2025-04-01" },
+          { budgetLineId: "L007", name: "Database Subscriptions", planned: 2000, actual: 1800, procurementMethod: "Framework Agreement", category: "Services", supplier: "JSTOR / Elsevier", status: "Completed", expectedDelivery: "2025-01-15" },
+          { budgetLineId: "L008", name: "Reference Materials", planned: 800, actual: 650, procurementMethod: "Direct Purchase", category: "Goods/Equipment", supplier: "Bookshop Ghana Ltd", status: "Completed", expectedDelivery: "2025-02-10" },
         ],
       },
     ],
@@ -105,27 +105,27 @@ const PROCUREMENT_DATA: ProcurementPhase[] = [
         taskId: "T004",
         taskName: "Coordinate Field Data Collection",
         lineItems: [
-          { budgetLineId: "L009", name: "Venue & Catering", planned: 5000, actual: 4800, procurementMethod: "Request for Quotation", category: "Services", vendor: "Kempinski Hotel Gold Coast", status: "Completed", expectedDelivery: "2025-05-01" },
-          { budgetLineId: "L010", name: "Audio-Visual Equipment Rental", planned: 2000, actual: 1950, procurementMethod: "Direct Purchase", category: "Services", vendor: "AV Solutions Accra", status: "Completed", expectedDelivery: "2025-05-01" },
-          { budgetLineId: "L011", name: "Facilitator Fees", planned: 3000, actual: 3000, procurementMethod: "Single Source", category: "Consulting", vendor: "Nana Yaw Mensah", status: "Completed", expectedDelivery: "2025-05-01" },
+          { budgetLineId: "L009", name: "Venue & Catering", planned: 5000, actual: 4800, procurementMethod: "Request for Quotation", category: "Services", supplier: "Kempinski Hotel Gold Coast", status: "Completed", expectedDelivery: "2025-05-01" },
+          { budgetLineId: "L010", name: "Audio-Visual Equipment Rental", planned: 2000, actual: 1950, procurementMethod: "Direct Purchase", category: "Services", supplier: "AV Solutions Accra", status: "Completed", expectedDelivery: "2025-05-01" },
+          { budgetLineId: "L011", name: "Facilitator Fees", planned: 3000, actual: 3000, procurementMethod: "Single Source", category: "Consulting", supplier: "Nana Yaw Mensah", status: "Completed", expectedDelivery: "2025-05-01" },
         ],
       },
       {
         taskId: "T005",
         taskName: "Conduct Stakeholder Engagement Sessions",
         lineItems: [
-          { budgetLineId: "L012", name: "Consultant Fees - Engagement", planned: 7000, actual: 5600, procurementMethod: "Competitive Bidding", category: "Consulting", vendor: "Ghana Research Associates", status: "PO Issued", expectedDelivery: "2025-07-15" },
-          { budgetLineId: "L013", name: "Community Outreach Materials", planned: 3000, actual: 2100, procurementMethod: "Request for Quotation", category: "Goods/Equipment", vendor: "CreativeEdge Designs", status: "Delivered", expectedDelivery: "2025-06-30" },
-          { budgetLineId: "L014", name: "Travel - Stakeholder Visits", planned: 4500, actual: 3200, procurementMethod: "Direct Purchase", category: "Services", vendor: null, status: "Requisition Raised", expectedDelivery: "2025-08-01" },
+          { budgetLineId: "L012", name: "Consultant Fees - Engagement", planned: 7000, actual: 5600, procurementMethod: "Competitive Bidding", category: "Consulting", supplier: "Ghana Research Associates", status: "PO Issued", expectedDelivery: "2025-07-15" },
+          { budgetLineId: "L013", name: "Community Outreach Materials", planned: 3000, actual: 2100, procurementMethod: "Request for Quotation", category: "Goods/Equipment", supplier: "CreativeEdge Designs", status: "Delivered", expectedDelivery: "2025-06-30" },
+          { budgetLineId: "L014", name: "Travel - Stakeholder Visits", planned: 4500, actual: 3200, procurementMethod: "Direct Purchase", category: "Services", supplier: null, status: "Requisition Raised", expectedDelivery: "2025-08-01" },
         ],
       },
       {
         taskId: "T009",
         taskName: "Procure IT Equipment",
         lineItems: [
-          { budgetLineId: "L015", name: "Laptops (50x Dell Latitude)", planned: 47500, actual: 47500, procurementMethod: "Competitive Bidding", category: "Goods/Equipment", vendor: "Dell Inc. (via Telefonika Ghana)", status: "Delivered", expectedDelivery: "2025-06-15" },
-          { budgetLineId: "L016", name: "Networking Equipment", planned: 3500, actual: 0, procurementMethod: "Request for Quotation", category: "Goods/Equipment", vendor: null, status: "RFQ Issued", expectedDelivery: "2025-09-01" },
-          { budgetLineId: "L017", name: "Software Licences", planned: 8000, actual: 0, procurementMethod: "Framework Agreement", category: "Services", vendor: null, status: "Evaluation", expectedDelivery: "2025-09-15" },
+          { budgetLineId: "L015", name: "Laptops (50x Dell Latitude)", planned: 47500, actual: 47500, procurementMethod: "Competitive Bidding", category: "Goods/Equipment", supplier: "Dell Inc. (via Telefonika Ghana)", status: "Delivered", expectedDelivery: "2025-06-15" },
+          { budgetLineId: "L016", name: "Networking Equipment", planned: 3500, actual: 0, procurementMethod: "Request for Quotation", category: "Goods/Equipment", supplier: null, status: "RFQ Issued", expectedDelivery: "2025-09-01" },
+          { budgetLineId: "L017", name: "Software Licences", planned: 8000, actual: 0, procurementMethod: "Framework Agreement", category: "Services", supplier: null, status: "Evaluation", expectedDelivery: "2025-09-15" },
         ],
       },
     ],
@@ -138,8 +138,8 @@ const PROCUREMENT_DATA: ProcurementPhase[] = [
         taskId: "T006",
         taskName: "Conduct Internal Peer Review of Draft",
         lineItems: [
-          { budgetLineId: "L018", name: "QA Reviewer Wages", planned: 12000, actual: 0, procurementMethod: "Request for Quotation", category: "Services", vendor: null, status: "Not Started", expectedDelivery: "2026-01-15" },
-          { budgetLineId: "L019", name: "Testing Tools & Subscriptions", planned: 5000, actual: 0, procurementMethod: "Direct Purchase", category: "Services", vendor: null, status: "Not Started", expectedDelivery: "2026-01-15" },
+          { budgetLineId: "L018", name: "QA Reviewer Wages", planned: 12000, actual: 0, procurementMethod: "Request for Quotation", category: "Services", supplier: null, status: "Not Started", expectedDelivery: "2026-01-15" },
+          { budgetLineId: "L019", name: "Testing Tools & Subscriptions", planned: 5000, actual: 0, procurementMethod: "Direct Purchase", category: "Services", supplier: null, status: "Not Started", expectedDelivery: "2026-01-15" },
         ],
       },
     ],
@@ -152,8 +152,8 @@ const PROCUREMENT_DATA: ProcurementPhase[] = [
         taskId: "T007",
         taskName: "Design and Layout Report",
         lineItems: [
-          { budgetLineId: "L020", name: "Graphic Design Services", planned: 6000, actual: 0, procurementMethod: "Single Source", category: "Consulting", vendor: null, status: "Not Started", expectedDelivery: "2026-03-01" },
-          { budgetLineId: "L021", name: "Editorial Review Services", planned: 4000, actual: 0, procurementMethod: "Request for Quotation", category: "Services", vendor: null, status: "Not Started", expectedDelivery: "2026-04-01" },
+          { budgetLineId: "L020", name: "Graphic Design Services", planned: 6000, actual: 0, procurementMethod: "Single Source", category: "Consulting", supplier: null, status: "Not Started", expectedDelivery: "2026-03-01" },
+          { budgetLineId: "L021", name: "Editorial Review Services", planned: 4000, actual: 0, procurementMethod: "Request for Quotation", category: "Services", supplier: null, status: "Not Started", expectedDelivery: "2026-04-01" },
         ],
       },
     ],
@@ -166,7 +166,7 @@ const PROCUREMENT_DATA: ProcurementPhase[] = [
         taskId: "T010",
         taskName: "Plan Distribution Channels",
         lineItems: [
-          { budgetLineId: "L022", name: "Distribution Platform Fees", planned: 3500, actual: 0, procurementMethod: "Direct Purchase", category: "Services", vendor: null, status: "Not Started", expectedDelivery: "2026-05-01" },
+          { budgetLineId: "L022", name: "Distribution Platform Fees", planned: 3500, actual: 0, procurementMethod: "Direct Purchase", category: "Services", supplier: null, status: "Not Started", expectedDelivery: "2026-05-01" },
         ],
       },
     ],
@@ -179,9 +179,9 @@ const PROCUREMENT_DATA: ProcurementPhase[] = [
         taskId: "T008",
         taskName: "Submit Final Technical Report",
         lineItems: [
-          { budgetLineId: "L023", name: "Report Design & Layout", planned: 3000, actual: 0, procurementMethod: "Request for Quotation", category: "Services", vendor: null, status: "Not Started", expectedDelivery: "2026-07-01" },
-          { budgetLineId: "L024", name: "Printing & Distribution", planned: 2000, actual: 0, procurementMethod: "Direct Purchase", category: "Goods/Equipment", vendor: null, status: "Not Started", expectedDelivery: "2026-08-01" },
-          { budgetLineId: "L025", name: "Final Audit Fees", planned: 4500, actual: 0, procurementMethod: "Single Source", category: "Consulting", vendor: null, status: "Not Started", expectedDelivery: "2026-08-15" },
+          { budgetLineId: "L023", name: "Report Design & Layout", planned: 3000, actual: 0, procurementMethod: "Request for Quotation", category: "Services", supplier: null, status: "Not Started", expectedDelivery: "2026-07-01" },
+          { budgetLineId: "L024", name: "Printing & Distribution", planned: 2000, actual: 0, procurementMethod: "Direct Purchase", category: "Goods/Equipment", supplier: null, status: "Not Started", expectedDelivery: "2026-08-01" },
+          { budgetLineId: "L025", name: "Final Audit Fees", planned: 4500, actual: 0, procurementMethod: "Single Source", category: "Consulting", supplier: null, status: "Not Started", expectedDelivery: "2026-08-15" },
         ],
       },
     ],
@@ -194,7 +194,7 @@ const PROCUREMENT_DATA: ProcurementPhase[] = [
         taskId: "T015",
         taskName: "Sign-off and Handover",
         lineItems: [
-          { budgetLineId: "L026", name: "Final Review & Sign-off Meeting", planned: 1500, actual: 0, procurementMethod: "Direct Purchase", category: "Services", vendor: null, status: "Not Started", expectedDelivery: "2026-09-01" },
+          { budgetLineId: "L026", name: "Final Review & Sign-off Meeting", planned: 1500, actual: 0, procurementMethod: "Direct Purchase", category: "Services", supplier: null, status: "Not Started", expectedDelivery: "2026-09-01" },
         ],
       },
     ],
@@ -2134,7 +2134,7 @@ export function ProcurementPlanView({ onBack }: ProcurementPlanViewProps) {
                     <th className="text-right px-4 py-3 text-white text-[12px] font-semibold">Planned Amount</th>
                     <th className="text-right px-4 py-3 text-white text-[12px] font-semibold">Plan Items</th>
                     <th className="text-left px-4 py-3 text-white text-[12px] font-semibold">Method</th>
-                    <th className="text-left px-4 py-3 text-white text-[12px] font-semibold">Vendor / Responsible</th>
+                    <th className="text-left px-4 py-3 text-white text-[12px] font-semibold">Supplier / Responsible</th>
                     <th className="text-left px-4 py-3 text-white text-[12px] font-semibold">Expected Date</th>
                   </tr>
                 </thead>
@@ -2445,7 +2445,7 @@ function TaskRows({
                 )}
               </td>
               <td className="px-4 py-2.5">{getMethodBadge(li.procurementMethod)}</td>
-              <td className="px-4 py-2.5 text-[12px] text-slate-600">{li.vendor || "—"}</td>
+              <td className="px-4 py-2.5 text-[12px] text-slate-600">{li.supplier || "—"}</td>
               <td className="px-4 py-2.5 text-[12px] text-slate-600 whitespace-nowrap">{li.expectedDelivery}</td>
             </tr>
             {linked.map((pi) => (

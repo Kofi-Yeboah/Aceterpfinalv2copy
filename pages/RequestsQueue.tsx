@@ -69,7 +69,7 @@ const mockRequests: ContractRequest[] = [
   },
   {
     id: "REQ-2026-005",
-    requestType: "Vendor Agreement",
+    requestType: "Supplier Agreement",
     title: "Cloud Hosting Services",
     requestedBy: "Michael Chen",
     department: "IT",
@@ -109,7 +109,7 @@ const mockRequests: ContractRequest[] = [
   {
     id: "REQ-2026-008",
     requestType: "NDA",
-    title: "Vendor Evaluation - Multiple Suppliers",
+    title: "Supplier Evaluation - Multiple Suppliers",
     requestedBy: "Lisa Anderson",
     department: "Procurement",
     dateRequested: "Jan 18, 2026",
@@ -117,7 +117,7 @@ const mockRequests: ContractRequest[] = [
     status: "Rejected",
     assignedTo: "David Wilson",
     dueDate: "Jan 25, 2026",
-    description: "NDA for vendor evaluation process - Rejected due to incomplete information"
+    description: "NDA for supplier evaluation process - Rejected due to incomplete information"
   },
   {
     id: "REQ-2026-009",
@@ -264,7 +264,7 @@ export function RequestsQueue() {
             <option>Employment Contract</option>
             <option>NDA</option>
             <option>Service Agreement</option>
-            <option>Vendor Agreement</option>
+            <option>Supplier Agreement</option>
             <option>Consultant Agreement</option>
             <option>Lease Agreement</option>
           </select>
@@ -491,7 +491,7 @@ export function RequestsQueue() {
                   <option value="Employment Contract">Employment Contract</option>
                   <option value="NDA">NDA</option>
                   <option value="Service Agreement">Service Agreement</option>
-                  <option value="Vendor Agreement">Vendor Agreement</option>
+                  <option value="Supplier Agreement">Supplier Agreement</option>
                   <option value="Consultant Agreement">Consultant Agreement</option>
                   <option value="Lease Agreement">Lease Agreement</option>
                 </select>

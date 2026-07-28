@@ -36,7 +36,7 @@ const BUDGET_DATA: BudgetPhase[] = [
       },
       {
         id: "T002",
-        name: "Evaluate Vendor Submissions",
+        name: "Evaluate Supplier Submissions",
         lineItems: [
           { id: "L004", name: "External Reviewer Honoraria", planned: 4000, actual: 4000 },
           { id: "L005", name: "Review Meeting Logistics", planned: 1500, actual: 1200 },

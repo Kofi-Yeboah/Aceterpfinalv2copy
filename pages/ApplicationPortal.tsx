@@ -155,10 +155,10 @@ const jobTitleLookup: Record<string, JobTitleMeta> = {
     grade: "Grade 6",
     salaryRange: "$35,000 - $45,000",
     description:
-      "The Procurement Officer is responsible for managing procurement processes including sourcing, vendor management, and purchase order processing within the Procurement department.",
+      "The Procurement Officer is responsible for managing procurement processes including sourcing, supplier management, and purchase order processing within the Procurement department.",
     responsibilities: [
       "Manage end-to-end procurement processes",
-      "Source and evaluate suppliers and vendors",
+      "Source and evaluate suppliers and suppliers",
       "Prepare and process purchase orders and contracts",
       "Ensure compliance with procurement policies and donor requirements",
       "Maintain procurement records and documentation",
@@ -167,7 +167,7 @@ const jobTitleLookup: Record<string, JobTitleMeta> = {
       "Bachelor's degree in Procurement, Supply Chain, or related field",
       "2+ years of experience in procurement",
       "Knowledge of procurement regulations and best practices",
-      "Strong negotiation and vendor management skills",
+      "Strong negotiation and supplier management skills",
       "Proficiency in procurement software and Microsoft Office",
     ],
   },

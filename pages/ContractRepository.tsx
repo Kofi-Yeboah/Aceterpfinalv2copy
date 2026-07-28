@@ -186,7 +186,7 @@ const staticContracts: UnifiedContract[] = [
     ], amendments: [],
   },
   {
-    id: "S-010", contractNumber: "CNT-2024-010", title: "Supplier Agreement - Office Supplies", type: "Vendor", party: "OfficeMax Solutions",
+    id: "S-010", contractNumber: "CNT-2024-010", title: "Supplier Agreement - Office Supplies", type: "Supplier", party: "OfficeMax Solutions",
     startDate: "2024-01-01", endDate: "2026-12-31", value: 25000, status: "Active", department: "Procurement", owner: "Lisa Anderson",
     description: "Framework agreement for office consumables — stationery, toner, paper.",
     paymentTerms: "Order-based invoicing, Net-30.",
@@ -364,7 +364,7 @@ export function ContractRepository() {
   const getTypeBadge = (type: string) => {
     switch (type) {
       case "Employment": return "bg-blue-50 text-blue-700";
-      case "Vendor": return "bg-purple-50 text-purple-700";
+      case "Supplier": return "bg-purple-50 text-purple-700";
       case "Service": return "bg-cyan-50 text-cyan-700";
       case "Consultant": return "bg-amber-50 text-amber-700";
       case "NDA": return "bg-slate-100 text-slate-700";
@@ -597,7 +597,7 @@ export function ContractRepository() {
                   )}
                 </div>
 
-                {/* Party / Vendor + Sourcing Trail */}
+                {/* Party / Supplier + Sourcing Trail */}
                 <div className="space-y-5">
                   <div className="bg-white rounded-xl border border-slate-200 p-5">
                     <h3 className="text-[13px] font-semibold text-slate-900 mb-4 flex items-center gap-2">
@@ -1074,7 +1074,7 @@ export function ContractRepository() {
         <select value={typeFilter} onChange={e => { setTypeFilter(e.target.value); setCurrentPage(1); }}
           className="px-3 py-2 border border-slate-200 rounded-lg text-[12px] text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-purple-500">
           <option>All Types</option>
-          <option>Employment</option><option>Vendor</option><option>Service</option><option>NDA</option><option>Lease</option><option>Consultant</option><option>Works</option>
+          <option>Employment</option><option>Supplier</option><option>Service</option><option>NDA</option><option>Lease</option><option>Consultant</option><option>Works</option>
         </select>
         <select value={deptFilter} onChange={e => { setDeptFilter(e.target.value); setCurrentPage(1); }}
           className="px-3 py-2 border border-slate-200 rounded-lg text-[12px] text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-purple-500">
@@ -1091,7 +1091,7 @@ export function ContractRepository() {
               <th className="px-4 py-3 text-left text-[11px] text-white font-semibold">Contract ID</th>
               <th className="px-4 py-3 text-left text-[11px] text-white font-semibold">Title</th>
               <th className="px-4 py-3 text-left text-[11px] text-white font-semibold">Type</th>
-              <th className="px-4 py-3 text-left text-[11px] text-white font-semibold">Party/Vendor</th>
+              <th className="px-4 py-3 text-left text-[11px] text-white font-semibold">Party/Supplier</th>
               <th className="px-4 py-3 text-left text-[11px] text-white font-semibold">Start</th>
               <th className="px-4 py-3 text-left text-[11px] text-white font-semibold">End</th>
               <th className="px-4 py-3 text-right text-[11px] text-white font-semibold">Value</th>

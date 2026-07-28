@@ -48,7 +48,7 @@ const mockTimesheetApprovals: TimesheetApproval[] = [
     id: "3", requestId: "TS-2026-003", employee: "Abena Osei", department: "Operations", period: "Feb 01 – Feb 15, 2026",
     entries: [
       { task: "Supply Chain Coordination", project: "Logistics Improvement", phase: "Implementation", week: "Week 1", hours: 40, type: "paid" },
-      { task: "Vendor Negotiations", project: "Logistics Improvement", phase: "Procurement", week: "Week 2", hours: 32, type: "paid" },
+      { task: "Supplier Negotiations", project: "Logistics Improvement", phase: "Procurement", week: "Week 2", hours: 32, type: "paid" },
       { task: "Process Documentation", project: "Logistics Improvement", phase: "Reporting", week: "Week 2", hours: 8, type: "paid" },
     ],
     totalHours: 80, submittedDate: "Feb 16, 2026", status: "Approved"

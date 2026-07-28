@@ -39,7 +39,7 @@ interface DocumentDetailsInputProps {
 const DEFAULT_PHASES: Phase[] = [
   { number: 1, name: "Procurement & Contracting", tasks: [
     { id: "T1-1", name: "Draft Request for Proposals (RFP)" },
-    { id: "T1-2", name: "Evaluate Vendor Submissions" },
+    { id: "T1-2", name: "Evaluate Supplier Submissions" },
     { id: "T1-3", name: "Finalize Service Agreements" },
   ]},
   { number: 2, name: "Implementation", tasks: [

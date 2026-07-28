@@ -58,7 +58,7 @@ export const RBAC_ROLES: { name: RoleName; description: string }[] = [
   { name: "Finance Director", description: "Full access to all finance modules, approval authority for all transactions" },
   { name: "Finance Manager", description: "Manage day-to-day operations, approve transactions up to defined limits" },
   { name: "Accountant", description: "Create and post journal entries, manage accounts, run reports" },
-  { name: "AP Clerk", description: "Process vendor invoices, manage payables, initiate payments" },
+  { name: "AP Clerk", description: "Process supplier invoices, manage payables, initiate payments" },
   { name: "AR Clerk", description: "Process customer invoices, manage receivables, apply receipts" },
   { name: "Budget Analyst", description: "Create and manage budgets, run variance reports" },
   { name: "Financial Analyst", description: "Read-only access to all data, create custom reports" },

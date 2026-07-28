@@ -8,11 +8,11 @@ import {
 } from "lucide-react";
 import { getSignature, subscribe as subscribeSignature, getCurrentUserId, canUseSignature } from "../lib/signatureStore";
 import {
-  getVendors, getEligibleVendors, checkSourcingEligibility, vendorDisplayName, vendorEmail,
-  avgScore, registerVendor, subscribe as subscribeVendors,
-  VENDOR_CATEGORIES, SUB_CATEGORIES,
-  type Vendor, type VendorType, type NewFirmInput, type NewIndividualInput,
-} from "../lib/vendorStore";
+  getSuppliers, getEligibleSuppliers, checkSourcingEligibility, supplierDisplayName, supplierEmail,
+  avgScore, registerSupplier, subscribe as subscribeSuppliers,
+  SUPPLIER_CATEGORIES, SUB_CATEGORIES,
+  type Supplier, type SupplierType, type NewFirmInput, type NewIndividualInput,
+} from "../lib/supplierStore";
 import {
   PROCUREMENT_METHODS, canonicalMethod, validateMethodAgainstThreshold, getThreshold, formatBand,
   isDirect, isRFQ, requiresAdvertisement, type ProcurementMethod,
@@ -69,9 +69,9 @@ export interface SourcingStep {
   documents: UploadedDoc[];
 }
 
-export interface VendorBid {
+export interface SupplierBid {
   id: string;
-  vendorName: string;
+  supplierName: string;
   dateReceived: string;
   bidReference?: string;
   notes?: string;
@@ -80,17 +80,17 @@ export interface VendorBid {
   proposalType?: "Combined" | "Separate";
 }
 
-/** A vendor formally invited to bid, with the eligibility decision recorded. */
-export interface InvitedVendor {
-  vendorId: string;
-  vendorRef: string;
+/** A supplier formally invited to bid, with the eligibility decision recorded. */
+export interface InvitedSupplier {
+  supplierId: string;
+  supplierRef: string;
   name: string;
   email: string;
   category: string;
   performanceScore: number;
   invitedAt: string;
   invitedBy: string;
-  /** Present when the vendor could only be invited with management sign-off. */
+  /** Present when the supplier could only be invited with management sign-off. */
   managementApproval?: { approvedBy: string; justification: string; warnings: string[] };
 }
 
@@ -108,7 +108,7 @@ export interface AdvertisementRecord {
 /** One EoI respondent, scored and either shortlisted or not. */
 export interface ShortlistEntry {
   id: string;
-  vendorId?: string;
+  supplierId?: string;
   name: string;
   category?: string;
   performanceScore?: number;
@@ -148,15 +148,15 @@ export interface SourcingCase {
   currentStepKey: string;
   overallStatus: "In Progress" | "Completed" | "Cancelled";
   steps: SourcingStep[];
-  awardedVendor?: string;
+  awardedSupplier?: string;
   contractNumber?: string;
-  vendorsBidding?: VendorBid[];
+  suppliersBidding?: SupplierBid[];
   fundingSource?: string;
   separateProposals?: boolean;
   bidOpeningMinutes?: string;
   bidOpeningAttendance?: string;
   /** Persisted selections — previously these were thrown away on modal close. */
-  invitedVendors?: InvitedVendor[];
+  invitedSuppliers?: InvitedSupplier[];
   advertisement?: AdvertisementRecord;
   shortlist?: ShortlistEntry[];
   proposalRequirement?: "Technical" | "Financial" | "Both";
@@ -170,8 +170,8 @@ export interface SourcingCase {
 export interface ContractAwardPayload {
   caseId: string;
   contractNumber: string;
-  vendor: string;
-  vendorRef?: string;
+  supplier: string;
+  supplierRef?: string;
   comments: string;
   awardedBy: string;
   managementApproval?: { approvedBy: string; justification: string };
@@ -184,9 +184,9 @@ export interface DocUploadPayload {
   doc: UploadedDoc;
 }
 
-export interface VendorBidUpdatePayload {
+export interface SupplierBidUpdatePayload {
   caseId: string;
-  vendorsBidding: VendorBid[];
+  suppliersBidding: SupplierBid[];
 }
 
 interface SourcingCaseDetailProps {
@@ -196,7 +196,7 @@ interface SourcingCaseDetailProps {
   onStepAdvance: (caseId: string, stepKey: string) => void;
   onContractAward: (payload: ContractAwardPayload) => void;
   onDocUpload: (payload: DocUploadPayload) => void;
-  onVendorBidUpdate: (payload: VendorBidUpdatePayload) => void;
+  onSupplierBidUpdate: (payload: SupplierBidUpdatePayload) => void;
   /** Generic persistence channel for the state the case now carries. */
   onCaseUpdate: (caseId: string, patch: Partial<SourcingCase>) => void;
   onNavigateToContract?: () => void;
@@ -245,9 +245,9 @@ function addDays(days: number): string {
 
 /**
  * Sourcing speaks in procurement categories (Goods/Services/Works/Consultancy);
- * the vendor register uses the supplier taxonomy. This is the join between them.
+ * the supplier register uses the supplier taxonomy. This is the join between them.
  */
-export function vendorCategoryFor(category: CategoryType): string {
+export function supplierCategoryFor(category: CategoryType): string {
   switch (category) {
     case "Consultancy": return "Consulting";
     case "Services": return "Non-Consulting Services";
@@ -309,12 +309,12 @@ function getDocLabelsForStep(key: string, category: CategoryType): string[] {
 function isStepSatisfied(step: SourcingStep, sc: SourcingCase, openedCount: number): boolean {
   if (step.documents.length > 0) return true;
   switch (step.key) {
-    case "invitation": return (sc.invitedVendors?.length ?? 0) > 0;
+    case "invitation": return (sc.invitedSuppliers?.length ?? 0) > 0;
     case "advertisement": return !!sc.advertisement;
     case "eoi_shortlisting": return (sc.shortlist ?? []).some(s => s.shortlisted);
     case "interview": return (sc.shortlist ?? []).some(s => s.interviewScore !== undefined);
     case "submission_portal": return openedCount > 0;
-    case "bid_opening": return (sc.vendorsBidding?.length ?? 0) > 0 || openedCount > 0;
+    case "bid_opening": return (sc.suppliersBidding?.length ?? 0) > 0 || openedCount > 0;
     default: return false;
   }
 }
@@ -322,7 +322,7 @@ function isStepSatisfied(step: SourcingStep, sc: SourcingCase, openedCount: numb
 /** One row in the merged bid list — electronic submissions and manual entries together. */
 interface MergedBid {
   key: string;
-  vendorName: string;
+  supplierName: string;
   dateReceived: string;
   reference: string;
   notes: string;
@@ -334,7 +334,7 @@ interface MergedBid {
 
 const SUBMISSION_REPORT_COLUMNS: ExportColumn<Record<string, unknown>>[] = [
   { key: "submissionId", header: "Submission ID" },
-  { key: "vendor", header: "Vendor" },
+  { key: "supplier", header: "Supplier" },
   { key: "envelope", header: "Envelope" },
   { key: "submittedAt", header: "Received (timestamp)" },
   { key: "onTime", header: "On Time", format: v => (v ? "Yes" : "No — late") },
@@ -350,7 +350,7 @@ const SUBMISSION_REPORT_COLUMNS: ExportColumn<Record<string, unknown>>[] = [
 
 export function SourcingCaseDetail({
   sourcingCase, onBack, onMethodChange, onStepAdvance, onContractAward, onDocUpload,
-  onVendorBidUpdate, onCaseUpdate, onNavigateToContract,
+  onSupplierBidUpdate, onCaseUpdate, onNavigateToContract,
   onGeneratePO, poGenerated, poNumber: generatedPONumber,
 }: SourcingCaseDetailProps) {
   const sc = sourcingCase;
@@ -366,11 +366,11 @@ export function SourcingCaseDetail({
   const manageDenial = denialReason("sourcing.manage");
   const awardDenial = denialReason("sourcing.award");
 
-  // ── Store subscriptions (vendors + tender portal) ──
+  // ── Store subscriptions (suppliers + tender portal) ──
   const [storeTick, setStoreTick] = useState(0);
   useEffect(() => {
     const bump = () => setStoreTick(t => t + 1);
-    const unsubV = subscribeVendors(bump);
+    const unsubV = subscribeSuppliers(bump);
     const unsubT = subscribeTenders(bump);
     return () => { unsubV(); unsubT(); };
   }, []);
@@ -388,9 +388,9 @@ export function SourcingCaseDetail({
   // Version history modal
   const [showVersionHistory, setShowVersionHistory] = useState<UploadedDoc | null>(null);
 
-  // Vendor bid recording modal
+  // Supplier bid recording modal
   const [showBidModal, setShowBidModal] = useState(false);
-  const [bidVendorName, setBidVendorName] = useState("");
+  const [bidSupplierName, setBidSupplierName] = useState("");
   const [bidReference, setBidReference] = useState("");
   const [bidNotes, setBidNotes] = useState("");
   const [bidDate, setBidDate] = useState(todayStr());
@@ -412,7 +412,7 @@ export function SourcingCaseDetail({
 
   // Invitation
   const [showInviteModal, setShowInviteModal] = useState(false);
-  const [selectedVendorIds, setSelectedVendorIds] = useState<string[]>([]);
+  const [selectedSupplierIds, setSelectedSupplierIds] = useState<string[]>([]);
   const [proposalType, setProposalType] = useState<"Technical" | "Financial" | "Both">(sc.proposalRequirement ?? "Both");
   const [showIneligible, setShowIneligible] = useState(false);
   const [scopeAllCategories, setScopeAllCategories] = useState(false);
@@ -421,13 +421,13 @@ export function SourcingCaseDetail({
   const [inviteClosingDate, setInviteClosingDate] = useState(addDays(14));
   const [inviteError, setInviteError] = useState("");
 
-  // Register vendor
+  // Register supplier
   const [showRegisterModal, setShowRegisterModal] = useState(false);
-  const [regType, setRegType] = useState<VendorType>("Firm");
+  const [regType, setRegType] = useState<SupplierType>("Firm");
   const [regName, setRegName] = useState("");
   const [regEmail, setRegEmail] = useState("");
   const [regPhone, setRegPhone] = useState("");
-  const [regCategory, setRegCategory] = useState<string>(vendorCategoryFor(sc.category));
+  const [regCategory, setRegCategory] = useState<string>(supplierCategoryFor(sc.category));
   const [regSubCategory, setRegSubCategory] = useState<string>("");
   const [regAddress, setRegAddress] = useState("");
   const [regRegNumber, setRegRegNumber] = useState("");
@@ -437,7 +437,7 @@ export function SourcingCaseDetail({
   const [regIdNumber, setRegIdNumber] = useState("");
   const [regExpertAreas, setRegExpertAreas] = useState("");
   const [regError, setRegError] = useState("");
-  const [regResult, setRegResult] = useState<{ vendorId: string; name: string; warnings: string[] } | null>(null);
+  const [regResult, setRegResult] = useState<{ supplierId: string; name: string; warnings: string[] } | null>(null);
 
   // Envelope opening / tender ops
   const [envelopeError, setEnvelopeError] = useState("");
@@ -449,7 +449,7 @@ export function SourcingCaseDetail({
 
   // Award
   const [showAwardModal, setShowAwardModal] = useState(false);
-  const [awardVendorId, setAwardVendorId] = useState("");
+  const [awardSupplierId, setAwardSupplierId] = useState("");
   const [contractComment, setContractComment] = useState("");
   const [awardMgmtAck, setAwardMgmtAck] = useState(false);
   const [awardMgmtJustification, setAwardMgmtJustification] = useState("");
@@ -525,7 +525,7 @@ export function SourcingCaseDetail({
   const mergedBids: MergedBid[] = useMemo(() => {
     const electronic: MergedBid[] = openedSubmissions.map(s => ({
       key: `sub-${s.id}`,
-      vendorName: s.vendorName,
+      supplierName: s.supplierName,
       dateReceived: s.submittedAt,
       reference: s.submissionId,
       notes: s.coverNote || `${s.envelope} envelope · ${s.documents.length} document(s) · opened by ${s.openedBy ?? "—"}`,
@@ -533,9 +533,9 @@ export function SourcingCaseDetail({
       envelope: s.envelope,
       rate: s.proposedRate ? `${formatCurrency(s.proposedRate.amount)} ${s.proposedRate.rateType.toLowerCase()}` : undefined,
     }));
-    const manual: MergedBid[] = (sc.vendorsBidding ?? []).map(b => ({
+    const manual: MergedBid[] = (sc.suppliersBidding ?? []).map(b => ({
       key: `bid-${b.id}`,
-      vendorName: b.vendorName,
+      supplierName: b.supplierName,
       dateReceived: b.dateReceived,
       reference: b.bidReference || "—",
       notes: b.notes || "—",
@@ -543,20 +543,20 @@ export function SourcingCaseDetail({
       bidId: b.id,
     }));
     return [...electronic, ...manual].sort((a, b) => a.dateReceived.localeCompare(b.dateReceived));
-  }, [openedSubmissions, sc.vendorsBidding]);
+  }, [openedSubmissions, sc.suppliersBidding]);
 
-  /* ── Vendor pool for the pickers ── */
-  const vendorPool = useMemo(() => {
-    const scopeCategory = scopeAllCategories ? undefined : vendorCategoryFor(sc.category);
-    const eligible = getEligibleVendors(scopeCategory);
-    const pool: Vendor[] = showIneligible
-      ? getVendors().filter(v => !scopeCategory || v.category === scopeCategory)
+  /* ── Supplier pool for the pickers ── */
+  const supplierPool = useMemo(() => {
+    const scopeCategory = scopeAllCategories ? undefined : supplierCategoryFor(sc.category);
+    const eligible = getEligibleSuppliers(scopeCategory);
+    const pool: Supplier[] = showIneligible
+      ? getSuppliers().filter(v => !scopeCategory || v.category === scopeCategory)
       : eligible;
     return pool
       .map(v => ({
-        vendor: v,
-        name: vendorDisplayName(v),
-        email: vendorEmail(v),
+        supplier: v,
+        name: supplierDisplayName(v),
+        email: supplierEmail(v),
         score: avgScore(v.performance),
         eligibility: checkSourcingEligibility(v.id),
       }))
@@ -573,37 +573,37 @@ export function SourcingCaseDetail({
     [sc.shortlist]
   );
 
-  const selectedVendorEntries = vendorPool.filter(v => selectedVendorIds.includes(v.vendor.id));
-  const blockedSelections = selectedVendorEntries.filter(v => !v.eligibility.eligible);
-  const approvalSelections = selectedVendorEntries.filter(v => v.eligibility.eligible && v.eligibility.requiresManagementApproval);
+  const selectedSupplierEntries = supplierPool.filter(v => selectedSupplierIds.includes(v.supplier.id));
+  const blockedSelections = selectedSupplierEntries.filter(v => !v.eligibility.eligible);
+  const approvalSelections = selectedSupplierEntries.filter(v => v.eligibility.eligible && v.eligibility.requiresManagementApproval);
 
   /* ── Award candidates: whoever actually engaged, else the eligible register ── */
   const awardCandidates = useMemo(() => {
     const names = new Set<string>();
-    (sc.invitedVendors ?? []).forEach(v => names.add(v.name.toLowerCase()));
-    mergedBids.forEach(b => names.add(b.vendorName.toLowerCase()));
+    (sc.invitedSuppliers ?? []).forEach(v => names.add(v.name.toLowerCase()));
+    mergedBids.forEach(b => names.add(b.supplierName.toLowerCase()));
     (sc.shortlist ?? []).filter(s => s.shortlisted).forEach(s => names.add(s.name.toLowerCase()));
 
-    const all = getVendors().map(v => ({
-      vendor: v,
-      name: vendorDisplayName(v),
+    const all = getSuppliers().map(v => ({
+      supplier: v,
+      name: supplierDisplayName(v),
       score: avgScore(v.performance),
       eligibility: checkSourcingEligibility(v.id),
     }));
     const engaged = all.filter(v => names.has(v.name.toLowerCase()));
     if (engaged.length > 0) return engaged.sort((a, b) => b.score - a.score);
     return all
-      .filter(v => v.eligibility.eligible && v.vendor.category === vendorCategoryFor(sc.category))
+      .filter(v => v.eligibility.eligible && v.supplier.category === supplierCategoryFor(sc.category))
       .sort((a, b) => b.score - a.score);
-  }, [sc.invitedVendors, sc.shortlist, mergedBids, sc.category, storeTick]);
+  }, [sc.invitedSuppliers, sc.shortlist, mergedBids, sc.category, storeTick]);
 
-  const awardCandidate = awardCandidates.find(c => c.vendor.id === awardVendorId);
+  const awardCandidate = awardCandidates.find(c => c.supplier.id === awardSupplierId);
   const awardEligibility = awardCandidate?.eligibility;
   const awardShortlistEntry = (sc.shortlist ?? []).find(
     s => awardCandidate && s.name.toLowerCase() === awardCandidate.name.toLowerCase()
   );
   const awardSubmissionRate = openedSubmissions.find(
-    s => awardCandidate && s.vendorName.toLowerCase() === awardCandidate.name.toLowerCase() && s.proposedRate
+    s => awardCandidate && s.supplierName.toLowerCase() === awardCandidate.name.toLowerCase() && s.proposedRate
   )?.proposedRate;
 
   const getMethodColor = (m: SourcingMethod) => {
@@ -805,7 +805,7 @@ export function SourcingCaseDetail({
       requiresTechnical: env.requiresTechnical,
       requiresFinancial: env.requiresFinancial,
       requestRateQuote: env.requestRateQuote,
-      invitedVendorIds: [],
+      invitedSupplierIds: [],
       channels: adChannels,
       contactEmail: adContactEmail,
     });
@@ -827,7 +827,7 @@ export function SourcingCaseDetail({
         `"${sc.description}" has been published for open competition by ${user.name}.`,
         `Channels: ${adChannels.join(", ")}.`,
         `Published ${formatDate(adPublicationDate)}; bids close ${formatDate(adClosingDate)} at ${adClosingTime}.`,
-        `The tender is live on the vendor portal — every eligible vendor can download the documents and submit electronically.`,
+        `The tender is live on the supplier portal — every eligible supplier can download the documents and submit electronically.`,
       ].join("\n")
     );
 
@@ -839,7 +839,7 @@ export function SourcingCaseDetail({
 
   const openInviteModal = () => {
     if (!canManage) return;
-    setSelectedVendorIds((sc.invitedVendors ?? []).map(v => v.vendorId));
+    setSelectedSupplierIds((sc.invitedSuppliers ?? []).map(v => v.supplierId));
     setProposalType(sc.proposalRequirement ?? "Both");
     setMgmtAck(false);
     setMgmtJustification("");
@@ -847,42 +847,42 @@ export function SourcingCaseDetail({
     setShowInviteModal(true);
   };
 
-  const toggleVendor = (id: string) => {
-    const entry = vendorPool.find(v => v.vendor.id === id);
+  const toggleSupplier = (id: string) => {
+    const entry = supplierPool.find(v => v.supplier.id === id);
     if (entry && !entry.eligibility.eligible) return; // blocked outright
     setInviteError("");
     if (isDirect(sc.method)) {
-      setSelectedVendorIds([id]);
+      setSelectedSupplierIds([id]);
       return;
     }
-    setSelectedVendorIds(prev => (prev.includes(id) ? prev.filter(v => v !== id) : [...prev, id]));
+    setSelectedSupplierIds(prev => (prev.includes(id) ? prev.filter(v => v !== id) : [...prev, id]));
   };
 
   const selectAllShortlisted = () => {
-    const ids = vendorPool
+    const ids = supplierPool
       .filter(v => v.eligibility.eligible && shortlistedNames.has(v.name.toLowerCase()))
-      .map(v => v.vendor.id);
-    setSelectedVendorIds(isDirect(sc.method) ? ids.slice(0, 1) : ids);
+      .map(v => v.supplier.id);
+    setSelectedSupplierIds(isDirect(sc.method) ? ids.slice(0, 1) : ids);
   };
 
   const handleSendInvitations = () => {
-    if (selectedVendorIds.length === 0) { setInviteError("Select at least one vendor."); return; }
+    if (selectedSupplierIds.length === 0) { setInviteError("Select at least one supplier."); return; }
     if (blockedSelections.length > 0) {
       setInviteError(`${blockedSelections.map(v => v.name).join(", ")} cannot be engaged. Remove them from the selection.`);
       return;
     }
     if (approvalSelections.length > 0 && (!mgmtAck || !mgmtJustification.trim())) {
-      setInviteError("Confirm Senior Management approval and record a justification for the flagged vendors.");
+      setInviteError("Confirm Senior Management approval and record a justification for the flagged suppliers.");
       return;
     }
 
     const at = new Date().toISOString();
-    const invited: InvitedVendor[] = selectedVendorEntries.map(v => ({
-      vendorId: v.vendor.id,
-      vendorRef: v.vendor.vendorId,
+    const invited: InvitedSupplier[] = selectedSupplierEntries.map(v => ({
+      supplierId: v.supplier.id,
+      supplierRef: v.supplier.supplierId,
       name: v.name,
       email: v.email,
-      category: `${v.vendor.category} · ${v.vendor.subCategory}`,
+      category: `${v.supplier.category} · ${v.supplier.subCategory}`,
       performanceScore: v.score,
       invitedAt: at,
       invitedBy: user.name,
@@ -891,9 +891,9 @@ export function SourcingCaseDetail({
         : undefined,
     }));
 
-    onCaseUpdate(sc.id, { invitedVendors: invited, proposalRequirement: proposalType });
+    onCaseUpdate(sc.id, { invitedSuppliers: invited, proposalRequirement: proposalType });
 
-    // A restricted tender so the invited vendors — and only they — can submit
+    // A restricted tender so the invited suppliers — and only they — can submit
     // electronically through the portal.
     if (!requiresAdvertisement(sc.method)) {
       const env = envelopeRequirements();
@@ -911,23 +911,23 @@ export function SourcingCaseDetail({
         requiresTechnical: env.requiresTechnical,
         requiresFinancial: env.requiresFinancial,
         requestRateQuote: env.requestRateQuote,
-        invitedVendorIds: invited.map(v => v.vendorId),
-        channels: ["ACET Vendor Portal — Restricted"],
+        invitedSupplierIds: invited.map(v => v.supplierId),
+        channels: ["ACET Supplier Portal — Restricted"],
         contactEmail: DEFAULT_CONTACT_EMAIL,
       });
     }
 
     announce(
-      `${sc.caseNumber} — ${isDirect(sc.method) ? "vendor selected" : `${invited.length} bidder(s) invited`}`,
+      `${sc.caseNumber} — ${isDirect(sc.method) ? "supplier selected" : `${invited.length} bidder(s) invited`}`,
       [
         `${user.name} ${isDirect(sc.method) ? "selected" : "invited"} the following for "${sc.description}" (${sc.method}):`,
-        ...invited.map(v => `• ${v.name} (${v.vendorRef}) — rating ${v.performanceScore || "n/a"}/10 — ${v.email}`),
+        ...invited.map(v => `• ${v.name} (${v.supplierRef}) — rating ${v.performanceScore || "n/a"}/10 — ${v.email}`),
         sc.category === "Services" || sc.category === "Consultancy" ? `\nProposal requirement: ${proposalType === "Both" ? "Technical + Financial" : `${proposalType} only`}.` : "",
         approvalSelections.length > 0
           ? `\n⚠ Management approval recorded for ${approvalSelections.map(v => v.name).join(", ")}.\nJustification: ${mgmtJustification.trim()}`
           : "",
         !requiresAdvertisement(sc.method)
-          ? `\nA restricted tender is now open on the vendor portal; submissions close ${formatDate(inviteClosingDate)} at 17:00.`
+          ? `\nA restricted tender is now open on the supplier portal; submissions close ${formatDate(inviteClosingDate)} at 17:00.`
           : "",
       ].filter(Boolean).join("\n"),
       { category: approvalSelections.length > 0 ? "Alert" : "Info", priority: approvalSelections.length > 0 ? "High" : "Normal" }
@@ -937,17 +937,17 @@ export function SourcingCaseDetail({
     setInviteError("");
   };
 
-  /* ── Register a new vendor without leaving Sourcing ── */
+  /* ── Register a new supplier without leaving Sourcing ── */
 
   const resetRegisterForm = () => {
     setRegType("Firm"); setRegName(""); setRegEmail(""); setRegPhone("");
-    setRegCategory(vendorCategoryFor(sc.category)); setRegSubCategory("");
+    setRegCategory(supplierCategoryFor(sc.category)); setRegSubCategory("");
     setRegAddress(""); setRegRegNumber(""); setRegTaxId(""); setRegContactPerson("");
     setRegIdType("National ID"); setRegIdNumber(""); setRegExpertAreas("");
     setRegError(""); setRegResult(null);
   };
 
-  const handleRegisterVendor = () => {
+  const handleRegisterSupplier = () => {
     if (!regName.trim()) { setRegError("A legal name is required."); return; }
     if (!regEmail.trim()) { setRegError("An email address is required."); return; }
     if (!regSubCategory) { setRegError("Select a sub-category."); return; }
@@ -985,14 +985,14 @@ export function SourcingCaseDetail({
             historicalRates: [],
           };
 
-    const { vendor, flags } = registerVendor(regType, input, { registeredBy: user.name, source: "Internal" });
+    const { supplier, flags } = registerSupplier(regType, input, { registeredBy: user.name, source: "Internal" });
 
     const warnings: string[] = [];
     if (flags.sanctioned) warnings.push("This name matches a donor/statutory sanctions entry — escalate before approving.");
-    if (flags.duplicates.length > 0) warnings.push(`Possible duplicate of ${flags.duplicates.map(d => vendorDisplayName(d)).join(", ")}.`);
+    if (flags.duplicates.length > 0) warnings.push(`Possible duplicate of ${flags.duplicates.map(d => supplierDisplayName(d)).join(", ")}.`);
     if (flags.missingDocs.length > 0) warnings.push(`Outstanding documents: ${flags.missingDocs.join(", ")}.`);
 
-    setRegResult({ vendorId: vendor.vendorId, name: vendorDisplayName(vendor), warnings });
+    setRegResult({ supplierId: supplier.supplierId, name: supplierDisplayName(supplier), warnings });
     setRegError("");
   };
 
@@ -1052,7 +1052,7 @@ export function SourcingCaseDetail({
     updateShortlist((sc.shortlist ?? []).map(s => (s.id === id ? { ...s, ...patch } : s)));
   };
 
-  const addShortlistEntry = (name: string, vendor?: Vendor) => {
+  const addShortlistEntry = (name: string, supplier?: Supplier) => {
     const trimmed = name.trim();
     if (!trimmed) return;
     const existing = sc.shortlist ?? [];
@@ -1060,9 +1060,9 @@ export function SourcingCaseDetail({
     const entry: ShortlistEntry = {
       id: `sl-${Date.now()}-${existing.length}`,
       name: trimmed,
-      vendorId: vendor?.id,
-      category: vendor ? `${vendor.category} · ${vendor.subCategory}` : undefined,
-      performanceScore: vendor ? avgScore(vendor.performance) : undefined,
+      supplierId: supplier?.id,
+      category: supplier ? `${supplier.category} · ${supplier.subCategory}` : undefined,
+      performanceScore: supplier ? avgScore(supplier.performance) : undefined,
       shortlisted: false,
     };
     updateShortlist([...existing, entry]);
@@ -1074,27 +1074,27 @@ export function SourcingCaseDetail({
     const known = new Set(existing.map(s => s.name.toLowerCase()));
     const additions: ShortlistEntry[] = [];
     openedSubmissions.forEach((s, i) => {
-      if (known.has(s.vendorName.toLowerCase())) return;
-      known.add(s.vendorName.toLowerCase());
-      const vendor = getVendors().find(v => v.id === s.vendorId);
+      if (known.has(s.supplierName.toLowerCase())) return;
+      known.add(s.supplierName.toLowerCase());
+      const supplier = getSuppliers().find(v => v.id === s.supplierId);
       additions.push({
         id: `sl-${Date.now()}-p${i}`,
-        name: s.vendorName,
-        vendorId: s.vendorId,
-        category: vendor ? `${vendor.category} · ${vendor.subCategory}` : undefined,
-        performanceScore: vendor ? avgScore(vendor.performance) : undefined,
+        name: s.supplierName,
+        supplierId: s.supplierId,
+        category: supplier ? `${supplier.category} · ${supplier.subCategory}` : undefined,
+        performanceScore: supplier ? avgScore(supplier.performance) : undefined,
         shortlisted: false,
         proposedRate: s.proposedRate?.amount,
         rateType: s.proposedRate?.rateType,
       });
     });
-    (sc.invitedVendors ?? []).forEach((v, i) => {
+    (sc.invitedSuppliers ?? []).forEach((v, i) => {
       if (known.has(v.name.toLowerCase())) return;
       known.add(v.name.toLowerCase());
       additions.push({
         id: `sl-${Date.now()}-i${i}`,
         name: v.name,
-        vendorId: v.vendorId,
+        supplierId: v.supplierId,
         category: v.category,
         performanceScore: v.performanceScore,
         shortlisted: false,
@@ -1138,7 +1138,7 @@ export function SourcingCaseDetail({
 
   const openBidModal = () => {
     if (!canManage) return;
-    setBidVendorName("");
+    setBidSupplierName("");
     setBidReference("");
     setBidNotes("");
     setBidDate(todayStr());
@@ -1147,26 +1147,26 @@ export function SourcingCaseDetail({
   };
 
   const handleAddBid = () => {
-    if (!bidVendorName.trim()) { setBidError("Vendor name is required."); return; }
-    const newBid: VendorBid = {
+    if (!bidSupplierName.trim()) { setBidError("Supplier name is required."); return; }
+    const newBid: SupplierBid = {
       id: `bid-${Date.now()}`,
-      vendorName: bidVendorName.trim(),
+      supplierName: bidSupplierName.trim(),
       dateReceived: bidDate,
       bidReference: bidReference.trim() || undefined,
       notes: bidNotes.trim() || undefined,
     };
-    const current = sc.vendorsBidding || [];
-    onVendorBidUpdate({ caseId: sc.id, vendorsBidding: [...current, newBid] });
+    const current = sc.suppliersBidding || [];
+    onSupplierBidUpdate({ caseId: sc.id, suppliersBidding: [...current, newBid] });
     announce(
-      `${sc.caseNumber} — bid received from ${newBid.vendorName}`,
+      `${sc.caseNumber} — bid received from ${newBid.supplierName}`,
       `A bid was logged manually by ${user.name} on ${formatDate(bidDate)}${newBid.bidReference ? ` under reference ${newBid.bidReference}` : ""}.${newBid.notes ? `\nNotes: ${newBid.notes}` : ""}`
     );
     setShowBidModal(false);
   };
 
   const handleRemoveBid = (bidId: string) => {
-    const current = sc.vendorsBidding || [];
-    onVendorBidUpdate({ caseId: sc.id, vendorsBidding: current.filter(b => b.id !== bidId) });
+    const current = sc.suppliersBidding || [];
+    onSupplierBidUpdate({ caseId: sc.id, suppliersBidding: current.filter(b => b.id !== bidId) });
   };
 
   const notifyBidOpening = () => {
@@ -1174,7 +1174,7 @@ export function SourcingCaseDetail({
       `${sc.caseNumber} — bid opening session`,
       [
         `${user.name} has convened the bid opening for "${sc.description}".`,
-        `${mergedBids.length} bid(s) are on the register: ${openedSubmissions.length} electronic, ${(sc.vendorsBidding ?? []).length} received manually.`,
+        `${mergedBids.length} bid(s) are on the register: ${openedSubmissions.length} electronic, ${(sc.suppliersBidding ?? []).length} received manually.`,
         "Attend the session or review the minutes and attendance record once uploaded.",
       ].join("\n"),
       { sms: true }
@@ -1186,7 +1186,7 @@ export function SourcingCaseDetail({
 
   const openAwardModal = () => {
     if (!canAward) return;
-    setAwardVendorId("");
+    setAwardSupplierId("");
     setContractComment("");
     setAwardMgmtAck(false);
     setAwardMgmtJustification("");
@@ -1201,28 +1201,28 @@ export function SourcingCaseDetail({
     const prefill = awardShortlistEntry?.proposedRate ?? awardSubmissionRate?.amount;
     setAwardRate(prefill !== undefined ? String(prefill) : "");
     setAwardRateType(awardShortlistEntry?.rateType ?? awardSubmissionRate?.rateType ?? "Daily");
-  }, [awardVendorId]);
+  }, [awardSupplierId]);
 
   const handleConfirmAward = () => {
-    if (!awardCandidate || !awardEligibility) { setAwardError("Select a vendor."); return; }
+    if (!awardCandidate || !awardEligibility) { setAwardError("Select a supplier."); return; }
     if (!awardEligibility.eligible) {
       setAwardError(`${awardCandidate.name} cannot be awarded: ${awardEligibility.blockingReasons.join(" ")}`);
       return;
     }
     if (awardEligibility.requiresManagementApproval && (!awardMgmtAck || !awardMgmtJustification.trim())) {
-      setAwardError("Confirm Senior Management approval and record a justification before awarding to this vendor.");
+      setAwardError("Confirm Senior Management approval and record a justification before awarding to this supplier.");
       return;
     }
 
     const contractNumber = `CNT-${sc.sourcePR.replace("PR-", "")}`;
     const rateValue = Number(awardRate);
-    const isIndividual = awardCandidate.vendor.type === "Individual";
+    const isIndividual = awardCandidate.supplier.type === "Individual";
 
     onContractAward({
       caseId: sc.id,
       contractNumber,
-      vendor: awardCandidate.name,
-      vendorRef: awardCandidate.vendor.id,
+      supplier: awardCandidate.name,
+      supplierRef: awardCandidate.supplier.id,
       comments: contractComment,
       awardedBy: user.name,
       managementApproval: awardEligibility.requiresManagementApproval
@@ -1384,16 +1384,16 @@ export function SourcingCaseDetail({
             </div>
           </div>
 
-          {/* Invited vendors */}
-          {(sc.invitedVendors ?? []).length > 0 && (
+          {/* Invited suppliers */}
+          {(sc.invitedSuppliers ?? []).length > 0 && (
             <div className="mt-5 pt-4 border-t border-slate-200">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[11px] text-slate-500" style={{ fontFamily: F }}>Invited</span>
-                <span className="text-[11px] font-medium text-slate-700" style={{ fontFamily: F }}>{sc.invitedVendors!.length}</span>
+                <span className="text-[11px] font-medium text-slate-700" style={{ fontFamily: F }}>{sc.invitedSuppliers!.length}</span>
               </div>
               <div className="space-y-1.5">
-                {sc.invitedVendors!.map(v => (
-                  <div key={v.vendorId} className="flex items-center gap-2 px-2 py-1.5 bg-slate-50 rounded text-[10px] text-slate-700" style={{ fontFamily: F }}>
+                {sc.invitedSuppliers!.map(v => (
+                  <div key={v.supplierId} className="flex items-center gap-2 px-2 py-1.5 bg-slate-50 rounded text-[10px] text-slate-700" style={{ fontFamily: F }}>
                     <Send size={10} className="text-purple-500 shrink-0" />
                     <span className="flex-1 truncate">{v.name}</span>
                     {v.managementApproval && <ShieldCheck size={10} className="text-amber-500 shrink-0" />}
@@ -1416,7 +1416,7 @@ export function SourcingCaseDetail({
                     {bid.origin === "Electronic"
                       ? <ShieldCheck size={10} className="text-emerald-500 shrink-0" />
                       : <Users size={10} className="text-purple-500 shrink-0" />}
-                    <span className="flex-1 truncate">{bid.vendorName}</span>
+                    <span className="flex-1 truncate">{bid.supplierName}</span>
                     {bid.bidId && sc.overallStatus !== "Completed" && canManage && (
                       <button onClick={() => handleRemoveBid(bid.bidId!)} className="text-slate-400 hover:text-red-500 shrink-0">
                         <X size={10} />
@@ -1498,12 +1498,12 @@ export function SourcingCaseDetail({
                         <button onClick={openInviteModal}
                           disabled={!canManage} title={!canManage ? manageDenial : undefined}
                           className="px-3.5 py-2 rounded-lg text-[12px] font-medium border border-purple-300 bg-purple-50 text-purple-700 flex items-center gap-1.5 hover:bg-purple-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" style={{ fontFamily: F }}>
-                          <Users size={13} /> {isDirect(sc.method) ? "Select Vendor" : "Select & Invite Bidders"}
+                          <Users size={13} /> {isDirect(sc.method) ? "Select Supplier" : "Select & Invite Bidders"}
                         </button>
                         <button onClick={() => { resetRegisterForm(); setShowRegisterModal(true); }}
                           disabled={!canManage} title={!canManage ? manageDenial : undefined}
                           className="px-3.5 py-2 rounded-lg text-[12px] font-medium border border-slate-300 bg-white text-slate-700 flex items-center gap-1.5 hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" style={{ fontFamily: F }}>
-                          <UserPlus size={13} /> Register New Vendor
+                          <UserPlus size={13} /> Register New Supplier
                         </button>
                       </>
                     )}
@@ -1557,7 +1557,7 @@ export function SourcingCaseDetail({
 
                   {selectedStep.key === "contract_award" && (
                     <p className="text-[12px] text-slate-600 mb-4" style={{ fontFamily: F }}>
-                      Upload the signed contract. The PR number ({sc.sourcePR}) will convert to a Contract Number, push to the Contract Management Module, register against the vendor profile, and mark the requisition as Converted to Sourcing.
+                      Upload the signed contract. The PR number ({sc.sourcePR}) will convert to a Contract Number, push to the Contract Management Module, register against the supplier profile, and mark the requisition as Converted to Sourcing.
                     </p>
                   )}
 
@@ -1618,11 +1618,11 @@ export function SourcingCaseDetail({
                   {/* ── INVITATION ── */}
                   {selectedStep.key === "invitation" && (
                     <div className="mb-4">
-                      {(sc.invitedVendors ?? []).length > 0 ? (
+                      {(sc.invitedSuppliers ?? []).length > 0 ? (
                         <>
                           <p className="text-[12px] font-medium text-slate-700 mb-2 flex items-center gap-1.5" style={{ fontFamily: F }}>
                             <Send size={13} className="text-purple-600" />
-                            Invited Bidders ({sc.invitedVendors!.length})
+                            Invited Bidders ({sc.invitedSuppliers!.length})
                             {sc.proposalRequirement && (
                               <span className="ml-2 text-[10px] px-2 py-0.5 rounded-full bg-purple-50 text-purple-700">
                                 {sc.proposalRequirement === "Both" ? "Technical + Financial" : `${sc.proposalRequirement} only`}
@@ -1633,16 +1633,16 @@ export function SourcingCaseDetail({
                             <table className="w-full">
                               <thead style={{ backgroundColor: "#0B01D0" }}>
                                 <tr>
-                                  <th className="text-left px-3 py-2 text-[10px] text-white font-medium" style={{ fontFamily: F }}>Vendor</th>
-                                  <th className="text-left px-3 py-2 text-[10px] text-white font-medium" style={{ fontFamily: F }}>Vendor ID</th>
+                                  <th className="text-left px-3 py-2 text-[10px] text-white font-medium" style={{ fontFamily: F }}>Supplier</th>
+                                  <th className="text-left px-3 py-2 text-[10px] text-white font-medium" style={{ fontFamily: F }}>Supplier ID</th>
                                   <th className="text-left px-3 py-2 text-[10px] text-white font-medium" style={{ fontFamily: F }}>Category</th>
                                   <th className="text-center px-3 py-2 text-[10px] text-white font-medium" style={{ fontFamily: F }}>Rating</th>
                                   <th className="text-left px-3 py-2 text-[10px] text-white font-medium" style={{ fontFamily: F }}>Invited</th>
                                 </tr>
                               </thead>
                               <tbody>
-                                {sc.invitedVendors!.map((v, idx) => (
-                                  <tr key={v.vendorId} className={idx % 2 === 0 ? "bg-white" : "bg-slate-50/50"}>
+                                {sc.invitedSuppliers!.map((v, idx) => (
+                                  <tr key={v.supplierId} className={idx % 2 === 0 ? "bg-white" : "bg-slate-50/50"}>
                                     <td className="px-3 py-2" style={{ fontFamily: F }}>
                                       <p className="text-[11px] text-slate-900 font-medium">{v.name}</p>
                                       <p className="text-[9px] text-slate-400">{v.email}</p>
@@ -1652,7 +1652,7 @@ export function SourcingCaseDetail({
                                         </p>
                                       )}
                                     </td>
-                                    <td className="px-3 py-2 text-[11px] text-slate-600" style={{ fontFamily: F }}>{v.vendorRef}</td>
+                                    <td className="px-3 py-2 text-[11px] text-slate-600" style={{ fontFamily: F }}>{v.supplierRef}</td>
                                     <td className="px-3 py-2 text-[10px] text-slate-500" style={{ fontFamily: F }}>{v.category}</td>
                                     <td className="px-3 py-2 text-center" style={{ fontFamily: F }}>
                                       <span className={`text-[11px] font-medium ${
@@ -1674,7 +1674,7 @@ export function SourcingCaseDetail({
                         <div className="border border-dashed border-purple-300 rounded-lg p-5 bg-purple-50/30 text-center">
                           <Users size={22} className="text-purple-400 mx-auto mb-2" />
                           <p className="text-[12px] text-slate-600" style={{ fontFamily: F }}>
-                            No bidders invited yet. Vendors are drawn from the approved supplier register and screened for eligibility.
+                            No bidders invited yet. Suppliers are drawn from the approved supplier register and screened for eligibility.
                           </p>
                           {shortlistedNames.size > 0 && (
                             <p className="text-[11px] text-purple-600 mt-1" style={{ fontFamily: F }}>
@@ -1711,7 +1711,7 @@ export function SourcingCaseDetail({
                         <div className="border border-dashed border-amber-300 rounded-lg p-5 bg-amber-50/40 text-center">
                           <Globe size={22} className="text-amber-500 mx-auto mb-2" />
                           <p className="text-[12px] text-amber-800" style={{ fontFamily: F }}>
-                            This case has not been published to the vendor portal yet.
+                            This case has not been published to the supplier portal yet.
                           </p>
                           <p className="text-[11px] text-amber-600 mt-1" style={{ fontFamily: F }}>
                             {requiresAdvertisement(sc.method)
@@ -1725,7 +1725,7 @@ export function SourcingCaseDetail({
                             <div className="flex-1 min-w-[180px]">
                               <p className="text-[11px] font-semibold text-slate-800" style={{ fontFamily: F }}>{tender.title}</p>
                               <p className="text-[10px] text-slate-500" style={{ fontFamily: F }}>
-                                Closes {formatDate(tender.closingDate)} at {tender.closingTime} &middot; {tender.invitedVendorIds.length > 0 ? `Restricted to ${tender.invitedVendorIds.length} vendor(s)` : "Open to all eligible vendors"} &middot; Envelopes: {[tender.requiresTechnical && "Technical", tender.requiresFinancial && "Financial", tender.requestRateQuote && "Rate quote"].filter(Boolean).join(" + ") || "Single"}
+                                Closes {formatDate(tender.closingDate)} at {tender.closingTime} &middot; {tender.invitedSupplierIds.length > 0 ? `Restricted to ${tender.invitedSupplierIds.length} supplier(s)` : "Open to all eligible suppliers"} &middot; Envelopes: {[tender.requiresTechnical && "Technical", tender.requiresFinancial && "Financial", tender.requestRateQuote && "Rate quote"].filter(Boolean).join(" + ") || "Single"}
                               </p>
                             </div>
                             <span className={`text-[10px] px-2 py-1 rounded-full font-medium ${
@@ -1800,7 +1800,7 @@ export function SourcingCaseDetail({
                                 <thead style={{ backgroundColor: "#0B01D0" }}>
                                   <tr>
                                     <th className="text-left px-3 py-2 text-[10px] text-white font-medium" style={{ fontFamily: F }}>Submission ID</th>
-                                    <th className="text-left px-3 py-2 text-[10px] text-white font-medium" style={{ fontFamily: F }}>Vendor</th>
+                                    <th className="text-left px-3 py-2 text-[10px] text-white font-medium" style={{ fontFamily: F }}>Supplier</th>
                                     <th className="text-left px-3 py-2 text-[10px] text-white font-medium" style={{ fontFamily: F }}>Envelope</th>
                                     <th className="text-left px-3 py-2 text-[10px] text-white font-medium" style={{ fontFamily: F }}>Received</th>
                                     <th className="text-left px-3 py-2 text-[10px] text-white font-medium" style={{ fontFamily: F }}>Contents</th>
@@ -1814,7 +1814,7 @@ export function SourcingCaseDetail({
                                         <p className="text-[11px] text-slate-900 font-medium">{s.submissionId}</p>
                                         <p className="text-[9px] text-slate-400">{s.acknowledgementRef} · {s.sourceIp}</p>
                                       </td>
-                                      <td className="px-3 py-2 text-[11px] text-slate-800" style={{ fontFamily: F }}>{s.vendorName}</td>
+                                      <td className="px-3 py-2 text-[11px] text-slate-800" style={{ fontFamily: F }}>{s.supplierName}</td>
                                       <td className="px-3 py-2" style={{ fontFamily: F }}>
                                         <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
                                           s.envelope === "Financial" ? "bg-green-50 text-green-700" :
@@ -1878,7 +1878,7 @@ export function SourcingCaseDetail({
                         <div>
                           <p className="text-[12px] font-medium text-slate-900" style={{ fontFamily: F }}>Separate Technical &amp; Financial Proposals</p>
                           <p className="text-[10px] text-slate-500" style={{ fontFamily: F }}>
-                            When enabled, vendors must submit technical and financial proposals in separate envelopes that are opened at different times.
+                            When enabled, suppliers must submit technical and financial proposals in separate envelopes that are opened at different times.
                           </p>
                         </div>
                       </label>
@@ -2053,13 +2053,13 @@ export function SourcingCaseDetail({
                       {canManage && (
                         <div className="flex items-center gap-2">
                           <select value="" onChange={e => {
-                              const v = getVendors().find(x => x.id === e.target.value);
-                              if (v) addShortlistEntry(vendorDisplayName(v), v);
+                              const v = getSuppliers().find(x => x.id === e.target.value);
+                              if (v) addShortlistEntry(supplierDisplayName(v), v);
                             }}
                             className="border border-slate-200 rounded-lg h-[32px] px-2 text-[11px] text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-purple-400" style={{ fontFamily: F }}>
-                            <option value="">Add from the vendor register...</option>
-                            {getEligibleVendors(scopeAllCategories ? undefined : vendorCategoryFor(sc.category)).map(v => (
-                              <option key={v.id} value={v.id}>{vendorDisplayName(v)} — {avgScore(v.performance) || "new"}/10</option>
+                            <option value="">Add from the supplier register...</option>
+                            {getEligibleSuppliers(scopeAllCategories ? undefined : supplierCategoryFor(sc.category)).map(v => (
+                              <option key={v.id} value={v.id}>{supplierDisplayName(v)} — {avgScore(v.performance) || "new"}/10</option>
                             ))}
                           </select>
                           <input type="text" value={newRespondent} onChange={e => setNewRespondent(e.target.value)}
@@ -2163,7 +2163,7 @@ export function SourcingCaseDetail({
                         <Users size={13} className="text-purple-600" />
                         Bids Received ({mergedBids.length})
                         <span className="text-[10px] text-slate-400 font-normal">
-                          {openedSubmissions.length} electronic &middot; {(sc.vendorsBidding ?? []).length} manual
+                          {openedSubmissions.length} electronic &middot; {(sc.suppliersBidding ?? []).length} manual
                         </span>
                       </p>
                       {sealedCount > 0 && (
@@ -2178,7 +2178,7 @@ export function SourcingCaseDetail({
                         <table className="w-full">
                           <thead style={{ backgroundColor: "#0B01D0" }}>
                             <tr>
-                              <th className="text-left px-3 py-2 text-[10px] text-white font-medium" style={{ fontFamily: F }}>Vendor</th>
+                              <th className="text-left px-3 py-2 text-[10px] text-white font-medium" style={{ fontFamily: F }}>Supplier</th>
                               <th className="text-left px-3 py-2 text-[10px] text-white font-medium" style={{ fontFamily: F }}>Origin</th>
                               <th className="text-left px-3 py-2 text-[10px] text-white font-medium" style={{ fontFamily: F }}>Received</th>
                               <th className="text-left px-3 py-2 text-[10px] text-white font-medium" style={{ fontFamily: F }}>Ref #</th>
@@ -2192,7 +2192,7 @@ export function SourcingCaseDetail({
                             {mergedBids.map((bid, idx) => (
                               <tr key={bid.key} className={idx % 2 === 0 ? "bg-white" : "bg-slate-50/50"}>
                                 <td className="px-3 py-2 text-[11px] text-slate-900 font-medium" style={{ fontFamily: F }}>
-                                  {bid.vendorName}
+                                  {bid.supplierName}
                                   {bid.rate && <span className="block text-[9px] text-purple-600">{bid.rate}</span>}
                                 </td>
                                 <td className="px-3 py-2" style={{ fontFamily: F }}>
@@ -2278,7 +2278,7 @@ export function SourcingCaseDetail({
                             Contract Awarded: {sc.contractNumber}
                           </p>
                           <p className="text-[11px] text-green-600" style={{ fontFamily: F }}>
-                            Awarded to {sc.awardedVendor} &middot; Pushed to Contract Management &middot; Registered against the vendor profile &middot; {sc.sourcePR} marked Converted to Sourcing
+                            Awarded to {sc.awardedSupplier} &middot; Pushed to Contract Management &middot; Registered against the supplier profile &middot; {sc.sourcePR} marked Converted to Sourcing
                           </p>
                         </div>
                         {onNavigateToContract && (
@@ -2335,7 +2335,7 @@ export function SourcingCaseDetail({
                           <div className="flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-lg">
                             <CheckCircle2 size={13} className="text-green-600" />
                             <span className="text-[11px] text-green-700" style={{ fontFamily: F }}>
-                              PO Generated: <span className="font-semibold">{generatedPONumber}</span> — Signed &amp; dispatched to vendor.
+                              PO Generated: <span className="font-semibold">{generatedPONumber}</span> — Signed &amp; dispatched to supplier.
                             </span>
                           </div>
                         ) : (
@@ -2825,7 +2825,7 @@ export function SourcingCaseDetail({
               <p className="text-[12px] text-slate-600 mb-3" style={{ fontFamily: F }}>Select where this solicitation is published:</p>
               <div className="space-y-2.5 mb-4">
                 {[
-                  { id: "ACET Procurement Portal", title: "ACET Procurement Portal", blurb: "Opens the tender on the vendor portal for electronic submission" },
+                  { id: "ACET Procurement Portal", title: "ACET Procurement Portal", blurb: "Opens the tender on the supplier portal for electronic submission" },
                   { id: "ACET Website", title: "ACET Website", blurb: "Post to the public-facing website" },
                   { id: "National Newspaper", title: "National Newspaper", blurb: "Print advertisement — upload the ad proof afterwards" },
                   { id: "Donor / Development Portal", title: "Donor / Development Portal", blurb: "Where the funding agreement requires wider publication" },
@@ -2902,7 +2902,7 @@ export function SourcingCaseDetail({
             <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between shrink-0">
               <div>
                 <h3 className="text-[15px] font-semibold text-slate-900" style={{ fontFamily: F }}>
-                  {isDirect(sc.method) ? "Select Vendor" : "Select & Invite Bidders"}
+                  {isDirect(sc.method) ? "Select Supplier" : "Select & Invite Bidders"}
                 </h3>
                 <p className="text-[11px] text-slate-500 mt-0.5" style={{ fontFamily: F }}>
                   Drawn live from the approved supplier register &middot; screened for eligibility
@@ -2937,7 +2937,7 @@ export function SourcingCaseDetail({
                   </label>
                   <label className="flex items-center gap-1.5 text-[11px] text-slate-600 cursor-pointer" style={{ fontFamily: F }}>
                     <input type="checkbox" checked={showIneligible} onChange={e => setShowIneligible(e.target.checked)} className="accent-purple-700 w-3.5 h-3.5" />
-                    Show blocked vendors
+                    Show blocked suppliers
                   </label>
                 </div>
                 <div className="flex items-center gap-2">
@@ -2949,7 +2949,7 @@ export function SourcingCaseDetail({
                   )}
                   <button onClick={() => { resetRegisterForm(); setShowRegisterModal(true); }}
                     className="text-[10px] px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 flex items-center gap-1" style={{ fontFamily: F }}>
-                    <UserPlus size={10} /> Register new vendor
+                    <UserPlus size={10} /> Register new supplier
                   </button>
                 </div>
               </div>
@@ -2960,44 +2960,44 @@ export function SourcingCaseDetail({
                   <input type="date" value={inviteClosingDate} onChange={e => setInviteClosingDate(e.target.value)}
                     className="border border-slate-200 rounded-lg h-[30px] px-2 text-[11px] focus:outline-none focus:ring-2 focus:ring-purple-400" style={{ fontFamily: F }} />
                   <span className="text-[10px] text-slate-400" style={{ fontFamily: F }}>
-                    A restricted tender opens on the vendor portal for the invited bidders only.
+                    A restricted tender opens on the supplier portal for the invited bidders only.
                   </span>
                 </div>
               )}
 
               <div className="space-y-2">
-                {vendorPool.length === 0 && (
+                {supplierPool.length === 0 && (
                   <div className="border border-dashed border-slate-300 rounded-lg p-5 text-center">
                     <p className="text-[12px] text-slate-500" style={{ fontFamily: F }}>
-                      No eligible vendors in this category. Widen the scope, or register a new vendor.
+                      No eligible suppliers in this category. Widen the scope, or register a new supplier.
                     </p>
                   </div>
                 )}
-                {vendorPool.map(v => {
+                {supplierPool.map(v => {
                   const blocked = !v.eligibility.eligible;
                   const needsApproval = !blocked && v.eligibility.requiresManagementApproval;
-                  const selected = selectedVendorIds.includes(v.vendor.id);
+                  const selected = selectedSupplierIds.includes(v.supplier.id);
                   return (
-                    <label key={v.vendor.id}
+                    <label key={v.supplier.id}
                       className={`flex items-start gap-3 px-4 py-3 border rounded-lg transition-colors ${
                         blocked ? "border-red-200 bg-red-50/40 cursor-not-allowed" :
                         selected ? "border-purple-300 bg-purple-50 cursor-pointer" :
                         needsApproval ? "border-amber-200 bg-amber-50/40 cursor-pointer hover:bg-amber-50" :
                         "border-slate-200 hover:bg-slate-50 cursor-pointer"
                       }`}>
-                      <input type={isDirect(sc.method) ? "radio" : "checkbox"} name="vendor"
+                      <input type={isDirect(sc.method) ? "radio" : "checkbox"} name="supplier"
                         checked={selected} disabled={blocked}
-                        onChange={() => toggleVendor(v.vendor.id)}
+                        onChange={() => toggleSupplier(v.supplier.id)}
                         className="accent-purple-700 w-4 h-4 mt-0.5 disabled:cursor-not-allowed" />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="text-[12px] font-medium text-slate-900" style={{ fontFamily: F }}>{v.name}</p>
-                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-500" style={{ fontFamily: F }}>{v.vendor.vendorId}</span>
+                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-500" style={{ fontFamily: F }}>{v.supplier.supplierId}</span>
                           <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${
-                            v.vendor.status === "Active" ? "bg-green-50 text-green-700" :
-                            v.vendor.status === "Flagged" ? "bg-amber-50 text-amber-700" :
+                            v.supplier.status === "Active" ? "bg-green-50 text-green-700" :
+                            v.supplier.status === "Flagged" ? "bg-amber-50 text-amber-700" :
                             "bg-red-50 text-red-700"
-                          }`}>{v.vendor.status}</span>
+                          }`}>{v.supplier.status}</span>
                           {shortlistedNames.has(v.name.toLowerCase()) && (
                             <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 font-medium flex items-center gap-0.5">
                               <Star size={8} /> Shortlisted
@@ -3005,7 +3005,7 @@ export function SourcingCaseDetail({
                           )}
                         </div>
                         <p className="text-[10px] text-slate-400 mt-0.5" style={{ fontFamily: F }}>
-                          {v.vendor.type} &middot; {v.vendor.category} · {v.vendor.subCategory} &middot; {v.email}
+                          {v.supplier.type} &middot; {v.supplier.category} · {v.supplier.subCategory} &middot; {v.email}
                         </p>
                         <div className="flex items-center gap-2 mt-1">
                           <span className={`text-[10px] font-medium flex items-center gap-1 ${
@@ -3014,7 +3014,7 @@ export function SourcingCaseDetail({
                             <Star size={9} /> {v.score > 0 ? `${v.score}/10 past performance` : "No performance history"}
                           </span>
                           <span className="text-[10px] text-slate-400" style={{ fontFamily: F }}>
-                            &middot; {v.vendor.totalOrders} order(s), {formatCurrency(v.vendor.totalSpend)} to date
+                            &middot; {v.supplier.totalOrders} order(s), {formatCurrency(v.supplier.totalSpend)} to date
                           </span>
                         </div>
 
@@ -3047,21 +3047,21 @@ export function SourcingCaseDetail({
                   </p>
                   <ul className="mb-3 space-y-1">
                     {approvalSelections.map(v => (
-                      <li key={v.vendor.id} className="text-[11px] text-amber-800" style={{ fontFamily: F }}>
+                      <li key={v.supplier.id} className="text-[11px] text-amber-800" style={{ fontFamily: F }}>
                         <span className="font-medium">{v.name}</span> — {v.eligibility.warnings.join(" ")}
                       </li>
                     ))}
                   </ul>
                   <textarea rows={2} value={mgmtJustification}
                     onChange={e => { setMgmtJustification(e.target.value); setInviteError(""); }}
-                    placeholder="Record why these vendors are being invited despite the warnings, and who approved it..."
+                    placeholder="Record why these suppliers are being invited despite the warnings, and who approved it..."
                     className="w-full border border-amber-300 rounded-lg px-3 py-2 text-[11px] text-slate-900 placeholder:text-amber-400 outline-none resize-none focus:ring-2 focus:ring-amber-400 bg-white"
                     style={{ fontFamily: F }} />
                   <label className="flex items-start gap-2 mt-2 cursor-pointer">
                     <input type="checkbox" checked={mgmtAck} onChange={e => { setMgmtAck(e.target.checked); setInviteError(""); }}
                       className="accent-amber-600 w-4 h-4 mt-0.5" />
                     <span className="text-[11px] text-amber-800" style={{ fontFamily: F }}>
-                      I confirm Senior Management approval has been obtained for the vendors listed above. This is recorded against the case with my name ({user.name}).
+                      I confirm Senior Management approval has been obtained for the suppliers listed above. This is recorded against the case with my name ({user.name}).
                     </span>
                   </label>
                 </div>
@@ -3076,14 +3076,14 @@ export function SourcingCaseDetail({
             </div>
             <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-between shrink-0">
               <span className="text-[11px] text-slate-500" style={{ fontFamily: F }}>
-                {selectedVendorIds.length} selected
+                {selectedSupplierIds.length} selected
                 {approvalSelections.length > 0 && ` · ${approvalSelections.length} requiring management approval`}
               </span>
               <div className="flex gap-3">
                 <button onClick={() => setShowInviteModal(false)}
                   className="px-4 py-2 border border-slate-200 rounded-lg text-[12px] text-slate-600 hover:bg-slate-50" style={{ fontFamily: F }}>Cancel</button>
                 <button onClick={handleSendInvitations}
-                  disabled={selectedVendorIds.length === 0}
+                  disabled={selectedSupplierIds.length === 0}
                   className="px-4 py-2 text-[12px] font-medium text-white rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{ backgroundColor: "#0B01D0", fontFamily: F }}>
                   {isDirect(sc.method) ? "Confirm Selection" : "Send Invitations"}
@@ -3095,7 +3095,7 @@ export function SourcingCaseDetail({
       )}
 
       {/* ══════════════════════════════════════════════════════════════════════
-         REGISTER NEW VENDOR MODAL
+         REGISTER NEW SUPPLIER MODAL
          ══════════════════════════════════════════════════════════════════════ */}
       {showRegisterModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50">
@@ -3104,7 +3104,7 @@ export function SourcingCaseDetail({
               <div className="flex items-center gap-2">
                 <UserPlus size={18} className="text-purple-600" />
                 <div>
-                  <h3 className="text-[15px] font-semibold text-slate-900" style={{ fontFamily: F }}>Register New Vendor</h3>
+                  <h3 className="text-[15px] font-semibold text-slate-900" style={{ fontFamily: F }}>Register New Supplier</h3>
                   <p className="text-[10px] text-slate-500 mt-0.5" style={{ fontFamily: F }}>
                     Added to the supplier register — Procurement must approve onboarding before they can be invited.
                   </p>
@@ -3122,11 +3122,11 @@ export function SourcingCaseDetail({
                   </div>
                   <p className="text-[14px] font-semibold text-green-800" style={{ fontFamily: F }}>{regResult.name} registered</p>
                   <p className="text-[11px] text-slate-500 mt-1" style={{ fontFamily: F }}>
-                    Vendor ID <span className="font-medium text-slate-700">{regResult.vendorId}</span> &middot; status Pending Onboarding
+                    Supplier ID <span className="font-medium text-slate-700">{regResult.supplierId}</span> &middot; status Pending Onboarding
                   </p>
                   <div className="mt-4 w-full px-4 py-3 bg-amber-50 border border-amber-200 rounded-lg">
                     <p className="text-[11px] text-amber-800" style={{ fontFamily: F }}>
-                      The vendor cannot be invited or awarded until Procurement approves the registration in Supplier Management and the mandatory documents are on file.
+                      The supplier cannot be invited or awarded until Procurement approves the registration in Supplier Management and the mandatory documents are on file.
                     </p>
                   </div>
                   {regResult.warnings.length > 0 && (
@@ -3142,7 +3142,7 @@ export function SourcingCaseDetail({
               ) : (
                 <>
                   <div className="flex gap-2 mb-4">
-                    {(["Firm", "Individual"] as VendorType[]).map(t => (
+                    {(["Firm", "Individual"] as SupplierType[]).map(t => (
                       <button key={t} onClick={() => { setRegType(t); setRegError(""); }}
                         className={`px-3 py-1.5 rounded-lg text-[12px] border transition-colors ${
                           regType === t ? "bg-purple-700 text-white border-purple-700" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
@@ -3174,7 +3174,7 @@ export function SourcingCaseDetail({
                       <label className="text-[11px] text-slate-600" style={{ fontFamily: F }}>Category</label>
                       <select value={regCategory} onChange={e => { setRegCategory(e.target.value); setRegSubCategory(""); }}
                         className="border border-slate-200 rounded-lg h-[36px] px-2 text-[12px] bg-white focus:outline-none focus:ring-2 focus:ring-purple-400" style={{ fontFamily: F }}>
-                        {VENDOR_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                        {SUPPLIER_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                       </select>
                     </div>
                     <div className="flex flex-col gap-1.5">
@@ -3256,10 +3256,10 @@ export function SourcingCaseDetail({
                 {regResult ? "Close" : "Cancel"}
               </button>
               {!regResult && (
-                <button onClick={handleRegisterVendor}
+                <button onClick={handleRegisterSupplier}
                   className="px-5 py-2 text-[12px] font-medium text-white rounded-lg hover:opacity-90"
                   style={{ backgroundColor: "#0B01D0", fontFamily: F }}>
-                  Register Vendor
+                  Register Supplier
                 </button>
               )}
             </div>
@@ -3284,23 +3284,23 @@ export function SourcingCaseDetail({
             </div>
             <div className="px-6 py-5 overflow-y-auto">
               <p className="text-[12px] text-slate-600 mb-4" style={{ fontFamily: F }}>
-                The PR number <span className="font-medium text-indigo-700">{sc.sourcePR}</span> converts to a Contract Number, pushes to Contract Management, registers against the vendor's profile, and marks the requisition Converted to Sourcing.
+                The PR number <span className="font-medium text-indigo-700">{sc.sourcePR}</span> converts to a Contract Number, pushes to Contract Management, registers against the supplier's profile, and marks the requisition Converted to Sourcing.
               </p>
               <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[11px] text-slate-600" style={{ fontFamily: F }}>Awarded Vendor <span className="text-red-500">*</span></label>
-                  <select value={awardVendorId} onChange={e => { setAwardVendorId(e.target.value); setAwardError(""); setAwardMgmtAck(false); }}
+                  <label className="text-[11px] text-slate-600" style={{ fontFamily: F }}>Awarded Supplier <span className="text-red-500">*</span></label>
+                  <select value={awardSupplierId} onChange={e => { setAwardSupplierId(e.target.value); setAwardError(""); setAwardMgmtAck(false); }}
                     className="bg-slate-50 border border-slate-200 rounded-lg h-[36px] px-3 text-[12px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-green-400"
                     style={{ fontFamily: F }}>
-                    <option value="">Select vendor...</option>
+                    <option value="">Select supplier...</option>
                     {awardCandidates.map(c => (
-                      <option key={c.vendor.id} value={c.vendor.id}>
+                      <option key={c.supplier.id} value={c.supplier.id}>
                         {c.name} — {c.score > 0 ? `${c.score}/10` : "no history"}{!c.eligibility.eligible ? " (blocked)" : c.eligibility.requiresManagementApproval ? " (approval required)" : ""}
                       </option>
                     ))}
                   </select>
                   <p className="text-[10px] text-slate-400" style={{ fontFamily: F }}>
-                    Candidates are the vendors invited, shortlisted or who submitted a bid on this case.
+                    Candidates are the suppliers invited, shortlisted or who submitted a bid on this case.
                   </p>
                 </div>
 
@@ -3338,7 +3338,7 @@ export function SourcingCaseDetail({
                   </div>
                 )}
 
-                {awardCandidate?.vendor.type === "Individual" && (
+                {awardCandidate?.supplier.type === "Individual" && (
                   <div className="flex flex-col gap-1.5">
                     <label className="text-[11px] text-slate-600" style={{ fontFamily: F }}>Agreed Consultant Rate</label>
                     <div className="flex items-center gap-2">
@@ -3395,7 +3395,7 @@ export function SourcingCaseDetail({
       )}
 
       {/* ══════════════════════════════════════════════════════════════════════
-         RECORD VENDOR BID MODAL — bids received physically or by email
+         RECORD SUPPLIER BID MODAL — bids received physically or by email
          ══════════════════════════════════════════════════════════════════════ */}
       {showBidModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -3404,7 +3404,7 @@ export function SourcingCaseDetail({
               <div className="flex items-center gap-2">
                 <Users size={18} className="text-purple-600" />
                 <div>
-                  <h3 className="text-[15px] font-semibold text-slate-900" style={{ fontFamily: F }}>Record Vendor Bid</h3>
+                  <h3 className="text-[15px] font-semibold text-slate-900" style={{ fontFamily: F }}>Record Supplier Bid</h3>
                   <p className="text-[10px] text-purple-600 mt-0.5" style={{ fontFamily: F }}>Manual entry — bids received physically or via email</p>
                 </div>
               </div>
@@ -3416,19 +3416,19 @@ export function SourcingCaseDetail({
               <div className="mb-4 px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2">
                 <AlertTriangle size={14} className="text-amber-600 shrink-0 mt-0.5" />
                 <p className="text-[11px] text-amber-800" style={{ fontFamily: F }}>
-                  Electronic submissions arrive through the vendor portal automatically. Use this form only for bids delivered physically, by courier or by email.
+                  Electronic submissions arrive through the supplier portal automatically. Use this form only for bids delivered physically, by courier or by email.
                 </p>
               </div>
               <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[11px] text-slate-600" style={{ fontFamily: F }}>Vendor / Bidder Name <span className="text-red-500">*</span></label>
-                  <input type="text" value={bidVendorName} onChange={e => { setBidVendorName(e.target.value); setBidError(""); }}
-                    list="sourcing-invited-vendors"
-                    placeholder="Enter vendor or bidder name..."
+                  <label className="text-[11px] text-slate-600" style={{ fontFamily: F }}>Supplier / Bidder Name <span className="text-red-500">*</span></label>
+                  <input type="text" value={bidSupplierName} onChange={e => { setBidSupplierName(e.target.value); setBidError(""); }}
+                    list="sourcing-invited-suppliers"
+                    placeholder="Enter supplier or bidder name..."
                     className="border border-slate-200 rounded-lg h-[36px] px-3 text-[12px] text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-400"
                     style={{ fontFamily: F }} />
-                  <datalist id="sourcing-invited-vendors">
-                    {(sc.invitedVendors ?? []).map(v => <option key={v.vendorId} value={v.name} />)}
+                  <datalist id="sourcing-invited-suppliers">
+                    {(sc.invitedSuppliers ?? []).map(v => <option key={v.supplierId} value={v.name} />)}
                   </datalist>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -3469,7 +3469,7 @@ export function SourcingCaseDetail({
                 <button onClick={() => setShowBidModal(false)}
                   className="px-4 py-2 border border-slate-200 rounded-lg text-[12px] text-slate-600 hover:bg-slate-50" style={{ fontFamily: F }}>Cancel</button>
                 <button onClick={handleAddBid}
-                  disabled={!bidVendorName.trim()}
+                  disabled={!bidSupplierName.trim()}
                   className="px-5 py-2 text-[12px] font-medium text-white rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{ backgroundColor: "#0B01D0", fontFamily: F }}>
                   Record Bid
@@ -3498,8 +3498,8 @@ export function SourcingCaseDetail({
                   <span className="text-[11px] text-slate-900 font-medium" style={{ fontFamily: F }}>{sc.contractNumber}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-[11px] text-slate-500" style={{ fontFamily: F }}>Vendor</span>
-                  <span className="text-[11px] text-slate-900" style={{ fontFamily: F }}>{sc.awardedVendor}</span>
+                  <span className="text-[11px] text-slate-500" style={{ fontFamily: F }}>Supplier</span>
+                  <span className="text-[11px] text-slate-900" style={{ fontFamily: F }}>{sc.awardedSupplier}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-[11px] text-slate-500" style={{ fontFamily: F }}>Signed By</span>

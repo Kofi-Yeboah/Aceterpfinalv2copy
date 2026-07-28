@@ -37,7 +37,7 @@ const RISK_CATEGORIES = [
 // Available tasks for risk assignment
 const AVAILABLE_TASKS = [
   { id: "T001", name: "Draft Request for Proposals (RFP)", phase: "Procurement & Contracting" },
-  { id: "T002", name: "Evaluate Vendor Submissions", phase: "Procurement & Contracting" },
+  { id: "T002", name: "Evaluate Supplier Submissions", phase: "Procurement & Contracting" },
   { id: "T003", name: "Finalize Service Agreements", phase: "Procurement & Contracting" },
   { id: "T004", name: "Coordinate Field Data Collection", phase: "Implementation" },
   { id: "T005", name: "Conduct Stakeholder Engagement Sessions", phase: "Implementation" },

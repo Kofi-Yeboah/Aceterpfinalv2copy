@@ -244,7 +244,7 @@ export function NavigationSidebar({ selectedItem, onSelectItem, collapsed }: Nav
         { icon: <ScrollText size={iconSize} />, label: "Contract Management" },
         { icon: <HardHat size={iconSize} />, label: "Contractors" },
         { icon: <FolderKanban size={iconSize} />, label: "Contract Repository" },
-        { icon: <Globe size={iconSize} />, label: "Vendor Portal" },
+        { icon: <Globe size={iconSize} />, label: "Supplier Portal" },
         {
           icon: <CheckCircle size={iconSize} />,
           label: "Approvals",
@@ -253,7 +253,7 @@ export function NavigationSidebar({ selectedItem, onSelectItem, collapsed }: Nav
         {
           icon: <BarChart3 size={iconSize} />,
           label: "Reporting & Analytics",
-          submenu: ["Planning & Orders Report", "Sourcing & Contracts Report", "Vendors & KPIs Report", "Contract Reports", "Donor Reports", "Combined Analysis Report"],
+          submenu: ["Planning & Orders Report", "Sourcing & Contracts Report", "Suppliers & KPIs Report", "Contract Reports", "Donor Reports", "Combined Analysis Report"],
         },
       ],
     },

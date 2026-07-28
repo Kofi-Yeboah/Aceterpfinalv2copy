@@ -67,7 +67,7 @@ const STANDARD_PHASES: StandardPhaseDefinition[] = [
     id: "procurement-contracting",
     name: "Procurement & Contracting",
     isMandatory: false,
-    description: "Manage procurement processes, vendor selection, and contract management for the project.",
+    description: "Manage procurement processes, supplier selection, and contract management for the project.",
     color: "bg-amber-500",
   },
   {

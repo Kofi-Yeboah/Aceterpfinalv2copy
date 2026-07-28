@@ -20,7 +20,7 @@ import { getSignature, subscribe as subscribeSignature, getCurrentUserId, canUse
 export interface POGenerationProps {
   sourcePR: string;
   sourceSourcingCase: string;
-  vendor: string;
+  supplier: string;
   itemDescription: string;
   budget: number;
   category: string;
@@ -50,7 +50,7 @@ const formatDate = (s: string) =>
 const formatDateTime = (s: string) =>
   new Date(s).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 
-const VENDOR_EMAILS: Record<string, string> = {
+const SUPPLIER_EMAILS: Record<string, string> = {
   "Tech Solutions Inc.": "orders@techsolutions.com.gh",
   "Office Depot Ltd.": "procurement@officedepot.com.gh",
   "PrintWorks Ghana Ltd": "sales@printworks.com.gh",
@@ -68,7 +68,7 @@ const VENDOR_EMAILS: Record<string, string> = {
   "Akosua Frimpong": "a.frimpong@services.com.gh",
 };
 
-const VENDOR_ADDRESSES: Record<string, string> = {
+const SUPPLIER_ADDRESSES: Record<string, string> = {
   "Tech Solutions Inc.": "14 Independence Ave, Accra, Ghana",
   "PrintWorks Ghana Ltd": "22 Graphic Road, Adabraka, Accra",
   "MedSupply GH": "5 Hospital Road, Korle-Bu, Accra",
@@ -86,7 +86,7 @@ const COMPANY_ADDRESS = "27 Castle Road, Osu, Accra, Greater Accra Region, Ghana
    ══════════════════════════════════════════════════════════════════════════════ */
 
 export function POGenerationFlow({
-  sourcePR, sourceSourcingCase, vendor, itemDescription, budget,
+  sourcePR, sourceSourcingCase, supplier, itemDescription, budget,
   category, method, department, requestedBy, projectName, contractNumber,
   onBack, onComplete,
 }: POGenerationProps) {
@@ -103,8 +103,8 @@ export function POGenerationFlow({
   const [warrantyTerms, setWarrantyTerms] = useState(category === "Goods" ? "12-month manufacturer warranty from date of delivery." : "N/A — Service engagement.");
   const [paymentTerms, setPaymentTerms] = useState("Net 30 days upon satisfactory delivery and inspection.");
   const [shippingMethod, setShippingMethod] = useState(category === "Goods" ? "Standard Ground Shipping" : "N/A");
-  const [vendorEmail, setVendorEmail] = useState(VENDOR_EMAILS[vendor] || `orders@${vendor.toLowerCase().replace(/\s+/g, "")}.com`);
-  const [vendorAddress, setVendorAddress] = useState(VENDOR_ADDRESSES[vendor] || "To be confirmed");
+  const [supplierEmail, setSupplierEmail] = useState(SUPPLIER_EMAILS[supplier] || `orders@${supplier.toLowerCase().replace(/\s+/g, "")}.com`);
+  const [supplierAddress, setSupplierAddress] = useState(SUPPLIER_ADDRESSES[supplier] || "To be confirmed");
 
   // Line items — auto-generated from requisition data
   const [lineItems, setLineItems] = useState<POLineItem[]>(() => {
@@ -167,9 +167,9 @@ export function POGenerationFlow({
     const po = generatePOFromSourcing({
       sourcePR,
       sourceSourcingCase,
-      vendor,
-      vendorEmail,
-      vendorAddress,
+      supplier,
+      supplierEmail,
+      supplierAddress,
       itemDescription,
       lineItems,
       totalAmount,
@@ -220,7 +220,7 @@ export function POGenerationFlow({
       pushContract({
         contractNumber: generatedPO.poNumber,
         title: itemDescription,
-        party: vendor,
+        party: supplier,
         sourcePR,
         sourceSourcingCase,
         category,
@@ -245,7 +245,7 @@ export function POGenerationFlow({
       },
       {
         id: `n-${Date.now()}-2`,
-        message: `Signed PO PDF emailed to ${vendor} at ${vendorEmail}.`,
+        message: `Signed PO PDF emailed to ${supplier} at ${supplierEmail}.`,
         icon: <Mail size={14} className="text-purple-600" />,
         time: timeStr,
       },
@@ -324,13 +324,13 @@ export function POGenerationFlow({
             </div>
           </div>
 
-          {/* Vendor / Buyer */}
+          {/* Supplier / Buyer */}
           <div className="grid grid-cols-2 gap-4 mb-6 pb-4 border-b border-slate-200">
             <div>
-              <p className="text-[8px] text-slate-400 uppercase tracking-wider mb-1" style={{ fontFamily: F }}>VENDOR</p>
-              <p className="text-[11px] font-semibold text-slate-900" style={{ fontFamily: F }}>{vendor}</p>
-              <p className="text-[9px] text-slate-600" style={{ fontFamily: F }}>{vendorAddress}</p>
-              <p className="text-[9px] text-slate-600" style={{ fontFamily: F }}>{vendorEmail}</p>
+              <p className="text-[8px] text-slate-400 uppercase tracking-wider mb-1" style={{ fontFamily: F }}>SUPPLIER</p>
+              <p className="text-[11px] font-semibold text-slate-900" style={{ fontFamily: F }}>{supplier}</p>
+              <p className="text-[9px] text-slate-600" style={{ fontFamily: F }}>{supplierAddress}</p>
+              <p className="text-[9px] text-slate-600" style={{ fontFamily: F }}>{supplierEmail}</p>
             </div>
             <div>
               <p className="text-[8px] text-slate-400 uppercase tracking-wider mb-1" style={{ fontFamily: F }}>SHIP TO</p>
@@ -455,7 +455,7 @@ export function POGenerationFlow({
               Purchase Order Generation
             </h1>
             <p className="text-[11px] text-slate-500" style={{ fontFamily: F }}>
-              {sourceSourcingCase} &middot; {sourcePR} &middot; {vendor}
+              {sourceSourcingCase} &middot; {sourcePR} &middot; {supplier}
             </p>
           </div>
           <div className="px-3 py-1.5 rounded-lg text-[11px] font-medium" style={{
@@ -526,22 +526,22 @@ export function POGenerationFlow({
                 ))}
               </div>
 
-              {/* Vendor Info */}
+              {/* Supplier Info */}
               <div className="space-y-3">
                 <h3 className="text-[12px] font-semibold text-slate-900 flex items-center gap-1.5" style={{ fontFamily: F }}>
-                  <Building2 size={12} className="text-purple-600" /> Vendor Information
+                  <Building2 size={12} className="text-purple-600" /> Supplier Information
                 </h3>
                 <div className="space-y-2">
-                  <label className="text-[10px] text-slate-500 block" style={{ fontFamily: F }}>Vendor Name</label>
-                  <input type="text" value={vendor} readOnly className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 h-[34px] text-[12px] text-slate-700" style={{ fontFamily: F }} />
+                  <label className="text-[10px] text-slate-500 block" style={{ fontFamily: F }}>Supplier Name</label>
+                  <input type="text" value={supplier} readOnly className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 h-[34px] text-[12px] text-slate-700" style={{ fontFamily: F }} />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] text-slate-500 block" style={{ fontFamily: F }}>Vendor Email</label>
-                  <input type="email" value={vendorEmail} onChange={e => setVendorEmail(e.target.value)} className="w-full border border-slate-200 rounded-lg px-3 h-[34px] text-[12px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-400" style={{ fontFamily: F }} />
+                  <label className="text-[10px] text-slate-500 block" style={{ fontFamily: F }}>Supplier Email</label>
+                  <input type="email" value={supplierEmail} onChange={e => setSupplierEmail(e.target.value)} className="w-full border border-slate-200 rounded-lg px-3 h-[34px] text-[12px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-400" style={{ fontFamily: F }} />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] text-slate-500 block" style={{ fontFamily: F }}>Vendor Address</label>
-                  <input type="text" value={vendorAddress} onChange={e => setVendorAddress(e.target.value)} className="w-full border border-slate-200 rounded-lg px-3 h-[34px] text-[12px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-400" style={{ fontFamily: F }} />
+                  <label className="text-[10px] text-slate-500 block" style={{ fontFamily: F }}>Supplier Address</label>
+                  <input type="text" value={supplierAddress} onChange={e => setSupplierAddress(e.target.value)} className="w-full border border-slate-200 rounded-lg px-3 h-[34px] text-[12px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-400" style={{ fontFamily: F }} />
                 </div>
               </div>
 
@@ -619,7 +619,7 @@ export function POGenerationFlow({
                   <select value={shippingMethod} onChange={e => setShippingMethod(e.target.value)} className="w-full border border-slate-200 rounded-lg px-3 h-[34px] text-[12px] text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-400" style={{ fontFamily: F }}>
                     <option>Standard Ground Shipping</option>
                     <option>Express Delivery</option>
-                    <option>Vendor Delivery</option>
+                    <option>Supplier Delivery</option>
                     <option>Pickup</option>
                     <option>N/A</option>
                   </select>
@@ -762,7 +762,7 @@ export function POGenerationFlow({
                 <h3 className="text-[12px] font-semibold text-slate-900" style={{ fontFamily: F }}>PO Summary</h3>
                 {[
                   ["PO Number", generatedPO?.poNumber || poNumber],
-                  ["Vendor", vendor],
+                  ["Supplier", supplier],
                   ["Total Value", formatCurrency(totalAmount)],
                   ["Source PR", sourcePR],
                   ["Project", projectName],
@@ -811,7 +811,7 @@ export function POGenerationFlow({
                 <div className="space-y-1.5">
                   {[
                     ["Stamp the PO PDF with your digital signature, name & timestamp", <PenLine key="1" size={11} className="text-green-600 shrink-0 mt-0.5" />],
-                    [`Email signed PO to ${vendor} at ${vendorEmail}`, <Mail key="2" size={11} className="text-green-600 shrink-0 mt-0.5" />],
+                    [`Email signed PO to ${supplier} at ${supplierEmail}`, <Mail key="2" size={11} className="text-green-600 shrink-0 mt-0.5" />],
                     ["Push to Purchase Order Management & Contract Repository", <Package key="3" size={11} className="text-green-600 shrink-0 mt-0.5" />],
                     ["Alert Contract Coordinator for delivery tracking", <Truck key="4" size={11} className="text-green-600 shrink-0 mt-0.5" />],
                   ].map(([text, icon], i) => (
@@ -874,11 +874,11 @@ export function POGenerationFlow({
                 <h3 className="text-[12px] font-semibold text-slate-900 mb-2" style={{ fontFamily: F }}>Dispatch Summary</h3>
                 {[
                   ["PO Number", generatedPO?.poNumber || poNumber],
-                  ["Vendor", vendor],
+                  ["Supplier", supplier],
                   ["Total Value", formatCurrency(totalAmount)],
                   ["Signed By", getCurrentUserName()],
                   ["Authority", signatureAuthority],
-                  ["Vendor Notified", vendorEmail],
+                  ["Supplier Notified", supplierEmail],
                   ["Expected Delivery", formatDate(deliveryDate)],
                 ].map(([label, val]) => (
                   <div key={label} className="flex justify-between text-[11px]" style={{ fontFamily: F }}>
@@ -937,7 +937,7 @@ export function POGenerationFlow({
               <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-2">
                 {[
                   ["PO Number", generatedPO?.poNumber || poNumber],
-                  ["Vendor", vendor],
+                  ["Supplier", supplier],
                   ["Total Value", formatCurrency(totalAmount)],
                   ["Authority Level", signatureAuthority],
                   ["Signed By", signatureData.employeeName],
@@ -954,7 +954,7 @@ export function POGenerationFlow({
               <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
                 <AlertTriangle size={14} className="text-amber-600 mt-0.5 shrink-0" />
                 <p className="text-[10px] text-amber-700" style={{ fontFamily: F }}>
-                  Upon confirmation, the system will automatically email the signed PO to the vendor, push it to the PO Management module, and notify the Contract Coordinator.
+                  Upon confirmation, the system will automatically email the signed PO to the supplier, push it to the PO Management module, and notify the Contract Coordinator.
                 </p>
               </div>
             </div>

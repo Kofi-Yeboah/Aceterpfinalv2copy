@@ -1,22 +1,22 @@
 // ──────────────────────────────────────────────────────────────────────────────
-// Vendor & Consultant master data.
+// Supplier & Consultant master data.
 //
 // This is the single source of truth the requirements assume when they say
-// "Sourcing Module: Select vendors directly from approved list", "Block vendor
-// from future solicitations", and "The rating of the consultant or the vendor on
-// past performance must be visible in both places". Previously the vendor list
+// "Sourcing Module: Select suppliers directly from approved list", "Block supplier
+// from future solicitations", and "The rating of the consultant or the supplier on
+// past performance must be visible in both places". Previously the supplier list
 // lived inside Suppliers.tsx while Sourcing carried its own hardcoded copy, so
 // none of that could hold.
 //
-// Everything that decides whether a vendor may be engaged — suspension,
+// Everything that decides whether a supplier may be engaged — suspension,
 // blacklisting, document expiry, sanctions screening, performance history —
 // resolves through `checkSourcingEligibility` here.
 // ──────────────────────────────────────────────────────────────────────────────
 
 import { notify, scheduleReminder, resolveReminder } from "./notificationStore";
 
-export type VendorType = "Firm" | "Individual";
-export type VendorStatus =
+export type SupplierType = "Firm" | "Individual";
+export type SupplierStatus =
   | "Active"
   | "Pending Onboarding"
   | "Flagged"
@@ -41,7 +41,7 @@ export interface HistoricalRate {
 }
 
 /** One completed evaluation, as captured at contract mid-term or close-out. */
-export interface VendorEvaluation {
+export interface SupplierEvaluation {
   id: string;
   contractNumber: string;
   contractTitle: string;
@@ -54,8 +54,8 @@ export interface VendorEvaluation {
   comments: string;
 }
 
-/** Award history so a vendor profile can show contracts and totals to date. */
-export interface VendorContractRecord {
+/** Award history so a supplier profile can show contracts and totals to date. */
+export interface SupplierContractRecord {
   contractNumber: string;
   title: string;
   value: number;
@@ -64,23 +64,23 @@ export interface VendorContractRecord {
   fundingSource?: string;
 }
 
-export interface VendorStatusChange {
+export interface SupplierStatusChange {
   id: string;
   date: string;
-  from: VendorStatus;
-  to: VendorStatus;
+  from: SupplierStatus;
+  to: SupplierStatus;
   reason: string;
   performedBy: string;
   approvedBy?: string;
 }
 
-interface VendorBase {
+interface SupplierBase {
   id: string;
-  vendorId: string;
+  supplierId: string;
   category: string;
   subCategory: string;
   riskLevel: RiskLevel;
-  status: VendorStatus;
+  status: SupplierStatus;
   performance: PerformanceScore;
   totalOrders: number;
   totalSpend: number;
@@ -92,14 +92,14 @@ interface VendorBase {
   bankValidated?: boolean;
   bankValidatedBy?: string;
   sanctionsChecked?: boolean;
-  evaluations?: VendorEvaluation[];
-  contractHistory?: VendorContractRecord[];
-  statusHistory?: VendorStatusChange[];
+  evaluations?: SupplierEvaluation[];
+  contractHistory?: SupplierContractRecord[];
+  statusHistory?: SupplierStatusChange[];
   /** Source of the record, for the "registered via portal" audit question. */
   registrationSource?: "Internal" | "Self-Registration";
 }
 
-export interface FirmVendor extends VendorBase {
+export interface FirmSupplier extends SupplierBase {
   type: "Firm";
   legalBusinessName: string;
   registrationNumber: string;
@@ -114,7 +114,7 @@ export interface FirmVendor extends VendorBase {
   specialization?: string[];
 }
 
-export interface IndividualVendor extends VendorBase {
+export interface IndividualSupplier extends SupplierBase {
   type: "Individual";
   legalName: string;
   contactEmail: string;
@@ -128,18 +128,18 @@ export interface IndividualVendor extends VendorBase {
   historicalRates: HistoricalRate[];
 }
 
-export type Vendor = FirmVendor | IndividualVendor;
+export type Supplier = FirmSupplier | IndividualSupplier;
 
 // ── Shared reference data ───────────────────────────────────────────────────
 
-export const VENDOR_CATEGORIES = ["Goods", "Works", "Consulting", "Non-Consulting Services"];
+export const SUPPLIER_CATEGORIES = ["Goods", "Works", "Consulting", "Non-Consulting Services"];
 export const SUB_CATEGORIES: Record<string, string[]> = {
   Goods: ["IT Equipment", "Office Supplies", "Medical Supplies", "Vehicles", "Furniture"],
   Works: ["Construction", "Renovation", "Installation", "Maintenance"],
   Consulting: ["Management Consulting", "IT Consulting", "Financial Advisory", "Legal Services", "Research"],
   "Non-Consulting Services": ["Logistics", "Catering", "Security", "Cleaning", "Printing"],
 };
-export const VENDOR_STATUSES: VendorStatus[] = [
+export const SUPPLIER_STATUSES: SupplierStatus[] = [
   "Active", "Pending Onboarding", "Flagged", "Blacklisted", "Suspended", "Pending Reactivation",
 ];
 export const RISK_LEVELS: RiskLevel[] = ["Low", "Medium", "High"];
@@ -205,9 +205,9 @@ export function subscribe(listener: Listener) {
 let nextFirmSeq = 1009;
 let nextIndividualSeq = 2007;
 
-let vendors: Vendor[] = [
+let suppliers: Supplier[] = [
   {
-    id: "f1", vendorId: "VND-1001", type: "Firm", legalBusinessName: "Tech Solutions Inc.",
+    id: "f1", supplierId: "SUP-1001", type: "Firm", legalBusinessName: "Tech Solutions Inc.",
     registrationNumber: "CS-2018-45678", taxId: "TIN-GH-2345678", registeredAddress: "14 Independence Ave, Accra",
     contactPerson: "John Smith", email: "john@techsolutions.com", phone: "+233 20 123 4567",
     bankName: "GCB Bank", bankAccountNumber: "****4521", category: "Goods", subCategory: "IT Equipment",
@@ -223,7 +223,7 @@ let vendors: Vendor[] = [
     ],
   },
   {
-    id: "f2", vendorId: "VND-1002", type: "Firm", legalBusinessName: "Office Depot Ltd.",
+    id: "f2", supplierId: "SUP-1002", type: "Firm", legalBusinessName: "Office Depot Ltd.",
     registrationNumber: "CS-2016-34521", taxId: "TIN-GH-1234567", registeredAddress: "23 Oxford Street, Osu, Accra",
     contactPerson: "Sarah Johnson", email: "sarah@officedepot.com", phone: "+233 24 234 5678",
     bankName: "Ecobank Ghana", bankAccountNumber: "****7892", category: "Goods", subCategory: "Office Supplies",
@@ -236,7 +236,7 @@ let vendors: Vendor[] = [
     bankValidated: true, bankValidatedBy: "Abena Osei", sanctionsChecked: true, registrationSource: "Internal",
   },
   {
-    id: "f3", vendorId: "VND-1003", type: "Firm", legalBusinessName: "PrintWorks Ghana Ltd",
+    id: "f3", supplierId: "SUP-1003", type: "Firm", legalBusinessName: "PrintWorks Ghana Ltd",
     registrationNumber: "CS-2019-56789", taxId: "TIN-GH-3456789", registeredAddress: "5 Ring Road East, Accra",
     contactPerson: "Michael Brown", email: "michael@printworks.com.gh", phone: "+233 27 345 6789",
     bankName: "Stanbic Bank", bankAccountNumber: "****3341", category: "Goods", subCategory: "Office Supplies",
@@ -266,7 +266,7 @@ let vendors: Vendor[] = [
     ],
   },
   {
-    id: "f4", vendorId: "VND-1004", type: "Firm", legalBusinessName: "La Palm Royal Beach Hotel",
+    id: "f4", supplierId: "SUP-1004", type: "Firm", legalBusinessName: "La Palm Royal Beach Hotel",
     registrationNumber: "CS-2005-12345", taxId: "TIN-GH-9876543", registeredAddress: "La Beach Road, Trade Fair, Accra",
     contactPerson: "Emily Davis", email: "events@lapalmhotel.com", phone: "+233 30 271 2500",
     bankName: "Standard Chartered", bankAccountNumber: "****6654", category: "Non-Consulting Services", subCategory: "Catering",
@@ -279,7 +279,7 @@ let vendors: Vendor[] = [
     bankValidated: true, sanctionsChecked: true, registrationSource: "Internal",
   },
   {
-    id: "f5", vendorId: "VND-1005", type: "Firm", legalBusinessName: "MedSupply GH",
+    id: "f5", supplierId: "SUP-1005", type: "Firm", legalBusinessName: "MedSupply GH",
     registrationNumber: "CS-2020-78901", taxId: "TIN-GH-6543210", registeredAddress: "12 Liberation Road, Accra",
     contactPerson: "Grace Owusu", email: "grace@medsupplygh.com", phone: "+233 26 456 7890",
     bankName: "Absa Bank", bankAccountNumber: "****8812", category: "Goods", subCategory: "Medical Supplies",
@@ -292,7 +292,7 @@ let vendors: Vendor[] = [
     bankValidated: true, sanctionsChecked: true, registrationSource: "Internal",
   },
   {
-    id: "f6", vendorId: "VND-1006", type: "Firm", legalBusinessName: "CreativeEdge Designs",
+    id: "f6", supplierId: "SUP-1006", type: "Firm", legalBusinessName: "CreativeEdge Designs",
     registrationNumber: "CS-2021-23456", taxId: "TIN-GH-4567890", registeredAddress: "8 Cantonments Rd, Accra",
     contactPerson: "Tom Anderson", email: "tom@creativeedge.com.gh", phone: "+233 55 567 8901",
     bankName: "Fidelity Bank", bankAccountNumber: "****2209", category: "Consulting", subCategory: "Management Consulting",
@@ -305,7 +305,7 @@ let vendors: Vendor[] = [
     sanctionsChecked: true, registrationSource: "Internal",
   },
   {
-    id: "f7", vendorId: "VND-1007", type: "Firm", legalBusinessName: "Kwame Construction Ltd",
+    id: "f7", supplierId: "SUP-1007", type: "Firm", legalBusinessName: "Kwame Construction Ltd",
     registrationNumber: "CS-2015-89012", taxId: "TIN-GH-7890123", registeredAddress: "Industrial Area, Tema",
     contactPerson: "Kwame Asante", email: "kwame@kwameconstruction.com", phone: "+233 20 678 9012",
     bankName: "GCB Bank", bankAccountNumber: "****5567", category: "Works", subCategory: "Construction",
@@ -321,7 +321,7 @@ let vendors: Vendor[] = [
     ],
   },
   {
-    id: "f8", vendorId: "VND-1008", type: "Firm", legalBusinessName: "ABC Logistics Group",
+    id: "f8", supplierId: "SUP-1008", type: "Firm", legalBusinessName: "ABC Logistics Group",
     registrationNumber: "CS-2017-34567", taxId: "TIN-GH-8901234", registeredAddress: "3 North Industrial Area, Accra",
     contactPerson: "Rachel Green", email: "rachel@abclogistics.com.gh", phone: "+233 24 789 0123",
     bankName: "Zenith Bank", bankAccountNumber: "****1198", category: "Non-Consulting Services", subCategory: "Logistics",
@@ -337,7 +337,7 @@ let vendors: Vendor[] = [
     ],
   },
   {
-    id: "i1", vendorId: "VND-2001", type: "Individual", legalName: "Dr. Kwesi Appiah",
+    id: "i1", supplierId: "SUP-2001", type: "Individual", legalName: "Dr. Kwesi Appiah",
     contactEmail: "kwesi.appiah@consultant.com", contactPhone: "+233 20 111 2222",
     idType: "Passport", idNumber: "G****4521", residentialAddress: "15 East Legon, Accra",
     bankName: "GCB Bank", bankAccountNumber: "****9901", category: "Consulting", subCategory: "Research",
@@ -359,7 +359,7 @@ let vendors: Vendor[] = [
     ],
   },
   {
-    id: "i2", vendorId: "VND-2002", type: "Individual", legalName: "Prof. Ama Benyiwa",
+    id: "i2", supplierId: "SUP-2002", type: "Individual", legalName: "Prof. Ama Benyiwa",
     contactEmail: "ama.benyiwa@university.edu.gh", contactPhone: "+233 24 222 3333",
     idType: "National ID", idNumber: "GHA****6789", residentialAddress: "22 Labone, Accra",
     bankName: "Ecobank Ghana", bankAccountNumber: "****5543", category: "Consulting", subCategory: "Financial Advisory",
@@ -377,7 +377,7 @@ let vendors: Vendor[] = [
     bankValidated: true, sanctionsChecked: true, registrationSource: "Internal",
   },
   {
-    id: "i3", vendorId: "VND-2003", type: "Individual", legalName: "Nana Yaw Mensah",
+    id: "i3", supplierId: "SUP-2003", type: "Individual", legalName: "Nana Yaw Mensah",
     contactEmail: "nana.yaw@facilitator.com", contactPhone: "+233 55 333 4444",
     idType: "National ID", idNumber: "GHA****3456", residentialAddress: "7 Airport Residential, Accra",
     bankName: "Stanbic Bank", bankAccountNumber: "****7782", category: "Consulting", subCategory: "Management Consulting",
@@ -395,7 +395,7 @@ let vendors: Vendor[] = [
     bankValidated: true, sanctionsChecked: true, registrationSource: "Internal",
   },
   {
-    id: "i4", vendorId: "VND-2004", type: "Individual", legalName: "Akosua Frimpong",
+    id: "i4", supplierId: "SUP-2004", type: "Individual", legalName: "Akosua Frimpong",
     contactEmail: "akosua.f@legalconsult.com", contactPhone: "+233 26 444 5555",
     idType: "Passport", idNumber: "G****7890", residentialAddress: "31 Dzorwulu, Accra",
     bankName: "Fidelity Bank", bankAccountNumber: "****3301", category: "Consulting", subCategory: "Legal Services",
@@ -412,7 +412,7 @@ let vendors: Vendor[] = [
     bankValidated: true, sanctionsChecked: true, registrationSource: "Internal",
   },
   {
-    id: "i5", vendorId: "VND-2005", type: "Individual", legalName: "Kofi Adu-Gyamfi",
+    id: "i5", supplierId: "SUP-2005", type: "Individual", legalName: "Kofi Adu-Gyamfi",
     contactEmail: "kofi.adu@techconsulting.com", contactPhone: "+233 27 555 6666",
     idType: "National ID", idNumber: "GHA****1234", residentialAddress: "9 Roman Ridge, Accra",
     bankName: "Absa Bank", bankAccountNumber: "****6645", category: "Consulting", subCategory: "IT Consulting",
@@ -427,7 +427,7 @@ let vendors: Vendor[] = [
     sanctionsChecked: true, registrationSource: "Internal",
   },
   {
-    id: "i6", vendorId: "VND-2006", type: "Individual", legalName: "Efua Mensah-Bonsu",
+    id: "i6", supplierId: "SUP-2006", type: "Individual", legalName: "Efua Mensah-Bonsu",
     contactEmail: "efua.mb@researcher.org", contactPhone: "+233 50 666 7777",
     idType: "Passport", idNumber: "G****5678", residentialAddress: "4 Spintex Road, Accra",
     bankName: "Standard Chartered", bankAccountNumber: "****2234", category: "Consulting", subCategory: "Research",
@@ -450,15 +450,15 @@ let vendors: Vendor[] = [
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
-export function vendorDisplayName(v: Vendor): string {
+export function supplierDisplayName(v: Supplier): string {
   return v.type === "Firm" ? v.legalBusinessName : v.legalName;
 }
 
-export function vendorEmail(v: Vendor): string {
+export function supplierEmail(v: Supplier): string {
   return v.type === "Firm" ? v.email : v.contactEmail;
 }
 
-export function vendorAddress(v: Vendor): string {
+export function supplierAddress(v: Supplier): string {
   return v.type === "Firm" ? v.registeredAddress : v.residentialAddress;
 }
 
@@ -478,19 +478,19 @@ function daysUntil(dateStr: string): number {
   return Math.round(ms / 86_400_000);
 }
 
-export function getExpiredDocs(v: Vendor): string[] {
+export function getExpiredDocs(v: Supplier): string[] {
   return Object.entries(v.documentExpiry)
     .filter(([, exp]) => exp < todayStr())
     .map(([doc]) => doc);
 }
 
-export function getExpiringDocs(v: Vendor, withinDays = 30): { doc: string; expiry: string; daysLeft: number }[] {
+export function getExpiringDocs(v: Supplier, withinDays = 30): { doc: string; expiry: string; daysLeft: number }[] {
   return Object.entries(v.documentExpiry)
     .map(([doc, expiry]) => ({ doc, expiry, daysLeft: daysUntil(expiry) }))
     .filter((d) => d.daysLeft >= 0 && d.daysLeft <= withinDays);
 }
 
-export function getMissingDocs(v: Vendor): string[] {
+export function getMissingDocs(v: Supplier): string[] {
   const required = v.type === "Firm" ? FIRM_DOC_CHECKLIST : INDIVIDUAL_DOC_CHECKLIST;
   return required.filter((d) => !v.documents.includes(d));
 }
@@ -501,20 +501,20 @@ export function isSanctioned(name: string): boolean {
 }
 
 /** Existing records whose name is the same or a near-match, for the duplicate flag. */
-export function findPotentialDuplicates(name: string, excludeId?: string): Vendor[] {
+export function findPotentialDuplicates(name: string, excludeId?: string): Supplier[] {
   const normalise = (s: string) =>
     s.toLowerCase().replace(/\b(ltd|limited|inc|llc|plc|co|company|group|gh|ghana)\b/g, "").replace(/[^a-z0-9]/g, "");
   const target = normalise(name);
   if (!target) return [];
-  return vendors.filter((v) => {
+  return suppliers.filter((v) => {
     if (v.id === excludeId) return false;
-    const other = normalise(vendorDisplayName(v));
+    const other = normalise(supplierDisplayName(v));
     return other === target || other.includes(target) || target.includes(other);
   });
 }
 
 /** Auto risk score, recomputed whenever performance, docs or status change. */
-export function computeRiskLevel(v: Vendor): RiskLevel {
+export function computeRiskLevel(v: Supplier): RiskLevel {
   let score = 0;
   const avg = avgScore(v.performance);
   if (avg > 0 && avg < 5) score += 3;
@@ -527,37 +527,37 @@ export function computeRiskLevel(v: Vendor): RiskLevel {
   if (v.status === "Suspended") score += 3;
   if (v.status === "Blacklisted") score += 4;
 
-  if (isSanctioned(vendorDisplayName(v))) score += 4;
+  if (isSanctioned(supplierDisplayName(v))) score += 4;
 
   return score >= 4 ? "High" : score >= 2 ? "Medium" : "Low";
 }
 
-/** All the automatic warnings the requirements ask to be raised on a vendor. */
-export interface VendorFlags {
+/** All the automatic warnings the requirements ask to be raised on a supplier. */
+export interface SupplierFlags {
   expiredDocs: string[];
   expiringDocs: { doc: string; expiry: string; daysLeft: number }[];
   missingDocs: string[];
   sanctioned: boolean;
-  duplicates: Vendor[];
+  duplicates: Supplier[];
   poorPerformance: boolean;
   bankUnvalidated: boolean;
 }
 
-export function getVendorFlags(v: Vendor): VendorFlags {
+export function getSupplierFlags(v: Supplier): SupplierFlags {
   const avg = avgScore(v.performance);
   return {
     expiredDocs: getExpiredDocs(v),
     expiringDocs: getExpiringDocs(v),
     missingDocs: getMissingDocs(v),
-    sanctioned: isSanctioned(vendorDisplayName(v)),
-    duplicates: findPotentialDuplicates(vendorDisplayName(v), v.id),
+    sanctioned: isSanctioned(supplierDisplayName(v)),
+    duplicates: findPotentialDuplicates(supplierDisplayName(v), v.id),
     poorPerformance: avg > 0 && avg < 5,
     bankUnvalidated: !v.bankValidated,
   };
 }
 
-export function hasVendorWarning(v: Vendor): boolean {
-  const f = getVendorFlags(v);
+export function hasSupplierWarning(v: Supplier): boolean {
+  const f = getSupplierFlags(v);
   return (
     f.expiredDocs.length > 0 ||
     f.expiringDocs.length > 0 ||
@@ -569,17 +569,17 @@ export function hasVendorWarning(v: Vendor): boolean {
 
 // ── Reads ───────────────────────────────────────────────────────────────────
 
-export function getVendors(): Vendor[] {
-  return vendors;
+export function getSuppliers(): Supplier[] {
+  return suppliers;
 }
 
-export function getVendorById(id: string): Vendor | undefined {
-  return vendors.find((v) => v.id === id || v.vendorId === id);
+export function getSupplierById(id: string): Supplier | undefined {
+  return suppliers.find((v) => v.id === id || v.supplierId === id);
 }
 
-export function findVendorByName(name: string): Vendor | undefined {
+export function findSupplierByName(name: string): Supplier | undefined {
   const n = name.trim().toLowerCase();
-  return vendors.find((v) => vendorDisplayName(v).trim().toLowerCase() === n);
+  return suppliers.find((v) => supplierDisplayName(v).trim().toLowerCase() === n);
 }
 
 export interface EligibilityResult {
@@ -591,36 +591,36 @@ export interface EligibilityResult {
 }
 
 /**
- * The gate Sourcing consults before a vendor can be invited or awarded.
- * Blacklisted, suspended and sanctioned vendors are blocked outright; poor
- * performers and vendors with lapsed compliance documents may proceed only with
+ * The gate Sourcing consults before a supplier can be invited or awarded.
+ * Blacklisted, suspended and sanctioned suppliers are blocked outright; poor
+ * performers and suppliers with lapsed compliance documents may proceed only with
  * management approval.
  */
-export function checkSourcingEligibility(vendorRef: string): EligibilityResult {
-  const v = getVendorById(vendorRef) ?? findVendorByName(vendorRef);
+export function checkSourcingEligibility(supplierRef: string): EligibilityResult {
+  const v = getSupplierById(supplierRef) ?? findSupplierByName(supplierRef);
   if (!v) {
     return {
       eligible: false,
       requiresManagementApproval: false,
-      blockingReasons: [`"${vendorRef}" is not in the vendor database. Register the vendor before inviting them.`],
+      blockingReasons: [`"${supplierRef}" is not in the supplier database. Register the supplier before inviting them.`],
       warnings: [],
     };
   }
 
-  const flags = getVendorFlags(v);
+  const flags = getSupplierFlags(v);
   const blocking: string[] = [];
   const warnings: string[] = [];
   let requiresApproval = false;
 
-  if (v.status === "Blacklisted") blocking.push("Vendor is blacklisted and cannot be engaged.");
-  if (v.status === "Suspended") blocking.push("Vendor is suspended pending resolution of a compliance matter.");
-  if (flags.sanctioned) blocking.push("Vendor appears on a donor/statutory sanctions list.");
-  if (v.status === "Pending Onboarding") blocking.push("Vendor onboarding is not yet approved by Procurement.");
+  if (v.status === "Blacklisted") blocking.push("Supplier is blacklisted and cannot be engaged.");
+  if (v.status === "Suspended") blocking.push("Supplier is suspended pending resolution of a compliance matter.");
+  if (flags.sanctioned) blocking.push("Supplier appears on a donor/statutory sanctions list.");
+  if (v.status === "Pending Onboarding") blocking.push("Supplier onboarding is not yet approved by Procurement.");
   if (v.status === "Pending Reactivation") blocking.push("Reactivation is awaiting Senior Management approval.");
 
   if (v.status === "Flagged") {
     requiresApproval = true;
-    warnings.push("Vendor is flagged — engagement requires Senior Management approval.");
+    warnings.push("Supplier is flagged — engagement requires Senior Management approval.");
   }
   if (flags.poorPerformance) {
     requiresApproval = true;
@@ -652,9 +652,9 @@ export function checkSourcingEligibility(vendorRef: string): EligibilityResult {
   };
 }
 
-/** Vendors selectable in Sourcing, optionally narrowed to a procurement category. */
-export function getEligibleVendors(category?: string): Vendor[] {
-  return vendors
+/** Suppliers selectable in Sourcing, optionally narrowed to a procurement category. */
+export function getEligibleSuppliers(category?: string): Supplier[] {
+  return suppliers
     .filter((v) => checkSourcingEligibility(v.id).eligible)
     .filter((v) => !category || v.category === category || category === "All Categories")
     .sort((a, b) => avgScore(b.performance) - avgScore(a.performance));
@@ -662,35 +662,35 @@ export function getEligibleVendors(category?: string): Vendor[] {
 
 // ── Registration ────────────────────────────────────────────────────────────
 
-export function peekNextVendorId(type: VendorType): string {
-  return type === "Firm" ? `VND-${nextFirmSeq}` : `VND-${nextIndividualSeq}`;
+export function peekNextSupplierId(type: SupplierType): string {
+  return type === "Firm" ? `SUP-${nextFirmSeq}` : `SUP-${nextIndividualSeq}`;
 }
 
 export type NewFirmInput = Omit<
-  FirmVendor,
-  "id" | "vendorId" | "type" | "riskLevel" | "status" | "performance" | "totalOrders" | "totalSpend" | "dateOnboarded"
-> & { status?: VendorStatus };
+  FirmSupplier,
+  "id" | "supplierId" | "type" | "riskLevel" | "status" | "performance" | "totalOrders" | "totalSpend" | "dateOnboarded"
+> & { status?: SupplierStatus };
 
 export type NewIndividualInput = Omit<
-  IndividualVendor,
-  "id" | "vendorId" | "type" | "riskLevel" | "status" | "performance" | "totalOrders" | "totalSpend" | "dateOnboarded"
-> & { status?: VendorStatus };
+  IndividualSupplier,
+  "id" | "supplierId" | "type" | "riskLevel" | "status" | "performance" | "totalOrders" | "totalSpend" | "dateOnboarded"
+> & { status?: SupplierStatus };
 
 /**
- * Creates a vendor record and returns it together with the flags raised during
+ * Creates a supplier record and returns it together with the flags raised during
  * screening, so the caller can surface duplicate/sanctions warnings.
  */
-export function registerVendor(
-  type: VendorType,
+export function registerSupplier(
+  type: SupplierType,
   input: NewFirmInput | NewIndividualInput,
   opts?: { registeredBy?: string; source?: "Internal" | "Self-Registration" }
-): { vendor: Vendor; flags: VendorFlags } {
+): { supplier: Supplier; flags: SupplierFlags } {
   const source = opts?.source ?? "Internal";
-  const vendorId = type === "Firm" ? `VND-${nextFirmSeq++}` : `VND-${nextIndividualSeq++}`;
+  const supplierId = type === "Firm" ? `SUP-${nextFirmSeq++}` : `SUP-${nextIndividualSeq++}`;
 
   const base = {
     id: `${type === "Firm" ? "f" : "i"}-${Date.now()}`,
-    vendorId,
+    supplierId,
     riskLevel: "Low" as RiskLevel,
     // A self-registration is never live until Procurement has reviewed it.
     status: input.status ?? "Pending Onboarding",
@@ -703,45 +703,45 @@ export function registerVendor(
     registrationSource: source,
   };
 
-  const vendor = (type === "Firm"
+  const supplier = (type === "Firm"
     ? { ...(input as NewFirmInput), ...base, type: "Firm" as const }
-    : { ...(input as NewIndividualInput), ...base, type: "Individual" as const }) as Vendor;
+    : { ...(input as NewIndividualInput), ...base, type: "Individual" as const }) as Supplier;
 
-  vendor.riskLevel = computeRiskLevel(vendor);
+  supplier.riskLevel = computeRiskLevel(supplier);
 
-  vendors = [...vendors, vendor];
-  const flags = getVendorFlags(vendor);
+  suppliers = [...suppliers, supplier];
+  const flags = getSupplierFlags(supplier);
 
   notify({
     category: flags.sanctioned || flags.duplicates.length > 0 ? "Alert" : "Info",
     module: "Supplier Management",
-    subject: `Vendor registration: ${vendorDisplayName(vendor)} (${vendorId})`,
+    subject: `Supplier registration: ${supplierDisplayName(supplier)} (${supplierId})`,
     body: [
-      `${source === "Self-Registration" ? "Self-registration received via the vendor portal" : "Vendor registered internally"} by ${opts?.registeredBy ?? "Procurement"}.`,
+      `${source === "Self-Registration" ? "Self-registration received via the supplier portal" : "Supplier registered internally"} by ${opts?.registeredBy ?? "Procurement"}.`,
       flags.sanctioned ? "⚠ SANCTIONS MATCH — this name appears on a debarment list. Do not approve without escalation." : "",
       flags.duplicates.length > 0
-        ? `⚠ Possible duplicate of: ${flags.duplicates.map((d) => `${vendorDisplayName(d)} (${d.vendorId})`).join(", ")}.`
+        ? `⚠ Possible duplicate of: ${flags.duplicates.map((d) => `${supplierDisplayName(d)} (${d.supplierId})`).join(", ")}.`
         : "",
       flags.missingDocs.length > 0 ? `Outstanding documents: ${flags.missingDocs.join(", ")}.` : "",
-      "Awaiting Procurement review before the vendor becomes active.",
+      "Awaiting Procurement review before the supplier becomes active.",
     ]
       .filter(Boolean)
       .join("\n"),
     recipientRole: "Procurement",
-    entityRef: vendorId,
+    entityRef: supplierId,
     priority: flags.sanctioned ? "Urgent" : "Normal",
   });
 
-  syncDocumentExpiryReminders(vendor);
+  syncDocumentExpiryReminders(supplier);
   notifyListeners();
-  return { vendor, flags };
+  return { supplier, flags };
 }
 
-export function updateVendor(id: string, updates: Partial<Vendor>, performedBy: string): Vendor | undefined {
-  let updated: Vendor | undefined;
-  vendors = vendors.map((v) => {
+export function updateSupplier(id: string, updates: Partial<Supplier>, performedBy: string): Supplier | undefined {
+  let updated: Supplier | undefined;
+  suppliers = suppliers.map((v) => {
     if (v.id !== id) return v;
-    const merged = { ...v, ...updates } as Vendor;
+    const merged = { ...v, ...updates } as Supplier;
     merged.riskLevel = computeRiskLevel(merged);
     updated = merged;
     return merged;
@@ -751,10 +751,10 @@ export function updateVendor(id: string, updates: Partial<Vendor>, performedBy: 
     notify({
       category: "Info",
       module: "Supplier Management",
-      subject: `Vendor record updated: ${vendorDisplayName(updated)}`,
+      subject: `Supplier record updated: ${supplierDisplayName(updated)}`,
       body: `Fields changed: ${Object.keys(updates).join(", ")}. Updated by ${performedBy}.`,
       recipientRole: "Procurement",
-      entityRef: updated.vendorId,
+      entityRef: updated.supplierId,
     });
     notifyListeners();
   }
@@ -762,38 +762,38 @@ export function updateVendor(id: string, updates: Partial<Vendor>, performedBy: 
 }
 
 /** Procurement sign-off that moves a pending registration to Active. */
-export function approveVendorRegistration(id: string, approvedBy: string): Vendor | undefined {
-  const v = getVendorById(id);
+export function approveSupplierRegistration(id: string, approvedBy: string): Supplier | undefined {
+  const v = getSupplierById(id);
   if (!v) return undefined;
   const missing = getMissingDocs(v);
   if (missing.length > 0) {
     notify({
       category: "Alert",
       module: "Supplier Management",
-      subject: `Cannot approve ${vendorDisplayName(v)} — documents outstanding`,
+      subject: `Cannot approve ${supplierDisplayName(v)} — documents outstanding`,
       body: `The following mandatory documents are still missing: ${missing.join(", ")}.`,
       recipientRole: "Procurement",
-      entityRef: v.vendorId,
+      entityRef: v.supplierId,
       priority: "High",
     });
     return undefined;
   }
-  return changeVendorStatus(id, "Active", "Registration reviewed and approved.", approvedBy);
+  return changeSupplierStatus(id, "Active", "Registration reviewed and approved.", approvedBy);
 }
 
 // ── Status transitions ──────────────────────────────────────────────────────
 
-export function changeVendorStatus(
+export function changeSupplierStatus(
   id: string,
-  to: VendorStatus,
+  to: SupplierStatus,
   reason: string,
   performedBy: string,
   approvedBy?: string
-): Vendor | undefined {
-  let updated: Vendor | undefined;
-  vendors = vendors.map((v) => {
+): Supplier | undefined {
+  let updated: Supplier | undefined;
+  suppliers = suppliers.map((v) => {
     if (v.id !== id) return v;
-    const change: VendorStatusChange = {
+    const change: SupplierStatusChange = {
       id: `vsh-${Date.now()}`,
       date: todayStr(),
       from: v.status,
@@ -802,7 +802,7 @@ export function changeVendorStatus(
       performedBy,
       approvedBy,
     };
-    const merged: Vendor = {
+    const merged: Supplier = {
       ...v,
       status: to,
       pendingReview: to === "Active" ? false : v.pendingReview,
@@ -818,12 +818,12 @@ export function changeVendorStatus(
     notify({
       category: blocking ? "Alert" : "Info",
       module: "Supplier Management",
-      subject: `${vendorDisplayName(updated)} — status changed to ${to}`,
+      subject: `${supplierDisplayName(updated)} — status changed to ${to}`,
       body: `${reason}\n\nActioned by ${performedBy}${approvedBy ? `, approved by ${approvedBy}` : ""}.${
-        blocking ? "\n\nThis vendor is now blocked from all solicitations and awards." : ""
+        blocking ? "\n\nThis supplier is now blocked from all solicitations and awards." : ""
       }${to === "Pending Reactivation" ? "\n\nReactivation requires Senior Management approval." : ""}`,
       recipientRole: to === "Pending Reactivation" ? "Senior Management" : "Procurement",
-      entityRef: updated.vendorId,
+      entityRef: updated.supplierId,
       priority: blocking ? "High" : "Normal",
       channels: blocking ? ["In-App", "Email", "SMS"] : ["In-App", "Email"],
     });
@@ -833,18 +833,18 @@ export function changeVendorStatus(
 }
 
 export function requestReactivation(id: string, reason: string, requestedBy: string) {
-  return changeVendorStatus(id, "Pending Reactivation", reason, requestedBy);
+  return changeSupplierStatus(id, "Pending Reactivation", reason, requestedBy);
 }
 
 export function approveReactivation(id: string, approvedBy: string) {
-  return changeVendorStatus(id, "Active", "Reactivation approved by Senior Management.", approvedBy, approvedBy);
+  return changeSupplierStatus(id, "Active", "Reactivation approved by Senior Management.", approvedBy, approvedBy);
 }
 
 // ── Finance: banking validation ─────────────────────────────────────────────
 
-export function validateBankingDetails(id: string, validatedBy: string): Vendor | undefined {
-  let updated: Vendor | undefined;
-  vendors = vendors.map((v) => {
+export function validateBankingDetails(id: string, validatedBy: string): Supplier | undefined {
+  let updated: Supplier | undefined;
+  suppliers = suppliers.map((v) => {
     if (v.id !== id) return v;
     updated = { ...v, bankValidated: true, bankValidatedBy: validatedBy };
     return updated;
@@ -853,10 +853,10 @@ export function validateBankingDetails(id: string, validatedBy: string): Vendor 
     notify({
       category: "Info",
       module: "Supplier Management",
-      subject: `Banking details validated — ${vendorDisplayName(updated)}`,
+      subject: `Banking details validated — ${supplierDisplayName(updated)}`,
       body: `Finance confirmed the bank account on file. Validated by ${validatedBy}.`,
       recipientRole: "Procurement",
-      entityRef: updated.vendorId,
+      entityRef: updated.supplierId,
     });
     notifyListeners();
   }
@@ -865,15 +865,15 @@ export function validateBankingDetails(id: string, validatedBy: string): Vendor 
 
 // ── Documents ───────────────────────────────────────────────────────────────
 
-export function addVendorDocument(
+export function addSupplierDocument(
   id: string,
   doc: { label: string; expiry?: string },
   uploadedBy: string
-): Vendor | undefined {
-  let updated: Vendor | undefined;
-  vendors = vendors.map((v) => {
+): Supplier | undefined {
+  let updated: Supplier | undefined;
+  suppliers = suppliers.map((v) => {
     if (v.id !== id) return v;
-    const merged: Vendor = {
+    const merged: Supplier = {
       ...v,
       documents: v.documents.includes(doc.label) ? v.documents : [...v.documents, doc.label],
       documentExpiry: doc.expiry ? { ...v.documentExpiry, [doc.label]: doc.expiry } : v.documentExpiry,
@@ -884,15 +884,15 @@ export function addVendorDocument(
   });
   if (updated) {
     // A renewed certificate clears the reminder that was chasing it.
-    resolveReminder(`${updated.vendorId}:${doc.label}`, "Vendor Document");
+    resolveReminder(`${updated.supplierId}:${doc.label}`, "Supplier Document");
     syncDocumentExpiryReminders(updated);
     notify({
       category: "Info",
       module: "Supplier Management",
-      subject: `Document uploaded — ${vendorDisplayName(updated)}`,
+      subject: `Document uploaded — ${supplierDisplayName(updated)}`,
       body: `${doc.label} uploaded by ${uploadedBy}${doc.expiry ? `, valid until ${doc.expiry}` : ""}.`,
       recipientRole: "Procurement",
-      entityRef: updated.vendorId,
+      entityRef: updated.supplierId,
     });
     notifyListeners();
   }
@@ -900,17 +900,17 @@ export function addVendorDocument(
 }
 
 /** Queues renewal reminders for every compliance document nearing expiry. */
-export function syncDocumentExpiryReminders(v: Vendor) {
+export function syncDocumentExpiryReminders(v: Supplier) {
   Object.entries(v.documentExpiry).forEach(([doc, expiry]) => {
     if (!EXPIRY_CRITICAL_DOCS.includes(doc)) return;
     const daysLeft = daysUntil(expiry);
     if (daysLeft > 60) return;
     scheduleReminder({
-      entityRef: `${v.vendorId}:${doc}`,
-      entityType: "Vendor Document",
+      entityRef: `${v.supplierId}:${doc}`,
+      entityType: "Supplier Document",
       module: "Supplier Management",
-      subject: `${doc} for ${vendorDisplayName(v)} ${daysLeft < 0 ? "has expired" : `expires in ${daysLeft} days`}`,
-      body: `${doc} on file for ${vendorDisplayName(v)} (${v.vendorId}) is valid until ${expiry}. Request a renewed copy from the vendor to keep them eligible for solicitation.`,
+      subject: `${doc} for ${supplierDisplayName(v)} ${daysLeft < 0 ? "has expired" : `expires in ${daysLeft} days`}`,
+      body: `${doc} on file for ${supplierDisplayName(v)} (${v.supplierId}) is valid until ${expiry}. Request a renewed copy from the supplier to keep them eligible for solicitation.`,
       recipientRole: "Procurement",
       dueDate: expiry,
       reminderAfterHours: 24,
@@ -921,7 +921,7 @@ export function syncDocumentExpiryReminders(v: Vendor) {
 
 /** Runs the expiry sweep across the whole register — called on module load. */
 export function syncAllDocumentReminders() {
-  vendors.forEach(syncDocumentExpiryReminders);
+  suppliers.forEach(syncDocumentExpiryReminders);
 }
 
 // ── Performance ─────────────────────────────────────────────────────────────
@@ -940,22 +940,22 @@ const STANDARD_CRITERIA_MAP: Record<string, keyof PerformanceScore> = {
 };
 
 /**
- * Records a contract evaluation against the vendor profile and rolls it into the
+ * Records a contract evaluation against the supplier profile and rolls it into the
  * headline performance score, which is what makes the rating "visible in both
  * places" as the requirement puts it.
  */
-export function recordVendorEvaluation(
-  vendorRef: string,
-  evaluation: Omit<VendorEvaluation, "id">
-): Vendor | undefined {
-  const target = getVendorById(vendorRef) ?? findVendorByName(vendorRef);
+export function recordSupplierEvaluation(
+  supplierRef: string,
+  evaluation: Omit<SupplierEvaluation, "id">
+): Supplier | undefined {
+  const target = getSupplierById(supplierRef) ?? findSupplierByName(supplierRef);
   if (!target) return undefined;
 
-  let updated: Vendor | undefined;
-  vendors = vendors.map((v) => {
+  let updated: Supplier | undefined;
+  suppliers = suppliers.map((v) => {
     if (v.id !== target.id) return v;
 
-    const record: VendorEvaluation = { ...evaluation, id: `ve-${Date.now()}` };
+    const record: SupplierEvaluation = { ...evaluation, id: `ve-${Date.now()}` };
     const evaluations = [...(v.evaluations ?? []), record];
 
     // Recompute the headline score as the mean across every evaluation that
@@ -980,7 +980,7 @@ export function recordVendorEvaluation(
       compliance: mean(buckets.compliance) || v.performance.compliance,
     };
 
-    const merged: Vendor = { ...v, evaluations, performance };
+    const merged: Supplier = { ...v, evaluations, performance };
     merged.riskLevel = computeRiskLevel(merged);
     updated = merged;
     return merged;
@@ -992,38 +992,38 @@ export function recordVendorEvaluation(
     notify({
       category: poor ? "Alert" : "Info",
       module: "Supplier Management",
-      subject: `${evaluation.evaluationType} evaluation recorded — ${vendorDisplayName(updated)} scored ${score}/10`,
+      subject: `${evaluation.evaluationType} evaluation recorded — ${supplierDisplayName(updated)} scored ${score}/10`,
       body: poor
-        ? `Performance on ${evaluation.contractNumber} scored ${score}/10, below the threshold of 5. This vendor is now flagged: future shortlisting or award requires Senior Management approval.`
+        ? `Performance on ${evaluation.contractNumber} scored ${score}/10, below the threshold of 5. This supplier is now flagged: future shortlisting or award requires Senior Management approval.`
         : `Performance on ${evaluation.contractNumber} scored ${score}/10. Recorded by ${evaluation.evaluator}${
             evaluation.supervisorApproval ? `, approved by ${evaluation.supervisorApproval}` : ""
           }.`,
       recipientRole: "Procurement",
-      entityRef: updated.vendorId,
+      entityRef: updated.supplierId,
       priority: poor ? "High" : "Normal",
     });
 
     if (poor && updated.status === "Active") {
-      changeVendorStatus(
+      changeSupplierStatus(
         updated.id,
         "Flagged",
         `Automatic flag: ${evaluation.evaluationType} evaluation on ${evaluation.contractNumber} scored ${score}/10 (below 5).`,
         "System"
       );
-      updated = getVendorById(updated.id);
+      updated = getSupplierById(updated.id);
     }
     notifyListeners();
   }
   return updated;
 }
 
-/** Called on contract award so the vendor profile shows engagement history. */
-export function recordContractAward(vendorRef: string, record: VendorContractRecord): Vendor | undefined {
-  const target = getVendorById(vendorRef) ?? findVendorByName(vendorRef);
+/** Called on contract award so the supplier profile shows engagement history. */
+export function recordContractAward(supplierRef: string, record: SupplierContractRecord): Supplier | undefined {
+  const target = getSupplierById(supplierRef) ?? findSupplierByName(supplierRef);
   if (!target) return undefined;
 
-  let updated: Vendor | undefined;
-  vendors = vendors.map((v) => {
+  let updated: Supplier | undefined;
+  suppliers = suppliers.map((v) => {
     if (v.id !== target.id) return v;
     const history = v.contractHistory ?? [];
     if (history.some((h) => h.contractNumber === record.contractNumber)) {
@@ -1043,11 +1043,11 @@ export function recordContractAward(vendorRef: string, record: VendorContractRec
 }
 
 /** Appends a consultant's agreed rate so the last-3-assignments view stays current. */
-export function recordConsultantRate(vendorRef: string, rate: HistoricalRate): Vendor | undefined {
-  const target = getVendorById(vendorRef) ?? findVendorByName(vendorRef);
+export function recordConsultantRate(supplierRef: string, rate: HistoricalRate): Supplier | undefined {
+  const target = getSupplierById(supplierRef) ?? findSupplierByName(supplierRef);
   if (!target || target.type !== "Individual") return undefined;
-  let updated: Vendor | undefined;
-  vendors = vendors.map((v) => {
+  let updated: Supplier | undefined;
+  suppliers = suppliers.map((v) => {
     if (v.id !== target.id || v.type !== "Individual") return v;
     updated = { ...v, historicalRates: [rate, ...v.historicalRates].slice(0, 10) };
     return updated;
@@ -1058,43 +1058,43 @@ export function recordConsultantRate(vendorRef: string, rate: HistoricalRate): V
 
 // ── Aggregate reads for dashboards ──────────────────────────────────────────
 
-export function getVendorStats() {
-  const active = vendors.filter((v) => v.status === "Active").length;
-  const pending = vendors.filter((v) => v.status === "Pending Onboarding" || v.pendingReview).length;
-  const flagged = vendors.filter(
+export function getSupplierStats() {
+  const active = suppliers.filter((v) => v.status === "Active").length;
+  const pending = suppliers.filter((v) => v.status === "Pending Onboarding" || v.pendingReview).length;
+  const flagged = suppliers.filter(
     (v) => v.status === "Flagged" || v.status === "Suspended" || v.status === "Blacklisted"
   ).length;
-  const expiring = vendors.filter((v) => getExpiringDocs(v).length > 0 || getExpiredDocs(v).length > 0).length;
-  const scored = vendors.filter((v) => avgScore(v.performance) > 0);
+  const expiring = suppliers.filter((v) => getExpiringDocs(v).length > 0 || getExpiredDocs(v).length > 0).length;
+  const scored = suppliers.filter((v) => avgScore(v.performance) > 0);
   const avgPerformance = scored.length
     ? +(scored.reduce((sum, v) => sum + avgScore(v.performance), 0) / scored.length).toFixed(1)
     : 0;
 
-  return { total: vendors.length, active, pending, flagged, expiring, avgPerformance };
+  return { total: suppliers.length, active, pending, flagged, expiring, avgPerformance };
 }
 
-/** Ranked leaderboard used by the vendor performance report. */
-export function getPerformanceRanking(): { vendor: Vendor; score: number; contracts: number }[] {
-  return vendors
+/** Ranked leaderboard used by the supplier performance report. */
+export function getPerformanceRanking(): { supplier: Supplier; score: number; contracts: number }[] {
+  return suppliers
     .filter((v) => avgScore(v.performance) > 0)
-    .map((v) => ({ vendor: v, score: avgScore(v.performance), contracts: v.contractHistory?.length ?? v.totalOrders }))
+    .map((v) => ({ supplier: v, score: avgScore(v.performance), contracts: v.contractHistory?.length ?? v.totalOrders }))
     .sort((a, b) => b.score - a.score);
 }
 
-export function getVendorsByCategory(): { category: string; count: number }[] {
+export function getSuppliersByCategory(): { category: string; count: number }[] {
   const counts = new Map<string, number>();
-  vendors.forEach((v) => counts.set(v.category, (counts.get(v.category) ?? 0) + 1));
+  suppliers.forEach((v) => counts.set(v.category, (counts.get(v.category) ?? 0) + 1));
   return Array.from(counts, ([category, count]) => ({ category, count }));
 }
 
-export function getBlockedVendors(): Vendor[] {
-  return vendors.filter(
+export function getBlockedSuppliers(): Supplier[] {
+  return suppliers.filter(
     (v) => v.status === "Blacklisted" || v.status === "Suspended" || v.status === "Flagged"
   );
 }
 
-export function getVendorsWithDocumentIssues(): { vendor: Vendor; expired: string[]; expiring: { doc: string; expiry: string; daysLeft: number }[] }[] {
-  return vendors
-    .map((v) => ({ vendor: v, expired: getExpiredDocs(v), expiring: getExpiringDocs(v) }))
+export function getSuppliersWithDocumentIssues(): { supplier: Supplier; expired: string[]; expiring: { doc: string; expiry: string; daysLeft: number }[] }[] {
+  return suppliers
+    .map((v) => ({ supplier: v, expired: getExpiredDocs(v), expiring: getExpiringDocs(v) }))
     .filter((r) => r.expired.length > 0 || r.expiring.length > 0);
 }

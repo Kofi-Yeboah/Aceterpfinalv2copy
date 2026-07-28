@@ -28,12 +28,12 @@ import {
   type ContractChangeRequest, type PerformanceEvaluation,
 } from "../lib/contractStore";
 import {
-  getVendors, getVendorsByCategory, getBlockedVendors, getVendorsWithDocumentIssues,
-  getExpiredDocs, getMissingDocs, checkSourcingEligibility, getVendorFlags,
-  avgScore, vendorDisplayName,
-  subscribe as subscribeVendors,
-  type Vendor,
-} from "../lib/vendorStore";
+  getSuppliers, getSuppliersByCategory, getBlockedSuppliers, getSuppliersWithDocumentIssues,
+  getExpiredDocs, getMissingDocs, checkSourcingEligibility, getSupplierFlags,
+  avgScore, supplierDisplayName,
+  subscribe as subscribeSuppliers,
+  type Supplier,
+} from "../lib/supplierStore";
 import { exportToCSV, exportToExcel, exportToPDF, type ExportColumn } from "../lib/exportUtils";
 import { getCurrentUser, can, denialReason, subscribe as subscribeUser } from "../lib/currentUser";
 import { ProcurementTabs, ProcurementTabBar, type ProcurementTab } from "./procurement/ProcurementTabs";
@@ -49,7 +49,7 @@ const TIME_PERIODS = ["Last 30 Days", "Last 3 Months", "Last 6 Months", "Last Ye
 const PERIOD_FILTERS = ["Monthly", "Quarterly", "Annually", "Custom Range", "All Time"] as const;
 const EXPIRY_WINDOWS = [30, 60, 90] as const;
 
-type TabKey = "planning" | "sourcing" | "vendors" | "contracts" | "donors" | "combined";
+type TabKey = "planning" | "sourcing" | "suppliers" | "contracts" | "donors" | "combined";
 type PeriodFilter = (typeof PERIOD_FILTERS)[number];
 type Lookback = (typeof TIME_PERIODS)[number];
 type ExpiryWindow = (typeof EXPIRY_WINDOWS)[number];
@@ -57,7 +57,7 @@ type ExpiryWindow = (typeof EXPIRY_WINDOWS)[number];
 const TAB_LABELS: Record<TabKey, string> = {
   planning: "Planning & Orders",
   sourcing: "Sourcing & Contracts",
-  vendors: "Vendors & KPIs",
+  suppliers: "Suppliers & KPIs",
   contracts: "Contract Reports",
   donors: "Donor Reports",
   combined: "Combined Analysis",
@@ -89,7 +89,7 @@ const KPI_TARGETS = {
   paymentWithinDays: 30,
   cycleTime: 90,
   costSavings: 85,
-  vendorQuality: 88,
+  supplierQuality: 88,
   onTimeDelivery: 92,
   compliance: 95,
   paymentTimeliness: 90,
@@ -247,7 +247,7 @@ function daysBetween(from: string | undefined, to: string | undefined): number |
   return Math.round(ms / 86_400_000);
 }
 
-/** Loose name match so contracts, invoices and vendor records line up. */
+/** Loose name match so contracts, invoices and supplier records line up. */
 function normaliseName(name: string): string {
   return name
     .toLowerCase()
@@ -351,7 +351,7 @@ function complianceChecks(c: AwardedContract): Record<ComplianceMetric, boolean>
 }
 
 /** Prequalification standing, derived from status and document currency. */
-function prequalBucket(v: Vendor): "Prequalified" | "Pending Review" | "Expired" | "Suspended" | "Flagged" {
+function prequalBucket(v: Supplier): "Prequalified" | "Pending Review" | "Expired" | "Suspended" | "Flagged" {
   if (v.status === "Blacklisted" || v.status === "Suspended") return "Suspended";
   if (v.status === "Pending Onboarding" || v.status === "Pending Reactivation" || v.pendingReview) return "Pending Review";
   if (getExpiredDocs(v).length > 0) return "Expired";
@@ -379,7 +379,7 @@ function useStoreVersion(): number {
     const unsubscribers = [
       subscribeProcurement(bump),
       subscribeContracts(bump),
-      subscribeVendors(bump),
+      subscribeSuppliers(bump),
       subscribeUser(bump),
     ];
     return () => unsubscribers.forEach(u => u());
@@ -838,10 +838,10 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
 
     const deliverables = contracts.flatMap(c => (c.deliverables ?? []).map(deliverable => ({ contract: c, deliverable })));
 
-    const vendors = getVendors();
-    const vendorByName = new Map<string, Vendor>();
-    vendors.forEach(v => vendorByName.set(normaliseName(vendorDisplayName(v)), v));
-    const lookupVendor = (name: string) => vendorByName.get(normaliseName(name || ""));
+    const suppliers = getSuppliers();
+    const supplierByName = new Map<string, Supplier>();
+    suppliers.forEach(v => supplierByName.set(normaliseName(supplierDisplayName(v)), v));
+    const lookupSupplier = (name: string) => supplierByName.get(normaliseName(name || ""));
 
     // Cross-module links: contract → requisition → plan item.
     const contractBySourcePR = new Map<string, AwardedContract>();
@@ -862,7 +862,7 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
       allPlanItems, planItems, approvedPlanItems,
       allPRs, prs, pos, sourcing,
       allContracts, contracts, invoices, changeRequests, risks, deliverables,
-      vendors, lookupVendor,
+      suppliers, lookupSupplier,
       contractBySourcePR, planByPPId, prByNumber, contractFunding,
     };
   }, [version, range]);
@@ -900,12 +900,12 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
     const onTimeDeliveries = settledDeliverables.filter(d => (daysBetween(d.dueDate, d.actualDate) ?? 0) <= 0).length;
     const onTimeDelivery = pct(onTimeDeliveries, settledDeliverables.length);
 
-    const scoredVendors = base.vendors.filter(v => avgScore(v.performance) > 0);
-    const vendorQuality = scoredVendors.length
-      ? (scoredVendors.reduce((s, v) => s + avgScore(v.performance), 0) / scoredVendors.length) * 10
+    const scoredSuppliers = base.suppliers.filter(v => avgScore(v.performance) > 0);
+    const supplierQuality = scoredSuppliers.length
+      ? (scoredSuppliers.reduce((s, v) => s + avgScore(v.performance), 0) / scoredSuppliers.length) * 10
       : 0;
-    const responsiveness = scoredVendors.length
-      ? (scoredVendors.reduce((s, v) => s + v.performance.responsiveness, 0) / scoredVendors.length) * 10
+    const responsiveness = scoredSuppliers.length
+      ? (scoredSuppliers.reduce((s, v) => s + v.performance.responsiveness, 0) / scoredSuppliers.length) * 10
       : 0;
 
     const complianceTotals = base.contracts.reduce(
@@ -944,7 +944,7 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
     const radar = [
       { metric: "Cycle Time", score: +cycleScore.toFixed(1), target: KPI_TARGETS.cycleTime },
       { metric: "Cost Savings", score: +savingsScore.toFixed(1), target: KPI_TARGETS.costSavings },
-      { metric: "Vendor Quality", score: +vendorQuality.toFixed(1), target: KPI_TARGETS.vendorQuality },
+      { metric: "Supplier Quality", score: +supplierQuality.toFixed(1), target: KPI_TARGETS.supplierQuality },
       { metric: "On-Time Delivery", score: +onTimeDelivery.toFixed(1), target: KPI_TARGETS.onTimeDelivery },
       { metric: "Compliance", score: +compliance.toFixed(1), target: KPI_TARGETS.compliance },
       { metric: "Payment Timeliness", score: +paymentTimeliness.toFixed(1), target: KPI_TARGETS.paymentTimeliness },
@@ -959,7 +959,7 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
       paidInvoiceCount: paymentDurations.length,
       onTimeDelivery,
       settledDeliverableCount: settledDeliverables.length,
-      vendorQuality,
+      supplierQuality,
       responsiveness,
       compliance,
       executed,
@@ -1123,22 +1123,22 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
       overdue: rows.filter(r => r.daysLeft < 0).length,
     };
   }, [base.allContracts, expiryWindow, version]);
-  /* ── Vendor & KPI derivations ──────────────────────────────────────────── */
+  /* ── Supplier & KPI derivations ──────────────────────────────────────────── */
 
-  const vendorData = useMemo(() => {
-    const prequalCounts = Array.from(groupBy(base.vendors, v => prequalBucket(v)))
+  const supplierData = useMemo(() => {
+    const prequalCounts = Array.from(groupBy(base.suppliers, v => prequalBucket(v)))
       .map(([name, list]) => ({ name, value: list.length, color: PREQUAL_COLORS[name] ?? "#94a3b8" }))
       .sort((a, b) => b.value - a.value);
 
-    const byCategory = getVendorsByCategory().map((c, i) => ({ ...c, color: PALETTE[i % PALETTE.length] }));
-    const blocked = getBlockedVendors();
-    const docIssues = getVendorsWithDocumentIssues();
-    const docIssueIds = new Set(docIssues.map(d => d.vendor.id));
+    const byCategory = getSuppliersByCategory().map((c, i) => ({ ...c, color: PALETTE[i % PALETTE.length] }));
+    const blocked = getBlockedSuppliers();
+    const docIssues = getSuppliersWithDocumentIssues();
+    const docIssueIds = new Set(docIssues.map(d => d.supplier.id));
 
     /** Every counterparty seen on a contract, invoice or sourcing case. */
     interface Party {
       name: string;
-      vendor?: Vendor;
+      supplier?: Supplier;
       contracts: AwardedContract[];
       invoices: ContractInvoice[];
       sourcingCases: number;
@@ -1149,16 +1149,16 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
       const key = normaliseName(name) || name.toLowerCase();
       let entry = parties.get(key);
       if (!entry) {
-        entry = { name, vendor: base.lookupVendor(name), contracts: [], invoices: [], sourcingCases: 0, sourcingWins: 0 };
+        entry = { name, supplier: base.lookupSupplier(name), contracts: [], invoices: [], sourcingCases: 0, sourcingWins: 0 };
         parties.set(key, entry);
       }
       return entry;
     };
-    base.vendors.forEach(v => partyFor(vendorDisplayName(v)));
+    base.suppliers.forEach(v => partyFor(supplierDisplayName(v)));
     base.contracts.forEach(c => partyFor(c.party).contracts.push(c));
-    base.invoices.forEach(r => partyFor(r.invoice.vendor || r.contract.party).invoices.push(r.invoice));
+    base.invoices.forEach(r => partyFor(r.invoice.supplier || r.contract.party).invoices.push(r.invoice));
     base.sourcing.forEach(s => {
-      const p = partyFor(s.vendor);
+      const p = partyFor(s.supplier);
       p.sourcingCases += 1;
       if (s.approvalStatus === "Approved") p.sourcingWins += 1;
     });
@@ -1169,7 +1169,7 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
       .map(p => {
         const totalValue = p.contracts.reduce((s, c) => s + c.value, 0);
         return {
-          vendor: p.name,
+          supplier: p.name,
           bidsSubmitted: p.sourcingCases,
           awardsWon: Math.max(p.sourcingWins, p.contracts.length),
           winRate: pct(Math.max(p.sourcingWins, p.contracts.length), p.sourcingCases),
@@ -1191,7 +1191,7 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
         const totalPaid = paid.reduce((s, i) => s + (i.amountPaid ?? i.amount), 0);
         const durations = p.invoices.map(invoiceDaysToPay).filter((d): d is number => d !== null && d >= 0);
         return {
-          vendor: p.name,
+          supplier: p.name,
           invoicesSubmitted: p.invoices.length,
           paid: paid.length,
           pending: pending.length,
@@ -1211,25 +1211,25 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
         Array.from(groupBy(p.contracts, c => base.contractFunding(c))).map(([donor, list]) => {
           const evals = list.map(c => latestEvaluation(c)).filter((e): e is PerformanceEvaluation => !!e);
           const perfFromEvals = average(evals.map(e => e.overallScore * 10));
-          const perfFromVendor = p.vendor && avgScore(p.vendor.performance) > 0 ? avgScore(p.vendor.performance) * 10 : null;
+          const perfFromSupplier = p.supplier && avgScore(p.supplier.performance) > 0 ? avgScore(p.supplier.performance) * 10 : null;
           return {
-            vendor: p.name,
+            supplier: p.name,
             donor,
             contracts: list.length,
             totalValue: list.reduce((s, c) => s + c.value, 0),
             paid: list.reduce((s, c) => s + getContractFinancials(c).totalPaid, 0),
-            avgPerformance: perfFromEvals ?? perfFromVendor,
+            avgPerformance: perfFromEvals ?? perfFromSupplier,
           };
         })
       )
       .sort((a, b) => b.totalValue - a.totalValue);
 
-    const master = base.vendors.map(v => {
-      const p = parties.get(normaliseName(vendorDisplayName(v)));
+    const master = base.suppliers.map(v => {
+      const p = parties.get(normaliseName(supplierDisplayName(v)));
       const contractValue = p ? p.contracts.reduce((s, c) => s + c.value, 0) : 0;
       return {
-        vendor: v,
-        name: vendorDisplayName(v),
+        supplier: v,
+        name: supplierDisplayName(v),
         contractsInPeriod: p?.contracts.length ?? 0,
         contractValue,
         lifetimeContracts: v.contractHistory?.length ?? v.totalOrders,
@@ -1298,7 +1298,7 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
     return {
       prequalCounts, byCategory, blocked, docIssues, participation, payments, engagement,
       master, cycleTrend, paymentTrend,
-      prequalifiedCount: base.vendors.filter(v => prequalBucket(v) === "Prequalified").length,
+      prequalifiedCount: base.suppliers.filter(v => prequalBucket(v) === "Prequalified").length,
     };
   }, [base]);
 
@@ -1512,15 +1512,15 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
     };
   }, [base, version]);
 
-  /* ── Combined (vendor × donor) derivations ─────────────────────────────── */
+  /* ── Combined (supplier × donor) derivations ─────────────────────────────── */
 
   const combined = useMemo(() => {
-    const vendorDonorPerformance = base.contracts.map(c => {
-      const vendor = base.lookupVendor(c.party);
+    const supplierDonorPerformance = base.contracts.map(c => {
+      const supplier = base.lookupSupplier(c.party);
       const ev = latestEvaluation(c);
-      const score = ev ? ev.overallScore * 10 : vendor && avgScore(vendor.performance) > 0 ? avgScore(vendor.performance) * 10 : null;
+      const score = ev ? ev.overallScore * 10 : supplier && avgScore(supplier.performance) > 0 ? avgScore(supplier.performance) * 10 : null;
       return {
-        vendor: c.party,
+        supplier: c.party,
         donor: base.contractFunding(c),
         contract: c.contractNumber,
         value: c.value,
@@ -1531,17 +1531,17 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
       };
     }).sort((a, b) => (b.performanceScore ?? -1) - (a.performanceScore ?? -1));
 
-    const spendByDonorVendor = Array.from(
+    const spendByDonorSupplier = Array.from(
       groupBy(base.contracts, c => `${base.contractFunding(c)}||${c.party}`)
     )
       .map(([key, list]) => {
-        const [donor, vendor] = key.split("||");
+        const [donor, supplier] = key.split("||");
         const invoiced = list.reduce(
           (s, c) => s + (c.invoices ?? []).reduce((t, i) => t + i.amount, 0), 0
         );
         const paid = list.reduce((s, c) => s + getContractFinancials(c).totalPaid, 0);
         return {
-          donor, vendor,
+          donor, supplier,
           contracts: list.length,
           awarded: list.reduce((s, c) => s + c.value, 0),
           invoiced,
@@ -1551,23 +1551,23 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
       })
       .sort((a, b) => b.awarded - a.awarded);
 
-    const donorNames = Array.from(new Set(spendByDonorVendor.map(r => r.donor)));
-    const vendorNames = Array.from(new Set(spendByDonorVendor.map(r => r.vendor)));
+    const donorNames = Array.from(new Set(spendByDonorSupplier.map(r => r.donor)));
+    const supplierNames = Array.from(new Set(spendByDonorSupplier.map(r => r.supplier)));
     const spendStack = donorNames.map(donor => {
       const row: Record<string, string | number> = { donor };
-      vendorNames.forEach(v => {
-        row[v] = spendByDonorVendor.filter(r => r.donor === donor && r.vendor === v).reduce((s, r) => s + r.paid, 0);
+      supplierNames.forEach(v => {
+        row[v] = spendByDonorSupplier.filter(r => r.donor === donor && r.supplier === v).reduce((s, r) => s + r.paid, 0);
       });
       return row;
     });
 
-    const topPerformers = vendorData.participation
+    const topPerformers = supplierData.participation
       .map(p => {
-        const rows = vendorDonorPerformance.filter(r => normaliseName(r.vendor) === normaliseName(p.vendor));
+        const rows = supplierDonorPerformance.filter(r => normaliseName(r.supplier) === normaliseName(p.supplier));
         const scores = rows.map(r => r.performanceScore).filter((s): s is number => s !== null);
         const donors = Array.from(new Set(rows.map(r => r.donor)));
         return {
-          vendor: p.vendor,
+          supplier: p.supplier,
           contractsWon: p.awardsWon,
           totalValue: p.totalContractValue,
           avgScore: average(scores),
@@ -1580,11 +1580,11 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
 
     const topPerFunding = donorNames
       .map(donor => {
-        const candidates = spendByDonorVendor.filter(r => r.donor === donor);
+        const candidates = spendByDonorSupplier.filter(r => r.donor === donor);
         const ranked = candidates
           .map(c => {
-            const scores = vendorDonorPerformance
-              .filter(r => r.donor === donor && r.vendor === c.vendor)
+            const scores = supplierDonorPerformance
+              .filter(r => r.donor === donor && r.supplier === c.supplier)
               .map(r => r.performanceScore)
               .filter((s): s is number => s !== null);
             return { ...c, score: average(scores) };
@@ -1594,15 +1594,15 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
       })
       .filter((r): r is NonNullable<typeof r> => r !== null);
 
-    const scored = vendorDonorPerformance.filter(r => r.performanceScore !== null);
+    const scored = supplierDonorPerformance.filter(r => r.performanceScore !== null);
 
     return {
-      vendorDonorPerformance, spendByDonorVendor, spendStack, vendorNames,
+      supplierDonorPerformance, spendByDonorSupplier, spendStack, supplierNames,
       topPerformers, topPerFunding,
       avgPerformance: average(scored.map(r => r.performanceScore as number)),
       scoredCount: scored.length,
     };
-  }, [base, vendorData.participation]);
+  }, [base, supplierData.participation]);
   /* ══════════════════════════════════════════════════════════════════════════
      RENDER
      ══════════════════════════════════════════════════════════════════════════ */
@@ -1610,10 +1610,10 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
   const screenTitle: Record<TabKey, { title: string; subtitle: string }> = {
     planning: { title: "Planning & Orders Report", subtitle: "Requisition pipeline, budget utilization, and purchase order trends" },
     sourcing: { title: "Sourcing & Contracts Report", subtitle: "RFQ status, bid submissions, invoices, contracts, and renewal alerts" },
-    vendors: { title: "Vendors & KPIs Report", subtitle: "Vendor performance, donor procurement, cycle times, and payment timeliness" },
+    suppliers: { title: "Suppliers & KPIs Report", subtitle: "Supplier performance, donor procurement, cycle times, and payment timeliness" },
     contracts: { title: "Contract Reports", subtitle: "Contract lifecycle, deliverables, invoices, variations, close-outs, and expiry alerts" },
     donors: { title: "Donor Reports", subtitle: "Donor procurement summaries, budget utilization, and spend analysis" },
-    combined: { title: "Combined Analysis", subtitle: "Cross-cutting vendor-donor performance, compliance, and top performers" },
+    combined: { title: "Combined Analysis", subtitle: "Cross-cutting supplier-donor performance, compliance, and top performers" },
   };
 
   const { title, subtitle } = screenTitle[activeTab];
@@ -1650,7 +1650,7 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
 
   const expiryColumns: TableColumn[] = [
     { key: "contract", header: "Contract", cell: refCell("contract") },
-    { key: "vendor", header: "Vendor" },
+    { key: "supplier", header: "Supplier" },
     { key: "endDate", header: "End Date", format: v => prettyDate(String(v ?? "")) },
     {
       key: "daysLeft", header: "Days Left", align: "center",
@@ -1672,7 +1672,7 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
   const expiryRows: ReportRow[] = expiry.rows.map(({ contract, daysLeft }) => ({
     __key: contract.id,
     contract: contract.contractNumber,
-    vendor: contract.party,
+    supplier: contract.party,
     endDate: contract.endDate,
     daysLeft,
     value: contract.value,
@@ -1840,9 +1840,9 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
         verdict: kpis.settledDeliverableCount ? verdictOf(kpis.onTimeDelivery, KPI_TARGETS.onTimeDelivery, false) : "Pending",
       },
       {
-        __key: "responsiveness", metric: "Vendor responsiveness",
+        __key: "responsiveness", metric: "Supplier responsiveness",
         value: kpis.responsiveness ? fmtPct(kpis.responsiveness) : "—",
-        target: fmtPct(80), basis: "Average responsiveness score across rated vendors",
+        target: fmtPct(80), basis: "Average responsiveness score across rated suppliers",
         verdict: kpis.responsiveness ? verdictOf(kpis.responsiveness, 80, false) : "Pending",
       },
     ];
@@ -2038,7 +2038,7 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
     const sourcingColumns: TableColumn[] = [
       { key: "ref", header: "Sourcing Ref", cell: refCell("ref") },
       { key: "title", header: "Title" },
-      { key: "vendor", header: "Vendor" },
+      { key: "supplier", header: "Supplier" },
       { key: "project", header: "Project" },
       { key: "sourcePR", header: "Source PR", cell: refCell("sourcePR") },
       { key: "value", header: "Estimated Value", format: moneyFormat, cell: moneyCell("value") },
@@ -2050,7 +2050,7 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
       __key: s.id,
       ref: s.rfqNumber,
       title: s.title,
-      vendor: s.vendor,
+      supplier: s.supplier,
       project: s.projectName,
       sourcePR: s.sourcePR,
       value: s.estimatedValue,
@@ -2078,7 +2078,7 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
     const invoiceColumns: TableColumn[] = [
       { key: "invoice", header: "Invoice", cell: refCell("invoice") },
       { key: "contract", header: "Contract", cell: refCell("contract") },
-      { key: "vendor", header: "Vendor" },
+      { key: "supplier", header: "Supplier" },
       { key: "via", header: "Received Via" },
       { key: "submitted", header: "Submitted", format: v => prettyDate(String(v ?? "")) },
       { key: "amount", header: "Amount", format: moneyFormat, cell: moneyCell("amount") },
@@ -2094,7 +2094,7 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
         __key: invoice.id,
         invoice: invoice.invoiceNumber,
         contract: contract.contractNumber,
-        vendor: invoice.vendor,
+        supplier: invoice.supplier,
         via: invoice.submittedVia,
         submitted: invoiceSubmittedDate(invoice),
         amount: invoice.amount,
@@ -2179,7 +2179,7 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
               { label: "Invoices Received", value: fmtNum(base.invoices.length), sub: fmt(sourcingData.totalInvoiced), icon: <FileText size={18} />, tone: "info" },
               { label: "Paid", value: fmtNum(base.invoices.filter(r => r.invoice.status === "Paid").length), sub: fmt(base.invoices.reduce((s, r) => s + (r.invoice.amountPaid ?? 0), 0)), icon: <CheckCircle2 size={18} />, tone: "success" },
               { label: "In Approval Chain", value: fmtNum(unpaid.length), sub: "awaiting a decision", icon: <Clock size={18} />, tone: "info" },
-              { label: "Queried", value: fmtNum(queried.length), sub: "returned to vendor", icon: <AlertTriangle size={18} />, tone: "danger" },
+              { label: "Queried", value: fmtNum(queried.length), sub: "returned to supplier", icon: <AlertTriangle size={18} />, tone: "danger" },
             ]} />
             <ReportSection title="Invoice and Payment Report" columns={invoiceColumns} rows={invoiceRows} meta={exportMeta}
               search={searchQuery} emptyMessage="No invoices in this period" emptyHint={noDataHint} />
@@ -2201,14 +2201,14 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
     );
   };
 
-  /* ── Tab 3: Vendors & KPIs ─────────────────────────────────────────────── */
+  /* ── Tab 3: Suppliers & KPIs ─────────────────────────────────────────────── */
 
-  const vendorTabs = ["Charts & Statistics", "Vendor Master List", "Participation", "Payments", "Prequalification", "Cycle & Timeliness"];
+  const supplierTabs = ["Charts & Statistics", "Supplier Master List", "Participation", "Payments", "Prequalification", "Cycle & Timeliness"];
 
-  const renderVendors = () => {
+  const renderSuppliers = () => {
     const masterColumns: TableColumn[] = [
-      { key: "vendorId", header: "Vendor ID", cell: refCell("vendorId") },
-      { key: "name", header: "Vendor / Consultant" },
+      { key: "supplierId", header: "Supplier ID", cell: refCell("supplierId") },
+      { key: "name", header: "Supplier / Consultant" },
       { key: "type", header: "Type" },
       { key: "category", header: "Category" },
       { key: "status", header: "Status", cell: badgeCell("status") },
@@ -2220,13 +2220,13 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
       { key: "eligible", header: "Sourcing Eligible", format: yesNoFormat, cell: yesNoCell("eligible") },
     ];
 
-    const masterRows: ReportRow[] = base.vendors.map(v => {
-      const flags = getVendorFlags(v);
+    const masterRows: ReportRow[] = base.suppliers.map(v => {
+      const flags = getSupplierFlags(v);
       const eligibility = checkSourcingEligibility(v.id);
       return {
         __key: v.id,
-        vendorId: v.vendorId,
-        name: vendorDisplayName(v),
+        supplierId: v.supplierId,
+        name: supplierDisplayName(v),
         type: v.type,
         category: v.category,
         status: v.status,
@@ -2240,7 +2240,7 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
     });
 
     const participationColumns: TableColumn[] = [
-      { key: "vendor", header: "Vendor" },
+      { key: "supplier", header: "Supplier" },
       { key: "bids", header: "Bids Submitted", align: "center", cell: countCell("bids") },
       { key: "awards", header: "Awards Won", align: "center", cell: countCell("awards") },
       { key: "winRate", header: "Win Rate", format: pctFormat, cell: scoreCell("winRate", 50, 25, "%") },
@@ -2249,9 +2249,9 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
       { key: "completed", header: "Completed", align: "center", cell: countCell("completed") },
     ];
 
-    const participationRows: ReportRow[] = vendorData.participation.map((p, i) => ({
+    const participationRows: ReportRow[] = supplierData.participation.map((p, i) => ({
       __key: `part-${i}`,
-      vendor: p.vendor,
+      supplier: p.supplier,
       bids: p.bidsSubmitted,
       awards: p.awardsWon,
       winRate: p.winRate,
@@ -2261,7 +2261,7 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
     }));
 
     const paymentColumns: TableColumn[] = [
-      { key: "vendor", header: "Vendor" },
+      { key: "supplier", header: "Supplier" },
       { key: "submitted", header: "Invoices", align: "center", cell: countCell("submitted") },
       { key: "paid", header: "Paid", align: "center", cell: countCell("paid") },
       { key: "pending", header: "In Chain", align: "center", cell: countCell("pending") },
@@ -2270,9 +2270,9 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
       { key: "avgDays", header: "Avg Days to Pay", align: "center", format: v => (v === null || v === undefined || v === "" ? "—" : `${Number(v).toFixed(1)}`) },
     ];
 
-    const paymentRows: ReportRow[] = vendorData.payments.map((p, i) => ({
+    const paymentRows: ReportRow[] = supplierData.payments.map((p, i) => ({
       __key: `pay-${i}`,
-      vendor: p.vendor,
+      supplier: p.supplier,
       submitted: p.invoicesSubmitted,
       paid: p.paid,
       pending: p.pending,
@@ -2282,8 +2282,8 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
     }));
 
     const prequalColumns: TableColumn[] = [
-      { key: "vendorId", header: "Vendor ID", cell: refCell("vendorId") },
-      { key: "name", header: "Vendor / Consultant" },
+      { key: "supplierId", header: "Supplier ID", cell: refCell("supplierId") },
+      { key: "name", header: "Supplier / Consultant" },
       { key: "category", header: "Category" },
       { key: "prequal", header: "Prequalification", cell: badgeCell("prequal") },
       { key: "score", header: "Score", align: "center", format: scoreFormat, cell: scoreCell("score", 8, 5) },
@@ -2292,13 +2292,13 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
       { key: "reason", header: "Eligibility" },
     ];
 
-    const prequalRows: ReportRow[] = base.vendors.map(v => {
-      const flags = getVendorFlags(v);
+    const prequalRows: ReportRow[] = base.suppliers.map(v => {
+      const flags = getSupplierFlags(v);
       const eligibility = checkSourcingEligibility(v.id);
       return {
         __key: `pq-${v.id}`,
-        vendorId: v.vendorId,
-        name: vendorDisplayName(v),
+        supplierId: v.supplierId,
+        name: supplierDisplayName(v),
         category: v.category,
         prequal: prequalBucket(v),
         score: avgScore(v.performance) || "",
@@ -2310,42 +2310,42 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
       };
     });
 
-    const blockedCount = base.vendors.filter(v => !checkSourcingEligibility(v.id).eligible).length;
-    const docIssueCount = base.vendors.filter(v => {
-      const f = getVendorFlags(v);
+    const blockedCount = base.suppliers.filter(v => !checkSourcingEligibility(v.id).eligible).length;
+    const docIssueCount = base.suppliers.filter(v => {
+      const f = getSupplierFlags(v);
       return f.expiredDocs.length > 0 || f.missingDocs.length > 0 || f.expiringDocs.length > 0;
     }).length;
 
     return (
       <div>
-        <SubTabBar tabs={vendorTabs} active={subTab} onChange={setSubTab} />
+        <SubTabBar tabs={supplierTabs} active={subTab} onChange={setSubTab} />
         <div className="space-y-6 p-6">
           {periodBar}
 
           {subTab === 0 && <>
             <ProcurementStatCards variant="flush" stats={[
-              { label: "Registered Vendors", value: fmtNum(base.vendors.length), sub: `${fmtNum(base.vendors.filter(v => v.status === "Active").length)} active`, icon: <Users size={18} />, tone: "info" },
-              { label: "Prequalified", value: fmtNum(vendorData.prequalifiedCount), sub: "eligible for sourcing", icon: <CheckCircle2 size={18} />, tone: "success" },
+              { label: "Registered Suppliers", value: fmtNum(base.suppliers.length), sub: `${fmtNum(base.suppliers.filter(v => v.status === "Active").length)} active`, icon: <Users size={18} />, tone: "info" },
+              { label: "Prequalified", value: fmtNum(supplierData.prequalifiedCount), sub: "eligible for sourcing", icon: <CheckCircle2 size={18} />, tone: "success" },
               { label: "Blocked or Restricted", value: fmtNum(blockedCount), sub: "cannot be awarded", icon: <AlertTriangle size={18} />, tone: "danger" },
               { label: "Document Issues", value: fmtNum(docIssueCount), sub: "expired, expiring or missing", icon: <FileText size={18} />, tone: "warning" },
             ]} />
 
             <div className="grid grid-cols-2 gap-4">
-              <ChartCard title="Prequalification Status" height={215} isEmpty={vendorData.prequalCounts.length === 0}
-                emptyMessage="No vendors registered" emptyHint={noDataHint}>
+              <ChartCard title="Prequalification Status" height={215} isEmpty={supplierData.prequalCounts.length === 0}
+                emptyMessage="No suppliers registered" emptyHint={noDataHint}>
                 <PieChart>
-                  <Pie data={vendorData.prequalCounts} cx="50%" cy="50%" innerRadius={45} outerRadius={78} paddingAngle={3} dataKey="value"
+                  <Pie data={supplierData.prequalCounts} cx="50%" cy="50%" innerRadius={45} outerRadius={78} paddingAngle={3} dataKey="value"
                     label={(props: any) => `${props.name}: ${props.value}`}>
-                    {vendorData.prequalCounts.map(e => <Cell key={`pq-${e.name}`} fill={e.color} />)}
+                    {supplierData.prequalCounts.map(e => <Cell key={`pq-${e.name}`} fill={e.color} />)}
                   </Pie>
                   <Tooltip contentStyle={{ fontFamily: F, fontSize: 11 }} />
                   <Legend wrapperStyle={{ fontSize: 10, fontFamily: F }} />
                 </PieChart>
               </ChartCard>
 
-              <ChartCard title="Payment Timeliness" height={215} isEmpty={vendorData.paymentTrend.length === 0}
+              <ChartCard title="Payment Timeliness" height={215} isEmpty={supplierData.paymentTrend.length === 0}
                 emptyMessage="No settled invoices in this period" emptyHint={noDataHint}>
-                <BarChart data={vendorData.paymentTrend} barGap={2}>
+                <BarChart data={supplierData.paymentTrend} barGap={2}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                   <XAxis dataKey="month" tick={{ fontSize: 9, fontFamily: F }} />
                   <YAxis tick={{ fontSize: 9, fontFamily: F }} allowDecimals={false} />
@@ -2358,9 +2358,9 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
               </ChartCard>
             </div>
 
-            <ChartCard title="Requisition-to-Contract Cycle Time" height={230} isEmpty={vendorData.cycleTrend.length === 0}
+            <ChartCard title="Requisition-to-Contract Cycle Time" height={230} isEmpty={supplierData.cycleTrend.length === 0}
               emptyMessage="No completed cycles in this period" emptyHint={noDataHint}>
-              <ComposedChart data={vendorData.cycleTrend}>
+              <ComposedChart data={supplierData.cycleTrend}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                 <XAxis dataKey="month" tick={{ fontSize: 9, fontFamily: F }} />
                 <YAxis tick={{ fontSize: 9, fontFamily: F }} label={{ value: "Days", angle: -90, position: "insideLeft", style: { fontSize: 10, fontFamily: F } }} />
@@ -2374,23 +2374,23 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
           </>}
 
           {subTab === 1 && (
-            <ReportSection title="Vendor and Consultant Master List" columns={masterColumns} rows={masterRows} meta={exportMeta}
-              search={searchQuery} emptyMessage="No vendors registered" emptyHint={noDataHint} />
+            <ReportSection title="Supplier and Consultant Master List" columns={masterColumns} rows={masterRows} meta={exportMeta}
+              search={searchQuery} emptyMessage="No suppliers registered" emptyHint={noDataHint} />
           )}
 
           {subTab === 2 && (
-            <ReportSection title="Vendor Procurement Participation" columns={participationColumns} rows={participationRows} meta={exportMeta}
-              search={searchQuery} emptyMessage="No vendor participation in this period" emptyHint={noDataHint} />
+            <ReportSection title="Supplier Procurement Participation" columns={participationColumns} rows={participationRows} meta={exportMeta}
+              search={searchQuery} emptyMessage="No supplier participation in this period" emptyHint={noDataHint} />
           )}
 
           {subTab === 3 && (
-            <ReportSection title="Vendor Payment and Invoice Report" columns={paymentColumns} rows={paymentRows} meta={exportMeta}
-              search={searchQuery} emptyMessage="No vendor invoices in this period" emptyHint={noDataHint} />
+            <ReportSection title="Supplier Payment and Invoice Report" columns={paymentColumns} rows={paymentRows} meta={exportMeta}
+              search={searchQuery} emptyMessage="No supplier invoices in this period" emptyHint={noDataHint} />
           )}
 
           {subTab === 4 && (
             <ReportSection title="Prequalification Status Report" columns={prequalColumns} rows={prequalRows} meta={exportMeta}
-              search={searchQuery} emptyMessage="No vendors registered" emptyHint={noDataHint} />
+              search={searchQuery} emptyMessage="No suppliers registered" emptyHint={noDataHint} />
           )}
 
           {subTab === 5 && <>
@@ -2400,8 +2400,8 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
               { label: "Contract → Payment", value: fmtDays(kpis.contractToPayment), sub: `target ${KPI_TARGETS.contractToPaymentDays} days`, icon: <DollarSign size={18} />, tone: "warning" },
               { label: "Invoice → Payment", value: fmtDays(average(base.invoices.map(r => invoiceDaysToPay(r.invoice)).filter((d): d is number => d !== null))), sub: `target ${KPI_TARGETS.paymentWithinDays} days`, icon: <CheckCircle2 size={18} />, tone: "success" },
             ]} />
-            <ReportSection title="Vendor Payment Timeliness" columns={paymentColumns} rows={paymentRows} meta={exportMeta}
-              search={searchQuery} emptyMessage="No vendor invoices in this period" emptyHint={noDataHint} />
+            <ReportSection title="Supplier Payment Timeliness" columns={paymentColumns} rows={paymentRows} meta={exportMeta}
+              search={searchQuery} emptyMessage="No supplier invoices in this period" emptyHint={noDataHint} />
           </>}
         </div>
       </div>
@@ -2416,7 +2416,7 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
     const activeColumns: TableColumn[] = [
       { key: "contract", header: "Contract", cell: refCell("contract") },
       { key: "title", header: "Title" },
-      { key: "vendor", header: "Vendor" },
+      { key: "supplier", header: "Supplier" },
       { key: "category", header: "Category" },
       { key: "funding", header: "Funding Source" },
       { key: "value", header: "Value", format: moneyFormat, cell: moneyCell("value") },
@@ -2435,7 +2435,7 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
         __key: c.id,
         contract: c.contractNumber,
         title: c.title,
-        vendor: c.party,
+        supplier: c.party,
         category: c.category,
         funding: base.contractFunding(c),
         value: c.value,
@@ -2452,7 +2452,7 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
 
     const deliverableColumns: TableColumn[] = [
       { key: "contract", header: "Contract", cell: refCell("contract") },
-      { key: "vendor", header: "Vendor" },
+      { key: "supplier", header: "Supplier" },
       { key: "description", header: "Deliverable" },
       { key: "due", header: "Due", format: v => prettyDate(String(v ?? "")) },
       { key: "actual", header: "Submitted", format: v => (v ? prettyDate(String(v)) : "—") },
@@ -2466,7 +2466,7 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
       (c.deliverables ?? []).map(d => ({
         __key: d.id,
         contract: c.contractNumber,
-        vendor: c.party,
+        supplier: c.party,
         description: d.description,
         due: d.dueDate,
         actual: d.actualDate ?? "",
@@ -2504,7 +2504,7 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
 
     const closeOutColumns: TableColumn[] = [
       { key: "contract", header: "Contract", cell: refCell("contract") },
-      { key: "vendor", header: "Vendor" },
+      { key: "supplier", header: "Supplier" },
       { key: "value", header: "Value", format: moneyFormat, cell: moneyCell("value") },
       { key: "paid", header: "Final Payments", format: moneyFormat, cell: moneyCell("paid") },
       { key: "readiness", header: "Close-Out Readiness", cell: progressCell("satisfied", "totalChecks") },
@@ -2521,7 +2521,7 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
       return {
         __key: `co-${c.id}`,
         contract: c.contractNumber,
-        vendor: c.party,
+        supplier: c.party,
         value: c.value,
         paid: f.totalPaid,
         satisfied: checks.filter(ch => ch.satisfied).length,
@@ -2536,7 +2536,7 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
 
     const riskColumns: TableColumn[] = [
       { key: "contract", header: "Contract", cell: refCell("contract") },
-      { key: "vendor", header: "Vendor" },
+      { key: "supplier", header: "Supplier" },
       { key: "value", header: "Value", format: moneyFormat, cell: moneyCell("value") },
       { key: "severity", header: "Severity", cell: badgeCell("severity") },
       { key: "riskCount", header: "Signals", align: "center", cell: countCell("riskCount", 1) },
@@ -2546,7 +2546,7 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
     const riskRows: ReportRow[] = base.risks.map(r => ({
       __key: `risk-${r.contract.id}`,
       contract: r.contract.contractNumber,
-      vendor: r.contract.party,
+      supplier: r.contract.party,
       value: r.contract.value,
       severity: r.severity,
       riskCount: r.risks.length,
@@ -2732,7 +2732,7 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
               { label: "Funding Sources", value: fmtNum(donorRows.length), sub: "with activity in scope", icon: <Users size={18} />, tone: "info" },
               { label: "Total Planned", value: fmt(donorRows.reduce((s, r) => s + Number(r.planned), 0)), sub: "approved plan value", icon: <FileText size={18} />, tone: "info" },
               { label: "Total Committed", value: fmt(donorRows.reduce((s, r) => s + Number(r.committed), 0)), sub: "contracted", icon: <Package size={18} />, tone: "accent" },
-              { label: "Total Spent", value: fmt(donorRows.reduce((s, r) => s + Number(r.spent), 0)), sub: "paid to vendors", icon: <DollarSign size={18} />, tone: "success" },
+              { label: "Total Spent", value: fmt(donorRows.reduce((s, r) => s + Number(r.spent), 0)), sub: "paid to suppliers", icon: <DollarSign size={18} />, tone: "success" },
             ]} />
 
             <ChartCard title="Planned vs Committed vs Spent by Donor" height={260} isEmpty={chartData.length === 0}
@@ -2777,11 +2777,11 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
 
   /* ── Tab 6: Combined analysis ──────────────────────────────────────────── */
 
-  const combinedTabs = ["Vendor × Donor Performance", "Top Performers", "Spend per Donor by Vendor", "Procurement Compliance"];
+  const combinedTabs = ["Supplier × Donor Performance", "Top Performers", "Spend per Donor by Supplier", "Procurement Compliance"];
 
   const renderCombined = () => {
     const vdColumns: TableColumn[] = [
-      { key: "vendor", header: "Vendor" },
+      { key: "supplier", header: "Supplier" },
       { key: "donor", header: "Donor / Funding Source" },
       { key: "contract", header: "Contract", cell: refCell("contract") },
       { key: "value", header: "Contract Value", format: moneyFormat, cell: moneyCell("value") },
@@ -2791,9 +2791,9 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
       { key: "status", header: "Status", cell: badgeCell("status") },
     ];
 
-    const vdRows: ReportRow[] = combined.vendorDonorPerformance.map((r, i) => ({
+    const vdRows: ReportRow[] = combined.supplierDonorPerformance.map((r, i) => ({
       __key: `vd-${i}`,
-      vendor: r.vendor,
+      supplier: r.supplier,
       donor: r.donor,
       contract: r.contract,
       value: r.value,
@@ -2804,7 +2804,7 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
     }));
 
     const topColumns: TableColumn[] = [
-      { key: "vendor", header: "Vendor" },
+      { key: "supplier", header: "Supplier" },
       { key: "avgScore", header: "Average Score", align: "center", format: scoreFormat, cell: scoreCell("avgScore", 8, 5) },
       { key: "contractsWon", header: "Contracts Won", align: "center", cell: countCell("contractsWon") },
       { key: "totalValue", header: "Total Value", format: moneyFormat, cell: moneyCell("totalValue") },
@@ -2813,14 +2813,14 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
 
     const topRows: ReportRow[] = combined.topPerformers.map((t, i) => ({
       __key: `top-${i}`,
-      vendor: t.vendor,
+      supplier: t.supplier,
       avgScore: t.avgScore,
       contractsWon: t.contractsWon,
       totalValue: t.totalValue,
       winRate: t.winRate,
     }));
 
-    // Spend per donor broken down by vendor.
+    // Spend per donor broken down by supplier.
     const spendMap = new Map<string, Map<string, number>>();
     base.contracts.forEach(c => {
       const donor = base.contractFunding(c);
@@ -2829,19 +2829,19 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
       inner.set(c.party, (inner.get(c.party) ?? 0) + getContractFinancials(c).totalPaid);
     });
 
-    const spendRows: ReportRow[] = Array.from(spendMap).flatMap(([donor, vendorsMap]) =>
-      Array.from(vendorsMap, ([vendor, spend]) => ({
-        __key: `sp-${donor}-${vendor}`,
+    const spendRows: ReportRow[] = Array.from(spendMap).flatMap(([donor, suppliersMap]) =>
+      Array.from(suppliersMap, ([supplier, spend]) => ({
+        __key: `sp-${donor}-${supplier}`,
         donor,
-        vendor,
+        supplier,
         spend,
-        share: pct(spend, Array.from(vendorsMap.values()).reduce((s, v) => s + v, 0)),
+        share: pct(spend, Array.from(suppliersMap.values()).reduce((s, v) => s + v, 0)),
       }))
     ).sort((a, b) => Number(b.spend) - Number(a.spend));
 
     const spendColumns: TableColumn[] = [
       { key: "donor", header: "Donor / Funding Source" },
-      { key: "vendor", header: "Vendor" },
+      { key: "supplier", header: "Supplier" },
       { key: "spend", header: "Spend", format: moneyFormat, cell: moneyCell("spend") },
       { key: "share", header: "Share of Donor Spend", format: pctFormat, cell: scoreCell("share", 0, 0, "%") },
     ];
@@ -2888,24 +2888,24 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
 
           <ProcurementStatCards variant="flush" stats={[
             { label: "Average Performance", value: combined.scoredCount ? fmtPct(combined.avgPerformance ?? 0) : "—", sub: `${fmtNum(combined.scoredCount)} scored contracts`, icon: <TrendingUp size={18} />, tone: "success" },
-            { label: "Vendors Engaged", value: fmtNum(new Set(base.contracts.map(c => c.party)).size), sub: "under contract in period", icon: <Users size={18} />, tone: "info" },
+            { label: "Suppliers Engaged", value: fmtNum(new Set(base.contracts.map(c => c.party)).size), sub: "under contract in period", icon: <Users size={18} />, tone: "info" },
             { label: "Funding Sources", value: fmtNum(new Set(base.contracts.map(c => base.contractFunding(c))).size), sub: "with contracted spend", icon: <Package size={18} />, tone: "accent" },
             { label: "Contracts at Risk", value: fmtNum(base.risks.length), sub: "carrying one or more signals", icon: <AlertTriangle size={18} />, tone: "danger" },
           ]} />
 
           {subTab === 0 && (
-            <ReportSection title="Vendor Performance on Donor-Funded Contracts" columns={vdColumns} rows={vdRows} meta={exportMeta}
+            <ReportSection title="Supplier Performance on Donor-Funded Contracts" columns={vdColumns} rows={vdRows} meta={exportMeta}
               search={searchQuery} emptyMessage="No contracts in this period" emptyHint={noDataHint} />
           )}
 
           {subTab === 1 && (
-            <ReportSection title="Top Performing Vendors" columns={topColumns} rows={topRows} meta={exportMeta}
-              search={searchQuery} emptyMessage="No vendors have been scored yet"
+            <ReportSection title="Top Performing Suppliers" columns={topColumns} rows={topRows} meta={exportMeta}
+              search={searchQuery} emptyMessage="No suppliers have been scored yet"
               emptyHint="Scores arrive from contract performance evaluations at mid-term and close-out." />
           )}
 
           {subTab === 2 && (
-            <ReportSection title="Procurement Spend per Donor by Vendor" columns={spendColumns} rows={spendRows} meta={exportMeta}
+            <ReportSection title="Procurement Spend per Donor by Supplier" columns={spendColumns} rows={spendRows} meta={exportMeta}
               search={searchQuery} emptyMessage="No spend recorded in this period" emptyHint={noDataHint} />
           )}
 
@@ -2923,7 +2923,7 @@ export function ProcurementReportingAnalytics({ initialTab }: { initialTab?: Tab
   const renderers: Record<TabKey, () => ReactNode> = {
     planning: renderPlanning,
     sourcing: renderSourcing,
-    vendors: renderVendors,
+    suppliers: renderSuppliers,
     contracts: renderContracts,
     donors: renderDonors,
     combined: renderCombined,

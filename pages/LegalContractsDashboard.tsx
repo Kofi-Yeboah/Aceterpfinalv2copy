@@ -6,17 +6,17 @@ import { DashboardConfigPanel, useDashboardConfig } from "../components/Dashboar
 import { getContracts, subscribe as subscribeContracts, type AwardedContract } from "../lib/contractStore";
 
 /* ── Static legacy contracts that aren't in the contract store ── */
-const staticLegacyContracts: { id: string; title: string; vendor: string; endDate: string; value: number; type: string; status: string; department: string }[] = [
-  { id: "S-003", title: "Employment Contract - Sarah Johnson", vendor: "Sarah Johnson", endDate: "2027-01-14", value: 95000, type: "Employment", status: "Active", department: "HR" },
-  { id: "S-004", title: "IT Support Services Agreement", vendor: "TechSupport Inc", endDate: "2026-03-31", value: 28000, type: "Service", status: "Active", department: "IT" },
-  { id: "S-005", title: "NDA - Strategic Partnership", vendor: "Global Solutions Ltd", endDate: "2027-05-10", value: 0, type: "NDA", status: "Active", department: "Legal" },
-  { id: "S-098", title: "Cleaning Services Contract", vendor: "CleanCo Services", endDate: "2025-12-31", value: 15000, type: "Service", status: "Expiring Soon", department: "Admin" },
-  { id: "S-006", title: "Consultant Agreement - Project Management", vendor: "ProjectPro Consulting", endDate: "2025-11-30", value: 75000, type: "Consultant", status: "Active", department: "Projects" },
-  { id: "S-045", title: "Internet Service Provider Agreement", vendor: "FastNet Communications", endDate: "2025-01-14", value: 12000, type: "Service", status: "Expired", department: "IT" },
-  { id: "S-007", title: "Employment Contract - David Wilson", vendor: "David Wilson", endDate: "2027-03-19", value: 110000, type: "Employment", status: "Active", department: "HR" },
-  { id: "S-008", title: "Vehicle Lease Agreement", vendor: "AutoLease Ltd", endDate: "2027-04-14", value: 36000, type: "Lease", status: "Active", department: "Admin" },
-  { id: "S-009", title: "Security Services Contract", vendor: "SecureGuard Inc", endDate: "2026-04-30", value: 42000, type: "Service", status: "Active", department: "Admin" },
-  { id: "S-010", title: "Supplier Agreement - Office Supplies", vendor: "OfficeMax Solutions", endDate: "2026-12-31", value: 25000, type: "Vendor", status: "Active", department: "Procurement" },
+const staticLegacyContracts: { id: string; title: string; supplier: string; endDate: string; value: number; type: string; status: string; department: string }[] = [
+  { id: "S-003", title: "Employment Contract - Sarah Johnson", supplier: "Sarah Johnson", endDate: "2027-01-14", value: 95000, type: "Employment", status: "Active", department: "HR" },
+  { id: "S-004", title: "IT Support Services Agreement", supplier: "TechSupport Inc", endDate: "2026-03-31", value: 28000, type: "Service", status: "Active", department: "IT" },
+  { id: "S-005", title: "NDA - Strategic Partnership", supplier: "Global Solutions Ltd", endDate: "2027-05-10", value: 0, type: "NDA", status: "Active", department: "Legal" },
+  { id: "S-098", title: "Cleaning Services Contract", supplier: "CleanCo Services", endDate: "2025-12-31", value: 15000, type: "Service", status: "Expiring Soon", department: "Admin" },
+  { id: "S-006", title: "Consultant Agreement - Project Management", supplier: "ProjectPro Consulting", endDate: "2025-11-30", value: 75000, type: "Consultant", status: "Active", department: "Projects" },
+  { id: "S-045", title: "Internet Service Provider Agreement", supplier: "FastNet Communications", endDate: "2025-01-14", value: 12000, type: "Service", status: "Expired", department: "IT" },
+  { id: "S-007", title: "Employment Contract - David Wilson", supplier: "David Wilson", endDate: "2027-03-19", value: 110000, type: "Employment", status: "Active", department: "HR" },
+  { id: "S-008", title: "Vehicle Lease Agreement", supplier: "AutoLease Ltd", endDate: "2027-04-14", value: 36000, type: "Lease", status: "Active", department: "Admin" },
+  { id: "S-009", title: "Security Services Contract", supplier: "SecureGuard Inc", endDate: "2026-04-30", value: 42000, type: "Service", status: "Active", department: "Admin" },
+  { id: "S-010", title: "Supplier Agreement - Office Supplies", supplier: "OfficeMax Solutions", endDate: "2026-12-31", value: 25000, type: "Supplier", status: "Active", department: "Procurement" },
 ];
 
 const formatCurrency = (n: number) =>
@@ -34,7 +34,7 @@ const daysUntil = (dateStr: string) => {
 
 const pendingSignatures = [
   { id: "1", title: "Employment Contract - Senior Developer", requestedBy: "Sarah Johnson", department: "HR", daysWaiting: 2, priority: "High" },
-  { id: "2", title: "NDA - Vendor Partnership", requestedBy: "Michael Chen", department: "Procurement", daysWaiting: 5, priority: "Medium" },
+  { id: "2", title: "NDA - Supplier Partnership", requestedBy: "Michael Chen", department: "Procurement", daysWaiting: 5, priority: "Medium" },
   { id: "3", title: "Consultant Agreement", requestedBy: "Emily Davis", department: "Projects", daysWaiting: 3, priority: "High" },
   { id: "4", title: "Supplier Agreement - Office Supplies", requestedBy: "John Smith", department: "Admin", daysWaiting: 7, priority: "Low" },
 ];
@@ -91,7 +91,7 @@ export function LegalContractsDashboard() {
     const storeContracts = getContracts();
     const storeNumbers = new Set(storeContracts.map(c => c.contractNumber));
     const fromStore = storeContracts.map(c => ({
-      id: c.id, title: c.title, vendor: c.party, endDate: c.endDate,
+      id: c.id, title: c.title, supplier: c.party, endDate: c.endDate,
       value: c.value, type: c.type, status: c.status, department: c.department,
       sourcePR: c.sourcePR,
     }));
@@ -113,7 +113,7 @@ export function LegalContractsDashboard() {
       .map(c => ({
         id: c.id,
         title: c.title,
-        vendor: c.vendor,
+        supplier: c.supplier,
         expiryDate: formatDate(c.endDate),
         daysLeft: c.daysLeft,
         value: c.value > 0 ? formatCurrency(c.value) : "N/A",
@@ -315,7 +315,7 @@ export function LegalContractsDashboard() {
             <thead className="bg-[#0B01D0]">
               <tr>
                 <th className="px-6 py-4 text-left text-xs text-white">Contract Title</th>
-                <th className="px-6 py-4 text-left text-xs text-white">Vendor/Party</th>
+                <th className="px-6 py-4 text-left text-xs text-white">Supplier/Party</th>
                 <th className="px-6 py-4 text-left text-xs text-white">Expiry Date</th>
                 <th className="px-6 py-4 text-left text-xs text-white">Days Left</th>
                 <th className="px-6 py-4 text-left text-xs text-white">Contract Value</th>
@@ -342,7 +342,7 @@ export function LegalContractsDashboard() {
                       </span>
                     )}
                   </td>
-                  <td className="px-6 py-4 text-[12px] text-slate-600">{contract.vendor}</td>
+                  <td className="px-6 py-4 text-[12px] text-slate-600">{contract.supplier}</td>
                   <td className="px-6 py-4 text-[12px] text-slate-600">{contract.expiryDate}</td>
                   <td className="px-6 py-4 text-[12px] text-slate-900 font-semibold">{contract.daysLeft} days</td>
                   <td className="px-6 py-4 text-[12px] text-slate-900">{contract.value}</td>

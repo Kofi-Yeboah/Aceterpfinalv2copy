@@ -44,7 +44,7 @@ const RESOURCE_DATA: ResourcePhase[] = [
       },
       {
         taskId: "T002",
-        taskName: "Evaluate Vendor Submissions",
+        taskName: "Evaluate Supplier Submissions",
         lineItems: [
           { budgetLineId: "RL003", name: "Data Analyst", planned: 6500, procurementCategory: "Staff Labour", resourceName: "Senior Data Analyst", unitType: "Month", quantity: 1, unitCost: 6500, expectedDate: "2025-03-01", fundSource: "FUND-EDU-001" },
           { budgetLineId: "RL004", name: "IT Equipment - Laptops", planned: 3600, procurementCategory: "Internal Asset", resourceName: "Dell Latitude 5520", unitType: "Unit", quantity: 3, unitCost: 1200, expectedDate: "2025-02-15", fundSource: "FUND-TEC-006" },

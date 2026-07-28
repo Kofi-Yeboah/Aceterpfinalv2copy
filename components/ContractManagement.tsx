@@ -324,7 +324,7 @@ function contractsExportSet(list: AwardedContract[]): ExportSet {
     columns: [
       { key: "contractNumber", header: "Contract #" },
       { key: "title", header: "Title" },
-      { key: "party", header: "Vendor / Consultant" },
+      { key: "party", header: "Supplier / Consultant" },
       { key: "category", header: "Category" },
       { key: "method", header: "Method" },
       { key: "value", header: "Value (USD)" },
@@ -378,7 +378,7 @@ function detailExportSet(c: AwardedContract, tab: DetailTab): ExportSet {
     return {
       title: `${prefix}Invoices & Payments`,
       columns: [
-        { key: "invoiceNumber", header: "Invoice #" }, { key: "vendor", header: "Vendor" },
+        { key: "invoiceNumber", header: "Invoice #" }, { key: "supplier", header: "Supplier" },
         { key: "amount", header: "Amount (USD)" }, { key: "dateSubmitted", header: "Submitted" },
         { key: "submittedVia", header: "Via" }, { key: "status", header: "Status" },
         { key: "reviewedBy", header: "CC Review" }, { key: "procurementApprovedBy", header: "Procurement" },
@@ -386,7 +386,7 @@ function detailExportSet(c: AwardedContract, tab: DetailTab): ExportSet {
         { key: "amountPaid", header: "Amount Paid (USD)" }, { key: "referenceNumber", header: "Reference" },
       ],
       rows: (c.invoices ?? []).map(i => ({
-        invoiceNumber: i.invoiceNumber, vendor: i.vendor, amount: i.amount,
+        invoiceNumber: i.invoiceNumber, supplier: i.supplier, amount: i.amount,
         dateSubmitted: i.dateSubmitted, submittedVia: i.submittedVia, status: i.status,
         reviewedBy: i.reviewedBy ?? "", procurementApprovedBy: i.procurementApprovedBy ?? "",
         supervisorApprovedBy: i.supervisorApprovedBy ?? "", datePaid: i.datePaid ?? "",
@@ -452,7 +452,7 @@ function certificateHtml(c: AwardedContract): string {
   const rows: [string, string][] = [
     ["Contract Number", c.contractNumber],
     ["Contract Title", c.title],
-    ["Vendor / Consultant", c.party],
+    ["Supplier / Consultant", c.party],
     ["Category", c.category],
     ["Contract Value", fmt(c.value)],
     ["Start Date", fmtDate(c.startDate)],
@@ -467,7 +467,7 @@ function certificateHtml(c: AwardedContract): string {
     <ul>
       <li>All deliverables completed and accepted.</li>
       <li>All payments processed and settled.</li>
-      <li>Vendor performance evaluation finalised.</li>
+      <li>Supplier performance evaluation finalised.</li>
     </ul>
     <table style="margin-top:28px">
       <tr>
@@ -488,7 +488,7 @@ function closureReportHtml(c: AwardedContract): string {
   const latest = evals.length ? evals[evals.length - 1] : null;
   const changes = c.changeRequests ?? [];
   const summary: [string, string][] = [
-    ["Contract Number", c.contractNumber], ["Vendor", c.party],
+    ["Contract Number", c.contractNumber], ["Supplier", c.party],
     ["Category", c.category], ["Method", c.method],
     ["Contract Value", fmt(c.value)], ["Total Paid", fmt(fin.totalPaid)],
     ["Balance", fmt(fin.balance)], ["Duration", `${fmtDate(c.startDate)} — ${fmtDate(c.endDate)}`],
@@ -510,7 +510,7 @@ function closureReportHtml(c: AwardedContract): string {
       <thead><tr><th>Invoice</th><th>Amount</th><th>Status</th><th>Paid</th><th>Reference</th></tr></thead>
       <tbody>${(c.invoices ?? []).map(i => `<tr><td>${esc(i.invoiceNumber)}</td><td>${esc(fmt(i.amount))}</td><td>${esc(i.status)}</td><td>${esc(fmtDate(i.datePaid))}</td><td>${esc(i.referenceNumber ?? "—")}</td></tr>`).join("") || `<tr><td colspan="5" class="muted">None recorded.</td></tr>`}</tbody>
     </table>
-    <h2>Vendor Performance</h2>
+    <h2>Supplier Performance</h2>
     <p>${latest ? `Latest score ${esc(latest.overallScore.toFixed(1))}/10 (${esc(latest.evaluationType)}, ${esc(fmtDate(latest.evaluationDate))}) across ${evals.length} evaluation(s).${latest.overallScore < 5 ? " <strong>Flagged as a poor performer.</strong>" : ""}` : `<span class="muted">No evaluations recorded.</span>`}</p>
     <h2>Change Management</h2>
     <p>${changes.length} change request(s); ${changes.filter(cr => cr.status === "Approved" || cr.status === "Implemented").length} approved or implemented.</p>
@@ -524,7 +524,7 @@ function closureReportHtml(c: AwardedContract): string {
 function contractSummaryHtml(c: AwardedContract): string {
   const fin = getContractFinancials(c);
   const rows: [string, string][] = [
-    ["Contract Number", c.contractNumber], ["Title", c.title], ["Vendor / Consultant", c.party],
+    ["Contract Number", c.contractNumber], ["Title", c.title], ["Supplier / Consultant", c.party],
     ["Category", c.category], ["Method", c.method], ["Contract Type", c.contractType ?? "—"],
     ["Status", c.status], ["Value", fmt(c.value)], ["Total Paid", fmt(fin.totalPaid)],
     ["Balance", fmt(fin.balance)], ["Award Date", fmtDate(c.awardDate)],
@@ -731,7 +731,7 @@ export function ContractManagement() {
                     {[
                       ["Contract Number", c.contractNumber],
                       ["Title", c.title],
-                      ["Vendor / Consultant", c.party],
+                      ["Supplier / Consultant", c.party],
                       ["Category", c.category],
                       ["Contract Type", c.contractType || "—"],
                       ["Method", c.method],
@@ -971,26 +971,26 @@ export function ContractManagement() {
                               <AlertTriangle size={16} className="text-red-600 shrink-0 mt-0.5" />
                               <div className="flex-1">
                                 <p className="text-[12px] text-red-800 font-bold">POOR PERFORMANCE FLAGGED</p>
-                                <p className="text-[11px] text-red-700 mt-0.5">This vendor scored below 5.0. Future sourcing engagement requires management approval.</p>
+                                <p className="text-[11px] text-red-700 mt-0.5">This supplier scored below 5.0. Future sourcing engagement requires management approval.</p>
                               </div>
                             </div>
-                            {!ev.vendorFlagged ? (
+                            {!ev.supplierFlagged ? (
                               <GatedButton
                                 allowed={can("contract.approveEvaluation")}
                                 reason={denialReason("contract.approveEvaluation")}
                                 onClick={() => {
                                   const updatedEvals = (c.performanceEvaluations || []).map(e =>
-                                    e.id === ev.id ? { ...e, vendorFlagged: true } : e
+                                    e.id === ev.id ? { ...e, supplierFlagged: true } : e
                                   );
                                   updateContract(c.id, { performanceEvaluations: updatedEvals });
                                 }}
                                 className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 text-white rounded-lg text-[11px] font-medium hover:bg-red-700"
                               >
-                                <Flag size={12} /> Flag Vendor
+                                <Flag size={12} /> Flag Supplier
                               </GatedButton>
                             ) : (
                               <div className="flex items-center gap-2 text-[11px] text-red-600 font-medium">
-                                <Flag size={12} /> Vendor has been flagged for management review
+                                <Flag size={12} /> Supplier has been flagged for management review
                               </div>
                             )}
                           </div>
@@ -1155,7 +1155,7 @@ export function ContractManagement() {
                 <h1>Contract Register</h1>
                 <p class="muted">${esc(filtered.length)} contract(s) matching the current filters.</p>
                 <table>
-                  <thead><tr><th>Contract #</th><th>Title</th><th>Vendor</th><th>Value</th><th>End Date</th><th>Status</th></tr></thead>
+                  <thead><tr><th>Contract #</th><th>Title</th><th>Supplier</th><th>Value</th><th>End Date</th><th>Status</th></tr></thead>
                   <tbody>${filtered.map(row => `<tr><td>${esc(row.contractNumber)}</td><td>${esc(row.title)}</td><td>${esc(row.party)}</td><td>${esc(fmt(row.value))}</td><td>${esc(fmtDate(row.endDate))}</td><td>${esc(row.status)}</td></tr>`).join("")}</tbody>
                 </table>`)}
               className="flex items-center gap-1.5 px-4 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-[12px] text-slate-600 font-medium"
@@ -1211,7 +1211,7 @@ export function ContractManagement() {
         <table className="w-full">
           <thead style={{ backgroundColor: "#0B01D0" }}>
             <tr>
-              {["Contract #", "Title", "Vendor / Consultant", "Category", "Value", "Start", "End", "Status", "Coordinators", "Deliverables"].map(h => (
+              {["Contract #", "Title", "Supplier / Consultant", "Category", "Value", "Start", "End", "Status", "Coordinators", "Deliverables"].map(h => (
                 <th key={h} className="px-4 py-3 text-left text-[12px] font-semibold text-white">{h}</th>
               ))}
             </tr>
@@ -1924,7 +1924,7 @@ function ContractRegistrationModal({ existing, onClose }: { existing?: AwardedCo
                 <div className="flex-1"><label className={labelCls}>Contract Number {enriching ? "" : "(Auto-generated)"}</label><input className={cn(inputCls, "bg-slate-50")} value={contractNumber} readOnly /></div>
               </div>
               <div><label className={labelCls}>Contract Title</label><input className={inputCls} value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Consultant Fees — Survey Design" /></div>
-              <div><label className={labelCls}>Vendor / Consultant Name</label><input className={cn(inputCls, enriching && "bg-slate-50")} value={party} onChange={e => setParty(e.target.value)} readOnly={enriching} /></div>
+              <div><label className={labelCls}>Supplier / Consultant Name</label><input className={cn(inputCls, enriching && "bg-slate-50")} value={party} onChange={e => setParty(e.target.value)} readOnly={enriching} /></div>
               <div className="grid grid-cols-2 gap-4">
                 <div><label className={labelCls}>Category</label><select className={cn(inputCls, enriching && "bg-slate-50")} value={category} onChange={e => setCategory(e.target.value)} disabled={enriching}>{REG_CATEGORIES.map(c => <option key={c}>{c}</option>)}</select></div>
                 <div><label className={labelCls}>Procurement Method</label><select className={cn(inputCls, enriching && "bg-slate-50")} value={method} onChange={e => setMethod(e.target.value)} disabled={enriching}>{REG_METHODS.map(m => <option key={m}>{m}</option>)}</select></div>
@@ -2144,7 +2144,7 @@ function ContractRegistrationModal({ existing, onClose }: { existing?: AwardedCo
                   {[
                     ["Contract Number", contractNumber],
                     ["Contract Title", title],
-                    ["Vendor / Consultant", party],
+                    ["Supplier / Consultant", party],
                     ["Category", category],
                     ["Contract Type", contractType],
                     ["Value", value ? fmt(parseFloat(value)) : "—"],
@@ -2607,7 +2607,7 @@ function ChangeRequestModal({ contract: c, onClose }: { contract: AwardedContrac
               className="w-full border-2 border-dashed border-slate-200 rounded-lg p-6 text-center hover:border-[#0B01D0]/40 hover:bg-[#0B01D0]/[0.02] transition-colors"
             >
               <Upload size={20} className="text-slate-300 mx-auto mb-2" />
-              <p className="text-[11px] text-slate-500 font-medium">Attach the vendor proposal, justification memo or approved change document</p>
+              <p className="text-[11px] text-slate-500 font-medium">Attach the supplier proposal, justification memo or approved change document</p>
               <p className="text-[10px] text-slate-400 mt-0.5">At least one document is required</p>
             </button>
             {docs.length > 0 && (
@@ -2779,7 +2779,7 @@ function EvaluationModal({ contract: c, onClose }: { contract: AwardedContract; 
             <textarea value={comments} onChange={e => setComments(e.target.value)} rows={3} className="w-full px-3 py-2 border border-slate-200 rounded-lg text-[12px] text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0B01D0]/20" placeholder="Additional comments..." />
           </div>
           <p className="text-[10px] text-slate-400">
-            Recorded against {user.name} ({user.roles.join(", ")}). The scorecard is pushed onto {c.party}&apos;s vendor profile
+            Recorded against {user.name} ({user.roles.join(", ")}). The scorecard is pushed onto {c.party}&apos;s supplier profile
             and will inform future sourcing decisions.
           </p>
           <ErrorNote message={error} />
@@ -2830,7 +2830,7 @@ function InvoicesTab({ contract: c, onRecordInvoice }: { contract: AwardedContra
       <table className="w-full">
         <thead style={{ backgroundColor: "#0B01D0" }}>
           <tr>
-            {["Invoice #", "Vendor", "Amount", "Submitted", "Via", "Status", "CC Review", "Procurement", "Supervisor", "Paid Date", "Amount Paid"].map(h => (
+            {["Invoice #", "Supplier", "Amount", "Submitted", "Via", "Status", "CC Review", "Procurement", "Supervisor", "Paid Date", "Amount Paid"].map(h => (
               <th key={h} className="px-4 py-3 text-left text-[11px] font-semibold text-white">{h}</th>
             ))}
           </tr>
@@ -2839,7 +2839,7 @@ function InvoicesTab({ contract: c, onRecordInvoice }: { contract: AwardedContra
           {invoices.map((inv, i) => (
             <tr key={inv.id} className={cn("hover:bg-slate-50 transition-colors", i % 2 === 1 && "bg-slate-50/50")}>
               <td className="px-4 py-3 text-[12px] text-purple-700 font-medium">{inv.invoiceNumber}</td>
-              <td className="px-4 py-3 text-[11px] text-slate-700">{inv.vendor}</td>
+              <td className="px-4 py-3 text-[11px] text-slate-700">{inv.supplier}</td>
               <td className="px-4 py-3 text-[11px] text-slate-700 font-medium">{fmt(inv.amount)}</td>
               <td className="px-4 py-3 text-[11px] text-slate-600">{fmtDate(inv.dateSubmitted)}</td>
               <td className="px-4 py-3 text-[11px] text-slate-500">{inv.submittedVia}</td>
@@ -3039,7 +3039,7 @@ function InvoiceWorkflowCard({ invoice: inv, contract: c }: { invoice: ContractI
         <div className="flex items-center gap-2">
           <span className="text-[12px] font-semibold text-slate-800">{inv.invoiceNumber}</span>
           <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-medium", INV_COLORS[inv.status])}>{inv.status}</span>
-          <span className="text-[10px] text-slate-400">{inv.vendor} · {inv.submittedVia} · {fmtDate(inv.dateSubmitted)}</span>
+          <span className="text-[10px] text-slate-400">{inv.supplier} · {inv.submittedVia} · {fmtDate(inv.dateSubmitted)}</span>
         </div>
         <p className="text-[13px] font-semibold text-slate-700">{fmt(inv.amount)}</p>
       </div>
@@ -3250,7 +3250,7 @@ function InvoiceActionModal({ contract: c, invoice: inv, action, onClose }: {
               <p className="text-[13px] font-semibold text-slate-700">{fmt(inv.amount)}</p>
             </div>
             <p className="text-[10px] text-slate-500 mt-0.5">
-              {inv.vendor} · submitted {fmtDate(inv.dateSubmitted)} via {inv.submittedVia} · currently {inv.status}
+              {inv.supplier} · submitted {fmtDate(inv.dateSubmitted)} via {inv.submittedVia} · currently {inv.status}
             </p>
           </div>
 
@@ -3368,7 +3368,7 @@ function InvoiceModal({ contract: c, onClose }: { contract: AwardedContract; onC
       c.id,
       {
         invoiceNumber: invoiceNum.trim(),
-        vendor: c.party,
+        supplier: c.party,
         amount: parsed,
         dateSubmitted,
         submittedVia: via,
@@ -3415,7 +3415,7 @@ function InvoiceModal({ contract: c, onClose }: { contract: AwardedContract; onC
           <div>
             <label className="text-[11px] text-slate-500 font-medium uppercase tracking-wider mb-2 block">Submitted Via</label>
             <div className="flex gap-2">
-              {(["Vendor Portal", "Email", "Manual"] as const).map(v => (
+              {(["Supplier Portal", "Email", "Manual"] as const).map(v => (
                 <button key={v} onClick={() => setVia(v)} className={cn("px-3 py-1.5 rounded-lg text-[11px] font-medium border", via === v ? "bg-[#0B01D0] text-white border-[#0B01D0]" : "bg-white text-slate-600 border-slate-200")}>{v}</button>
               ))}
             </div>
@@ -3702,7 +3702,7 @@ function CloseOutTab({ contract: c }: { contract: AwardedContract }) {
                 <div className="grid grid-cols-2 gap-x-6 gap-y-2.5">
                   {[
                     ["Contract #", c.contractNumber],
-                    ["Vendor / Consultant", c.party],
+                    ["Supplier / Consultant", c.party],
                     ["Contract Value", fmt(c.value)],
                     ["Category", c.category],
                     ["Start Date", fmtDate(c.startDate)],
@@ -3763,7 +3763,7 @@ function CloseOutTab({ contract: c }: { contract: AwardedContract }) {
                     <div className="grid grid-cols-2 gap-x-6 gap-y-1.5">
                       {[
                         ["Contract Number", c.contractNumber],
-                        ["Vendor", c.party],
+                        ["Supplier", c.party],
                         ["Category", c.category],
                         ["Method", c.method],
                         ["Contract Value", fmt(c.value)],

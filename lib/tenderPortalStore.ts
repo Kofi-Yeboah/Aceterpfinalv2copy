@@ -1,19 +1,19 @@
 // ──────────────────────────────────────────────────────────────────────────────
 // Tender publication & electronic bid submission.
 //
-// This is the "Online Submission Portal" the requirements describe: vendors log
+// This is the "Online Submission Portal" the requirements describe: suppliers log
 // in, download tender documents, upload their submissions, get an
 // acknowledgement receipt, and the tender locks until the official opening.
 // Every submission carries a unique ID, a timestamp and an IP entry for the
 // audit trail, and technical and financial envelopes open independently.
 //
-// Sourcing publishes into this store; the vendor portal reads and writes it.
+// Sourcing publishes into this store; the supplier portal reads and writes it.
 // Keeping both sides on one store is what makes "bids submitted electronically
 // should auto populate here after opening" possible.
 // ──────────────────────────────────────────────────────────────────────────────
 
 import { notify } from "./notificationStore";
-import { getVendorById, vendorDisplayName } from "./vendorStore";
+import { getSupplierById, supplierDisplayName } from "./supplierStore";
 
 export type EnvelopeType = "Technical" | "Financial" | "Combined" | "Quotation" | "EOI";
 export type TenderStatus = "Open" | "Closed" | "Under Evaluation" | "Awarded" | "Cancelled";
@@ -49,9 +49,9 @@ export interface PublishedTender {
   requestRateQuote: boolean;
   /**
    * Restricted list for Limited Competition and Direct Selection. Empty means
-   * open to every eligible vendor.
+   * open to every eligible supplier.
    */
-  invitedVendorIds: string[];
+  invitedSupplierIds: string[];
   /** Where the tender was advertised, for the audit record. */
   channels: string[];
   contactEmail: string;
@@ -67,8 +67,8 @@ export interface TenderSubmission {
   /** Human-facing unique reference issued on receipt. */
   submissionId: string;
   tenderRef: string;
-  vendorId: string;
-  vendorName: string;
+  supplierId: string;
+  supplierName: string;
   envelope: EnvelopeType;
   submittedAt: string; // ISO timestamp
   documents: TenderDocument[];
@@ -84,11 +84,11 @@ export interface TenderSubmission {
   withdrawn?: boolean;
 }
 
-/** A profile change a vendor submitted that Procurement must review. */
-export interface VendorUpdateRequest {
+/** A profile change a supplier submitted that Procurement must review. */
+export interface SupplierUpdateRequest {
   id: string;
-  vendorId: string;
-  vendorName: string;
+  supplierId: string;
+  supplierName: string;
   requestedAt: string;
   fields: Record<string, string>;
   note: string;
@@ -163,7 +163,7 @@ let tenders: PublishedTender[] = [
     requiresTechnical: true,
     requiresFinancial: true,
     requestRateQuote: false,
-    invitedVendorIds: [],
+    invitedSupplierIds: [],
     channels: ["ACET Portal", "ACET Website", "Daily Graphic"],
     contactEmail: "procurement@acet.org",
   },
@@ -188,7 +188,7 @@ let tenders: PublishedTender[] = [
     requiresTechnical: true,
     requiresFinancial: false,
     requestRateQuote: true,
-    invitedVendorIds: ["i1", "i2", "i3"],
+    invitedSupplierIds: ["i1", "i2", "i3"],
     channels: ["ACET Portal"],
     contactEmail: "procurement@acet.org",
   },
@@ -210,7 +210,7 @@ let tenders: PublishedTender[] = [
     requiresTechnical: false,
     requiresFinancial: true,
     requestRateQuote: false,
-    invitedVendorIds: ["f3", "f2"],
+    invitedSupplierIds: ["f3", "f2"],
     channels: ["ACET Portal"],
     contactEmail: "procurement@acet.org",
   },
@@ -221,8 +221,8 @@ let submissions: TenderSubmission[] = [
     id: "sub-seed-1",
     submissionId: "SUB-2026-0001",
     tenderRef: "SRC-2024-002",
-    vendorId: "f3",
-    vendorName: "PrintWorks Ghana Ltd",
+    supplierId: "f3",
+    supplierName: "PrintWorks Ghana Ltd",
     envelope: "Quotation",
     submittedAt: new Date(Date.now() - 3 * 86400000).toISOString(),
     documents: [{ id: "sd-1", name: "PrintWorks_Quotation.pdf", type: "PDF", size: "290 KB", uploadedAt: pastDate(3) }],
@@ -236,8 +236,8 @@ let submissions: TenderSubmission[] = [
     id: "sub-seed-2",
     submissionId: "SUB-2026-0002",
     tenderRef: "SRC-2024-002",
-    vendorId: "f2",
-    vendorName: "Office Depot Ltd.",
+    supplierId: "f2",
+    supplierName: "Office Depot Ltd.",
     envelope: "Quotation",
     submittedAt: new Date(Date.now() - 2 * 86400000).toISOString(),
     documents: [{ id: "sd-2", name: "OfficeDepot_Quote_AnnualReport.pdf", type: "PDF", size: "215 KB", uploadedAt: pastDate(2) }],
@@ -249,7 +249,7 @@ let submissions: TenderSubmission[] = [
   },
 ];
 
-let updateRequests: VendorUpdateRequest[] = [];
+let updateRequests: SupplierUpdateRequest[] = [];
 
 // ── Reads ───────────────────────────────────────────────────────────────────
 
@@ -261,10 +261,10 @@ export function getTenderByRef(ref: string): PublishedTender | undefined {
   return tenders.find((t) => t.tenderRef === ref);
 }
 
-/** Tenders a given vendor may see: open to all, or explicitly invited. */
-export function getTendersForVendor(vendorId: string): PublishedTender[] {
+/** Tenders a given supplier may see: open to all, or explicitly invited. */
+export function getTendersForSupplier(supplierId: string): PublishedTender[] {
   return tenders.filter(
-    (t) => t.status !== "Cancelled" && (t.invitedVendorIds.length === 0 || t.invitedVendorIds.includes(vendorId))
+    (t) => t.status !== "Cancelled" && (t.invitedSupplierIds.length === 0 || t.invitedSupplierIds.includes(supplierId))
   );
 }
 
@@ -278,8 +278,8 @@ export function getSubmissions(tenderRef?: string): TenderSubmission[] {
   return submissions.filter((s) => !s.withdrawn && (!tenderRef || s.tenderRef === tenderRef));
 }
 
-export function getSubmissionsByVendor(vendorId: string): TenderSubmission[] {
-  return submissions.filter((s) => s.vendorId === vendorId).sort((a, b) => b.submittedAt.localeCompare(a.submittedAt));
+export function getSubmissionsBySupplier(supplierId: string): TenderSubmission[] {
+  return submissions.filter((s) => s.supplierId === supplierId).sort((a, b) => b.submittedAt.localeCompare(a.submittedAt));
 }
 
 /** Only submissions whose envelope has been opened are visible to evaluators. */
@@ -287,7 +287,7 @@ export function getOpenedSubmissions(tenderRef: string): TenderSubmission[] {
   return submissions.filter((s) => s.tenderRef === tenderRef && !s.withdrawn && !s.locked);
 }
 
-export function getUpdateRequests(status?: VendorUpdateRequest["status"]): VendorUpdateRequest[] {
+export function getUpdateRequests(status?: SupplierUpdateRequest["status"]): SupplierUpdateRequest[] {
   return updateRequests.filter((r) => !status || r.status === status);
 }
 
@@ -308,7 +308,7 @@ export function publishTender(input: Omit<PublishedTender, "id" | "publishedDate
     category: "Info",
     module: "Sourcing",
     subject: `Tender ${record.tenderRef} published`,
-    body: `"${record.title}" is now open on the vendor portal${record.channels.length ? ` and advertised via ${record.channels.join(", ")}` : ""}. Bids close ${record.closingDate} at ${record.closingTime}.`,
+    body: `"${record.title}" is now open on the supplier portal${record.channels.length ? ` and advertised via ${record.channels.join(", ")}` : ""}. Bids close ${record.closingDate} at ${record.closingTime}.`,
     recipientRole: "Procurement",
     entityRef: record.tenderRef,
   });
@@ -380,7 +380,7 @@ export function openEnvelope(
   return { ok: true, opened };
 }
 
-// ── Submission (called from the vendor portal) ──────────────────────────────
+// ── Submission (called from the supplier portal) ──────────────────────────────
 
 export interface SubmissionReceipt {
   submissionId: string;
@@ -388,14 +388,14 @@ export interface SubmissionReceipt {
   receivedAt: string;
   tenderRef: string;
   tenderTitle: string;
-  vendorName: string;
+  supplierName: string;
   envelope: EnvelopeType;
   documentCount: number;
 }
 
 export function submitBid(input: {
   tenderRef: string;
-  vendorId: string;
+  supplierId: string;
   envelope: EnvelopeType;
   documents: TenderDocument[];
   proposedRate?: { amount: number; rateType: "Daily" | "Monthly" };
@@ -406,18 +406,18 @@ export function submitBid(input: {
   if (!isTenderOpen(tender)) {
     return { ok: false, error: `Submissions for ${tender.tenderRef} closed on ${tender.closingDate} at ${tender.closingTime}.` };
   }
-  if (tender.invitedVendorIds.length > 0 && !tender.invitedVendorIds.includes(input.vendorId)) {
+  if (tender.invitedSupplierIds.length > 0 && !tender.invitedSupplierIds.includes(input.supplierId)) {
     return { ok: false, error: "This is a restricted tender and your organisation is not on the invitation list." };
   }
   if (!input.documents.length) {
     return { ok: false, error: "Attach at least one document before submitting." };
   }
 
-  const vendor = getVendorById(input.vendorId);
-  if (!vendor) return { ok: false, error: "Vendor profile not found." };
+  const supplier = getSupplierById(input.supplierId);
+  if (!supplier) return { ok: false, error: "Supplier profile not found." };
 
   const duplicate = submissions.find(
-    (s) => s.tenderRef === input.tenderRef && s.vendorId === input.vendorId && s.envelope === input.envelope && !s.withdrawn
+    (s) => s.tenderRef === input.tenderRef && s.supplierId === input.supplierId && s.envelope === input.envelope && !s.withdrawn
   );
   if (duplicate) {
     return {
@@ -432,8 +432,8 @@ export function submitBid(input: {
     id: `sub-${Date.now()}`,
     submissionId: `SUB-${new Date().getFullYear()}-${String(n).padStart(4, "0")}`,
     tenderRef: input.tenderRef,
-    vendorId: input.vendorId,
-    vendorName: vendorDisplayName(vendor),
+    supplierId: input.supplierId,
+    supplierName: supplierDisplayName(supplier),
     envelope: input.envelope,
     submittedAt,
     documents: input.documents,
@@ -451,7 +451,7 @@ export function submitBid(input: {
     category: "Info",
     module: "Sourcing",
     subject: `Bid received for ${tender.tenderRef}`,
-    body: `${record.vendorName} submitted a ${input.envelope.toLowerCase()} envelope (${record.submissionId}) at ${new Date(submittedAt).toLocaleString()}. The submission is sealed until the official opening.`,
+    body: `${record.supplierName} submitted a ${input.envelope.toLowerCase()} envelope (${record.submissionId}) at ${new Date(submittedAt).toLocaleString()}. The submission is sealed until the official opening.`,
     recipientRole: "Procurement",
     entityRef: tender.tenderRef,
   });
@@ -465,18 +465,18 @@ export function submitBid(input: {
       receivedAt: submittedAt,
       tenderRef: tender.tenderRef,
       tenderTitle: tender.title,
-      vendorName: record.vendorName,
+      supplierName: record.supplierName,
       envelope: input.envelope,
       documentCount: input.documents.length,
     },
   };
 }
 
-/** A vendor may pull a submission back while the tender is still open. */
-export function withdrawSubmission(submissionId: string, vendorId: string): { ok: boolean; error?: string } {
+/** A supplier may pull a submission back while the tender is still open. */
+export function withdrawSubmission(submissionId: string, supplierId: string): { ok: boolean; error?: string } {
   const sub = submissions.find((s) => s.submissionId === submissionId);
   if (!sub) return { ok: false, error: "Submission not found." };
-  if (sub.vendorId !== vendorId) return { ok: false, error: "You can only withdraw your own submissions." };
+  if (sub.supplierId !== supplierId) return { ok: false, error: "You can only withdraw your own submissions." };
   const tender = tenders.find((t) => t.tenderRef === sub.tenderRef);
   if (!tender || !isTenderOpen(tender)) {
     return { ok: false, error: "The tender has closed — submissions can no longer be withdrawn." };
@@ -495,7 +495,7 @@ export function getSubmissionTimestampReport(tenderRef: string) {
     .sort((a, b) => a.submittedAt.localeCompare(b.submittedAt))
     .map((s) => ({
       submissionId: s.submissionId,
-      vendor: s.vendorName,
+      supplier: s.supplierName,
       envelope: s.envelope,
       submittedAt: new Date(s.submittedAt).toLocaleString(),
       onTime: tender ? s.submittedAt <= new Date(`${tender.closingDate}T${tender.closingTime}`).toISOString() : true,
@@ -506,26 +506,26 @@ export function getSubmissionTimestampReport(tenderRef: string) {
     }));
 }
 
-// ── Vendor profile update requests ──────────────────────────────────────────
+// ── Supplier profile update requests ──────────────────────────────────────────
 
 /**
- * Vendors cannot edit their own live record. "Where vendor is merely updating
+ * Suppliers cannot edit their own live record. "Where supplier is merely updating
  * Registration History, they can only be added to the system after internal
  * review of the submitted information."
  */
 export function requestProfileUpdate(input: {
-  vendorId: string;
+  supplierId: string;
   fields: Record<string, string>;
   note: string;
 }): { ok: boolean; error?: string } {
-  const vendor = getVendorById(input.vendorId);
-  if (!vendor) return { ok: false, error: "Vendor profile not found." };
+  const supplier = getSupplierById(input.supplierId);
+  if (!supplier) return { ok: false, error: "Supplier profile not found." };
   if (!Object.keys(input.fields).length) return { ok: false, error: "No changes were entered." };
 
-  const record: VendorUpdateRequest = {
+  const record: SupplierUpdateRequest = {
     id: `vur-${Date.now()}`,
-    vendorId: input.vendorId,
-    vendorName: vendorDisplayName(vendor),
+    supplierId: input.supplierId,
+    supplierName: supplierDisplayName(supplier),
     requestedAt: nowISO(),
     fields: input.fields,
     note: input.note,
@@ -536,10 +536,10 @@ export function requestProfileUpdate(input: {
   notify({
     category: "Approval",
     module: "Supplier Management",
-    subject: `Profile update submitted by ${record.vendorName}`,
-    body: `${record.vendorName} requested changes to ${Object.keys(input.fields).join(", ")} via the vendor portal. The changes will not take effect until Procurement reviews them.${input.note ? `\n\nVendor note: ${input.note}` : ""}`,
+    subject: `Profile update submitted by ${record.supplierName}`,
+    body: `${record.supplierName} requested changes to ${Object.keys(input.fields).join(", ")} via the supplier portal. The changes will not take effect until Procurement reviews them.${input.note ? `\n\nSupplier note: ${input.note}` : ""}`,
     recipientRole: "Procurement",
-    entityRef: vendor.vendorId,
+    entityRef: supplier.supplierId,
   });
 
   notifyListeners();
@@ -551,8 +551,8 @@ export function reviewUpdateRequest(
   decision: "Approved" | "Rejected",
   reviewedBy: string,
   reviewNote = ""
-): VendorUpdateRequest | undefined {
-  let updated: VendorUpdateRequest | undefined;
+): SupplierUpdateRequest | undefined {
+  let updated: SupplierUpdateRequest | undefined;
   updateRequests = updateRequests.map((r) => {
     if (r.id !== id) return r;
     updated = { ...r, status: decision, reviewedBy, reviewNote };

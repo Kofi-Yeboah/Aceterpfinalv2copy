@@ -76,11 +76,11 @@ const wbsSubmissions: WBSSubmission[] = [
     phases: [
       {
         id: "p1", name: "Procurement & Contracting", color: "bg-amber-500", isMandatory: false,
-        description: "Manage procurement processes, vendor selection, and contract management.",
+        description: "Manage procurement processes, supplier selection, and contract management.",
         deliverables: [
           { id: "d1-1", name: "RFP Document", tasks: [
             { id: "t1", name: "Draft Request for Proposals (RFP)", assignedTo: "Yaw Osei", startDate: "Jan 20, 2026", endDate: "Feb 10, 2026", hours: 80, priority: "High", status: "Completed" },
-            { id: "t2", name: "Evaluate Vendor Submissions", assignedTo: "Kofi Mensah", startDate: "Feb 01, 2026", endDate: "Feb 28, 2026", hours: 100, priority: "High", status: "Completed" },
+            { id: "t2", name: "Evaluate Supplier Submissions", assignedTo: "Kofi Mensah", startDate: "Feb 01, 2026", endDate: "Feb 28, 2026", hours: 100, priority: "High", status: "Completed" },
           ]},
           { id: "d1-2", name: "Service Agreements", tasks: [
             { id: "t3", name: "Finalize Service Agreements", assignedTo: "Ama Darko", startDate: "Jan 15, 2026", endDate: "Feb 15, 2026", hours: 120, priority: "Medium", status: "Completed" },

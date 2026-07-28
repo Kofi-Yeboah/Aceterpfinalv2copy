@@ -78,7 +78,7 @@ const STAFF_DATA: StaffMember[] = [
     tasks: [
       {
         id: "T1-3",
-        taskName: "Evaluate Vendor Submissions",
+        taskName: "Evaluate Supplier Submissions",
         phase: "Procurement & Contracting",
         startDate: "2025-02-01",
         endDate: "2025-02-28",

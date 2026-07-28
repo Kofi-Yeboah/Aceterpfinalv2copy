@@ -42,7 +42,7 @@ export function ProjectOverviewDashboard({ project, onNavigateToTab, onNavigateT
 
   const initialMilestones: Milestone[] = [
     { id: "MS-1", title: "Inception Report Submitted", phase: "Procurement & Contracting", dueDate: "Feb 15, 2025", completed: true, completedDate: "Feb 12, 2025", type: "deliverable" },
-    { id: "MS-2", title: "All Vendor Contracts Signed", phase: "Procurement & Contracting", dueDate: "Feb 28, 2025", completed: true, completedDate: "Feb 25, 2025", type: "contract" },
+    { id: "MS-2", title: "All Supplier Contracts Signed", phase: "Procurement & Contracting", dueDate: "Feb 28, 2025", completed: true, completedDate: "Feb 25, 2025", type: "contract" },
     { id: "MS-3", title: "Field Data Collection Complete", phase: "Implementation", dueDate: "Mar 31, 2025", completed: true, completedDate: "Mar 28, 2025", type: "deliverable" },
     { id: "MS-4", title: "Stakeholder Engagement Plan Delivered", phase: "Implementation", dueDate: "May 15, 2025", completed: isDelivery ? true : true, completedDate: isDelivery ? "May 10, 2025" : "May 10, 2025", type: "deliverable" },
     { id: "MS-5", title: "Mid-term Progress Report", phase: "Implementation", dueDate: "May 31, 2025", completed: isDelivery ? true : true, completedDate: isDelivery ? "May 28, 2025" : "May 28, 2025", type: "reporting" },

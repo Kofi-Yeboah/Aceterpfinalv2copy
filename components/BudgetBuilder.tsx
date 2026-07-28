@@ -102,11 +102,11 @@ const INITIAL_PHASES: PhaseBudget[] = [
     deliverables: [
       {
         id: "del-1-1",
-        name: "Vendor Engagement Package",
+        name: "Supplier Engagement Package",
         expanded: true,
         tasks: [
           { taskId: "T001", taskName: "Draft Request for Proposals (RFP)", lineItems: [], expanded: false },
-          { taskId: "T002", taskName: "Evaluate Vendor Submissions", lineItems: [], expanded: false },
+          { taskId: "T002", taskName: "Evaluate Supplier Submissions", lineItems: [], expanded: false },
         ],
       },
       {

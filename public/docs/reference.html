@@ -511,7 +511,7 @@
     <p class="eyebrow">ACET ERP · Procurement Module · Process Reference</p>
     <h1>End-to-end procurement process flows</h1>
     <p class="standfirst">
-      Sixteen flows, from the annual plan through to contract close-out and vendor rating. Each one names the
+      Sixteen flows, from the annual plan through to contract close-out and supplier rating. Each one names the
       actor at every station, the control that must be satisfied before it can advance, and where that control is
       enforced in the system. Read it as the operational manual and as the completeness check: no flow below has a
       dead end.
@@ -530,12 +530,12 @@
       <span>Invoice</span><i>→</i>
       <span>Payment</span><i>→</i>
       <span>Close-out</span><i>→</i>
-      <span>Vendor rating</span>
+      <span>Supplier rating</span>
     </div>
     <p>
-      Every record carries the reference of the record above it, and the vendor rating produced at close-out feeds
+      Every record carries the reference of the record above it, and the supplier rating produced at close-out feeds
       back into who may be shortlisted next time. Any payment can be traced back to the plan line that authorised
-      it, and any award can be traced forward to how the vendor actually performed.
+      it, and any award can be traced forward to how the supplier actually performed.
     </p>
   </div>
 
@@ -545,7 +545,7 @@
       <li><a href="#foundations"><b>00</b> Cross-cutting foundations</a></li>
       <li><a href="#f1"><b>01</b> Procurement planning</a></li>
       <li><a href="#f2"><b>02</b> Purchase requisition</a></li>
-      <li><a href="#f3"><b>03</b> Vendor onboarding and lifecycle</a></li>
+      <li><a href="#f3"><b>03</b> Supplier onboarding and lifecycle</a></li>
       <li><a href="#f4"><b>04</b> Sourcing: Open Competition</a></li>
       <li><a href="#f5"><b>05</b> Sourcing: Limited Competition</a></li>
       <li><a href="#f6"><b>06</b> Sourcing: Direct Selection</a></li>
@@ -621,7 +621,7 @@
           <h4>Audit trail</h4>
           <p>
             Contracts carry a full action log; requisitions carry an approval history; plan items carry field-level
-            change history with old and new values; vendors carry status history.
+            change history with old and new values; suppliers carry status history.
           </p>
           <p>Every entry records the real acting user, the date and a reason.</p>
           <p class="src">across all four stores</p>
@@ -640,7 +640,7 @@
             <tr><td>Invoice payment</td><td class="num">72h</td><td>Senior Management</td><td class="num">120h</td></tr>
             <tr><td>Plan item review</td><td class="num">48h</td><td>Senior Management</td><td class="num">72h</td></tr>
             <tr><td>Contract deliverable</td><td class="num">7 days</td><td>Procurement</td><td class="num">14 days</td></tr>
-            <tr><td>Vendor document expiry</td><td class="num">24h</td><td>—</td><td class="num">14 days</td></tr>
+            <tr><td>Supplier document expiry</td><td class="num">24h</td><td>—</td><td class="num">14 days</td></tr>
             <tr><td>Contract expiry</td><td class="num">7 days</td><td>—</td><td class="num">30 days</td></tr>
           </tbody>
         </table>
@@ -816,18 +816,18 @@ flowchart TD
     <section id="f3">
       <div class="flow-head">
         <span class="flow-num">03</span>
-        <h2 class="flow-title">Vendor onboarding and lifecycle</h2>
+        <h2 class="flow-title">Supplier onboarding and lifecycle</h2>
         <span class="tag">BR002</span>
       </div>
       <p>
-        One vendor register, two ways in, and a single gate that every sourcing decision consults. This is what makes a
+        One supplier register, two ways in, and a single gate that every sourcing decision consults. This is what makes a
         poor performance score or a lapsed tax certificate actually consequential.
       </p>
 
       <div class="plate">
 <pre class="mermaid">
 flowchart TD
-    A1["Vendor self-registers via portal"] --> B["Automatic screening"]
+    A1["Supplier self-registers via portal"] --> B["Automatic screening"]
     A2["Procurement creates internally"] --> B
     B --> C{"Duplicate, sanctions or<br/>missing documents?"}
     C -- "Flags raised" --> D["PENDING ONBOARDING<br/>flags shown to Procurement"]
@@ -911,10 +911,10 @@ flowchart TD
           <thead><tr><th class="num">#</th><th>Stage</th><th>Actor</th><th>Detail</th></tr></thead>
           <tbody>
             <tr><td class="num">1</td><td>Solicitation documents</td><td>Procurement</td><td>Uploads the invitation to bid for goods, or the expression of interest and request for proposals for services, plus the evaluation criteria matrix and draft contract. Real file upload with version history.</td></tr>
-            <tr><td class="num">2</td><td>Advertisement</td><td>Procurement</td><td>Publishes to the vendor portal and records the channels used — website, newspapers, donor portals — with dates and references. This is what makes the tender visible in flow 08.</td></tr>
+            <tr><td class="num">2</td><td>Advertisement</td><td>Procurement</td><td>Publishes to the supplier portal and records the channels used — website, newspapers, donor portals — with dates and references. This is what makes the tender visible in flow 08.</td></tr>
             <tr><td class="num">3</td><td>EOI evaluation and shortlisting</td><td>Procurement and evaluators</td><td>Services only. Bidders are scored and a shortlist recorded, which carries into the invitation stage.</td></tr>
-            <tr><td class="num">4</td><td>Invitation</td><td>Procurement</td><td>Selects shortlisted bidders from the vendor database, gated by the eligibility check, or registers a new vendor inline. Specifies whether technical, financial or both proposals are required. For individual consultants this may instead be an interview invitation.</td></tr>
-            <tr><td class="num">5</td><td>Electronic submission</td><td>Vendors</td><td>See flow 08. Sealed on arrival.</td></tr>
+            <tr><td class="num">4</td><td>Invitation</td><td>Procurement</td><td>Selects shortlisted bidders from the supplier database, gated by the eligibility check, or registers a new supplier inline. Specifies whether technical, financial or both proposals are required. For individual consultants this may instead be an interview invitation.</td></tr>
+            <tr><td class="num">5</td><td>Electronic submission</td><td>Suppliers</td><td>See flow 08. Sealed on arrival.</td></tr>
             <tr><td class="num">6</td><td>Bid opening</td><td>Procurement</td><td>Opening is refused while the tender is still accepting bids. Technical and financial envelopes open separately. Minutes and attendance are uploaded, and electronic bids auto-populate alongside manually recorded ones.</td></tr>
             <tr><td class="num">7</td><td>Evaluation and approvals</td><td>Evaluation panel</td><td>Combined evaluation report for services, evaluation report for goods, or interview scores for individual consultants.</td></tr>
             <tr><td class="num">8</td><td>Negotiation</td><td>Procurement</td><td>Optional and skippable. Minutes uploaded where negotiations are held.</td></tr>
@@ -926,7 +926,7 @@ flowchart TD
       <div class="callout gate">
         <p class="callout-label">Controls</p>
         <ul>
-          <li>No vendor blocked by the eligibility gate can be invited or awarded.</li>
+          <li>No supplier blocked by the eligibility gate can be invited or awarded.</li>
           <li>A financial envelope cannot be opened before the tender closes, so technical scoring can be settled before prices are revealed.</li>
           <li>Every stage transition notifies the requester and the internal stakeholders.</li>
         </ul>
@@ -942,7 +942,7 @@ flowchart TD
       </div>
       <p>
         Identical to open competition with <strong>no advertisement stage</strong>. The tender is published to the
-        invited shortlist only, so it appears in the portal solely for those vendors. The justification for restricting
+        invited shortlist only, so it appears in the portal solely for those suppliers. The justification for restricting
         the market is captured upstream at the requisition gate.
       </p>
       <div class="plate">
@@ -965,7 +965,7 @@ flowchart LR
         <span class="tag">BR003</span>
       </div>
       <p>
-        Single-source procurement. No advertisement, and the invitation stage becomes a single-choice vendor selection.
+        Single-source procurement. No advertisement, and the invitation stage becomes a single-choice supplier selection.
         <strong>Evaluation is optional here and can be skipped</strong> — a direct selection has no competing bids to
         evaluate. A written justification and the supplier's full legal identification are mandatory upstream at the
         requisition gate.
@@ -973,7 +973,7 @@ flowchart LR
       <div class="plate">
 <pre class="mermaid">
 flowchart LR
-    A["Solicitation documents"] --> B["Select vendor"]
+    A["Solicitation documents"] --> B["Select supplier"]
     B --> C["Submission, optional"]
     C --> D["Bid opening"]
     D --> E["Evaluation, optional"]
@@ -1012,10 +1012,10 @@ flowchart LR
         <span class="flow-num">08</span>
         <h2 class="flow-title">Electronic bid submission</h2>
         <span class="tag">BR003</span>
-        <span class="tag">Vendor Portal</span>
+        <span class="tag">Supplier Portal</span>
       </div>
       <p>
-        The vendor-facing side of sourcing. Vendors sign in, download tender documents, upload their submissions and
+        The supplier-facing side of sourcing. Suppliers sign in, download tender documents, upload their submissions and
         receive an acknowledgement immediately. The submission is sealed on arrival and cannot be read by ACET until
         the official opening.
       </p>
@@ -1023,13 +1023,13 @@ flowchart LR
       <div class="plate">
 <pre class="mermaid">
 flowchart TD
-    A["Vendor signs in to portal"] --> B["Views tenders open to them"]
+    A["Supplier signs in to portal"] --> B["Views tenders open to them"]
     B --> C["Downloads tender documents"]
     C --> D["Uploads submission<br/>technical, financial or combined"]
     D --> E["System issues submission ID<br/>and acknowledgement receipt"]
     E --> F["SEALED — timestamp and IP recorded"]
     F --> G{"Tender still open?"}
-    G -- Yes --> H["Vendor may withdraw and replace"]
+    G -- Yes --> H["Supplier may withdraw and replace"]
     G -- No --> I["LOCKED"]
     I --> J["Procurement opens technical envelope"]
     J --> K["Technical evaluation"]
@@ -1045,15 +1045,15 @@ flowchart TD
           <li><strong>Unique identity.</strong> Every submission receives a submission ID and an acknowledgement reference.</li>
           <li><strong>Sealed until opening.</strong> Submissions arrive locked; only the official opening unseals them, and only after the tender closes.</li>
           <li><strong>Audit trail.</strong> Timestamp, source address, document count and the name of whoever opened it are all recorded. The timestamps report exports to Excel or PDF.</li>
-          <li><strong>Restricted tenders.</strong> A vendor not on the invitation list cannot see or submit to a limited or direct tender.</li>
-          <li><strong>Eligibility.</strong> Only active vendors may submit; suspended and blacklisted accounts are refused with an explanation.</li>
-          <li><strong>No duplicate envelopes.</strong> One technical and one financial envelope per vendor per tender. Replacing requires withdrawing first, and only while the tender is open.</li>
+          <li><strong>Restricted tenders.</strong> A supplier not on the invitation list cannot see or submit to a limited or direct tender.</li>
+          <li><strong>Eligibility.</strong> Only active suppliers may submit; suspended and blacklisted accounts are refused with an explanation.</li>
+          <li><strong>No duplicate envelopes.</strong> One technical and one financial envelope per supplier per tender. Replacing requires withdrawing first, and only while the tender is open.</li>
           <li><strong>Consultant rates.</strong> Individuals may attach a proposed daily or monthly rate where the tender requests it; the accepted rate is written to their rate history on award.</li>
         </ul>
       </div>
 
       <p>
-        The portal also carries vendor self-registration, compliance document upload, profile change requests that go
+        The portal also carries supplier self-registration, compliance document upload, profile change requests that go
         to Procurement for review rather than editing the live record, invoice submission against a contract,
         submission history and notifications.
       </p>
@@ -1075,7 +1075,7 @@ flowchart TD
       <div class="plate">
 <pre class="mermaid">
 flowchart TD
-    A["Evaluation complete"] --> B["Select winning vendor"]
+    A["Evaluation complete"] --> B["Select winning supplier"]
     B --> C{"Eligibility gate"}
     C -- Blocked --> X["Award refused with reasons"]
     C -- "Needs approval" --> D["Senior Mgmt approval and justification"]
@@ -1084,15 +1084,15 @@ flowchart TD
     E --> F["Requisition number becomes<br/>contract number CNT-YYYY-NNN"]
     F --> G["Contract record created"]
     F --> H["Purchase order generated"]
-    G --> I["Vendor contract history updated"]
+    G --> I["Supplier contract history updated"]
     H --> J{"PO value 10,000 USD or above?"}
     J -- Yes --> K["COO signature"]
     J -- No --> L["Procurement Head signature"]
-    K --> M["PO dispatched to vendor"]
+    K --> M["PO dispatched to supplier"]
     L --> M
     E --> N["Requisition marked Converted to Sourcing"]
 </pre>
-        <p class="plate-cap">Award creates the contract, the purchase order and the vendor history entry together</p>
+        <p class="plate-cap">Award creates the contract, the purchase order and the supplier history entry together</p>
       </div>
     </section>
 
@@ -1109,7 +1109,7 @@ flowchart TD
         <table>
           <thead><tr><th class="num">Step</th><th>Captures</th></tr></thead>
           <tbody>
-            <tr><td class="num">1 · Identity</td><td>Title, auto-derived contract number, vendor, category, method, department, owner, funding source and budget line.</td></tr>
+            <tr><td class="num">1 · Identity</td><td>Title, auto-derived contract number, supplier, category, method, department, owner, funding source and budget line.</td></tr>
             <tr><td class="num">2 · Commercial terms</td><td>Lump sum or time based. Time-based contracts carry a rate frequency — daily, weekly, monthly or quarterly — and a <strong>maximum amount ceiling</strong>.</td></tr>
             <tr><td class="num">3 · Schedule</td><td>Delivery schedule for goods, with item, quantity and expected date; or milestones and deliverables for services.</td></tr>
             <tr><td class="num">4 · Payments</td><td>A payment schedule tied to deliverables or timelines, validated against the contract value.</td></tr>
@@ -1125,7 +1125,7 @@ flowchart TD
       <div class="callout note">
         <p class="callout-label">Contracts arriving from a sourcing award</p>
         <p>
-          These are created as a shell carrying vendor, value and dates. The module detects the gap and offers to
+          These are created as a shell carrying supplier, value and dates. The module detects the gap and offers to
           complete the contract setup, opening the same wizard in edit mode — so an awarded contract can always be
           brought up to a manageable state rather than sitting empty and unusable.
         </p>
@@ -1179,7 +1179,7 @@ flowchart TD
         <span class="tag">Critical control</span>
       </div>
       <p>
-        Four approval stations between a vendor invoice and money leaving the account. Each gate is enforced in the
+        Four approval stations between a supplier invoice and money leaving the account. Each gate is enforced in the
         data layer, so no screen can skip a stage and no invoice can be paid without a matched, accepted deliverable
         behind it.
       </p>
@@ -1187,7 +1187,7 @@ flowchart TD
       <div class="plate">
 <pre class="mermaid">
 flowchart TD
-    A1["Vendor submits via portal"] --> B["SUBMITTED"]
+    A1["Supplier submits via portal"] --> B["SUBMITTED"]
     A2["Email or manual, coordinator uploads"] --> B
     B --> C["Contract Coordinator: match to deliverable<br/>and confirm it meets specification"]
     C -- "Query with reason" --> Q["QUERIED"]
@@ -1224,7 +1224,7 @@ flowchart TD
 
       <p>
         Marking an invoice paid updates the total paid and the remaining balance. Any reviewer may query an invoice
-        back to the vendor with a documented reason, and resubmission returns it to the start of the chain. Every
+        back to the supplier with a documented reason, and resubmission returns it to the start of the chain. Every
         transition is written to the invoice's own approval history and to the contract audit log.
       </p>
     </section>
@@ -1293,12 +1293,12 @@ flowchart TD
 <pre class="mermaid">
 flowchart TD
     A["Contract Coordinator evaluates<br/>five criteria on a ten-point scale"] --> B["Supervisor approves<br/>must differ from the evaluator"]
-    B --> C["Scorecard written to vendor profile"]
+    B --> C["Scorecard written to supplier profile"]
     C --> D["Headline score recomputed<br/>as mean across all evaluations"]
     C --> E["Risk level recomputed"]
     D --> F{"Score below 5?"}
-    F -- Yes --> G["Vendor automatically FLAGGED"]
-    F -- No --> H["Vendor remains eligible"]
+    F -- Yes --> G["Supplier automatically FLAGGED"]
+    F -- No --> H["Supplier remains eligible"]
     G --> I["Future shortlisting or award<br/>needs Senior Mgmt approval"]
 </pre>
         <p class="plate-cap">The loop that makes a rating consequential rather than decorative</p>
@@ -1306,12 +1306,12 @@ flowchart TD
 
       <p>
         <strong>Two approvals are required</strong>, and an evaluation where the supervisor is the evaluator is
-        refused. On submission the scorecard is pushed into the vendor profile, where it appears in both contract
+        refused. On submission the scorecard is pushed into the supplier profile, where it appears in both contract
         management and supplier management, and the headline score is recomputed as the mean across all evaluations —
         normalised to ten points so a re-weighted template still averages correctly.
       </p>
       <p>
-        Any vendor scoring below five is flagged automatically, after which engagement requires Senior Management
+        Any supplier scoring below five is flagged automatically, after which engagement requires Senior Management
         approval through the eligibility gate in flow 03. That closing of the loop — a poor score on one contract
         actually blocking the next award — is the point of the exercise.
       </p>
@@ -1379,10 +1379,10 @@ flowchart TD
           <tbody>
             <tr><td>Planning and orders</td><td>Plan status; budget utilisation as planned versus committed versus spent; pipeline; pending, approved and rejected requisitions.</td></tr>
             <tr><td>Sourcing and contracts</td><td>Sourcing status; bid submission; active contracts; deliverables status; invoice and payment; variations; close-out.</td></tr>
-            <tr><td>Vendors and KPIs</td><td>Vendor master list; performance evaluation; prequalification; cycle time; efficiency; vendor responsiveness; payment timeliness.</td></tr>
+            <tr><td>Suppliers and KPIs</td><td>Supplier master list; performance evaluation; prequalification; cycle time; efficiency; supplier responsiveness; payment timeliness.</td></tr>
             <tr><td>Contract-specific</td><td>Contract summary; deliverables tracking; variations; performance scorecard; contract risk; expiry at 30, 60 and 90 days.</td></tr>
             <tr><td>Donor</td><td>Procurement summary per donor; budget utilisation per donor.</td></tr>
-            <tr><td>Combined</td><td>Vendor performance on donor-funded contracts; spend per donor by vendor; top performers per funding source; compliance per donor.</td></tr>
+            <tr><td>Combined</td><td>Supplier performance on donor-funded contracts; spend per donor by supplier; top performers per funding source; compliance per donor.</td></tr>
           </tbody>
         </table>
       </div>
@@ -1414,9 +1414,9 @@ flowchart TD
             <tr><td>Requisition rejected</td><td>Correct and resubmit</td><td>Full validation gate re-runs. Resubmission count and prior rejection reason are retained.</td></tr>
             <tr><td>Requisition no longer needed</td><td>Withdraw with reason</td><td>Blocked once approved — cancellation must go through Procurement.</td></tr>
             <tr><td>Cost above the plan item</td><td>Plan variance flag</td><td>Comment required from the requester; flag shown to all approvers.</td></tr>
-            <tr><td>Vendor flagged or poorly performing</td><td>Eligibility gate</td><td>Engagement permitted only with Senior Management approval.</td></tr>
-            <tr><td>Vendor suspended or blacklisted</td><td>Eligibility gate</td><td>Blocked outright from invitation and award.</td></tr>
-            <tr><td>Invoice disputed</td><td>Query with reason</td><td>Returns to the vendor; resubmission restarts the chain.</td></tr>
+            <tr><td>Supplier flagged or poorly performing</td><td>Eligibility gate</td><td>Engagement permitted only with Senior Management approval.</td></tr>
+            <tr><td>Supplier suspended or blacklisted</td><td>Eligibility gate</td><td>Blocked outright from invitation and award.</td></tr>
+            <tr><td>Invoice disputed</td><td>Query with reason</td><td>Returns to the supplier; resubmission restarts the chain.</td></tr>
             <tr><td>Contract needs to change</td><td>Change request</td><td>Same four-station approval chain as a fresh procurement.</td></tr>
             <tr><td>Approval stalls</td><td>Reminder then escalation</td><td>48-hour reminder, 72-hour escalation to Senior Management.</td></tr>
           </tbody>
@@ -1438,14 +1438,14 @@ flowchart TD
           <tbody>
             <tr><td>BR001 Procurement planning</td><td class="num">01</td><td class="ref">lib/procurementStore.ts · components/ProcurementPlanView.tsx</td></tr>
             <tr><td>BR001 Purchase requisition</td><td class="num">02</td><td class="ref">lib/procurementStore.ts · components/PurchaseRequisitionManagement.tsx</td></tr>
-            <tr><td>BR002 Supplier management</td><td class="num">03</td><td class="ref">lib/vendorStore.ts · components/Suppliers.tsx</td></tr>
+            <tr><td>BR002 Supplier management</td><td class="num">03</td><td class="ref">lib/supplierStore.ts · components/Suppliers.tsx</td></tr>
             <tr><td>BR003 Sourcing, all four methods</td><td class="num">04–07</td><td class="ref">components/Sourcing.tsx · components/SourcingCaseDetail.tsx · lib/procurementThresholds.ts</td></tr>
-            <tr><td>BR003 Online submission portal</td><td class="num">08</td><td class="ref">lib/tenderPortalStore.ts · components/VendorPortal.tsx</td></tr>
+            <tr><td>BR003 Online submission portal</td><td class="num">08</td><td class="ref">lib/tenderPortalStore.ts · components/SupplierPortal.tsx</td></tr>
             <tr><td>BR004 Contract registration</td><td class="num">09–10</td><td class="ref">lib/contractStore.ts · components/ContractManagement.tsx</td></tr>
             <tr><td>BR004 Deliverables</td><td class="num">11</td><td class="ref">lib/contractStore.ts</td></tr>
             <tr><td>BR004 Invoices and payment</td><td class="num">12</td><td class="ref">lib/contractStore.ts</td></tr>
             <tr><td>BR004 Change management</td><td class="num">13</td><td class="ref">lib/contractStore.ts</td></tr>
-            <tr><td>BR004 Performance measurement</td><td class="num">14</td><td class="ref">lib/contractStore.ts → lib/vendorStore.ts</td></tr>
+            <tr><td>BR004 Performance measurement</td><td class="num">14</td><td class="ref">lib/contractStore.ts → lib/supplierStore.ts</td></tr>
             <tr><td>BR004 Close-out</td><td class="num">15</td><td class="ref">lib/contractStore.ts</td></tr>
             <tr><td>BR007 Reporting and analytics</td><td class="num">16</td><td class="ref">components/ProcurementReportingAnalytics.tsx · lib/exportUtils.ts</td></tr>
             <tr><td>Roles and permissions</td><td class="num">00</td><td class="ref">lib/currentUser.ts</td></tr>

@@ -3,7 +3,7 @@
 //
 // The business requirements ask for email / SMS / in-app notification at every
 // workflow stage, reminders to approvers after 48–72h of inactivity, escalation
-// when those lapse, and reminders for expiring vendor documents, upcoming and
+// when those lapse, and reminders for expiring supplier documents, upcoming and
 // overdue deliverables, and contract expiry.
 //
 // There is no backend here, so "sending" means recording the dispatch against
@@ -44,7 +44,7 @@ export interface AppNotification {
 export interface ScheduledReminder {
   id: string;
   entityRef: string;
-  entityType: "Requisition" | "Plan Item" | "Deliverable" | "Invoice" | "Vendor Document" | "Contract" | "Change Request";
+  entityType: "Requisition" | "Plan Item" | "Deliverable" | "Invoice" | "Supplier Document" | "Contract" | "Change Request";
   module: NotificationModule;
   subject: string;
   body: string;
