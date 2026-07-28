@@ -110,7 +110,7 @@ export interface ContractInvoice {
   deliverableId?: string;
   status: InvoiceStatus;
   paymentInfo?: string;
-  submittedVia: "Supplier Portal" | "Email" | "Manual";
+  submittedVia: "Email" | "Manual";
   reviewedBy?: string;
   approvedBy?: string;
   paymentMethod?: "Wire Transfer" | "Cheque" | "Mobile Money";
@@ -122,6 +122,8 @@ export interface ContractInvoice {
   paidBy?: string;
   queryReason?: string;
   documents?: string[];
+  /** The uploaded invoice itself, so it can be shown in the detail view. */
+  documentFiles?: { name: string; url: string; type: string; size: string }[];
   approvalHistory?: InvoiceApprovalEntry[];
 }
 
@@ -390,8 +392,8 @@ let contracts: AwardedContract[] = [
       { id: "del-7", milestoneRef: "ms-7", description: "UAT, documentation, and handover", dueDate: "2025-08-30", status: "Pending", documents: [], comments: "", amount: 12500 },
     ],
     invoices: [
-      { id: "inv-4", invoiceNumber: "INV-TS-001", supplier: "TechSolutions Africa Ltd", amount: 75000, dateSubmitted: "2025-03-14", datePaid: "2025-04-01", amountPaid: 75000, deliverableId: "del-5", status: "Paid", submittedVia: "Supplier Portal", reviewedBy: "Eric Boateng", approvedBy: "Nana Esi", paymentInfo: "Wire transfer 01-Apr-2025" },
-      { id: "inv-5", invoiceNumber: "INV-TS-002", supplier: "TechSolutions Africa Ltd", amount: 37500, dateSubmitted: "2025-06-10", deliverableId: "del-6", status: "CC Reviewed", submittedVia: "Supplier Portal", reviewedBy: "Eric Boateng" },
+      { id: "inv-4", invoiceNumber: "INV-TS-001", supplier: "TechSolutions Africa Ltd", amount: 75000, dateSubmitted: "2025-03-14", datePaid: "2025-04-01", amountPaid: 75000, deliverableId: "del-5", status: "Paid", submittedVia: "Email", reviewedBy: "Eric Boateng", approvedBy: "Nana Esi", paymentInfo: "Wire transfer 01-Apr-2025" },
+      { id: "inv-5", invoiceNumber: "INV-TS-002", supplier: "TechSolutions Africa Ltd", amount: 37500, dateSubmitted: "2025-06-10", deliverableId: "del-6", status: "CC Reviewed", submittedVia: "Email", reviewedBy: "Eric Boateng" },
     ],
     changeRequests: [
       { id: "cr-1", changeNumber: 1, contractRef: "CNT-2025-003", types: ["Scope Change", "Cost Variation"], reason: "Additional UPS units required for extended server room", description: "Add 4x 3kVA UPS units and cabling for redundancy in the new server room wing", supportingDocs: ["SupplierQuote_UPS.pdf", "JustificationMemo.pdf"], estimatedCostImpact: 18000, estimatedTimeImpact: "2 weeks", revisedValue: 143000, status: "Approved", requestedBy: "Nana Esi", requestedDate: "2025-04-10", approvedBy: "Management Committee", approvedDate: "2025-04-20" },
@@ -1002,7 +1004,7 @@ export function addInvoice(
         stage: "Submitted",
         action: "Submitted",
         by: submittedBy,
-        role: invoice.submittedVia === "Supplier Portal" ? "Supplier" : "Contract Coordinator",
+        role: "Contract Coordinator",
         date: today(),
         comments: `Invoice received via ${invoice.submittedVia}`,
       },

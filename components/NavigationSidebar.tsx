@@ -242,9 +242,6 @@ export function NavigationSidebar({ selectedItem, onSelectItem, collapsed }: Nav
           submenu: ["Departmental Plans", "Project Plans"],
         },
         { icon: <ScrollText size={iconSize} />, label: "Contract Management" },
-        { icon: <HardHat size={iconSize} />, label: "Contractors" },
-        { icon: <FolderKanban size={iconSize} />, label: "Contract Repository" },
-        { icon: <Globe size={iconSize} />, label: "Supplier Portal" },
         {
           icon: <CheckCircle size={iconSize} />,
           label: "Approvals",

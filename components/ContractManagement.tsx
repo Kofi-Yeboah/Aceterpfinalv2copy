@@ -3415,7 +3415,7 @@ function InvoiceModal({ contract: c, onClose }: { contract: AwardedContract; onC
           <div>
             <label className="text-[11px] text-slate-500 font-medium uppercase tracking-wider mb-2 block">Submitted Via</label>
             <div className="flex gap-2">
-              {(["Supplier Portal", "Email", "Manual"] as const).map(v => (
+              {(["Email", "Manual"] as const).map(v => (
                 <button key={v} onClick={() => setVia(v)} className={cn("px-3 py-1.5 rounded-lg text-[11px] font-medium border", via === v ? "bg-[#0B01D0] text-white border-[#0B01D0]" : "bg-white text-slate-600 border-slate-200")}>{v}</button>
               ))}
             </div>

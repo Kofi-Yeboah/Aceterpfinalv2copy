@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 const imgImage35 = "/acet-logo-white.png";
 import { NavigationSidebar } from "./components/NavigationSidebar";
-import { SupplierPortal } from "./components/SupplierPortal";
-import { ContractRepository } from "./pages/ContractRepository";
 import { ProjectPurchasePlans } from "./pages/ProjectPurchasePlans";
 import { RoleSwitcher } from "./components/RoleSwitcher";
 import { startReminderSweep } from "./lib/notificationStore";
@@ -111,7 +109,6 @@ import { Sourcing } from "./components/Sourcing";
 import { PurchaseOrderManagement } from "./components/PurchaseOrderManagement";
 import { Invoices } from "./components/Invoices";
 import { ContractManagement } from "./components/ContractManagement";
-import { ContractorsManagement } from "./components/ContractorsManagement";
 import { ProcurementApprovals } from "./components/ProcurementApprovals";
 import { PurchasePlan } from "./pages/PurchasePlan";
 import { PurchasePlanApproval } from "./pages/PurchasePlanApproval";
@@ -445,8 +442,6 @@ export default function App() {
         return <Invoices />;
       case "PROCUREMENT-Contract Management":
         return <ContractManagement />;
-      case "PROCUREMENT-Contractors":
-        return <ContractorsManagement />;
       case "PROCUREMENT-Approvals-Purchase Requisitions":
         return <ProcurementApprovals />;
       case "PROCUREMENT-Purchase Plan-Departmental Plans":
@@ -469,10 +464,6 @@ export default function App() {
         return <ProcurementReportingAnalytics initialTab="donors" />;
       case "PROCUREMENT-Reporting & Analytics-Combined Analysis Report":
         return <ProcurementReportingAnalytics initialTab="combined" />;
-      case "PROCUREMENT-Contract Repository":
-        return <ContractRepository />;
-      case "PROCUREMENT-Supplier Portal":
-        return <SupplierPortal />;
       case "PAYROLL MANAGEMENT-Dashboard":
         return <PayrollManagementDashboard />;
       case "PAYROLL MANAGEMENT-Payroll":

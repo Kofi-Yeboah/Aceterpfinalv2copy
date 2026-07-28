@@ -59,6 +59,7 @@ export type Capability =
   | "contract.register"
   | "contract.uploadDeliverable"
   | "contract.reviewDeliverable"
+  | "contract.invoiceRecord"
   | "contract.invoiceCCReview"
   | "contract.invoiceProcurementReview"
   | "contract.invoiceSupervisorApprove"
@@ -83,12 +84,12 @@ const ROLE_CAPABILITIES: Record<ProcurementRole, Capability[]> = {
     "pr.create", "pr.approveProcurement",
     "supplier.create", "supplier.approveRegistration", "supplier.suspend",
     "sourcing.manage", "sourcing.award",
-    "contract.register", "contract.reviewDeliverable", "contract.invoiceProcurementReview",
+    "contract.register", "contract.reviewDeliverable", "contract.invoiceRecord", "contract.invoiceProcurementReview",
     "contract.approveChange", "contract.close",
     "report.view", "report.export",
   ],
   Finance: [
-    "plan.reviewFinance", "pr.approveFinance", "supplier.validateBanking",
+    "plan.reviewFinance", "pr.approveFinance", "supplier.validateBanking", "contract.invoiceRecord",
     "contract.processPayment", "contract.close",
     "report.view", "report.export",
   ],
@@ -98,7 +99,7 @@ const ROLE_CAPABILITIES: Record<ProcurementRole, Capability[]> = {
     "plan.emergencyOverride", "report.view", "report.export", "audit.view",
   ],
   "Contract Coordinator": [
-    "contract.uploadDeliverable", "contract.invoiceCCReview", "contract.evaluatePerformance",
+    "contract.uploadDeliverable", "contract.invoiceRecord", "contract.invoiceCCReview", "contract.evaluatePerformance",
     "report.view",
   ],
   Supervisor: [

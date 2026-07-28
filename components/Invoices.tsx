@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   Search, Download, ChevronDown, ChevronLeft, ChevronRight, X, FileSpreadsheet, FileText,
-  AlertTriangle, CheckCircle2, Clock, ArrowRight, Lock, Receipt,
+  AlertTriangle, CheckCircle2, Clock, ArrowRight, Lock, Receipt, Plus, Upload, Paperclip, Printer, FileUp,
 } from "lucide-react";
 import {
   getAllInvoices, subscribe as subscribeContracts,
@@ -10,6 +10,8 @@ import {
   type AwardedContract, type ContractInvoice, type InvoiceStatus,
 } from "../lib/contractStore";
 import { getCurrentUser, can, denialReason, subscribe as subscribeUser } from "../lib/currentUser";
+import { getContracts, addInvoice as recordInvoice } from "../lib/contractStore";
+import { pickFiles, openFile, downloadFile, FileValidationError, type UploadedFile } from "../lib/fileUpload";
 import { exportToCSV, exportToExcel, exportToPDF, type ExportColumn } from "../lib/exportUtils";
 import { ProcurementStatCards, type StatTone } from "./procurement/ProcurementStatCards";
 
@@ -70,6 +72,7 @@ export function Invoices() {
   const [showSupplierDropdown, setShowSupplierDropdown] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [selected, setSelected] = useState<Row | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
@@ -189,6 +192,14 @@ export function Invoices() {
           </div>
 
           <div className="flex items-center gap-2.5">
+            <button
+              onClick={() => setShowAddModal(true)}
+              disabled={!can("contract.invoiceRecord")}
+              title={can("contract.invoiceRecord") ? "Record an invoice received from a supplier" : denialReason("contract.invoiceRecord")}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium text-white bg-purple-700 hover:bg-purple-800 transition-colors shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <Plus size={16} /> Add Invoice
+            </button>
             <div className="relative">
               <button
                 onClick={() => setShowExportMenu(!showExportMenu)}
@@ -258,7 +269,7 @@ export function Invoices() {
           <table className="w-full">
             <thead style={{ backgroundColor: "#0B01D0" }}>
               <tr>
-                {["Invoice #", "Contract", "Supplier", "Received", "Via", "Amount", "Paid", "Awaiting", "Status", ""].map((h) => (
+                {["Invoice #", "Contract", "Supplier", "Received", "Amount", "Status", ""].map((h) => (
                   <th key={h} className="text-left px-4 py-3 text-white text-[12px] font-semibold border-b border-slate-100 whitespace-nowrap">
                     {h}
                   </th>
@@ -275,14 +286,7 @@ export function Invoices() {
                   </td>
                   <td className="px-4 py-4"><p className="text-[12px] text-slate-500">{invoice.supplier}</p></td>
                   <td className="px-4 py-4"><p className="text-[12px] text-slate-500">{formatDate(invoice.dateSubmitted)}</p></td>
-                  <td className="px-4 py-4"><p className="text-[12px] text-slate-500">{invoice.submittedVia}</p></td>
                   <td className="px-4 py-4"><p className="text-[12px] text-slate-900 tabular-nums">{formatCurrency(invoice.amount)}</p></td>
-                  <td className="px-4 py-4">
-                    <p className="text-[12px] text-slate-900 tabular-nums">
-                      {invoice.amountPaid ? formatCurrency(invoice.amountPaid) : "—"}
-                    </p>
-                  </td>
-                  <td className="px-4 py-4"><p className="text-[12px] text-slate-500">{awaitingLabel(invoice)}</p></td>
                   <td className="px-4 py-4">
                     <span className={`inline-flex items-center px-2 py-1 rounded-xl text-[11px] font-medium ${STATUS_STYLE[invoice.status]}`}>
                       {invoice.status}
@@ -334,6 +338,8 @@ export function Invoices() {
           </button>
         </div>
       </div>
+
+      {showAddModal && <AddInvoiceModal onClose={() => setShowAddModal(false)} />}
     </div>
   );
 }
@@ -509,6 +515,9 @@ function InvoiceWorkbench({ row, onBack }: { row: Row; onBack: () => void }) {
             value={invoice.datePaid ? `${formatCurrency(invoice.amountPaid ?? 0)} on ${formatDate(invoice.datePaid)} · ${invoice.referenceNumber}` : "Not paid"}
           />
         </div>
+
+        {/* The invoice document itself */}
+        <InvoiceDocument invoice={invoice} />
 
         {/* Actions */}
         <div className="bg-white rounded-xl border border-slate-200 p-5">
@@ -816,5 +825,287 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
         <div className="flex-1 overflow-y-auto px-6 py-5">{children}</div>
       </div>
     </div>
+  );
+}
+
+
+/* ────────────────────────────────────────────────────────────────────────────
+   The uploaded invoice, shown inline
+   ──────────────────────────────────────────────────────────────────────────── */
+
+function InvoiceDocument({ invoice }: { invoice: ContractInvoice }) {
+  const files = invoice.documentFiles ?? [];
+  const [active, setActive] = useState(0);
+  const file = files[active];
+
+  if (files.length === 0) {
+    return (
+      <div className="bg-white rounded-xl border border-slate-200 p-5">
+        <h2 className="text-sm font-semibold text-slate-900 mb-2">Invoice document</h2>
+        <div className="border border-dashed border-slate-300 rounded-lg py-10 text-center">
+          <FileText size={22} className="text-slate-300 mx-auto mb-2" />
+          <p className="text-sm text-slate-500">No document was attached to this invoice.</p>
+          <p className="text-xs text-slate-400 mt-1">Invoices recorded before documents were captured will show nothing here.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // PDFs and images render in the browser; anything else only offers download.
+  const isPdf = /pdf/i.test(file.type) || /\.pdf$/i.test(file.name);
+  const isImage = /^(png|jpe?g|gif|webp)$/i.test(file.type) || /\.(png|jpe?g|gif|webp)$/i.test(file.name);
+
+  return (
+    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <div className="px-4 py-2.5 bg-slate-800 text-white flex items-center justify-between">
+        <div className="flex items-center gap-2 min-w-0">
+          <FileText size={14} className="shrink-0" />
+          <span className="text-[12px] font-medium truncate">{file.name}</span>
+          <span className="text-[11px] text-slate-400 shrink-0">{file.size}</span>
+        </div>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <button onClick={() => openFile(file)} className="p-1.5 hover:bg-slate-700 rounded" title="Open in a new tab">
+            <Printer size={13} />
+          </button>
+          <button onClick={() => downloadFile(file)} className="p-1.5 hover:bg-slate-700 rounded" title="Download">
+            <Download size={13} />
+          </button>
+        </div>
+      </div>
+
+      {files.length > 1 && (
+        <div className="px-4 py-2 bg-slate-50 border-b border-slate-200 flex flex-wrap gap-1.5">
+          {files.map((f, i) => (
+            <button
+              key={f.url}
+              onClick={() => setActive(i)}
+              className={`px-2.5 py-1 rounded text-[11px] transition-colors ${
+                i === active ? "bg-purple-700 text-white" : "text-slate-600 hover:bg-slate-200"
+              }`}
+            >
+              {f.name}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className="bg-slate-100 p-4">
+        {isPdf ? (
+          <iframe src={file.url} title={file.name} className="w-full h-[620px] bg-white rounded shadow-sm border-0" />
+        ) : isImage ? (
+          <img src={file.url} alt={file.name} className="max-w-full mx-auto bg-white rounded shadow-sm" />
+        ) : (
+          <div className="bg-white rounded shadow-sm py-12 text-center">
+            <Paperclip size={22} className="text-slate-300 mx-auto mb-2" />
+            <p className="text-sm text-slate-600">{file.name}</p>
+            <p className="text-xs text-slate-400 mt-1">This file type can't be previewed in the browser.</p>
+            <button onClick={() => downloadFile(file)} className="mt-3 px-3 py-1.5 text-[12px] font-medium text-purple-700 border border-purple-200 rounded-lg hover:bg-purple-50">
+              Download to view
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
+   Add Invoice — the document comes first, then the details it belongs to
+   ──────────────────────────────────────────────────────────────────────────── */
+
+function AddInvoiceModal({ onClose }: { onClose: () => void }) {
+  const user = getCurrentUser();
+  const [files, setFiles] = useState<UploadedFile[]>([]);
+  const [contractId, setContractId] = useState("");
+  const [form, setForm] = useState({ invoiceNumber: "", amount: "", dateSubmitted: new Date().toISOString().split("T")[0], note: "" });
+  const [error, setError] = useState("");
+  const [done, setDone] = useState<string | null>(null);
+
+  // Only contracts that can still receive a bill.
+  const contracts = getContracts().filter((c) => c.status !== "Closed");
+  const contract = contracts.find((c) => c.id === contractId);
+
+  async function attach() {
+    setError("");
+    try {
+      const picked = await pickFiles({ multiple: true, uploadedBy: user.name });
+      if (picked.length) setFiles((f) => [...f, ...picked]);
+    } catch (err) {
+      setError(err instanceof FileValidationError ? err.message : "That file could not be attached.");
+    }
+  }
+
+  function submit() {
+    setError("");
+    if (!contract) { setError("Select the contract this invoice belongs to."); return; }
+    const res = recordInvoice(
+      contract.id,
+      {
+        invoiceNumber: form.invoiceNumber.trim(),
+        supplier: contract.party,
+        amount: Number(form.amount),
+        dateSubmitted: form.dateSubmitted,
+        submittedVia: "Manual",
+        documents: files.map((f) => f.name),
+        documentFiles: files.map((f) => ({ name: f.name, url: f.url, type: f.type, size: f.sizeLabel })),
+      },
+      user.name
+    );
+    if (!res.ok) { setError(res.error ?? "The invoice could not be recorded."); return; }
+    setDone(res.invoice!.invoiceNumber);
+  }
+
+  const ready = files.length > 0;
+  const complete = ready && !!contract && form.invoiceNumber.trim() !== "" && Number(form.amount) > 0;
+
+  return (
+    <Modal title="Add Invoice" onClose={onClose}>
+      {done ? (
+        <div className="text-center py-4">
+          <CheckCircle2 size={34} className="text-green-600 mx-auto mb-3" />
+          <p className="text-sm text-slate-900 font-medium">Invoice {done} recorded</p>
+          <p className="text-sm text-slate-500 mt-1">
+            It now sits at <strong>Submitted</strong>, waiting for the contract coordinator to match it to a deliverable.
+          </p>
+          <button onClick={onClose} className="mt-5 px-4 py-2 rounded-lg text-sm font-medium text-white bg-purple-700 hover:bg-purple-800">
+            Done
+          </button>
+        </div>
+      ) : (
+        <>
+          {error && (
+            <div className="rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-800 mb-4 flex gap-2">
+              <AlertTriangle size={16} className="shrink-0 mt-0.5" /> <span>{error}</span>
+            </div>
+          )}
+
+          {/* Step 1 — the document */}
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">1 &middot; Upload the invoice</p>
+          {files.length === 0 ? (
+            <button
+              onClick={attach}
+              className="w-full border-2 border-dashed border-slate-300 rounded-xl py-8 hover:border-purple-400 hover:bg-purple-50/40 transition-colors"
+            >
+              <FileUp size={24} className="text-slate-400 mx-auto mb-2" />
+              <p className="text-sm font-medium text-slate-700">Choose the invoice document</p>
+              <p className="text-xs text-slate-400 mt-0.5">PDF, image or Office file, up to 25 MB</p>
+            </button>
+          ) : (
+            <div className="space-y-1.5">
+              {files.map((f) => (
+                <div key={f.id} className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-slate-50 border border-slate-200">
+                  <button onClick={() => openFile(f)} className="flex items-center gap-2 min-w-0 text-sm text-slate-800 hover:underline">
+                    <Paperclip size={13} className="text-slate-400 shrink-0" />
+                    <span className="truncate">{f.name}</span>
+                  </button>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <span className="text-xs text-slate-500">{f.sizeLabel}</span>
+                    <button onClick={() => setFiles((p) => p.filter((x) => x.id !== f.id))} title="Remove">
+                      <X size={15} className="text-slate-400 hover:text-red-600" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+              <button onClick={attach} className="text-[12px] text-purple-700 hover:underline flex items-center gap-1 mt-1">
+                <Upload size={12} /> Add another file
+              </button>
+            </div>
+          )}
+
+          {/* Step 2 — the details, revealed once there is something to describe */}
+          <div className={`mt-6 transition-opacity ${ready ? "" : "opacity-40 pointer-events-none select-none"}`}>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
+              2 &middot; Invoice details {!ready && <span className="normal-case font-normal text-slate-400">— upload a document first</span>}
+            </p>
+
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-medium text-slate-600 mb-1">Contract *</label>
+                <select
+                  value={contractId}
+                  onChange={(e) => setContractId(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+                >
+                  <option value="">Select the contract this invoice is against…</option>
+                  {contracts.map((c) => (
+                    <option key={c.id} value={c.id}>{c.contractNumber} — {c.title}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-medium text-slate-600 mb-1">Supplier</label>
+                <input
+                  value={contract?.party ?? ""}
+                  readOnly
+                  placeholder="Filled in from the contract"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-sm text-slate-600"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">Invoice number *</label>
+                <input
+                  value={form.invoiceNumber}
+                  onChange={(e) => setForm({ ...form, invoiceNumber: e.target.value })}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">Amount (USD) *</label>
+                <input
+                  type="number" min="0"
+                  value={form.amount}
+                  onChange={(e) => setForm({ ...form, amount: e.target.value })}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">Date received *</label>
+                <input
+                  type="date"
+                  value={form.dateSubmitted}
+                  onChange={(e) => setForm({ ...form, dateSubmitted: e.target.value })}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">Contract balance</label>
+                <input
+                  value={contract ? formatCurrency(contract.value) : ""}
+                  readOnly
+                  placeholder="—"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-sm text-slate-600"
+                />
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-medium text-slate-600 mb-1">Note (optional)</label>
+                <textarea
+                  rows={2}
+                  value={form.note}
+                  onChange={(e) => setForm({ ...form, note: e.target.value })}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 mt-6">
+            <button onClick={onClose} className="px-4 py-2 rounded-lg text-sm border border-slate-300 hover:bg-slate-50">Cancel</button>
+            <button
+              onClick={submit}
+              disabled={!complete}
+              className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-purple-700 hover:bg-purple-800 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Record invoice
+            </button>
+          </div>
+        </>
+      )}
+    </Modal>
   );
 }
