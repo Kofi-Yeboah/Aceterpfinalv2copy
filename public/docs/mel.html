@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>ACET MEL — Module reference</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>">
+</head>
+<body>
+
+<style>
+  :root {
+    --bg: #fbfbfc; --card: #ffffff; --ink: #13171a; --ink-soft: #485257; --muted: #798388;
+    --line: #e2e6e9; --rule: #14181a;
+    --note-bg: #f4f7f9; --note-line: #d3dde5; --note-ink: #23485f;
+    --warn-bg: #fdf6ec; --warn-line: #e8d3ae; --warn-ink: #7a5410;
+    --ok-bg: #eef7f1; --ok-line: #bcdcc8; --ok-ink: #1f6338;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --accent: #5b4a9e;
+    --chip-bg: #eef1f4; --chip-ink: #3c464b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #16181a; --card: #1e2124; --ink: #e9edee; --ink-soft: #b7c0c4; --muted: #8d979b;
+      --line: #2c3134; --rule: #e9edee; --note-bg: #1c252b; --note-line: #2f4150; --note-ink: #96c4dd;
+      --warn-bg: #2a2318; --warn-line: #4d4128; --warn-ink: #dcb974;
+      --ok-bg: #18251d; --ok-line: #2c4535; --ok-ink: #7fc79a;
+      --accent: #a795e0; --chip-bg: #272c30; --chip-ink: #b7c0c4; }
+  }
+  :root[data-theme="dark"] { --bg: #16181a; --card: #1e2124; --ink: #e9edee; --ink-soft: #b7c0c4; --muted: #8d979b;
+    --line: #2c3134; --rule: #e9edee; --note-bg: #1c252b; --note-line: #2f4150; --note-ink: #96c4dd;
+    --warn-bg: #2a2318; --warn-line: #4d4128; --warn-ink: #dcb974;
+    --ok-bg: #18251d; --ok-line: #2c4535; --ok-ink: #7fc79a;
+    --accent: #a795e0; --chip-bg: #272c30; --chip-ink: #b7c0c4; }
+  :root[data-theme="light"] { --bg: #fbfbfc; --card: #ffffff; --ink: #13171a; --ink-soft: #485257; --muted: #798388;
+    --line: #e2e6e9; --rule: #14181a; --note-bg: #f4f7f9; --note-line: #d3dde5; --note-ink: #23485f;
+    --warn-bg: #fdf6ec; --warn-line: #e8d3ae; --warn-ink: #7a5410;
+    --ok-bg: #eef7f1; --ok-line: #bcdcc8; --ok-ink: #1f6338;
+    --accent: #5b4a9e; --chip-bg: #eef1f4; --chip-ink: #3c464b; }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 16px; line-height: 1.62; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 52px 22px 90px; }
+
+  .back { font-family: var(--mono); font-size: 12px; color: var(--muted); text-decoration: none; }
+  .back:hover { color: var(--ink); }
+
+  header { padding: 14px 0 26px; border-bottom: 2px solid var(--rule); margin-bottom: 26px; }
+  .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin: 14px 0 12px; }
+  h1 { font-size: clamp(1.9rem, 5vw, 2.7rem); line-height: 1.08; letter-spacing: -0.026em; font-weight: 760; margin: 0 0 14px; text-wrap: balance; }
+  .lede { font-size: 1.08rem; color: var(--ink-soft); margin: 0; max-width: 64ch; }
+
+  nav.toc { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 20px 24px; margin-bottom: 40px; }
+  nav.toc h2 { font-size: .78rem; letter-spacing: .1em; text-transform: uppercase; font-weight: 750; color: var(--muted); margin: 0 0 12px; }
+  nav.toc ol { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 5px 22px; }
+  nav.toc a { color: var(--ink-soft); text-decoration: none; font-size: 14px; }
+  nav.toc a:hover { color: var(--accent); }
+  nav.toc b { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-right: 7px; }
+
+  section { margin: 52px 0 0; scroll-margin-top: 20px; }
+  .sec-head { display: flex; align-items: baseline; gap: 14px; border-bottom: 1px solid var(--line); padding-bottom: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+  .sec-num { font-family: var(--mono); font-size: 12px; color: var(--accent); font-weight: 700; }
+  .sec-head h2 { font-size: 1.42rem; font-weight: 720; letter-spacing: -0.018em; margin: 0; }
+  .tag { font-family: var(--mono); font-size: 10.5px; letter-spacing: .05em; text-transform: uppercase; background: var(--chip-bg); color: var(--chip-ink); padding: 3px 8px; border-radius: 5px; }
+
+  h3 { font-size: 1.02rem; font-weight: 700; margin: 30px 0 8px; letter-spacing: -0.008em; }
+  p { margin: 0 0 13px; color: var(--ink-soft); max-width: 74ch; }
+  strong { color: var(--ink); font-weight: 640; }
+  ul, ol.plain { margin: 0 0 14px; padding-left: 20px; color: var(--ink-soft); max-width: 74ch; }
+  li { margin-bottom: 6px; }
+
+  .tw { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--card); margin: 0 0 16px; }
+  table { border-collapse: collapse; width: 100%; min-width: 620px; }
+  th { text-align: left; font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); font-weight: 700;
+       padding: 11px 14px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  td { padding: 11px 14px; font-size: 13.6px; color: var(--ink-soft); border-bottom: 1px solid var(--line); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  td.k { color: var(--ink); font-weight: 620; white-space: nowrap; }
+  code, .path { font-family: var(--mono); font-size: .85em; background: var(--chip-bg); color: var(--ink); padding: 1.5px 6px; border-radius: 5px; }
+  .path { white-space: nowrap; }
+
+  .note, .warn, .ok { margin: 18px 0; padding: 15px 19px; border-radius: 0 12px 12px 0; }
+  .note { border-left: 3px solid var(--note-ink); background: var(--note-bg); }
+  .warn { border-left: 3px solid var(--warn-ink); background: var(--warn-bg); }
+  .ok   { border-left: 3px solid var(--ok-ink);   background: var(--ok-bg); }
+  .note p, .warn p, .ok p, .note ul, .warn ul { margin: 0 0 8px; font-size: 14.2px; }
+  .note p:last-child, .warn p:last-child, .ok p:last-child, .note ul:last-child, .warn ul:last-child { margin: 0; }
+  .lbl { font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 7px; }
+  .note .lbl { color: var(--note-ink); } .warn .lbl { color: var(--warn-ink); } .ok .lbl { color: var(--ok-ink); }
+
+  .chain { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; margin: 14px 0 18px; }
+  .chain span { font-size: 12.5px; background: var(--chip-bg); color: var(--chip-ink); border-radius: 20px; padding: 4px 13px; font-weight: 600; white-space: nowrap; }
+  .chain i { color: var(--muted); font-style: normal; font-size: 13px; }
+
+  .ladder { margin: 16px 0 18px; }
+  .ladder div { display: grid; grid-template-columns: 150px 1fr; gap: 16px; padding: 12px 16px; background: var(--card);
+                border: 1px solid var(--line); border-radius: 10px; margin-bottom: 7px; align-items: baseline; }
+  .ladder b { font-size: 13.5px; color: var(--accent); }
+  .ladder span { font-size: 13.5px; color: var(--ink-soft); }
+  @media (max-width: 640px) { .ladder div { grid-template-columns: 1fr; gap: 3px; } }
+
+  .formula { font-family: var(--mono); font-size: 13px; background: var(--card); border: 1px solid var(--line);
+             border-radius: 10px; padding: 14px 17px; margin: 12px 0 16px; color: var(--ink); overflow-x: auto; }
+
+  footer { margin-top: 58px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); }
+
+  @media print { body { background: #fff; } section, .tw { break-inside: avoid; } nav.toc { display: none; } }
+</style>
+
+<div class="wrap">
+
+  <a class="back" href="./index.html">← All documentation</a>
+
+  <header>
+    <p class="eyebrow">ACET ERP · Monitoring &amp; Evaluation Module</p>
+    <h1>MEL — module reference</h1>
+    <p class="lede">
+      Monitoring, Evaluation and Learning: how a framework is built, how indicators hang off it, how results are
+      collected and quality-assured, and how all of that becomes a donor report. Includes the distinctions people
+      actually get stuck on — framework types, and the two different things called "level".
+    </p>
+  </header>
+
+  <nav class="toc">
+    <h2>Contents</h2>
+    <ol>
+      <li><a href="#chain"><b>01</b></a><a href="#chain">The measurement chain</a></li>
+      <li><a href="#frameworks"><b>02</b></a><a href="#frameworks">MEL frameworks</a></li>
+      <li><a href="#types"><b>03</b></a><a href="#types">Which framework type to use</a></li>
+      <li><a href="#indicators"><b>04</b></a><a href="#indicators">Performance indicators</a></li>
+      <li><a href="#levels"><b>05</b></a><a href="#levels">The two "levels", untangled</a></li>
+      <li><a href="#collection"><b>06</b></a><a href="#collection">Data collection &amp; quality assurance</a></li>
+      <li><a href="#dashboard"><b>07</b></a><a href="#dashboard">MEL dashboard</a></li>
+      <li><a href="#reports"><b>08</b></a><a href="#reports">Reporting &amp; analytics</a></li>
+      <li><a href="#integration"><b>09</b></a><a href="#integration">Where MEL meets other modules</a></li>
+      <li><a href="#status"><b>10</b></a><a href="#status">What is real, what is presentation</a></li>
+      <li><a href="#glossary"><b>11</b></a><a href="#glossary">Glossary</a></li>
+    </ol>
+  </nav>
+
+  <!-- ═══ 01 ═══ -->
+  <section id="chain">
+    <div class="sec-head"><span class="sec-num">01</span><h2>The measurement chain</h2></div>
+
+    <p>
+      Every screen in this module is one link in a single chain. Understanding the chain makes the rest of the module
+      obvious; missing it makes each screen look like an unrelated table.
+    </p>
+
+    <div class="chain">
+      <span>Framework</span><i>→</i><span>Indicator</span><i>→</i><span>Data record</span><i>→</i><span>Quality assurance</span><i>→</i><span>Report</span>
+    </div>
+
+    <div class="ladder">
+      <div><b>Framework</b><span>States what change we are trying to cause, and the logic by which our activities are supposed to cause it. Built once per programme or project.</span></div>
+      <div><b>Indicator</b><span>The specific thing we will count to know whether that change is happening. Hangs off a framework, and off a point in a project.</span></div>
+      <div><b>Data record</b><span>One indicator's actual value for one reporting period, with the evidence behind it and an explanation if it missed.</span></div>
+      <div><b>Quality assurance</b><span>Somebody other than the person who entered it confirms the number is supported by the evidence.</span></div>
+      <div><b>Report</b><span>Verified numbers assembled for a donor, for management, for the M&amp;E function, or for a formal impact evaluation.</span></div>
+    </div>
+
+    <div class="note">
+      <span class="lbl">Why the order is fixed</span>
+      <p>
+        An indicator that does not trace to a framework is a number nobody agreed was worth collecting. A report built
+        from unverified records is a claim with nothing behind it. The chain is the audit path a donor follows in
+        reverse: from a figure in a report, to the record, to the evidence file, to the indicator definition, to the
+        framework that justified measuring it.
+      </p>
+    </div>
+  </section>
+
+  <!-- ═══ 02 ═══ -->
+  <section id="frameworks">
+    <div class="sec-head"><span class="sec-num">02</span><h2>MEL frameworks</h2><span class="tag">MEL Frameworks</span></div>
+
+    <p>
+      A framework is the top of the chain. The register lists each one with its ID, name, type, the programme or project
+      it belongs to, who created it, when, and a status of <strong>Active</strong>, <strong>Draft</strong> or
+      <strong>Archived</strong>. It filters by type and by creation date, and exports to CSV.
+    </p>
+
+    <h3>Building one</h3>
+    <p>The builder captures the framework's identity, then its logic.</p>
+
+    <div class="tw">
+      <table>
+        <thead><tr><th>Field</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td class="k">Framework name</td><td>Free text</td></tr>
+          <tr><td class="k">Framework type</td><td>Theory of Change · Results Framework · Logical Framework · Logic Model</td></tr>
+          <tr><td class="k">Description</td><td>What the framework is for</td></tr>
+          <tr><td class="k">Applicable level</td><td>Institutional · Program Level · Project Level</td></tr>
+          <tr><td class="k">Linked entity</td><td><strong>Appears only</strong> when the level is Program or Project — an institutional framework has nothing to link to, so the field does not exist for it</td></tr>
+          <tr><td class="k">Start and end date</td><td>The period the framework covers</td></tr>
+          <tr><td class="k">Document / external link</td><td>The signed framework itself, uploaded or linked</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>The hierarchy builder</h3>
+    <p>
+      Beneath the header sits the results chain itself, built as levels containing items, where each item names its
+      parent on the level above. The default is the standard four:
+    </p>
+
+    <div class="ladder">
+      <div><b>Goal / Impact</b><span>The long-term change — "reduce youth unemployment by 20%"</span></div>
+      <div><b>Outcome</b><span>What must become true for the goal to follow — "youth acquire market-relevant digital skills", "employers increase hiring of trained youth"</span></div>
+      <div><b>Output</b><span>What our work directly produces — "digital training hubs established", "certification programme launched"</span></div>
+      <div><b>Activity</b><span>What we actually do — "renovate hub facilities", "procure equipment", "develop curriculum", "sign MoUs with employers"</span></div>
+    </div>
+
+    <p>
+      Levels can be added, renamed and removed, so a framework that needs five tiers or different vocabulary is not
+      forced into the default. Items link upward by parent, which is what makes the chain traceable in both directions:
+      from an activity up to the goal it serves, and from a goal down to everything being done in its name.
+    </p>
+    <p>
+      The builder ends with a <strong>review step</strong> before saving, so the whole structure is confirmed as one
+      piece rather than committed level by level.
+    </p>
+  </section>
+
+  <!-- ═══ 03 ═══ -->
+  <section id="types">
+    <div class="sec-head"><span class="sec-num">03</span><h2>Which framework type to use</h2></div>
+
+    <p>
+      All four types describe how activities lead to change, and they are often used loosely as synonyms. They answer
+      different questions, and picking the wrong one produces a document nobody uses.
+    </p>
+
+    <div class="tw">
+      <table>
+        <thead><tr><th>Type</th><th>Answers</th><th>Shape</th><th>Reach for it when</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="k">Theory of Change</td>
+            <td>Why do we believe this will work?</td>
+            <td>A causal map, often with several pathways, showing assumptions and the conditions each step depends on</td>
+            <td>Designing a programme, or having to defend the logic to a sceptical board or donor. It is the only one of the four that makes assumptions explicit.</td>
+          </tr>
+          <tr>
+            <td class="k">Results Framework</td>
+            <td>What are we accountable for delivering?</td>
+            <td>A strict hierarchy of results with indicators attached at each level</td>
+            <td>Reporting performance upward. It is the <strong>performance</strong> instrument — trimmed of narrative, built for measurement.</td>
+          </tr>
+          <tr>
+            <td class="k">Logical Framework</td>
+            <td>How will this be managed and verified?</td>
+            <td>A matrix: results down the side; indicator, means of verification, and assumptions across the top</td>
+            <td>Managing delivery and satisfying a donor who requires a logframe. It is the <strong>structural</strong> instrument — every cell must be filled.</td>
+          </tr>
+          <tr>
+            <td class="k">Logic Model</td>
+            <td>What goes in, what comes out?</td>
+            <td>A linear flow: inputs → activities → outputs → outcomes</td>
+            <td>Explaining a project on one page to a general audience. The simplest of the four, and the least useful for measurement.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <span class="lbl">Structure versus performance, in one line</span>
+      <p>
+        A <strong>logical framework</strong> is structural: it fixes the design, the means of verification and the
+        assumptions, and is used to <em>manage</em> the work. A <strong>results framework</strong> is performance-oriented:
+        it strips the design detail and keeps the results hierarchy with its indicators and targets, and is used to
+        <em>report</em> the work. Many organisations maintain both — the logframe for delivery, the results framework for
+        the donor — and the two must agree on the results they name.
+      </p>
+    </div>
+  </section>
+
+  <!-- ═══ 04 ═══ -->
+  <section id="indicators">
+    <div class="sec-head"><span class="sec-num">04</span><h2>Performance indicators</h2><span class="tag">Performance Indicators</span></div>
+
+    <p>
+      The indicator register is the working list of everything being measured. Each row carries the indicator ID, its
+      indicator level, name, project, project level, unit of measure, data source, reporting frequency, target, actual,
+      and a status of <strong>On Track</strong>, <strong>At Risk</strong> or <strong>Behind</strong>. It filters by unit,
+      by level and by period, searches by name or ID, and exports to CSV.
+    </p>
+
+    <h3>Defining an indicator</h3>
+    <p>The form is deliberately long, in four sections, because a badly defined indicator produces uncomparable data for years.</p>
+
+    <div class="tw">
+      <table>
+        <thead><tr><th>Section</th><th>Captures</th></tr></thead>
+        <tbody>
+          <tr><td class="k">1 · Basic information</td><td>Indicator name and its precise definition, plus the Assignment card — where in the project this is tracked and what it is attached to</td></tr>
+          <tr><td class="k">2 · Classification &amp; strategy</td><td>Indicator level, project, the framework it belongs to, and the specific outcome within that framework it reports against</td></tr>
+          <tr><td class="k">3 · Measurement rules (PIRS)</td><td>Unit of measure, data source, reporting frequency, and the Performance Indicator Reference Sheet itself — uploaded or linked</td></tr>
+          <tr><td class="k">4 · Benchmarks</td><td>Baseline value, target value, start date and target date</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <span class="lbl">What the PIRS is for</span>
+      <p>
+        A Performance Indicator Reference Sheet is the definitive statement of how an indicator is measured: precisely
+        what counts, who collects it, how often, from which source, and how it is calculated. It exists so that the
+        number means the same thing in year three as it did in year one, when the people who designed it have moved on.
+        Section 3 is where that document is attached to the indicator rather than living in someone's folder.
+      </p>
+    </div>
+
+    <p>
+      The <strong>baseline</strong> deserves the same emphasis. Without a value recorded before the work started, an
+      actual is a number with nothing to compare it to — the target tells you where you wanted to get to, the baseline
+      tells you how far you have come.
+    </p>
+  </section>
+
+  <!-- ═══ 05 ═══ -->
+  <section id="levels">
+    <div class="sec-head"><span class="sec-num">05</span><h2>The two "levels", untangled</h2></div>
+
+    <p>
+      The indicator table has two columns with "level" in the name, and they are genuinely different things. This is the
+      single most common point of confusion in the module.
+    </p>
+
+    <div class="tw">
+      <table>
+        <thead><tr><th></th><th>Indicator Level</th><th>Project Level</th></tr></thead>
+        <tbody>
+          <tr><td class="k">Answers</td><td><em>Whose</em> indicator is this — who needs the number?</td><td><em>Where</em> in the project is it measured?</td></tr>
+          <tr><td class="k">Values</td><td>Project Level Indicator (Donor Requirement) · Program Level Indicator · Institutional KPI</td><td>Project · Phase · Deliverable · Task</td></tr>
+          <tr><td class="k">Set on</td><td>The Classification &amp; Strategy section</td><td>The Assignment card, at the top of the form</td></tr>
+          <tr><td class="k">Drives</td><td>Which report the indicator rolls up into</td><td>What the indicator is attached to, and therefore who collects it</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>
+      They vary independently, which is exactly why both columns are needed. An <strong>Institutional KPI</strong> —
+      say, overall budget variance — can be tracked at <strong>Project</strong> level within a specific project. A
+      <strong>Project Level Indicator</strong> demanded by a donor may be measured at <strong>Deliverable</strong> level,
+      against the training curriculum that was actually handed over. Knowing one tells you nothing about the other.
+    </p>
+
+    <p>
+      In the table, Project Level shows the level as a chip with the thing it is attached to beneath it — the phase,
+      deliverable or task by name. At Project level that second line is suppressed, because it would simply repeat the
+      Project column beside it.
+    </p>
+  </section>
+
+  <!-- ═══ 06 ═══ -->
+  <section id="collection">
+    <div class="sec-head"><span class="sec-num">06</span><h2>Data collection and quality assurance</h2><span class="tag">Data Collection</span></div>
+
+    <p>
+      This is where indicators stop being definitions and start being results. A data record is one indicator's actual
+      value for one reporting period, and it carries the evidence with it.
+    </p>
+
+    <div class="tw">
+      <table>
+        <thead><tr><th>Field</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td class="k">Indicator + ID</td><td>What is being reported, linked back to its definition</td></tr>
+          <tr><td class="k">Project</td><td>Which project the result belongs to</td></tr>
+          <tr><td class="k">Reporting period</td><td>The quarter or period, e.g. "Q1 2025 (Jan–Mar)"</td></tr>
+          <tr><td class="k">Actual value</td><td>What was achieved</td></tr>
+          <tr><td class="k">Target value</td><td>What was planned, carried across from the indicator</td></tr>
+          <tr><td class="k">Evidence</td><td>Files or links substantiating the number, with a count shown on the row</td></tr>
+          <tr><td class="k">Explanation</td><td>Narrative — required when performance falls short, see below</td></tr>
+          <tr><td class="k">QA status</td><td>Draft · Pending · Verified · Flagged</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Disaggregation</h3>
+    <p>
+      The entry form splits a headline figure into its parts — <strong>male and female</strong>, <strong>urban and
+      rural</strong> — alongside the total. This is not decoration: a programme that reaches its overall target while
+      reaching almost no women has not succeeded, and an aggregate number hides that completely. Most donors require
+      disaggregation, and it is far easier to capture at entry than to reconstruct afterwards.
+    </p>
+
+    <h3>The variance rule</h3>
+    <p>Achievement is computed as the actual against the target:</p>
+    <div class="formula">achievement % = actual ÷ target × 100
+below 85%  →  variance alert raised, explanation required</div>
+    <p>
+      Under 85 per cent, the form raises an alert and will not treat the record as complete until a variance
+      explanation is written. The completion tracker counts four things — both actual values, evidence or narrative,
+      and a variance explanation where one is owed — so a shortfall cannot be quietly submitted as a bare number. An
+      under-performing indicator with a reason attached is useful; one without is just bad news with no learning in it.
+    </p>
+
+    <h3>Quality assurance</h3>
+    <div class="chain">
+      <span>Draft</span><i>→</i><span>Pending</span><i>→</i><span>Verified</span><i>·</i><span>Flagged</span>
+    </div>
+    <p>
+      A record entered is <strong>Draft</strong>; submitted for review it is <strong>Pending</strong>; checked against
+      its evidence it becomes <strong>Verified</strong>; where the evidence does not support the number, or the number
+      looks wrong, it is <strong>Flagged</strong> and goes back. Only verified records should reach a donor report —
+      that is the whole purpose of the status existing.
+    </p>
+  </section>
+
+  <!-- ═══ 07 ═══ -->
+  <section id="dashboard">
+    <div class="sec-head"><span class="sec-num">07</span><h2>MEL dashboard</h2><span class="tag">Dashboard</span></div>
+    <p>
+      Seven configurable panels, each of which can be shown or hidden, filtered by date, project and donor:
+      summary statistics, gender distribution, funding by donor type, indicator achievement trend, grant utilisation,
+      reporting compliance rate, and beneficiary reach. Additional series behind them cover outcome performance and
+      data quality.
+    </p>
+    <p>
+      The pairing to notice is <strong>reporting compliance</strong> next to <strong>data quality</strong>. Compliance
+      says reports went out on time; quality says whether the numbers in them were verified. High compliance with low
+      quality is the failure mode worth catching early, and it is invisible unless both are on the same screen.
+    </p>
+  </section>
+
+  <!-- ═══ 08 ═══ -->
+  <section id="reports">
+    <div class="sec-head"><span class="sec-num">08</span><h2>Reporting and analytics</h2><span class="tag">Reporting &amp; Analytics</span></div>
+
+    <p>Four report areas, each answering to a different audience.</p>
+
+    <h3>Donor reports</h3>
+    <p>
+      One row per report obligation: the donor, the project, the report type — Quarterly Financial, Quarterly Narrative,
+      Annual Progress, Semi-Annual Progress, Mid-Term Evaluation, Annual Audit Report — the period, the due date, the
+      submitted date, a status of <strong>Submitted</strong>, <strong>In Draft</strong>, <strong>Due Soon</strong> or
+      <strong>Overdue</strong>, and a compliance verdict of <strong>On Time</strong>, <strong>Late</strong>,
+      <strong>Pending</strong> or <strong>Overdue</strong>.
+    </p>
+    <div class="note">
+      <span class="lbl">Why status and compliance are separate columns</span>
+      <p>
+        A report can be Submitted and still Late — the fourth example in the seeded data is exactly that, due 30 April
+        and submitted 2 May. Collapsing the two into one column would erase the distinction between <em>did we file
+        it</em> and <em>did we file it on time</em>, which is precisely what a donor relationship turns on.
+      </p>
+    </div>
+
+    <h3>Management reports</h3>
+    <p>
+      Internal reporting across seven categories — Portfolio, Financial, Operations, Risk, Procurement, Governance —
+      each with a frequency, a period, who generated it (including "System Auto"), a status of Draft or Final, and a
+      trend direction. Burn rate, resource utilisation, risk register, procurement status, cash flow forecast and the
+      quarterly board report all live here.
+    </p>
+
+    <h3>M&amp;E reports</h3>
+    <p>
+      The M&amp;E function's own reporting, across Performance, Framework, Beneficiary, Data Quality, Learning,
+      Cross-Cutting and Review types. Two columns distinguish these from everything else: a <strong>data quality
+      score</strong> and the <strong>number of indicators tracked</strong>. A report covering 45 indicators at 92%
+      quality and one covering 6 at 85% are very different objects, and both numbers are needed to tell them apart.
+    </p>
+
+    <h3>Impact assessment</h3>
+    <p>
+      Formal evaluations, each with a methodology, a scope, a date range, a beneficiary count, a status, and an impact
+      score. Seven methodologies are represented, and the choice among them is a real methodological decision:
+    </p>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Methodology</th><th>How it establishes attribution</th></tr></thead>
+        <tbody>
+          <tr><td class="k">RCT</td><td>Random assignment to treatment and control. The strongest claim available, and the most demanding to run.</td></tr>
+          <tr><td class="k">Quasi-Experimental</td><td>A comparison group constructed rather than randomised — used where randomisation is impossible or unethical.</td></tr>
+          <tr><td class="k">Pre-Post Design</td><td>The same group measured before and after. Simple, and cannot separate the programme's effect from everything else happening at the time.</td></tr>
+          <tr><td class="k">Mixed Methods</td><td>Quantitative measurement plus qualitative enquiry, each covering the other's blind spot.</td></tr>
+          <tr><td class="k">Contribution Analysis</td><td>Tests whether the theory of change held, rather than isolating an effect — appropriate where many actors contributed.</td></tr>
+          <tr><td class="k">Cost-Benefit Analysis</td><td>Values outcomes against costs. Answers "was it worth it", not "did it work".</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      The impact score sits at <code>0</code> until an assessment reaches analysis — a study still collecting data has
+      no score, and the table shows that honestly rather than displaying a placeholder figure.
+    </p>
+  </section>
+
+  <!-- ═══ 09 ═══ -->
+  <section id="integration">
+    <div class="sec-head"><span class="sec-num">09</span><h2>Where MEL meets other modules</h2></div>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Boundary</th><th>What crosses it</th><th>Live?</th></tr></thead>
+        <tbody>
+          <tr><td class="k">Projects → MEL</td><td>The project an indicator belongs to, and the phase, deliverable or task it is assigned to</td><td>Selected from a fixed list, not read from the project store</td></tr>
+          <tr><td class="k">MEL → Projects</td><td>Indicator performance against project delivery</td><td>Presentation only</td></tr>
+          <tr><td class="k">Finance → MEL</td><td>Grant utilisation and funding by donor on the dashboard</td><td>Presentation only</td></tr>
+          <tr><td class="k">CRM → MEL</td><td>Donors and grant agreements behind the donor report obligations</td><td>Presentation only</td></tr>
+          <tr><td class="k">MEL → Management</td><td>Indicator and data-quality figures feeding management reporting</td><td>Presentation only</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ═══ 10 ═══ -->
+  <section id="status">
+    <div class="sec-head"><span class="sec-num">10</span><h2>What is real, what is presentation</h2></div>
+
+    <div class="warn">
+      <span class="lbl">The honest summary</span>
+      <p>
+        MEL is <strong>presentation throughout</strong>. Every screen holds its data as a local array inside the
+        component. Nothing written on one screen reaches another, and nothing survives navigating away. No screen in
+        this module imports a store from <code>lib/</code>.
+      </p>
+      <p>
+        What is genuinely there is the <strong>model</strong> — the framework hierarchy with parent linking, the
+        four-section indicator definition including the PIRS, disaggregated collection, the QA statuses, and the
+        variance rule. The thinking is sound and the forms are complete. It is the wiring underneath that is absent.
+      </p>
+    </div>
+
+    <div class="tw">
+      <table>
+        <thead><tr><th>Area</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td class="k">Framework hierarchy builder</td><td><strong>Real as an interaction.</strong> Levels add, rename and remove; items link to parents; the review step works. Not persisted.</td></tr>
+          <tr><td class="k">Variance rule (85%)</td><td><strong>Real.</strong> Computed from actual against target, drives the alert and the completion tracker.</td></tr>
+          <tr><td class="k">Achievement calculation</td><td><strong>Real.</strong> Computed, not typed.</td></tr>
+          <tr><td class="k">Disaggregation capture</td><td><strong>Real as a form.</strong> The fields exist and are captured; nothing aggregates them afterwards.</td></tr>
+          <tr><td class="k">Conditional linked-entity field</td><td><strong>Real.</strong> Appears only for Program and Project level frameworks.</td></tr>
+          <tr><td class="k">CSV export</td><td><strong>Real.</strong> Frameworks and indicators both export what is currently filtered.</td></tr>
+          <tr><td class="k">QA verification</td><td><strong>Not yet.</strong> Statuses are displayed and a Verify action exists, but no separation of duty is enforced — nothing stops the person who entered a record verifying it.</td></tr>
+          <tr><td class="k">Persistence</td><td><strong>Not yet.</strong> Submitting a framework, an indicator or a data record logs to the console and returns to the list.</td></tr>
+          <tr><td class="k">Framework → indicator link</td><td><strong>Not yet.</strong> The indicator form offers a fixed list of frameworks rather than the ones actually created.</td></tr>
+          <tr><td class="k">Indicator → data → report flow</td><td><strong>Not yet.</strong> Each of the three is seeded independently, so the same indicator's numbers need not agree across them.</td></tr>
+          <tr><td class="k">Dashboard figures</td><td><strong>Not yet.</strong> Seeded series, not aggregated from indicators or records.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <span class="lbl">If this is built out, the order that pays</span>
+      <p>
+        <strong>One store, following the chain.</strong> A <code>lib/melStore.ts</code> holding frameworks, indicators
+        and data records — with indicators referencing a framework ID and records referencing an indicator ID — would
+        make the chain in section 1 real rather than described. Two controls then become possible and are worth having
+        early: <strong>refuse to verify a record submitted by the same person</strong>, which is the control procurement
+        already applies to deliverable acceptance, and <strong>compute the dashboard and the M&amp;E reports' data
+        quality score from actual verified records</strong> instead of seeding them.
+      </p>
+    </div>
+  </section>
+
+  <!-- ═══ 11 ═══ -->
+  <section id="glossary">
+    <div class="sec-head"><span class="sec-num">11</span><h2>Glossary</h2></div>
+    <div class="tw">
+      <table>
+        <tbody>
+          <tr><td class="k">Baseline</td><td>The value of an indicator before the work started. Without it, an actual has nothing to be compared against.</td></tr>
+          <tr><td class="k">Target</td><td>The value the indicator is expected to reach by the target date.</td></tr>
+          <tr><td class="k">Actual</td><td>What was in fact achieved in a reporting period.</td></tr>
+          <tr><td class="k">Achievement</td><td>Actual as a percentage of target. Below 85%, an explanation is required.</td></tr>
+          <tr><td class="k">Disaggregation</td><td>Splitting a figure by group — sex, location — so an aggregate cannot hide who was missed.</td></tr>
+          <tr><td class="k">PIRS</td><td>Performance Indicator Reference Sheet. The definitive statement of how an indicator is measured, so the number means the same thing over time.</td></tr>
+          <tr><td class="k">Means of verification</td><td>Where the evidence for an indicator comes from. A required column in a logical framework.</td></tr>
+          <tr><td class="k">Assumption</td><td>Something that must hold true for the results chain to work, but which is outside our control. Named explicitly in a theory of change and a logframe.</td></tr>
+          <tr><td class="k">Output vs outcome</td><td>An output is what we produced — a training hub built. An outcome is what changed as a result — people gaining skills. Outputs are within our control; outcomes are not, which is why both are measured.</td></tr>
+          <tr><td class="k">Attribution vs contribution</td><td>Attribution claims our programme caused the change. Contribution claims we helped. Where many actors are involved, contribution is the honest claim, and contribution analysis is how it is tested.</td></tr>
+          <tr><td class="k">Outcome harvesting</td><td>Working backwards from observed changes to what caused them, rather than checking pre-set indicators. Useful where outcomes could not be predicted in advance.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    ACET ERP · MEL module reference · describes the system as built, including where it stops.
+  </footer>
+
+</div>
+</body>
+</html>

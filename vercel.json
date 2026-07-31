@@ -11,6 +11,8 @@
     { "source": "/walkthrough",  "destination": "/docs/walkthrough",  "permanent": false },
     { "source": "/reference",    "destination": "/docs/reference",    "permanent": false },
     { "source": "/approvals",    "destination": "/docs/approvals",    "permanent": false },
+    { "source": "/finance",      "destination": "/docs/finance",      "permanent": false },
+    { "source": "/mel",          "destination": "/docs/mel",          "permanent": false },
     { "source": "/flows",        "destination": "/docs",              "permanent": false },
     { "source": "/documentation","destination": "/docs",              "permanent": false }
   ]
