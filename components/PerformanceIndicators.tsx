@@ -3,11 +3,19 @@ import { Search, Download, Upload, ChevronDown, Plus, MoreHorizontal } from "luc
 import { AddNewIndicator } from "./AddNewIndicator";
 import { ViewIndicator } from "./ViewIndicator";
 
+/** The four assignment levels an indicator can be tracked at. */
+type ProjectLevel = "Project" | "Phase" | "Deliverable" | "Task";
+
 interface Indicator {
   id: string;
+  /** Programme, institutional or project — what kind of indicator it is. */
   level: string;
   name: string;
   project: string;
+  /** Where in the project it is tracked, set on the Assignment card. */
+  projectLevel: ProjectLevel;
+  /** The phase, deliverable or task it is attached to; the project itself at Project level. */
+  assignedTo: string;
   unit: string;
   dataSource: string;
   frequency: string;
@@ -44,6 +52,8 @@ export function PerformanceIndicators() {
       level: "Program level indicator",
       name: "Policy briefs cited in media",
       project: "West Africa Regional Integration Study",
+      projectLevel: "Project",
+      assignedTo: "West Africa Regional Integration Study",
       unit: "Number",
       dataSource: "Theory of Change",
       frequency: "Quarterly",
@@ -56,6 +66,8 @@ export function PerformanceIndicators() {
       level: "Institutional KPI",
       name: "Overall budget variance",
       project: "Digital Economy Policy Brief Series",
+      projectLevel: "Project",
+      assignedTo: "Digital Economy Policy Brief Series",
       unit: "%",
       dataSource: "Logical Framework",
       frequency: "Quarterly",
@@ -68,6 +80,8 @@ export function PerformanceIndicators() {
       level: "Project level indicator",
       name: "Youth trained in digital skills",
       project: "Youth Employment Skills Development",
+      projectLevel: "Deliverable",
+      assignedTo: "Training curriculum delivered",
       unit: "Number",
       dataSource: "Results Framework",
       frequency: "Monthly",
@@ -80,6 +94,8 @@ export function PerformanceIndicators() {
       level: "Project level indicator",
       name: "Donor reporting deadlines met",
       project: "Climate Finance Readiness Program",
+      projectLevel: "Task",
+      assignedTo: "Submit quarterly donor report",
       unit: "%",
       dataSource: "Project Impact Assessment",
       frequency: "Annually",
@@ -92,6 +108,8 @@ export function PerformanceIndicators() {
       level: "Institutional KPI",
       name: "Staff satisfaction score",
       project: "Healthcare System Strengthening Project",
+      projectLevel: "Project",
+      assignedTo: "Healthcare System Strengthening Project",
       unit: "Score (1-5)",
       dataSource: "Logical Framework",
       frequency: "Annually",
@@ -104,6 +122,8 @@ export function PerformanceIndicators() {
       level: "Program level indicator",
       name: "Communities reached with awareness campaigns",
       project: "Sustainable Agriculture Development Initiative",
+      projectLevel: "Phase",
+      assignedTo: "Community mobilisation",
       unit: "Number",
       dataSource: "Theory of Change",
       frequency: "Quarterly",
@@ -116,6 +136,8 @@ export function PerformanceIndicators() {
       level: "Project level indicator",
       name: "Advocacy events conducted",
       project: "Renewable Energy Transition Framework",
+      projectLevel: "Phase",
+      assignedTo: "Advocacy and outreach",
       unit: "Number",
       dataSource: "Results Framework",
       frequency: "Monthly",
@@ -128,6 +150,8 @@ export function PerformanceIndicators() {
       level: "Institutional KPI",
       name: "Grant utilization rate",
       project: "West Africa Regional Integration Study",
+      projectLevel: "Project",
+      assignedTo: "West Africa Regional Integration Study",
       unit: "%",
       dataSource: "Logical Framework",
       frequency: "Monthly",
@@ -172,9 +196,9 @@ export function PerformanceIndicators() {
   const handleExport = () => {
     // Export functionality
     const csvContent = [
-      ["Indicator ID", "Level", "Indicator Name", "Project", "Unit", "Data Source", "Frequency", "Target", "Actual", "Status"],
+      ["Indicator ID", "Indicator Level", "Indicator Name", "Project", "Project Level", "Assigned To", "Unit", "Data Source", "Frequency", "Target", "Actual", "Status"],
       ...filteredIndicators.map(ind => [
-        ind.id, ind.level, ind.name, ind.project, ind.unit, ind.dataSource, ind.frequency, 
+        ind.id, ind.level, ind.name, ind.project, ind.projectLevel, ind.assignedTo, ind.unit, ind.dataSource, ind.frequency, 
         ind.target.toString(), ind.actual.toString(), ind.status
       ])
     ].map(row => row.join(",")).join("\n");
@@ -280,7 +304,7 @@ export function PerformanceIndicators() {
                 <>
                   <div className="fixed inset-0 z-10" onClick={() => setShowLevelDropdown(false)} />
                   <div className="absolute right-0 top-full mt-1 w-56 bg-white border border-slate-200 rounded-lg shadow-lg z-20 overflow-hidden">
-                    {["all", "Program level indicator", "Outcome Indicator", "Output Indicator"].map((level) => (
+                    {["all", "Program level indicator", "Institutional KPI", "Project level indicator"].map((level) => (
                       <button
                         key={level}
                         onClick={() => {
@@ -343,13 +367,16 @@ export function PerformanceIndicators() {
                 Indicator ID
               </th>
               <th className="px-4 py-4 text-left text-white text-[12px] font-semibold border-b border-slate-100 min-w-[147px]">
-                Level
+                Indicator Level
               </th>
               <th className="px-4 py-4 text-left text-white text-[12px] font-semibold border-b border-slate-100 min-w-[155px]">
                 Indicator Name
               </th>
               <th className="px-4 py-4 text-left text-white text-[12px] font-semibold border-b border-slate-100">
                 Project
+              </th>
+              <th className="px-4 py-4 text-left text-white text-[12px] font-semibold border-b border-slate-100 min-w-[140px]">
+                Project Level
               </th>
               <th className="px-4 py-4 text-left text-white text-[12px] font-semibold border-b border-slate-100">
                 Unit of Measure
@@ -389,6 +416,15 @@ export function PerformanceIndicators() {
                   </td>
                   <td className="px-4 py-4">
                     <p className="text-[12px] text-slate-600">{indicator.project}</p>
+                  </td>
+                  <td className="px-4 py-4">
+                    <span className="inline-block px-2 py-0.5 rounded-full text-[11px] font-medium bg-indigo-50 text-indigo-700">
+                      {indicator.projectLevel}
+                    </span>
+                    {/* At project level the target is the project itself, already in the column beside this one. */}
+                    {indicator.projectLevel !== "Project" && (
+                      <p className="text-[10px] text-slate-400 mt-1">{indicator.assignedTo}</p>
+                    )}
                   </td>
                   <td className="px-4 py-4">
                     <p className="text-[12px] text-slate-600">{indicator.unit}</p>
@@ -458,7 +494,7 @@ export function PerformanceIndicators() {
               ))
             ) : (
               <tr>
-                <td colSpan={10} className="px-4 py-12 text-center text-sm text-slate-500">
+                <td colSpan={12} className="px-4 py-12 text-center text-sm text-slate-500">
                   No indicators found matching your filters
                 </td>
               </tr>

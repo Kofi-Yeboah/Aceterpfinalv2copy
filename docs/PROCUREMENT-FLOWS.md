@@ -34,8 +34,9 @@ traced back to the plan line that authorised it.
 15. [Flow 14 — Supplier performance evaluation](#flow-14--supplier-performance-evaluation)
 16. [Flow 15 — Contract close-out](#flow-15--contract-close-out)
 17. [Flow 16 — Reporting and analytics](#flow-16--reporting-and-analytics)
-18. [Exception paths](#exception-paths)
-19. [Traceability matrix](#traceability-matrix)
+18. [Approvals register](#approvals-register)
+19. [Exception paths](#exception-paths)
+20. [Traceability matrix](#traceability-matrix)
 
 ---
 
@@ -108,9 +109,21 @@ records the real acting user, the date and a reason.
 
 ## Flow 1 — Procurement planning
 
-**Requirement:** BR001 · **Screen:** Procurement Plan · **Code:** `components/ProcurementPlanView.tsx`, `lib/procurementStore.ts`
+**Requirement:** BR001 · **Screens:** Purchase Plan → Departmental Plans / Project Plans · **Code:** `pages/PurchasePlan.tsx`, `pages/ProjectPurchasePlans.tsx`, `pages/PurchasePlanApproval.tsx`, `lib/procurementStore.ts`
 
 Nothing may be procured that is not on an approved plan. This flow is what puts it there.
+
+Plans are of two kinds, carried on `planType`:
+
+| | Departmental | Project |
+|---|---|---|
+| What it is | The annual plan a department prepares | The plan belonging to an approved project |
+| Created on | Purchase Plan → Departmental Plans, one tab per department | Purchase Plan → Project Plans, one plan per project |
+| Checked against | The department's budget line | The project budget and its funding source |
+| Approved on | Approvals → Departmental Plan Approval | Approvals → Project Plan Approval |
+
+Both follow the identical two-station lifecycle below. The queues are filtered by `planType` in the
+store, so an entry of one kind can never be approved on the other's queue.
 
 ```mermaid
 flowchart TD
@@ -132,9 +145,9 @@ flowchart TD
 
 | # | Actor | Action | System behaviour |
 |---|---|---|---|
-| 1 | Requestor / Dept / Finance / Procurement | Create plan entry | Captures activity description, category (Goods/Services/Works/Consultancy), estimated value, donor/funding source, procurement method, initiation → award → completion dates, responsible person, department, budget line, work plan. Auto-generates `PP-2026-NNN`. |
+| 1 | Requestor / Dept / Finance / Procurement | Create plan entry | Captures activity description, category (Goods/Services/Works/Consultancy), estimated value, donor/funding source, procurement method, initiation → award → completion dates, responsible person, department, budget line, work plan, plus `planType` and `projectName` for project plans. Auto-generates `PP-2026-NNN`. |
 | 2 | System | Suggest method | `suggestProcurementMethod(value)` pre-fills the method and displays the bands. Override is allowed but demands `methodDeviationJustification`. |
-| 3 | Originator | Submit for review | `submitPlanItemForReview()` → status **Pending Procurement Review**. Notifies Procurement, schedules a 48h reminder. |
+| 3 | Originator | Submit for review | `submitPlanItemForReview()` → status **Pending Procurement Review**. Notifies Procurement, schedules a 48h reminder. `submitPlanGroupForReview()` does the same for every draft on one plan at once. |
 | 4 | Procurement | Compliance review | `reviewPlanItemProcurement()` → **Pending Finance Review**. Notifies Finance. |
 | 5 | Finance | Budget verification | `reviewPlanItemFinance()` → **Approved**. Notifies the responsible person. |
 | — | Either reviewer | Reject | `rejectPlanItem()` requires a written reason; item returns to **Rejected** and can be corrected and resubmitted. |
@@ -142,6 +155,7 @@ flowchart TD
 ### Controls
 
 - An item only appears in the requisition plan-item dropdown once `approvalStatus === "Approved"` (`getApprovedPlanItems()`).
+- **The two plan types never mix.** Each approval queue filters on `planType`, so a departmental entry cannot be approved on the project queue or the reverse.
 - **Amendments to an approved item do not apply immediately.** `requestPlanItemChange()` holds them as a `pendingChange` until Procurement *and* Finance approve, then writes them with full version history and both approvers' names stamped on the change record.
 - `detectOverduePlanItems()` runs on load, compares `completionDate` to today, flips slipped items to **Delayed** and raises an alert. This is automatic — it does not depend on anyone setting a status by hand.
 
@@ -612,6 +626,74 @@ top, one table beneath them:
 **Contract risk** is derived rather than declared: overdue deliverables, repeated invoice
 queries, excessive variations, scope creep, cost growth above 20%, approaching expiry and poor
 performance scores each contribute, producing a Low/Medium/High severity.
+
+---
+
+## Approvals register
+
+Every decision point in procurement, who may take it, where the item arrives from and the screen the
+decision is made on. Each gate is enforced in the store, so it cannot be skipped by opening a
+different screen, and no one may approve their own work.
+
+### Procurement planning
+
+| Approval | Who decides | Comes from | Decided on |
+|---|---|---|---|
+| Departmental plan — procurement compliance (1 of 2) | Procurement | Submitted from Purchase Plan → Departmental Plans | Approvals → Departmental Plan Approval → Procurement review |
+| Departmental plan — budget verification (2 of 2) | Finance | Automatic once compliance clears | Approvals → Departmental Plan Approval → Finance verification |
+| Project plan — procurement compliance (1 of 2) | Procurement | Submitted from Purchase Plan → Project Plans | Approvals → Project Plan Approval → Procurement review |
+| Project plan — budget verification (2 of 2) | Finance | Automatic once compliance clears | Approvals → Project Plan Approval → Finance verification |
+| Plan amendment | Procurement, then Finance | Raised against an approved plan entry; the edit is held, not applied | Amendments tab of whichever plan queue owns the entry |
+
+### Purchase requisitions
+
+| Approval | Who decides | Comes from | Decided on |
+|---|---|---|---|
+| Departmental approval (1 of 3) | Department Head | Raised at Employee Self-Service → Procurement Request | Employee Self-Service → Approvals → Procurement Request Approval |
+| Procurement review (2 of 3) | Procurement | Automatic once the department head approves | Procurement → Approvals → Purchase Requisitions |
+| Finance approval (3 of 3) | Finance | Automatic once procurement reviews | Finance → Approvals → Procurement Requests |
+| Senior management authorisation | Senior Management | Added automatically above `SENIOR_APPROVAL_THRESHOLD` ($10,000), and for any emergency override | Procurement → Approvals → Senior Management Approval |
+| Emergency override | Senior Management | Requested for an urgent need not on the approved plan | On the requisition; written justification mandatory, Audit notified, permanently visible |
+
+### Sourcing and award
+
+| Approval | Who decides | Comes from | Decided on |
+|---|---|---|---|
+| Award recommendation | Procurement | A sourcing case with bids opened and evaluated | Procurement → Approvals → Sourcing |
+| Award to the winning supplier | Procurement | The evaluated sourcing case | Sourcing → case → Award; refused by `checkSourcingEligibility()` for suspended, blacklisted or non-compliant suppliers |
+
+### Suppliers
+
+| Approval | Who decides | Comes from | Decided on |
+|---|---|---|---|
+| Registration | Procurement | Supplier Management → Onboard Firm / Onboard Individual | Approvals → Supplier Registrations; refused while a mandatory document is missing |
+| Reactivation after suspension | Senior Management | Requested on a suspended supplier record | Approvals → Supplier Registrations |
+| Banking detail verification | Finance | Bank details entered or changed | Supplier Management → supplier → Banking; unverified details block payment |
+| Suspension or blacklisting | Procurement or Senior Management | Poor performance, expired documents, compliance finding | Supplier Management → supplier → Status; written reason mandatory and permanent |
+
+### Contracts, deliverables and invoices
+
+| Approval | Who decides | Comes from | Decided on |
+|---|---|---|---|
+| Deliverable acceptance | Anyone other than the submitter | Uploaded on the contract's Deliverables tab, always as **Submitted** | Approvals → Deliverable Acceptance, or the contract's own tab |
+| Invoice — match to accepted work (1 of 4) | Contract Coordinator | Captured at Procurement → Invoices → Add Invoice | Procurement → Invoices |
+| Invoice — procurement review (2 of 4) | Procurement | Automatic once matched | Procurement → Invoices |
+| Invoice — supervisor approval (3 of 4) | Supervisor | Automatic once reviewed | Procurement → Invoices |
+| Invoice — payment (4 of 4) | Finance | Automatic once approved | Procurement → Invoices; refused if it would exceed the contract value |
+| Contract variation | Department Head → Procurement → Finance → Senior Management | Raised on the contract's Change Management tab with a mandatory supporting document | Approvals → Contract Variations |
+| Performance evaluation | Supervisor or Senior Management | Scorecard completed by the Contract Coordinator | Contract Management → contract → Performance; a score below 5 flags the supplier |
+| Contract close-out | Procurement, Finance or Senior Management | Requested once deliverables are accepted and invoices settled | Contract Management → contract → Close-out; `verifyCloseOutReadiness()` refuses while anything is outstanding and names it |
+
+### The Approvals menu
+
+Eight queues, in flow order: Purchase Requisitions · Sourcing · Departmental Plan Approval ·
+Project Plan Approval · Contract Variations · Deliverable Acceptance · Supplier Registrations ·
+Senior Management Approval.
+
+Two stations sit in other modules' menus on purpose — a requisition's departmental approval belongs
+to the requester's own department head, and its budget check to Finance. Invoice approvals have no
+separate queue: all four stations are worked on Procurement → Invoices, where each invoice shows a
+stage strip and only the button for the stage it is at.
 
 ---
 

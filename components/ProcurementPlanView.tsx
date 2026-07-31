@@ -18,8 +18,10 @@ import {
   rejectPlanItemChange,
   detectOverduePlanItems,
   subscribe,
+  PLAN_PROJECTS,
   type ProcurementPlanItem,
   type PlanItemChange,
+  type PlanType,
 } from "../lib/procurementStore";
 import {
   PROCUREMENT_METHODS,
@@ -340,7 +342,7 @@ const FUNDING_SOURCES = ["TAP", "ATTP", "Gates Foundation", "World Bank", "AfDB"
 const PLAN_STATUSES: ProcurementPlanItem["status"][] = [
   "Not Started", "In Progress", "Under Evaluation", "Awarded", "Contracted", "Completed", "Delayed",
 ];
-const DEPARTMENTS = ["IT", "Programs", "Operations", "Finance", "HR", "Admin", "M&E"];
+const DEPARTMENTS = ["IT", "Programs", "Operations", "Finance", "HR", "Communications", "Admin", "M&E"];
 
 const FIELD_LABELS: Record<string, string> = {
   activityDescription: "Activity description",
@@ -361,7 +363,9 @@ const FIELD_LABELS: Record<string, string> = {
 
 // ─── Shared plan form model, validation and threshold guidance ──────────────
 
-interface PlanFormState {
+export interface PlanFormState {
+  planType: PlanType;
+  projectName: string;
   activityDescription: string;
   category: ProcurementPlanItem["category"];
   estimatedValue: string;
@@ -382,13 +386,17 @@ type PlanUpdatable = Pick<
   ProcurementPlanItem,
   | "activityDescription" | "category" | "estimatedValue" | "fundingSource" | "procurementMethod"
   | "initiationDate" | "awardDate" | "completionDate" | "responsiblePerson" | "department" | "status"
+  | "planType"
 > & {
+  projectName?: string;
   linkedBudgetLine?: string;
   linkedWorkPlan?: string;
   methodDeviationJustification?: string;
 };
 
-const emptyPlanForm = (): PlanFormState => ({
+export const emptyPlanForm = (planType: PlanType = "Departmental", projectName = ""): PlanFormState => ({
+  planType,
+  projectName,
   activityDescription: "",
   category: "Goods",
   estimatedValue: "",
@@ -406,7 +414,9 @@ const emptyPlanForm = (): PlanFormState => ({
   linkedWorkPlan: "",
 });
 
-const formFromItem = (item: ProcurementPlanItem): PlanFormState => ({
+export const formFromItem = (item: ProcurementPlanItem): PlanFormState => ({
+  planType: item.planType,
+  projectName: item.projectName || "",
   activityDescription: item.activityDescription,
   category: item.category,
   estimatedValue: String(item.estimatedValue),
@@ -434,8 +444,12 @@ function methodCheckFor(form: PlanFormState) {
   return validateMethodAgainstThreshold(form.procurementMethod, value);
 }
 
-function validatePlanForm(form: PlanFormState): Record<string, string> {
+export function validatePlanForm(form: PlanFormState): Record<string, string> {
   const errors: Record<string, string> = {};
+
+  if (form.planType === "Project" && !form.projectName.trim()) {
+    errors.projectName = "A project plan entry must name the project it belongs to.";
+  }
 
   if (!form.activityDescription.trim()) {
     errors.activityDescription = "An activity description is required.";
@@ -471,8 +485,10 @@ function validatePlanForm(form: PlanFormState): Record<string, string> {
   return errors;
 }
 
-function toUpdatable(form: PlanFormState): PlanUpdatable {
+export function toUpdatable(form: PlanFormState): PlanUpdatable {
   return {
+    planType: form.planType,
+    projectName: form.planType === "Project" ? form.projectName.trim() : undefined,
     activityDescription: form.activityDescription.trim(),
     category: form.category,
     estimatedValue: Number(form.estimatedValue),
@@ -626,17 +642,20 @@ function LinkedSelect({
 
 // ─── Plan form fields, shared by add and edit ───────────────────────────────
 
-function PlanFormFields({
+export function PlanFormFields({
   form,
   setForm,
   errors,
   showStatus,
+  lockPlanType,
   methodAlreadyOverridden,
 }: {
   form: PlanFormState;
   setForm: (updater: (f: PlanFormState) => PlanFormState) => void;
   errors: Record<string, string>;
   showStatus?: boolean;
+  /** Set on the departmental and project plan screens, where the type is implied by the screen. */
+  lockPlanType?: boolean;
   /** An existing deliberate override must not be silently re-suggested away. */
   methodAlreadyOverridden?: boolean;
 }) {
@@ -656,6 +675,41 @@ function PlanFormFields({
 
   return (
     <>
+      {!lockPlanType && (
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className={labelCls}>Plan Type <span className="text-red-500">*</span></label>
+            <select
+              className={inputCls}
+              value={form.planType}
+              onChange={(e) =>
+                setForm((f) => {
+                  const planType = e.target.value as PlanType;
+                  return { ...f, planType, projectName: planType === "Project" ? f.projectName : "" };
+                })
+              }
+            >
+              <option value="Departmental">Departmental plan</option>
+              <option value="Project">Project plan</option>
+            </select>
+          </div>
+          {form.planType === "Project" && (
+            <div>
+              <label className={labelCls}>Project <span className="text-red-500">*</span></label>
+              <select
+                className={errors.projectName ? inputErrCls : inputCls}
+                value={form.projectName}
+                onChange={(e) => setForm((f) => ({ ...f, projectName: e.target.value }))}
+              >
+                <option value="">Select a project...</option>
+                {PLAN_PROJECTS.map((p) => <option key={p} value={p}>{p}</option>)}
+              </select>
+              <FieldError message={errors.projectName} />
+            </div>
+          )}
+        </div>
+      )}
+
       <div>
         <label className={labelCls}>Activity Description <span className="text-red-500">*</span></label>
         <input
@@ -837,7 +891,7 @@ function AddPlanItemModal({ open, onClose, user }: AddPlanItemModalProps) {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const reset = () => {
-    setForm(emptyPlanForm());
+    setForm((f) => emptyPlanForm(f.planType, f.planType === "Project" ? f.projectName : ""));
     setErrors({});
   };
 
@@ -848,6 +902,8 @@ function AddPlanItemModal({ open, onClose, user }: AddPlanItemModalProps) {
 
     const payload = toUpdatable(form);
     const created = addProcurementPlanItem({
+      planType: payload.planType,
+      projectName: payload.projectName,
       activityDescription: payload.activityDescription,
       category: payload.category,
       estimatedValue: payload.estimatedValue,

@@ -8,6 +8,7 @@ import {
   reviewPlanItemProcurement, reviewPlanItemFinance, rejectPlanItem,
   approvePlanItemChange, rejectPlanItemChange,
   type ProcurementPlanItem,
+  type PlanType,
 } from "../lib/procurementStore";
 import { validateMethodAgainstThreshold } from "../lib/procurementThresholds";
 import { getCurrentUser, can, denialReason, subscribe as subscribeUser, type Capability } from "../lib/currentUser";
@@ -39,6 +40,7 @@ const exportColumns: ExportColumn<Record<string, unknown>>[] = [
   { key: "fundingSource", header: "Funding Source" },
   { key: "procurementMethod", header: "Method" },
   { key: "department", header: "Department" },
+  { key: "projectName", header: "Project" },
   { key: "responsiblePerson", header: "Responsible" },
   { key: "initiationDate", header: "Initiation" },
   { key: "completionDate", header: "Completion" },
@@ -48,7 +50,7 @@ const exportColumns: ExportColumn<Record<string, unknown>>[] = [
   { key: "rejectionReason", header: "Rejection Reason" },
 ];
 
-export function PurchasePlanApproval() {
+export function PurchasePlanApproval({ planType = "Departmental" }: { planType?: PlanType } = {}) {
   const [, force] = useState(0);
   const [queue, setQueue] = useState<QueueKey>("procurement");
   const [search, setSearch] = useState("");
@@ -66,8 +68,19 @@ export function PurchasePlanApproval() {
     return () => unsubs.forEach((u) => u());
   }, []);
 
+  useEffect(() => {
+    setQueue("procurement");
+    setSelectedId(null);
+    setSearch("");
+    setError("");
+    setNotice("");
+  }, [planType]);
+
   const user = getCurrentUser();
-  const all = getProcurementPlanItems();
+  const isProject = planType === "Project";
+  // Each queue only ever sees its own kind of plan, so a reviewer of one never
+  // acts on the other by accident.
+  const all = getProcurementPlanItems().filter((i) => i.planType === planType);
 
   const queues: Record<QueueKey, ProcurementPlanItem[]> = {
     procurement: all.filter((i) => i.approvalStatus === "Pending Procurement Review"),
@@ -83,6 +96,7 @@ export function PurchasePlanApproval() {
       i.ppItemId.toLowerCase().includes(q) ||
       i.activityDescription.toLowerCase().includes(q) ||
       i.department.toLowerCase().includes(q) ||
+      (i.projectName ?? "").toLowerCase().includes(q) ||
       i.responsiblePerson.toLowerCase().includes(q) ||
       i.fundingSource.toLowerCase().includes(q)
     );
@@ -96,6 +110,7 @@ export function PurchasePlanApproval() {
   ];
 
   const rows = queues[queue].filter(matchesSearch);
+  const exportTitle = isProject ? "Project Plan Approvals" : "Departmental Plan Approvals";
   const selected = selectedId ? all.find((i) => i.id === selectedId) : null;
   const exportRows = rows.map((i) => ({ ...i } as unknown as Record<string, unknown>));
 
@@ -169,6 +184,7 @@ export function PurchasePlanApproval() {
               <Fact icon={<DollarSign />} label="Estimated value" value={currency(selected.estimatedValue)} />
               <Fact icon={<FileText />} label="Procurement method" value={selected.procurementMethod} />
               <Fact icon={<User />} label="Responsible" value={`${selected.responsiblePerson} · ${selected.department}`} />
+              {isProject && <Fact icon={<FileText />} label="Project" value={selected.projectName || "Unassigned project"} />}
               <Fact icon={<DollarSign />} label="Funding source" value={selected.fundingSource} />
               <Fact icon={<FileText />} label="Budget line" value={selected.linkedBudgetLine || "Not linked"} />
               <Fact icon={<Calendar />} label="Initiation" value={formatDate(selected.initiationDate)} />
@@ -371,9 +387,14 @@ export function PurchasePlanApproval() {
   return (
     <div className="h-full flex flex-col bg-slate-50 overflow-hidden">
       <div className="px-6 py-4 border-b border-slate-200 bg-white">
-        <h1 className="text-2xl font-semibold text-slate-900">Procurement plan approvals</h1>
+        <h1 className="text-2xl font-semibold text-slate-900">
+          {isProject ? "Project plan approvals" : "Departmental plan approvals"}
+        </h1>
         <p className="text-sm text-slate-500 mt-0.5">
-          Plan entries must clear procurement compliance and finance budget verification before they become available
+          {isProject
+            ? "Activities on project procurement plans, checked against the project budget and its funding source."
+            : "Activities on the annual departmental plans, checked against the department's budget line."}{" "}
+          Both stations — procurement compliance and finance verification — must clear an entry before it is available
           for requisition.
         </p>
       </div>
@@ -388,7 +409,7 @@ export function PurchasePlanApproval() {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Plan item, activity, department or funding source"
+            placeholder={isProject ? "Plan item, activity, project or funding source" : "Plan item, activity, department or funding source"}
             className="flex-1 outline-none text-sm text-slate-900 placeholder:text-slate-400"
           />
         </div>
@@ -407,19 +428,19 @@ export function PurchasePlanApproval() {
               <div className="fixed inset-0 z-10" onClick={() => setShowExport(false)} />
               <div className="absolute right-0 top-full mt-1 w-44 bg-white border border-slate-200 rounded-lg shadow-lg z-20 overflow-hidden">
                 <button
-                  onClick={() => { exportToExcel("Procurement Plan Approvals", exportColumns, exportRows, { subtitle: `Queue: ${queue}`, generatedBy: user.name }); setShowExport(false); }}
+                  onClick={() => { exportToExcel(exportTitle, exportColumns, exportRows, { subtitle: `Queue: ${queue}`, generatedBy: user.name }); setShowExport(false); }}
                   className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2"
                 >
                   <FileSpreadsheet size={14} className="text-green-600" /> Excel
                 </button>
                 <button
-                  onClick={() => { exportToPDF("Procurement Plan Approvals", exportColumns, exportRows, { subtitle: `Queue: ${queue}`, generatedBy: user.name }); setShowExport(false); }}
+                  onClick={() => { exportToPDF(exportTitle, exportColumns, exportRows, { subtitle: `Queue: ${queue}`, generatedBy: user.name }); setShowExport(false); }}
                   className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2"
                 >
                   <FileText size={14} className="text-red-600" /> PDF
                 </button>
                 <button
-                  onClick={() => { exportToCSV("Procurement Plan Approvals", exportColumns, exportRows); setShowExport(false); }}
+                  onClick={() => { exportToCSV(exportTitle, exportColumns, exportRows); setShowExport(false); }}
                   className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2"
                 >
                   <Download size={14} className="text-slate-500" /> CSV
@@ -441,14 +462,15 @@ export function PurchasePlanApproval() {
               {queue === "decided" && "No plan entries have been decided yet."}
             </p>
             <p className="text-slate-400 text-xs mt-1">
-              Entries arrive here when someone submits them for review from the Procurement Plan screen.
+              Entries arrive here when they are submitted from{" "}
+              {isProject ? "Purchase Plan → Project Plans" : "Purchase Plan → Departmental Plans"}.
             </p>
           </div>
         ) : (
           <table className="w-full">
             <thead style={{ backgroundColor: "#0B01D0" }}>
               <tr>
-                {["Plan item", "Activity", "Category", "Value", "Funding", "Method", "Responsible", "Completion", "Status", ""].map((h) => (
+                {["Plan item", "Activity", isProject ? "Project" : "Department", "Category", "Value", "Funding", "Method", "Responsible", "Completion", "Status", ""].map((h) => (
                   <th key={h} className="text-left px-4 py-3 text-white text-[12px] font-semibold whitespace-nowrap">{h}</th>
                 ))}
               </tr>
@@ -467,6 +489,11 @@ export function PurchasePlanApproval() {
                       )}
                     </td>
                     <td className="px-4 py-4"><p className="text-[12px] text-slate-700 max-w-[260px]">{i.activityDescription}</p></td>
+                    <td className="px-4 py-4">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-purple-100 text-purple-700 whitespace-nowrap">
+                        {isProject ? i.projectName || "Unassigned project" : i.department}
+                      </span>
+                    </td>
                     <td className="px-4 py-4"><p className="text-[12px] text-slate-500">{i.category}</p></td>
                     <td className="px-4 py-4"><p className="text-[12px] text-slate-900 tabular-nums">{currency(i.estimatedValue)}</p></td>
                     <td className="px-4 py-4"><p className="text-[12px] text-slate-500">{i.fundingSource}</p></td>

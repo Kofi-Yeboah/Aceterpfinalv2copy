@@ -562,8 +562,9 @@
     </ol>
     <h2>Reference</h2>
     <ol>
-      <li><a href="#exceptions"><b>A</b> Exception paths</a></li>
-      <li><a href="#matrix"><b>B</b> Traceability matrix</a></li>
+      <li><a href="#approvals"><b>A</b> Approvals register</a></li>
+      <li><a href="#exceptions"><b>B</b> Exception paths</a></li>
+      <li><a href="#matrix"><b>C</b> Traceability matrix</a></li>
     </ol>
   </nav>
 
@@ -674,23 +675,23 @@
         <span class="tag">BR001</span>
       </div>
       <p>
-        Nothing may be procured that is not on an approved plan. This flow is what puts it there, and the two review stations are what stop an unfunded or non-compliant line becoming usable.
+        Nothing may be procured that is not on an approved plan. This flow is what puts it there, and the two review stations are what stop an unfunded or non-compliant line becoming usable. Plans are of two kinds — <strong>departmental</strong>, the annual plan each department prepares, and <strong>project</strong>, belonging to an approved project. They carry the same lifecycle but are reviewed against different budgets, so each has its own queue and neither can be approved on the other's.
       </p>
 
       <div class="plate">
 <pre class="mermaid">
 flowchart TD
-    A["Project Lead, Department, Finance or Procurement<br/>creates plan entry"] --> B["System generates PP-YYYY-NNN<br/>and suggests method from value"]
+        A["Plan entry created on a<br/>departmental or project plan"] --> B["System generates PP-YYYY-NNN<br/>and suggests method from value"]
     B --> C{"Method matches<br/>threshold band?"}
     C -- No --> D["Deviation justification required"]
     C -- Yes --> E["DRAFT"]
     D --> E
-    E --> F["Submit for review"]
+    E --> F["Submit for review<br/>routed by plan type"]
     F --> G["Procurement: policy and plan compliance"]
     G -- "Reject with reason" --> E
     G -- Approve --> H["Finance: budget line and funding source"]
     H -- "Reject with reason" --> E
-    H -- Approve --> I["APPROVED and live"]
+        H -- Approve --> I["APPROVED and live"]
     I --> J["Available for requisition and sourcing"]
 </pre>
         <p class="plate-cap">Two-station compliance review before a plan line becomes usable</p>
@@ -703,7 +704,7 @@ flowchart TD
           <tbody>
             <tr>
               <td class="num">1</td><td>Requestor, Department, Finance or Procurement</td><td>Create plan entry</td>
-              <td>Captures activity description, category, estimated value, donor or funding source, method, initiation through award to completion dates, responsible person, department, budget line and work plan. Generates <span class="ref">PP-2026-NNN</span>.</td>
+              <td>Captures activity description, category, estimated value, donor or funding source, method, initiation through award to completion dates, responsible person, department, budget line and work plan. Also records the <strong>plan type</strong> — departmental, or project with the project named — which decides the queue it will be reviewed on. Generates <span class="ref">PP-2026-NNN</span>.</td>
             </tr>
             <tr>
               <td class="num">2</td><td>System</td><td>Suggest method</td>
@@ -711,7 +712,7 @@ flowchart TD
             </tr>
             <tr>
               <td class="num">3</td><td>Originator</td><td>Submit for review</td>
-              <td>Status becomes <span class="pill warn">Pending Procurement Review</span>. Notifies Procurement and schedules a 48-hour reminder.</td>
+              <td>Status becomes <span class="pill warn">Pending Procurement Review</span>. Notifies Procurement and schedules a 48-hour reminder. Submitting is available per entry or for a whole plan's drafts at once.</td>
             </tr>
             <tr>
               <td class="num">4</td><td>Procurement</td><td>Compliance review</td>
@@ -733,6 +734,7 @@ flowchart TD
         <p class="callout-label">Controls</p>
         <ul>
           <li>An item only appears in the requisition plan-item picker once it is approved by both stations.</li>
+          <li><strong>The two plan types never mix.</strong> Each approval queue is filtered to its own plan type in the data layer, so a departmental entry cannot be approved on the project queue or the reverse.</li>
           <li><strong>Amendments to an approved item do not apply immediately.</strong> They are held pending until Procurement and Finance both approve, then written with full version history and both approvers stamped on the change record.</li>
           <li>Overdue detection is automatic: completion dates are compared to today on load, slipped items flip to <span class="pill stop">Delayed</span> and raise an alert. It does not depend on anyone setting a status by hand.</li>
         </ul>
@@ -1386,10 +1388,106 @@ flowchart TD
       </p>
     </section>
 
+    <!-- ══ APPROVALS REGISTER ══ -->
+    <section id="approvals">
+      <div class="flow-head">
+        <span class="flow-num">A</span>
+        <h2 class="flow-title">Approvals register</h2>
+      </div>
+      <p>
+        Every decision point in procurement, who may take it, where the item arrives from and the screen the decision is
+        made on. Each gate is enforced in the store rather than the component, so it cannot be skipped by opening a
+        different screen, and nobody may approve their own work.
+      </p>
+
+      <h3>Procurement planning</h3>
+      <p>Departmental and project plans are separate throughout — different budgets, different reviewers, separate queues.</p>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Approval</th><th>Who decides</th><th>Comes from</th><th>Decided on</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Departmental plan — procurement compliance (1 of 2)</strong></td><td>Procurement</td><td>Submitted from Purchase Plan → Departmental Plans</td><td>Approvals → Departmental Plan Approval → Procurement review</td></tr>
+            <tr><td><strong>Departmental plan — budget verification (2 of 2)</strong></td><td>Finance</td><td>Automatic once compliance clears</td><td>Approvals → Departmental Plan Approval → Finance verification</td></tr>
+            <tr><td><strong>Project plan — procurement compliance (1 of 2)</strong></td><td>Procurement</td><td>Submitted from Purchase Plan → Project Plans</td><td>Approvals → Project Plan Approval → Procurement review</td></tr>
+            <tr><td><strong>Project plan — budget verification (2 of 2)</strong></td><td>Finance</td><td>Automatic once compliance clears</td><td>Approvals → Project Plan Approval → Finance verification</td></tr>
+            <tr><td><strong>Plan amendment</strong></td><td>Procurement, then Finance</td><td>Raised against an approved entry; the edit is held, not applied</td><td>Amendments tab of whichever plan queue owns the entry</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Purchase requisitions</h3>
+      <p>Three stations, and a fourth above $10,000. Each must finish before the next begins.</p>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Approval</th><th>Who decides</th><th>Comes from</th><th>Decided on</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Departmental approval (1 of 3)</strong></td><td>Department Head</td><td>Raised at Employee Self-Service → Procurement Request</td><td>Employee Self-Service → Approvals → Procurement Request Approval</td></tr>
+            <tr><td><strong>Procurement review (2 of 3)</strong></td><td>Procurement</td><td>Automatic once the department head approves</td><td>Procurement → Approvals → Purchase Requisitions</td></tr>
+            <tr><td><strong>Finance approval (3 of 3)</strong></td><td>Finance</td><td>Automatic once procurement reviews</td><td>Finance → Approvals → Procurement Requests</td></tr>
+            <tr><td><strong>Senior management authorisation</strong></td><td>Senior Management</td><td>Added automatically above $10,000, and for any emergency override</td><td>Procurement → Approvals → Senior Management Approval</td></tr>
+            <tr><td><strong>Emergency override</strong></td><td>Senior Management</td><td>Requested for an urgent need not on the approved plan</td><td>On the requisition — written justification mandatory, Audit notified, permanently visible</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Sourcing and award</h3>
+      <p></p>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Approval</th><th>Who decides</th><th>Comes from</th><th>Decided on</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Award recommendation</strong></td><td>Procurement</td><td>A sourcing case with bids opened and evaluated</td><td>Procurement → Approvals → Sourcing</td></tr>
+            <tr><td><strong>Award to the winning supplier</strong></td><td>Procurement</td><td>The evaluated sourcing case</td><td>Sourcing → case → Award — refused for suspended, blacklisted or non-compliant suppliers</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Suppliers</h3>
+      <p></p>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Approval</th><th>Who decides</th><th>Comes from</th><th>Decided on</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Registration</strong></td><td>Procurement</td><td>Supplier Management → Onboard Firm or Onboard Individual</td><td>Approvals → Supplier Registrations — refused while a mandatory document is missing</td></tr>
+            <tr><td><strong>Reactivation after suspension</strong></td><td>Senior Management</td><td>Requested on a suspended supplier record</td><td>Approvals → Supplier Registrations</td></tr>
+            <tr><td><strong>Banking detail verification</strong></td><td>Finance</td><td>Bank details entered or changed</td><td>Supplier Management → supplier → Banking — unverified details block payment</td></tr>
+            <tr><td><strong>Suspension or blacklisting</strong></td><td>Procurement or Senior Management</td><td>Poor performance, expired documents or a compliance finding</td><td>Supplier Management → supplier → Status — written reason mandatory and permanent</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Contracts, deliverables and invoices</h3>
+      <p>An invoice cannot be paid without an accepted deliverable behind it, and a contract cannot grow without a variation.</p>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Approval</th><th>Who decides</th><th>Comes from</th><th>Decided on</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Deliverable acceptance</strong></td><td>Anyone other than the submitter</td><td>Uploaded on the contract's Deliverables tab, always as Submitted</td><td>Approvals → Deliverable Acceptance, or the contract's own tab</td></tr>
+            <tr><td><strong>Invoice — match to accepted work (1 of 4)</strong></td><td>Contract Coordinator</td><td>Captured at Procurement → Invoices → Add Invoice</td><td>Procurement → Invoices</td></tr>
+            <tr><td><strong>Invoice — procurement review (2 of 4)</strong></td><td>Procurement</td><td>Automatic once matched</td><td>Procurement → Invoices</td></tr>
+            <tr><td><strong>Invoice — supervisor approval (3 of 4)</strong></td><td>Supervisor</td><td>Automatic once reviewed</td><td>Procurement → Invoices</td></tr>
+            <tr><td><strong>Invoice — payment (4 of 4)</strong></td><td>Finance</td><td>Automatic once approved</td><td>Procurement → Invoices — refused if it would exceed the contract value</td></tr>
+            <tr><td><strong>Contract variation</strong></td><td>Department Head → Procurement → Finance → Senior Management</td><td>Raised on Change Management with a mandatory supporting document</td><td>Approvals → Contract Variations</td></tr>
+            <tr><td><strong>Performance evaluation</strong></td><td>Supervisor or Senior Management</td><td>Scorecard completed by the Contract Coordinator</td><td>Contract Management → contract → Performance — a score below 5 flags the supplier</td></tr>
+            <tr><td><strong>Contract close-out</strong></td><td>Procurement, Finance or Senior Management</td><td>Requested once deliverables are accepted and invoices settled</td><td>Contract Management → contract → Close-out — refused while anything is outstanding, and it says what</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout">
+        <p class="callout-label">The Approvals menu</p>
+        <ul>
+          <li>Eight queues, in flow order: Purchase Requisitions · Sourcing · Departmental Plan Approval · Project Plan Approval · Contract Variations · Deliverable Acceptance · Supplier Registrations · Senior Management Approval.</li>
+          <li><strong>Two stations sit elsewhere on purpose.</strong> A requisition's departmental approval belongs to the requester's own department head, and its budget check to Finance, so each appears in the menu of the person who has to act.</li>
+          <li><strong>Invoice approvals have no separate queue.</strong> All four stations are worked on Procurement → Invoices, where each invoice shows a stage strip and only the button for the stage it is at.</li>
+        </ul>
+      </div>
+    </section>
+
     <!-- ══ EXCEPTIONS ══ -->
     <section id="exceptions">
       <div class="flow-head">
-        <span class="flow-num">A</span>
+        <span class="flow-num">B</span>
         <h2 class="flow-title">Exception paths</h2>
       </div>
       <p>
@@ -1419,7 +1517,7 @@ flowchart TD
     <!-- ══ MATRIX ══ -->
     <section id="matrix">
       <div class="flow-head">
-        <span class="flow-num">B</span>
+        <span class="flow-num">C</span>
         <h2 class="flow-title">Traceability matrix</h2>
       </div>
       <p>Each requirement in the business requirements sheet, mapped to the flow that satisfies it and the code that implements it.</p>

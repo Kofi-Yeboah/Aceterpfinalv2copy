@@ -835,6 +835,16 @@ export interface PlanItemChange {
   approvedBy?: string;
 }
 
+export type PlanType = "Departmental" | "Project";
+
+/** Projects that can own a procurement plan. */
+export const PLAN_PROJECTS = [
+  "Youth Employment Skills Development",
+  "Digital Literacy Initiative",
+  "Community Health Project",
+  "Clean Water Access Program",
+] as const;
+
 export interface ProcurementPlanItem {
   id: string;
   ppItemId: string; // auto-generated e.g. PP-2026-001
@@ -848,6 +858,14 @@ export interface ProcurementPlanItem {
   completionDate: string;
   responsiblePerson: string;
   department: string;
+  /**
+   * Departmental plans are the annual plans each department submits; project
+   * plans belong to an approved project. They are reviewed against different
+   * budgets by different people, so each has its own approval queue.
+   */
+  planType: PlanType;
+  /** Set on project plan items — the project whose plan the activity belongs to. */
+  projectName?: string;
   status: "Not Started" | "In Progress" | "Under Evaluation" | "Awarded" | "Contracted" | "Completed" | "Delayed";
   linkedBudgetLine?: string;
   linkedWorkPlan?: string;
@@ -892,7 +910,7 @@ export interface PendingPlanChange {
   procurementApprovedBy?: string;
 }
 
-let nextPlanItemSeq = 9; // seed uses 1–8
+let nextPlanItemSeq = 17; // seed uses 1–16
 
 let procurementPlanItems: ProcurementPlanItem[] = [
   {
@@ -901,6 +919,7 @@ let procurementPlanItems: ProcurementPlanItem[] = [
     category: "Goods", estimatedValue: 4500, fundingSource: "TAP",
     procurementMethod: "Competitive Bidding", initiationDate: "2026-02-15", awardDate: "2026-04-01", completionDate: "2026-05-15",
     responsiblePerson: "Ama Darko", department: "Programs",
+    planType: "Project", projectName: "Youth Employment Skills Development",
     status: "In Progress", linkedBudgetLine: "BL-PROG-001", linkedWorkPlan: "WP-YE-2026",
     approvalStatus: "Approved", version: 1, changeHistory: [], createdDate: "2026-01-10", lastModified: "2026-02-15",
   },
@@ -910,6 +929,7 @@ let procurementPlanItems: ProcurementPlanItem[] = [
     category: "Goods", estimatedValue: 24000, fundingSource: "ATTP",
     procurementMethod: "Competitive Bidding", initiationDate: "2026-02-20", awardDate: "2026-04-15", completionDate: "2026-06-01",
     responsiblePerson: "Kwame Boateng", department: "IT",
+    planType: "Project", projectName: "Youth Employment Skills Development",
     status: "In Progress", linkedBudgetLine: "BL-IT-003", linkedWorkPlan: "WP-YE-2026",
     approvalStatus: "Approved", version: 1, changeHistory: [], createdDate: "2026-01-10", lastModified: "2026-02-20",
   },
@@ -919,6 +939,7 @@ let procurementPlanItems: ProcurementPlanItem[] = [
     category: "Consultancy", estimatedValue: 15000, fundingSource: "Gates Foundation",
     procurementMethod: "Single Source", initiationDate: "2026-02-01", awardDate: "2026-03-15", completionDate: "2026-06-30",
     responsiblePerson: "Grace Owusu", department: "Programs",
+    planType: "Project", projectName: "Youth Employment Skills Development",
     status: "Under Evaluation", linkedBudgetLine: "BL-PROG-004", linkedWorkPlan: "WP-YE-2026",
     approvalStatus: "Approved", version: 2,
     changeHistory: [
@@ -932,6 +953,7 @@ let procurementPlanItems: ProcurementPlanItem[] = [
     category: "Goods", estimatedValue: 8500, fundingSource: "ATTP",
     procurementMethod: "Competitive Bidding", initiationDate: "2026-02-10", awardDate: "2026-03-20", completionDate: "2026-04-15",
     responsiblePerson: "Yaw Mensah", department: "Operations",
+    planType: "Departmental",
     status: "Awarded", linkedBudgetLine: "BL-OPS-002",
     approvalStatus: "Approved", version: 1, changeHistory: [], createdDate: "2026-01-10", lastModified: "2026-03-20",
   },
@@ -941,6 +963,7 @@ let procurementPlanItems: ProcurementPlanItem[] = [
     category: "Services", estimatedValue: 12000, fundingSource: "TAP",
     procurementMethod: "Direct Purchase", initiationDate: "2026-01-15", awardDate: "2026-03-01", completionDate: "2026-03-31",
     responsiblePerson: "Abena Osei", department: "Finance",
+    planType: "Departmental",
     status: "Contracted", linkedBudgetLine: "BL-FIN-001", linkedWorkPlan: "WP-ADMIN-2026",
     approvalStatus: "Approved", version: 1, changeHistory: [], createdDate: "2026-01-05", lastModified: "2026-03-01",
   },
@@ -950,6 +973,7 @@ let procurementPlanItems: ProcurementPlanItem[] = [
     category: "Services", estimatedValue: 3200, fundingSource: "TAP",
     procurementMethod: "Request for Quotation", initiationDate: "2026-01-10", awardDate: "2026-02-15", completionDate: "2026-03-15",
     responsiblePerson: "Nana Yaw", department: "Programs",
+    planType: "Departmental",
     status: "Completed", linkedBudgetLine: "BL-PROG-005",
     approvalStatus: "Approved", version: 1, changeHistory: [], createdDate: "2026-01-05", lastModified: "2026-03-15",
   },
@@ -959,6 +983,7 @@ let procurementPlanItems: ProcurementPlanItem[] = [
     category: "Services", estimatedValue: 6000, fundingSource: "ATTP",
     procurementMethod: "Request for Quotation", initiationDate: "2026-02-01", awardDate: "2026-02-28", completionDate: "2026-03-31",
     responsiblePerson: "Kwaku Anane", department: "Programs",
+    planType: "Project", projectName: "Digital Literacy Initiative",
     status: "Not Started", linkedBudgetLine: "BL-PROG-006", linkedWorkPlan: "WP-DL-2026",
     approvalStatus: "Approved", version: 1, changeHistory: [], createdDate: "2026-01-10", lastModified: "2026-01-10",
   },
@@ -968,13 +993,204 @@ let procurementPlanItems: ProcurementPlanItem[] = [
     category: "Goods", estimatedValue: 14000, fundingSource: "Gates Foundation",
     procurementMethod: "Competitive Bidding", initiationDate: "2026-01-20", awardDate: "2026-03-10", completionDate: "2026-04-30",
     responsiblePerson: "Kwame Boateng", department: "IT",
+    planType: "Project", projectName: "Digital Literacy Initiative",
     status: "Awarded", linkedBudgetLine: "BL-IT-005", linkedWorkPlan: "WP-DL-2026",
     approvalStatus: "Approved", version: 1, changeHistory: [], createdDate: "2026-01-05", lastModified: "2026-03-10",
+  },
+
+  // ── Departmental plan entries still moving through review ──
+  {
+    id: "ppi-9", ppItemId: "PP-2026-009",
+    activityDescription: "Office Internet & Connectivity Renewal",
+    category: "Services", estimatedValue: 18000, fundingSource: "TAP",
+    procurementMethod: "Request for Quotation", initiationDate: "2026-03-01", awardDate: "2026-04-10", completionDate: "2026-05-01",
+    responsiblePerson: "Kwame Boateng", department: "IT",
+    planType: "Departmental",
+    status: "Not Started", linkedBudgetLine: "BL-IT-008",
+    approvalStatus: "Pending Procurement Review", submittedBy: "Kwame Boateng", submittedDate: "2026-02-24",
+    version: 1, changeHistory: [], createdDate: "2026-02-20", lastModified: "2026-02-24",
+  },
+  {
+    id: "ppi-10", ppItemId: "PP-2026-010",
+    activityDescription: "Staff Wellness Programme — Annual Provision",
+    category: "Services", estimatedValue: 9500, fundingSource: "TAP",
+    procurementMethod: "Request for Quotation", initiationDate: "2026-03-05", awardDate: "2026-04-20", completionDate: "2026-12-31",
+    responsiblePerson: "Ama Serwaa", department: "HR",
+    planType: "Departmental",
+    status: "Not Started", linkedBudgetLine: "BL-HR-002",
+    approvalStatus: "Pending Finance Review", submittedBy: "Ama Serwaa", submittedDate: "2026-02-20",
+    procurementReview: "Approved", procurementReviewedBy: "Felix Addo",
+    version: 1, changeHistory: [], createdDate: "2026-02-16", lastModified: "2026-02-26",
+  },
+  {
+    id: "ppi-11", ppItemId: "PP-2026-011",
+    activityDescription: "Legal Retainer — Corporate Advisory",
+    category: "Services", estimatedValue: 22000, fundingSource: "ATTP",
+    procurementMethod: "Limited Competition", initiationDate: "2026-04-01", awardDate: "2026-05-15", completionDate: "2027-03-31",
+    responsiblePerson: "Yaw Mensah", department: "Operations",
+    planType: "Departmental",
+    status: "Not Started", linkedBudgetLine: "BL-OPS-007",
+    approvalStatus: "Draft",
+    version: 1, changeHistory: [], createdDate: "2026-03-02", lastModified: "2026-03-02",
+  },
+  {
+    id: "ppi-12", ppItemId: "PP-2026-012",
+    activityDescription: "Media Monitoring Subscription",
+    category: "Services", estimatedValue: 6400, fundingSource: "TAP",
+    procurementMethod: "Request for Quotation", initiationDate: "2026-03-10", awardDate: "2026-04-05", completionDate: "2027-03-31",
+    responsiblePerson: "Nana Yaw", department: "Communications",
+    planType: "Departmental",
+    status: "Not Started", linkedBudgetLine: "BL-COM-003",
+    approvalStatus: "Pending Procurement Review", submittedBy: "Nana Yaw", submittedDate: "2026-02-28",
+    version: 1, changeHistory: [], createdDate: "2026-02-25", lastModified: "2026-02-28",
+  },
+
+  // ── Project plan entries still moving through review ──
+  {
+    id: "ppi-13", ppItemId: "PP-2026-013",
+    activityDescription: "Cold Chain Equipment — Rural Clinics",
+    category: "Goods", estimatedValue: 37500, fundingSource: "Gates Foundation",
+    procurementMethod: "Limited Competition", initiationDate: "2026-03-15", awardDate: "2026-05-01", completionDate: "2026-06-30",
+    responsiblePerson: "Yaw Mensah", department: "Programs",
+    planType: "Project", projectName: "Community Health Project",
+    status: "Not Started", linkedBudgetLine: "BL-PROG-011", linkedWorkPlan: "WP-CHP-2026",
+    approvalStatus: "Pending Procurement Review", submittedBy: "Yaw Mensah", submittedDate: "2026-02-27",
+    version: 1, changeHistory: [], createdDate: "2026-02-22", lastModified: "2026-02-27",
+  },
+  {
+    id: "ppi-14", ppItemId: "PP-2026-014",
+    activityDescription: "Health Worker Training Programme",
+    category: "Services", estimatedValue: 48000, fundingSource: "Gates Foundation",
+    procurementMethod: "Open Competition", initiationDate: "2026-04-01", awardDate: "2026-06-01", completionDate: "2026-08-15",
+    responsiblePerson: "Grace Owusu", department: "Programs",
+    planType: "Project", projectName: "Community Health Project",
+    status: "Not Started", linkedBudgetLine: "BL-PROG-012", linkedWorkPlan: "WP-CHP-2026",
+    approvalStatus: "Pending Finance Review", submittedBy: "Grace Owusu", submittedDate: "2026-02-18",
+    procurementReview: "Approved", procurementReviewedBy: "Felix Addo",
+    version: 1, changeHistory: [], createdDate: "2026-02-14", lastModified: "2026-02-25",
+  },
+  {
+    id: "ppi-15", ppItemId: "PP-2026-015",
+    activityDescription: "Computer Lab Furniture & Installation",
+    category: "Works", estimatedValue: 48000, fundingSource: "Gates Foundation",
+    procurementMethod: "Open Competition", initiationDate: "2026-04-10", awardDate: "2026-06-15", completionDate: "2026-08-30",
+    responsiblePerson: "Kwame Boateng", department: "IT",
+    planType: "Project", projectName: "Digital Literacy Initiative",
+    status: "Not Started", linkedBudgetLine: "BL-IT-009", linkedWorkPlan: "WP-DL-2026",
+    approvalStatus: "Draft",
+    version: 1, changeHistory: [], createdDate: "2026-03-04", lastModified: "2026-03-04",
+  },
+  {
+    id: "ppi-16", ppItemId: "PP-2026-016",
+    activityDescription: "Baseline Survey Design Consultancy",
+    category: "Consultancy", estimatedValue: 8000, fundingSource: "TAP",
+    procurementMethod: "Request for Quotation", initiationDate: "2026-03-20", awardDate: "2026-05-10", completionDate: "2026-06-15",
+    responsiblePerson: "Ama Darko", department: "Programs",
+    planType: "Project", projectName: "Youth Employment Skills Development",
+    status: "Not Started", linkedBudgetLine: "BL-PROG-013", linkedWorkPlan: "WP-YE-2026",
+    approvalStatus: "Pending Procurement Review", submittedBy: "Ama Darko", submittedDate: "2026-03-01",
+    version: 1, changeHistory: [], createdDate: "2026-02-26", lastModified: "2026-03-01",
   },
 ];
 
 export function getProcurementPlanItems(): ProcurementPlanItem[] {
   return procurementPlanItems;
+}
+
+export function getPlanItemsByType(planType: PlanType): ProcurementPlanItem[] {
+  return procurementPlanItems.filter((i) => i.planType === planType);
+}
+
+/**
+ * The plan screens present a plan as a container of activities, while the store
+ * holds one record per activity because that is the unit that gets approved.
+ * A "plan" is therefore derived: departmental plans group by department, project
+ * plans group by project — one per project, which is the rule the project plan
+ * screen relies on.
+ */
+export interface PlanGroup {
+  key: string;
+  /** Department name, or project name for project plans. */
+  owner: string;
+  planType: PlanType;
+  items: ProcurementPlanItem[];
+  totalValue: number;
+  /** Rolled up from the items, so it can never disagree with them. */
+  status: "Draft" | "Under Review" | "Approved" | "Rejected" | "Mixed";
+  draftCount: number;
+  pendingCount: number;
+  approvedCount: number;
+  rejectedCount: number;
+  lastActivity: string;
+  responsiblePeople: string[];
+}
+
+function rollUpStatus(items: ProcurementPlanItem[]): PlanGroup["status"] {
+  if (items.length === 0) return "Draft";
+  const every = (s: PlanApprovalStatus) => items.every((i) => i.approvalStatus === s);
+  if (every("Draft")) return "Draft";
+  if (every("Approved")) return "Approved";
+  if (every("Rejected")) return "Rejected";
+  if (items.some((i) => i.approvalStatus === "Pending Procurement Review" || i.approvalStatus === "Pending Finance Review")) {
+    return "Under Review";
+  }
+  return "Mixed";
+}
+
+export function getPlanGroups(planType: PlanType): PlanGroup[] {
+  const items = getPlanItemsByType(planType);
+  const buckets = new Map<string, ProcurementPlanItem[]>();
+
+  for (const item of items) {
+    // A project item with no project recorded still has to appear somewhere.
+    const owner = planType === "Project" ? item.projectName || "Unassigned project" : item.department;
+    const existing = buckets.get(owner);
+    if (existing) existing.push(item);
+    else buckets.set(owner, [item]);
+  }
+
+  return [...buckets.entries()]
+    .map(([owner, groupItems]) => ({
+      key: `${planType}:${owner}`,
+      owner,
+      planType,
+      items: groupItems,
+      totalValue: groupItems.reduce((sum, i) => sum + i.estimatedValue, 0),
+      status: rollUpStatus(groupItems),
+      draftCount: groupItems.filter((i) => i.approvalStatus === "Draft").length,
+      pendingCount: groupItems.filter(
+        (i) => i.approvalStatus === "Pending Procurement Review" || i.approvalStatus === "Pending Finance Review"
+      ).length,
+      approvedCount: groupItems.filter((i) => i.approvalStatus === "Approved").length,
+      rejectedCount: groupItems.filter((i) => i.approvalStatus === "Rejected").length,
+      lastActivity: groupItems.reduce((latest, i) => (i.lastModified > latest ? i.lastModified : latest), ""),
+      responsiblePeople: [...new Set(groupItems.map((i) => i.responsiblePerson))],
+    }))
+    .sort((a, b) => a.owner.localeCompare(b.owner));
+}
+
+/**
+ * Submits every draft in a plan in one action, so a department does not have to
+ * walk its own list item by item. Returns what actually moved.
+ */
+export function submitPlanGroupForReview(
+  planType: PlanType,
+  owner: string,
+  submittedBy: string
+): { submitted: number; blocked: { ppItemId: string; reason: string }[] } {
+  const group = getPlanGroups(planType).find((g) => g.owner === owner);
+  if (!group) return { submitted: 0, blocked: [] };
+
+  let submitted = 0;
+  const blocked: { ppItemId: string; reason: string }[] = [];
+
+  for (const item of group.items.filter((i) => i.approvalStatus === "Draft")) {
+    const result = submitPlanItemForReview(item.id, submittedBy);
+    if (result) submitted++;
+    else blocked.push({ ppItemId: item.ppItemId, reason: "The entry could not be submitted — check it is complete." });
+  }
+
+  return { submitted, blocked };
 }
 
 export function addProcurementPlanItem(

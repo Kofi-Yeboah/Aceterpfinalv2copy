@@ -10,6 +10,7 @@
     { "source": "/buying-steps", "destination": "/docs/buying-steps", "permanent": false },
     { "source": "/walkthrough",  "destination": "/docs/walkthrough",  "permanent": false },
     { "source": "/reference",    "destination": "/docs/reference",    "permanent": false },
+    { "source": "/approvals",    "destination": "/docs/approvals",    "permanent": false },
     { "source": "/flows",        "destination": "/docs",              "permanent": false },
     { "source": "/documentation","destination": "/docs",              "permanent": false }
   ]

@@ -245,7 +245,7 @@ export function NavigationSidebar({ selectedItem, onSelectItem, collapsed }: Nav
         {
           icon: <CheckCircle size={iconSize} />,
           label: "Approvals",
-          submenu: ["Purchase Requisitions", "Sourcing", "Procurement Plan Approval", "Contract Variations", "Deliverable Acceptance", "Supplier Registrations", "Senior Management Approval"],
+          submenu: ["Purchase Requisitions", "Sourcing", "Departmental Plan Approval", "Project Plan Approval", "Contract Variations", "Deliverable Acceptance", "Supplier Registrations", "Senior Management Approval"],
         },
         {
           icon: <BarChart3 size={iconSize} />,

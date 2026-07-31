@@ -250,7 +250,7 @@ export function AddNewIndicator({ onBack }: AddNewIndicatorProps) {
                   {/* Level Selector */}
                   <div>
                     <label className="block text-[11px] text-slate-500 font-medium mb-1.5">
-                      Level <span className="text-red-400">*</span>
+                      Project Level <span className="text-red-400">*</span>
                     </label>
                     <div className="relative">
                       <select

@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>ACET Procurement — Every approval, and where it comes from</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✅</text></svg>">
+</head>
+<body>
+
+<style>
+  :root {
+    --bg: #fbfbfc; --card: #ffffff; --ink: #13171a; --ink-soft: #485257; --muted: #798388;
+    --line: #e2e6e9; --rule: #14181a;
+    --note-bg: #f4f7f9; --note-line: #d3dde5; --note-ink: #23485f;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --plan: #6a4aa3; --req: #1f7a4d; --source: #9a6a15; --supplier: #14706b; --contract: #2f5aa8;
+    --chip-bg: #eef1f4; --chip-ink: #3c464b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #16181a; --card: #1e2124; --ink: #e9edee; --ink-soft: #b7c0c4; --muted: #8d979b;
+      --line: #2c3134; --rule: #e9edee; --note-bg: #1c252b; --note-line: #2f4150; --note-ink: #96c4dd;
+      --plan: #a98fd8; --req: #5fc78e; --source: #d6a84a; --supplier: #5cbdb5; --contract: #7ea8e8;
+      --chip-bg: #272c30; --chip-ink: #b7c0c4; }
+  }
+  :root[data-theme="dark"] { --bg: #16181a; --card: #1e2124; --ink: #e9edee; --ink-soft: #b7c0c4; --muted: #8d979b;
+    --line: #2c3134; --rule: #e9edee; --note-bg: #1c252b; --note-line: #2f4150; --note-ink: #96c4dd;
+    --plan: #a98fd8; --req: #5fc78e; --source: #d6a84a; --supplier: #5cbdb5; --contract: #7ea8e8;
+    --chip-bg: #272c30; --chip-ink: #b7c0c4; }
+  :root[data-theme="light"] { --bg: #fbfbfc; --card: #ffffff; --ink: #13171a; --ink-soft: #485257; --muted: #798388;
+    --line: #e2e6e9; --rule: #14181a; --note-bg: #f4f7f9; --note-line: #d3dde5; --note-ink: #23485f;
+    --plan: #6a4aa3; --req: #1f7a4d; --source: #9a6a15; --supplier: #14706b; --contract: #2f5aa8;
+    --chip-bg: #eef1f4; --chip-ink: #3c464b; }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 56px 22px 90px; }
+
+  .back { font-family: var(--mono); font-size: 12px; color: var(--muted); text-decoration: none; }
+  .back:hover { color: var(--ink); }
+
+  header { padding: 14px 0 26px; border-bottom: 2px solid var(--rule); margin-bottom: 30px; }
+  .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin: 14px 0 12px; }
+  h1 { font-size: clamp(1.9rem, 5vw, 2.6rem); line-height: 1.1; letter-spacing: -0.025em; font-weight: 760; margin: 0 0 14px; text-wrap: balance; }
+  .lede { font-size: 1.06rem; color: var(--ink-soft); margin: 0; max-width: 62ch; }
+
+  .note { margin: 26px 0 0; padding: 16px 20px; border-left: 3px solid var(--note-ink); background: var(--note-bg); border-radius: 0 12px 12px 0; }
+  .note p { margin: 0 0 8px; font-size: 14.5px; color: var(--ink-soft); }
+  .note p:last-child { margin: 0; }
+  .note b { color: var(--ink); }
+
+  section { margin: 44px 0 0; }
+  section > h2 { font-size: .84rem; letter-spacing: .1em; text-transform: uppercase; font-weight: 750; color: var(--dot, var(--muted)); margin: 0 0 4px; }
+  section > p.sec-lede { margin: 0 0 16px; font-size: 14.5px; color: var(--ink-soft); max-width: 64ch; }
+
+  .tw { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
+  table { border-collapse: collapse; width: 100%; min-width: 760px; }
+  th { text-align: left; font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); font-weight: 700;
+       padding: 11px 14px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  td { padding: 12px 14px; font-size: 14px; color: var(--ink-soft); border-bottom: 1px solid var(--line); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  td.gate { color: var(--ink); font-weight: 620; }
+  td.who { white-space: nowrap; }
+  .path { font-family: var(--mono); font-size: 11.5px; color: var(--ink); background: var(--chip-bg); padding: 2px 6px; border-radius: 5px; display: inline-block; }
+  .seq { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+
+  .chain { margin: 18px 0 0; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .chain span { font-size: 12.5px; background: var(--chip-bg); color: var(--chip-ink); border-radius: 20px; padding: 4px 12px; font-weight: 600; }
+  .chain i { color: var(--muted); font-style: normal; }
+
+  footer { margin-top: 52px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); }
+
+  @media print { body { background: #fff; } .tw { break-inside: avoid; } }
+</style>
+
+<div class="wrap">
+
+  <a class="back" href="./index.html">← All documentation</a>
+
+  <header>
+    <p class="eyebrow">ACET ERP · Procurement Module</p>
+    <h1>Every approval, and where it comes from</h1>
+    <p class="lede">
+      One page listing every decision point in procurement: what is being approved, who may approve it, where the item
+      arrives from, and the exact screen the decision is made on. If a control exists in the system, it is on this page.
+    </p>
+  </header>
+
+  <div class="note">
+    <p><b>Two rules hold everywhere.</b></p>
+    <p>
+      <b>The rules live under the screens, not on them.</b> Every gate below is enforced in the data layer, so a
+      decision cannot be skipped by opening a different page — a button that should not work does not work, and it says
+      why.
+    </p>
+    <p>
+      <b>Nobody approves their own work.</b> Where a person could sit on both sides — uploading a deliverable and
+      accepting it, for example — the system refuses and names the conflict.
+    </p>
+  </div>
+
+  <!-- ══ PLANNING ══ -->
+  <section style="--dot: var(--plan)">
+    <h2>Procurement planning</h2>
+    <p class="sec-lede">
+      Nothing may be procured that is not on an approved plan. Departmental and project plans are separate throughout —
+      different budgets, different reviewers, separate queues — so a project activity can never be signed off as
+      departmental spend or the reverse.
+    </p>
+    <div class="tw">
+      <table>
+        <thead>
+          <tr><th>Approval</th><th>Who decides</th><th>Where it comes from</th><th>Where it is decided</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="gate">Departmental plan — procurement compliance <span class="seq">1 of 2</span></td>
+            <td class="who">Procurement</td>
+            <td>Submitted from <span class="path">Purchase Plan › Departmental Plans</span> — per activity, or all the department's drafts at once</td>
+            <td><span class="path">Approvals › Departmental Plan Approval › Procurement review</span></td>
+          </tr>
+          <tr>
+            <td class="gate">Departmental plan — budget verification <span class="seq">2 of 2</span></td>
+            <td class="who">Finance</td>
+            <td>Arrives automatically once procurement compliance has cleared</td>
+            <td><span class="path">Approvals › Departmental Plan Approval › Finance verification</span></td>
+          </tr>
+          <tr>
+            <td class="gate">Project plan — procurement compliance <span class="seq">1 of 2</span></td>
+            <td class="who">Procurement</td>
+            <td>Submitted from <span class="path">Purchase Plan › Project Plans</span> — open the project's plan and submit</td>
+            <td><span class="path">Approvals › Project Plan Approval › Procurement review</span></td>
+          </tr>
+          <tr>
+            <td class="gate">Project plan — budget verification <span class="seq">2 of 2</span></td>
+            <td class="who">Finance</td>
+            <td>Arrives automatically once procurement compliance has cleared</td>
+            <td><span class="path">Approvals › Project Plan Approval › Finance verification</span></td>
+          </tr>
+          <tr>
+            <td class="gate">Plan amendment</td>
+            <td class="who">Procurement, then Finance</td>
+            <td>Raised against an already-approved plan entry. The edit is held, not applied, until both clear it</td>
+            <td><span class="path">Approvals › … Plan Approval › Amendments</span> — on whichever of the two queues owns the entry</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ══ REQUISITION ══ -->
+  <section style="--dot: var(--req)">
+    <h2>Purchase requisitions</h2>
+    <p class="sec-lede">
+      A requisition passes three stations, and a fourth above $10,000. Each has to finish before the next can start, and
+      the requisition names which station it is sitting at.
+    </p>
+    <div class="tw">
+      <table>
+        <thead>
+          <tr><th>Approval</th><th>Who decides</th><th>Where it comes from</th><th>Where it is decided</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="gate">Departmental approval <span class="seq">1 of 3</span></td>
+            <td class="who">Department Head</td>
+            <td>Raised by staff at <span class="path">Employee Self-Service › Procurement Request</span></td>
+            <td><span class="path">Employee Self-Service › Approvals › Procurement Request Approval</span></td>
+          </tr>
+          <tr>
+            <td class="gate">Procurement review <span class="seq">2 of 3</span></td>
+            <td class="who">Procurement</td>
+            <td>Arrives once the department head has approved</td>
+            <td><span class="path">Procurement › Approvals › Purchase Requisitions</span></td>
+          </tr>
+          <tr>
+            <td class="gate">Finance approval <span class="seq">3 of 3</span></td>
+            <td class="who">Finance</td>
+            <td>Arrives once procurement has reviewed</td>
+            <td><span class="path">Finance › Approvals › Procurement Requests</span></td>
+          </tr>
+          <tr>
+            <td class="gate">Senior management authorisation <span class="seq">above $10,000</span></td>
+            <td class="who">Senior Management</td>
+            <td>Added automatically for high-value requests, and for any emergency override of the plan</td>
+            <td><span class="path">Procurement › Approvals › Senior Management Approval</span></td>
+          </tr>
+          <tr>
+            <td class="gate">Emergency override</td>
+            <td class="who">Senior Management</td>
+            <td>Requested on a requisition for an urgent need that is not on the approved plan</td>
+            <td>Granted on the requisition, then permanently visible on it — a written justification is mandatory and Audit is notified</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ══ SOURCING ══ -->
+  <section style="--dot: var(--source)">
+    <h2>Sourcing and award</h2>
+    <div class="tw">
+      <table>
+        <thead>
+          <tr><th>Approval</th><th>Who decides</th><th>Where it comes from</th><th>Where it is decided</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="gate">Award recommendation</td>
+            <td class="who">Procurement</td>
+            <td>Raised from a sourcing case once bids have been opened and evaluated</td>
+            <td><span class="path">Procurement › Approvals › Sourcing</span></td>
+          </tr>
+          <tr>
+            <td class="gate">Award to the winning supplier</td>
+            <td class="who">Procurement</td>
+            <td>The evaluated sourcing case</td>
+            <td><span class="path">Sourcing › case › Award</span> — refused outright if the supplier is suspended, blacklisted or missing a mandatory document</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ══ SUPPLIERS ══ -->
+  <section style="--dot: var(--supplier)">
+    <h2>Suppliers</h2>
+    <div class="tw">
+      <table>
+        <thead>
+          <tr><th>Approval</th><th>Who decides</th><th>Where it comes from</th><th>Where it is decided</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="gate">Registration</td>
+            <td class="who">Procurement</td>
+            <td>Entered at <span class="path">Supplier Management › Onboard Firm</span> or <span class="path">Onboard Individual</span></td>
+            <td><span class="path">Approvals › Supplier Registrations</span> — the button refuses while a mandatory document is missing</td>
+          </tr>
+          <tr>
+            <td class="gate">Reactivation after suspension</td>
+            <td class="who">Senior Management</td>
+            <td>Requested against a suspended supplier's record</td>
+            <td><span class="path">Approvals › Supplier Registrations</span>, alongside new registrations</td>
+          </tr>
+          <tr>
+            <td class="gate">Banking detail verification</td>
+            <td class="who">Finance</td>
+            <td>Bank details entered or changed on a supplier record</td>
+            <td><span class="path">Supplier Management › supplier › Banking</span> — unverified details block payment</td>
+          </tr>
+          <tr>
+            <td class="gate">Suspension or blacklisting</td>
+            <td class="who">Procurement or Senior Management</td>
+            <td>Poor performance, expired documents, or a compliance finding</td>
+            <td><span class="path">Supplier Management › supplier › Status</span> — a written reason is mandatory and the change is permanent on the record</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ══ CONTRACTS ══ -->
+  <section style="--dot: var(--contract)">
+    <h2>Contracts, deliverables and invoices</h2>
+    <p class="sec-lede">
+      The money side. An invoice cannot be paid without an accepted deliverable behind it, and a contract cannot quietly
+      grow — every increase is a variation approved by four people.
+    </p>
+    <div class="tw">
+      <table>
+        <thead>
+          <tr><th>Approval</th><th>Who decides</th><th>Where it comes from</th><th>Where it is decided</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="gate">Deliverable acceptance</td>
+            <td class="who">Anyone but the person who submitted it</td>
+            <td>Uploaded at <span class="path">Contract Management › contract › Deliverables</span>, always saved as Submitted, never as accepted</td>
+            <td><span class="path">Approvals › Deliverable Acceptance</span>, or on the contract's own Deliverables tab</td>
+          </tr>
+          <tr>
+            <td class="gate">Invoice — match to accepted work <span class="seq">1 of 4</span></td>
+            <td class="who">Contract Coordinator</td>
+            <td>Captured at <span class="path">Procurement › Invoices › Add Invoice</span> — document first, then the contract, which fills in the supplier</td>
+            <td><span class="path">Procurement › Invoices</span></td>
+          </tr>
+          <tr>
+            <td class="gate">Invoice — procurement review <span class="seq">2 of 4</span></td>
+            <td class="who">Procurement</td>
+            <td>Arrives once the coordinator has matched it</td>
+            <td><span class="path">Procurement › Invoices</span></td>
+          </tr>
+          <tr>
+            <td class="gate">Invoice — supervisor approval <span class="seq">3 of 4</span></td>
+            <td class="who">Supervisor</td>
+            <td>Arrives once procurement has reviewed</td>
+            <td><span class="path">Procurement › Invoices</span></td>
+          </tr>
+          <tr>
+            <td class="gate">Invoice — payment <span class="seq">4 of 4</span></td>
+            <td class="who">Finance</td>
+            <td>Arrives once the supervisor has approved</td>
+            <td><span class="path">Procurement › Invoices</span> — refused if it would take the contract over its approved value</td>
+          </tr>
+          <tr>
+            <td class="gate">Contract variation</td>
+            <td class="who">Department Head → Procurement → Finance → Senior Management</td>
+            <td>Raised at <span class="path">Contract Management › contract › Change Management</span>, with a supporting document that the form will not submit without</td>
+            <td><span class="path">Approvals › Contract Variations</span> — the queue shows whose turn it is</td>
+          </tr>
+          <tr>
+            <td class="gate">Performance evaluation</td>
+            <td class="who">Supervisor or Senior Management</td>
+            <td>Scorecard completed by the Contract Coordinator at contract milestones or close</td>
+            <td><span class="path">Contract Management › contract › Performance</span> — a score below 5 flags the supplier automatically</td>
+          </tr>
+          <tr>
+            <td class="gate">Contract close-out</td>
+            <td class="who">Procurement, Finance or Senior Management</td>
+            <td>Requested once every deliverable is accepted and every invoice settled</td>
+            <td><span class="path">Contract Management › contract › Close-out</span> — refused while anything is outstanding, and it says what</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ══ THE MENU ══ -->
+  <section>
+    <h2>What sits in the Approvals menu</h2>
+    <p class="sec-lede">
+      Eight queues, in the order the work flows. The two requisition stations that belong to other departments live in
+      those departments' own menus, which is why they are not repeated here.
+    </p>
+    <div class="chain">
+      <span>Purchase Requisitions</span><i>·</i>
+      <span>Sourcing</span><i>·</i>
+      <span>Departmental Plan Approval</span><i>·</i>
+      <span>Project Plan Approval</span><i>·</i>
+      <span>Contract Variations</span><i>·</i>
+      <span>Deliverable Acceptance</span><i>·</i>
+      <span>Supplier Registrations</span><i>·</i>
+      <span>Senior Management Approval</span>
+    </div>
+    <div class="note">
+      <p>
+        <b>Two live elsewhere on purpose.</b> A requisition's first stop is its own department head, at
+        <span class="path">Employee Self-Service › Approvals › Procurement Request Approval</span>, and its budget check
+        belongs to Finance, at <span class="path">Finance › Approvals › Procurement Requests</span>. Both are part of
+        the same chain — they simply appear in the menu of the person who has to act.
+      </p>
+      <p>
+        <b>Invoice approvals have no separate queue.</b> All four stations are worked on
+        <span class="path">Procurement › Invoices</span>, where each invoice shows a stage strip and only the button for
+        the stage it is actually at.
+      </p>
+    </div>
+  </section>
+
+  <footer>
+    ACET ERP · Procurement approvals register · every gate reflects what the system enforces, not what policy hopes for.
+  </footer>
+
+</div>
+</body>
+</html>

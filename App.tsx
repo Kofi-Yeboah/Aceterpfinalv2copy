@@ -451,8 +451,10 @@ export default function App() {
         return <PurchasePlan />;
       case "PROCUREMENT-Purchase Plan-Project Plans":
         return <ProjectPurchasePlans />;
-      case "PROCUREMENT-Approvals-Procurement Plan Approval":
-        return <PurchasePlanApproval />;
+      case "PROCUREMENT-Approvals-Departmental Plan Approval":
+        return <PurchasePlanApproval planType="Departmental" />;
+      case "PROCUREMENT-Approvals-Project Plan Approval":
+        return <PurchasePlanApproval planType="Project" />;
       case "PROCUREMENT-Approvals-Contract Variations":
         return <ProcurementApprovalQueues queue="variations" />;
       case "PROCUREMENT-Approvals-Deliverable Acceptance":
