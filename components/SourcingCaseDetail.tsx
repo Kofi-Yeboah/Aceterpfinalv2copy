@@ -912,7 +912,7 @@ export function SourcingCaseDetail({
         requiresFinancial: env.requiresFinancial,
         requestRateQuote: env.requestRateQuote,
         invitedSupplierIds: invited.map(v => v.supplierId),
-        channels: ["ACET Supplier Portal — Restricted"],
+        channels: ["Direct invitation — Restricted"],
         contactEmail: DEFAULT_CONTACT_EMAIL,
       });
     }
@@ -3353,7 +3353,7 @@ export function SourcingCaseDetail({
                     </div>
                     <p className="text-[10px] text-slate-400" style={{ fontFamily: F }}>
                       Recorded against the consultant's rate history so past rates stay visible at the next engagement.
-                      {awardSubmissionRate && ` Portal quote: ${formatCurrency(awardSubmissionRate.amount)} ${awardSubmissionRate.rateType.toLowerCase()}.`}
+                      {awardSubmissionRate && ` Submitted quote: ${formatCurrency(awardSubmissionRate.amount)} ${awardSubmissionRate.rateType.toLowerCase()}.`}
                     </p>
                   </div>
                 )}

@@ -112,7 +112,8 @@ import { ContractManagement } from "./components/ContractManagement";
 import { ProcurementApprovals } from "./components/ProcurementApprovals";
 import { PurchasePlan } from "./pages/PurchasePlan";
 import { PurchasePlanApproval } from "./pages/PurchasePlanApproval";
-import { ProcurementReportingAnalytics } from "./components/ProcurementReportingAnalytics";
+import { ProcurementReports } from "./components/ProcurementReports";
+import { ProcurementApprovalQueues } from "./components/ProcurementApprovalQueues";
 import { PayrollManagementDashboard } from "./components/PayrollManagementDashboard";
 import { PayrollManagementPayroll } from "./components/PayrollManagementPayroll";
 import { PayrollManagementAllowances } from "./components/PayrollManagementAllowances";
@@ -443,27 +444,33 @@ export default function App() {
       case "PROCUREMENT-Contract Management":
         return <ContractManagement />;
       case "PROCUREMENT-Approvals-Purchase Requisitions":
-        return <ProcurementApprovals />;
+        return <ProcurementApprovals view="pr" />;
+      case "PROCUREMENT-Approvals-Sourcing":
+        return <ProcurementApprovals view="sourcing" />;
       case "PROCUREMENT-Purchase Plan-Departmental Plans":
         return <PurchasePlan />;
       case "PROCUREMENT-Purchase Plan-Project Plans":
         return <ProjectPurchasePlans />;
-      case "PROCUREMENT-Approvals-Procurement Plan Approvals":
+      case "PROCUREMENT-Approvals-Procurement Plan Approval":
         return <PurchasePlanApproval />;
+      case "PROCUREMENT-Approvals-Contract Variations":
+        return <ProcurementApprovalQueues queue="variations" />;
+      case "PROCUREMENT-Approvals-Deliverable Acceptance":
+        return <ProcurementApprovalQueues queue="deliverables" />;
+      case "PROCUREMENT-Approvals-Supplier Registrations":
+        return <ProcurementApprovalQueues queue="registrations" />;
       case "PROCUREMENT-Approvals-Senior Management Approval":
         return <SeniorMgmtApproval />;
-      case "PROCUREMENT-Reporting & Analytics-Planning & Orders Report":
-        return <ProcurementReportingAnalytics initialTab="planning" />;
-      case "PROCUREMENT-Reporting & Analytics-Sourcing & Contracts Report":
-        return <ProcurementReportingAnalytics initialTab="sourcing" />;
-      case "PROCUREMENT-Reporting & Analytics-Suppliers & KPIs Report":
-        return <ProcurementReportingAnalytics initialTab="suppliers" />;
-      case "PROCUREMENT-Reporting & Analytics-Contract Reports":
-        return <ProcurementReportingAnalytics initialTab="contracts" />;
-      case "PROCUREMENT-Reporting & Analytics-Donor Reports":
-        return <ProcurementReportingAnalytics initialTab="donors" />;
-      case "PROCUREMENT-Reporting & Analytics-Combined Analysis Report":
-        return <ProcurementReportingAnalytics initialTab="combined" />;
+      case "PROCUREMENT-Reporting & Analytics-Procurement Plan":
+        return <ProcurementReports report="plan" />;
+      case "PROCUREMENT-Reporting & Analytics-Purchase Requisitions":
+        return <ProcurementReports report="requisitions" />;
+      case "PROCUREMENT-Reporting & Analytics-Contracts":
+        return <ProcurementReports report="contracts" />;
+      case "PROCUREMENT-Reporting & Analytics-Invoices & Payments":
+        return <ProcurementReports report="invoices" />;
+      case "PROCUREMENT-Reporting & Analytics-Supplier Performance":
+        return <ProcurementReports report="suppliers" />;
       case "PAYROLL MANAGEMENT-Dashboard":
         return <PayrollManagementDashboard />;
       case "PAYROLL MANAGEMENT-Payroll":

@@ -97,7 +97,7 @@
     <p>
       <b>Procurement › Purchase Plan › Departmental Plans</b> and <b>Project Plans</b> are display-only
       tables. They aren't connected to the data store, so nothing you do there reaches
-      <b>Approvals › Procurement Plan Approvals</b> — that queue will only ever show the eight items
+      <b>Approvals › Procurement Plan Approval</b> — that queue will only ever show the eight items
       seeded in the system.
     </p>
     <p>
@@ -121,9 +121,7 @@
 
   <div class="step"><input type="checkbox">
     <div>
-      <span class="id">A1</span><span class="who">Supplier</span>
-      <p class="act">Register through the portal</p>
-      <p class="path">Procurement › Supplier Portal › Register as a supplier or consultant</p>
+      <span class="id">A1</span><span class="who">Procurement</span> <p class="act">Onboard the supplier</p> <p class="path">Procurement › Supplier Management › Onboard Firm</p>
       <p class="do">Choose <b>Corporate entity</b>. Fill the form. Attach a file against
         <b>Certificate of Incorporation</b> and <b>Tax Clearance Certificate</b> — any PDF will do —
         and give each an expiry date. Submit.</p>
@@ -193,7 +191,7 @@
     <div>
       <span class="id">B3</span><span class="who">Felix, then Abena</span>
       <p class="act">Optional — see the two-station plan review</p>
-      <p class="path">Procurement › Approvals › Procurement Plan Approvals</p>
+      <p class="path">Procurement › Approvals › Procurement Plan Approval</p>
       <p class="do">Open the <b>Procurement review</b> queue, click <span class="btn">Review</span> on an
         item, approve it. Switch to Abena and clear it from <b>Finance verification</b>.</p>
       <div class="exp"><b>Expect:</b> an item only reaches <b>Approved</b> after <b>both</b> stations
@@ -352,11 +350,7 @@
 
   <div class="step"><input type="checkbox">
     <div>
-      <span class="id">D5</span><span class="who">Supplier</span>
-      <p class="act">Submit a sealed bid</p>
-      <p class="path">Procurement › Supplier Portal › Open Tenders › View &amp; bid</p>
-      <p class="do">Sign in as a supplier, open the tender you just published, attach a file and click
-        <span class="btn">Submit sealed bid</span>.</p>
+      <span class="id">D5</span><span class="who">Procurement</span> <p class="act">Record a sealed bid</p> <p class="path">Procurement › Sourcing › case › Bid Opening</p> <p class="do">Open the tender you just published and click <span class="btn">Record Bid Received</span>. Pick the supplier, enter the amount and attach the offer.</p>
       <div class="exp"><b>Expect:</b> an immediate receipt with a submission ID and acknowledgement
         reference.</div>
     </div>
@@ -447,10 +441,7 @@
 
   <div class="step"><input type="checkbox">
     <div>
-      <span class="id">F1</span><span class="who">Supplier</span>
-      <p class="act">Submit an invoice from the portal</p>
-      <p class="path">Procurement › Supplier Portal › Contracts &amp; Invoices › Submit invoice</p>
-      <p class="do">Enter a number and an amount, attach a file, submit.</p>
+      <span class="id">F1</span><span class="who">Contract Coordinator</span> <p class="act">Capture the invoice</p> <p class="path">Procurement › Invoices › Add Invoice</p> <p class="do">Upload the invoice document first — the fields stay locked until you do. Then pick the contract, which fills in the supplier by itself, and enter the number and amount.</p>
       <div class="exp"><b>Expect:</b> it appears under <b>Procurement › Invoices</b> at
         <b>Submitted</b>.</div>
     </div>
@@ -604,7 +595,7 @@
     <div>
       <span class="id">N2</span>
       <p class="act">Reports reflect what you did</p>
-      <p class="path">Procurement › Reporting &amp; Analytics › Contract Reports › Active Contracts</p>
+      <p class="path">Procurement › Reporting &amp; Analytics › Contracts</p>
       <div class="exp"><b>Expect:</b> your contract in the list with real figures, and
         <b>Export to Excel</b> downloads a file that actually opens.</div>
     </div>

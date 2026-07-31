@@ -385,8 +385,15 @@ const SOURCING_EXPORT_COLUMNS: ExportColumn<SourcingExportRow>[] = [
 
 // ─── Screen ──────────────────────────────────────────────────────────────────
 
-export function ProcurementApprovals() {
-  const [activeTab, setActiveTab] = useState<"pr" | "sourcing">("pr");
+export function ProcurementApprovals({ view = "pr" }: { view?: "pr" | "sourcing" } = {}) {
+  const [activeTab, setActiveTab] = useState<"pr" | "sourcing">(view);
+  // The menu decides which queue this is; keep them in step if the route changes.
+  useEffect(() => {
+    setActiveTab(view);
+    setSearchQuery("");
+    setSelectedStatus("All Statuses");
+    setCurrentPage(1);
+  }, [view]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("All Statuses");
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
@@ -1070,21 +1077,6 @@ export function ProcurementApprovals() {
           },
         ]}
       />
-
-      {/* Tabs */}
-      <ProcurementTabBar>
-        <ProcurementTabs
-          tabs={tabs}
-          active={activeTab}
-          onChange={(key) => {
-            setActiveTab(key);
-            setSearchQuery("");
-            setSelectedStatus("All Statuses");
-            setCurrentPage(1);
-          }}
-          minWidth={80}
-        />
-      </ProcurementTabBar>
 
       {/* Filters Bar */}
       <div className="px-6 py-4 bg-white border-b border-slate-200">

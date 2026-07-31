@@ -245,12 +245,12 @@ export function NavigationSidebar({ selectedItem, onSelectItem, collapsed }: Nav
         {
           icon: <CheckCircle size={iconSize} />,
           label: "Approvals",
-          submenu: ["Purchase Requisitions", "Procurement Plan Approvals", "Senior Management Approval"],
+          submenu: ["Purchase Requisitions", "Sourcing", "Procurement Plan Approval", "Contract Variations", "Deliverable Acceptance", "Supplier Registrations", "Senior Management Approval"],
         },
         {
           icon: <BarChart3 size={iconSize} />,
           label: "Reporting & Analytics",
-          submenu: ["Planning & Orders Report", "Sourcing & Contracts Report", "Suppliers & KPIs Report", "Contract Reports", "Donor Reports", "Combined Analysis Report"],
+          submenu: ["Procurement Plan", "Purchase Requisitions", "Contracts", "Invoices & Payments", "Supplier Performance"],
         },
       ],
     },
