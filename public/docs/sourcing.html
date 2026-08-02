@@ -108,9 +108,30 @@
     .step::before { left: 18px; top: 40px; }
   }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+  /* ── module tabs ── */
+  .modtabs { position: sticky; top: 0; z-index: 60; background: var(--bg, #fbfbfc); border-bottom: 1px solid var(--line, #e2e6e9);
+             margin: 0 0 30px; padding: 0; display: flex; gap: 2px; overflow-x: auto; }
+  .modtabs a { flex: 0 0 auto; text-decoration: none; color: var(--muted, #798388); font-size: 13.5px; font-weight: 600;
+               padding: 13px 15px; border-bottom: 2px solid transparent; white-space: nowrap; }
+  .modtabs a:hover { color: var(--ink, #13171a); }
+  .modtabs a.on { color: var(--accent-tab, #6a4aa3); border-bottom-color: var(--accent-tab, #6a4aa3); }
+  .modtabs a.home { font-weight: 500; padding-left: 0; }
+  /* nav-fix */
+  .wrap { padding-top: 0; }
+  .modtabs { margin-left: -24px; margin-right: -24px; padding-left: 24px; padding-right: 24px; }
+  @media print { .modtabs { display: none; } }
 </style>
 
 <div class="wrap">
+
+  <nav class="modtabs" aria-label="Documentation sections">
+    <a class="home" href="./index.html">All docs</a>
+    <a class="on" href="./index.html#procurement">Procurement</a>
+    <a href="./finance.html">Finance</a>
+    <a href="./mel.html">Monitoring &amp; Evaluation</a>
+  </nav>
+
 
   <header>
     <h1>How ACET finds a supplier</h1>
