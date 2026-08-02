@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Working in more than one currency — ACET Finance</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%2314181b'/><text x='16' y='22' font-family='Helvetica,Arial' font-size='16' fill='%23ffffff' text-anchor='middle'>A</text></svg>">
+<link rel="stylesheet" href="./docs.css">
+</head>
+<body>
+
+<div class="wrap">
+
+  <nav class="modtabs" aria-label="Documentation sections">
+    <a class="home" href="./index.html">All docs</a>
+    <a href="./index.html#procurement">Procurement</a>
+    <a class="on" href="./finance.html" aria-current="page">Finance</a>
+    <a href="./mel.html">Monitoring &amp; Evaluation</a>
+  </nav>
+
+  <header>
+    <p class="eyebrow">ACET ERP · Finance · Flow 06 of 9</p>
+    <h1>Working in more than one currency</h1>
+    <p class="lede">Donors give in dollars, euros and pounds. We spend in cedis. The books are kept in cedis, so everything else has to be converted — and the rate keeps moving.</p>
+  </header>
+
+      <div class="step">
+      <div class="num">1</div>
+      <span class="who">Finance</span>
+      <h4>There are three kinds of rate, and using the wrong one changes the answer</h4>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Rate</th><th>Used for</th><th>In plain terms</th></tr></thead>
+          <tbody>
+            <tr><td class="k">Spot</td><td>A single transaction</td><td>The rate on the day it happened</td></tr>
+            <tr><td class="k">Average</td><td>Income and spending over a period</td><td>The typical rate across the month or quarter, because the money moved throughout it, not on one day</td></tr>
+            <tr><td class="k">Closing</td><td>What we hold at period end</td><td>The rate on the last day, because that is what the balance is worth now</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Rates are stored with the date they took effect, and a back-dated transaction is converted at the rate that
+        applied <em>then</em> — not at today's rate.
+      </p>
+      <div class="sys"><span class="tag">In the system</span>
+        <p class="path">Finance › Multi-Currency › FX Rates</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num">2</div>
+      <span class="who">Finance</span>
+      <h4>At month end, foreign balances are restated</h4>
+      <p>
+        Say we hold $10,000. When it arrived the rate was 12, so the books show ₵120,000. At month end the rate is 13,
+        so that same $10,000 is now worth ₵130,000. The books need to say ₵130,000, and the ₵10,000 difference has to be
+        recorded somewhere.
+      </p>
+      <p>
+        That difference is called an <strong>unrealised</strong> gain — unrealised because nothing has actually been
+        converted. We have not made ₵10,000, we simply hold something that is currently worth more. If the rate moves
+        back next month, so does the gain.
+      </p>
+      <div class="why"><b class="tag">Why it matters</b>
+        A donor grant sitting in dollars while costs are paid in cedis means the real value of that grant changes every
+        month without anyone doing anything. Restating it is how the books stay honest about what the money is worth
+        today.
+      </div>
+      <div class="sys"><span class="tag">In the system</span>
+        <p class="path">Finance › Multi-Currency › Revaluation</p>
+        <p>This is step 3 of the month-end close.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num">3</div>
+      <span class="who">Finance</span>
+      <h4>The exposure view shows where the risk sits</h4>
+      <p>Holdings grouped by currency, so it is visible how much of the organisation's money is exposed to a rate that could move against it.</p>
+      <div class="sys"><span class="tag">In the system</span>
+        <p class="path">Finance › Multi-Currency › Exposure Report</p>
+      </div>
+    </div>
+
+    <div class="chg"><b class="tag">What changes after a revaluation</b>
+      <ul>
+        <li>Foreign-currency balances are restated at the closing rate.</li>
+        <li>A gain or loss appears that nobody spent or earned — it came purely from the rate moving.</li>
+        <li>The balance sheet changes even though no money moved.</li>
+      </ul>
+    </div>
+  <nav class="pager">
+    <span><a href="finance-05.html">← Checking the details still add up</a></span>
+    <span><a href="./finance.html">All flows</a></span>
+    <span><a href="finance-07.html">Things we buy that last →</a></span>
+  </nav>
+  <footer>ACET ERP · Finance · <a href="./finance.html">all nine flows</a></footer>
+
+</div>
+</body>
+</html>

@@ -9,7 +9,6 @@
 
 </head>
 <body>
-<a href="./index.html" style="position:fixed;top:14px;left:14px;z-index:99;font:600 12px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;text-decoration:none;color:#fff;background:#1f7a4d;padding:7px 13px;border-radius:999px;box-shadow:0 2px 10px rgba(0,0,0,.18)">&larr; All documents</a>
 <style>
   :root {
     --page: #faf7f0;
@@ -23,11 +22,9 @@
     --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   }
-  @media (prefers-color-scheme: dark) {
-    :root { --page: #191c1e; --lane-head: #0e1012; --lane-line: #2f3437; --lane-alt: #1e2224; --stroke: #99a3a7; --ink: #e6eaec; --muted: #8d979b; }
-  }
-  :root[data-theme="dark"] { --page: #191c1e; --lane-head: #0e1012; --lane-line: #2f3437; --lane-alt: #1e2224; --stroke: #99a3a7; --ink: #e6eaec; --muted: #8d979b; }
-  :root[data-theme="light"] { --page: #faf7f0; --lane-head: #2b2b2b; --lane-line: #ddd8cc; --lane-alt: #f4f0e6; --stroke: #33383a; --ink: #1b1f21; --muted: #6e767a; }
+  
+  
+  
 
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--page); color: var(--ink); font-family: var(--sans); line-height: 1.5; -webkit-font-smoothing: antialiased; }
@@ -39,10 +36,10 @@
   .legend { display: flex; flex-wrap: wrap; gap: 16px; margin: 0 0 22px; padding: 12px 16px; border: 1px solid var(--lane-line); border-radius: 10px; background: var(--lane-alt); }
   .legend span { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--muted); }
   .sw { width: 22px; height: 13px; border: 1.5px solid var(--stroke); flex-shrink: 0; }
-  .sw.start { border-radius: 7px; background: #b7e585; }
-  .sw.proc { border-radius: 3px; background: #b3aaf2; }
-  .sw.dec { background: #f7dc6f; transform: rotate(45deg) scale(.78); }
-  .sw.end { border-radius: 7px; background: #f5867e; }
+  .sw.start { border-radius: 7px; background: #ffffff; }
+  .sw.proc { border-radius: 3px; background: #ffffff; }
+  .sw.dec { background: #fafaf9; transform: rotate(45deg) scale(.78); }
+  .sw.end { border-radius: 7px; background: #fafaf9; }
   .sw.dash { background: none; border-style: dashed; }
 
   .scroller { overflow-x: auto; border: 1px solid var(--lane-line); border-radius: 12px; background: var(--page); }
@@ -76,7 +73,29 @@
   .wrap { padding-top: 0; }
   .modtabs { margin-left: -24px; margin-right: -24px; padding-left: 24px; padding-right: 24px; }
   @media print { .modtabs { display: none; } }
+
+  /* house palette: light only, one accent */
+  :root {
+    --bg: #ffffff; --page: #ffffff; --card: #ffffff; --surface: #ffffff; --surface-2: #ffffff;
+    --ground: #fafaf9; --plate: #fafaf9; --lane-alt: #fafaf9; --lane-head: #f2f2ef;
+    --paper-alt: #fafaf9;
+    --ink: #14181b; --rule: #14181b; --lane-head-text: #14181b;
+    --ink-soft: #4d5658; --muted: #8a8f90;
+    --line: #e4e4e0; --stroke: #d2d3ce;
+    --note-line: #e4e4e0; --why-line: #e4e4e0; --sys-line: #e4e4e0;
+    --ok-line: #e4e4e0; --warn-line: #e4e4e0; --stop-line: #e4e4e0; --lane-line: #e4e4e0;
+    --note-bg: #fafaf9; --why-bg: #fafaf9; --sys-bg: #fafaf9; --chg-bg: #fafaf9;
+    --lnk-bg: #fafaf9; --ok-bg: #fafaf9; --warn-bg: #fafaf9; --stop-bg: #fafaf9; --chip-bg: #fafaf9;
+    --note-ink: #14181b; --why-ink: #14181b; --sys-ink: #14181b; --chg-ink: #14181b;
+    --lnk-ink: #14181b; --ok-ink: #14181b; --warn-ink: #14181b; --stop-ink: #14181b; --chip-ink: #4d5658;
+    --ok: #4d5658; --warn: #4d5658; --stop: #14181b;
+    --buy: #4d5658; --contract: #4d5658; --supplier: #4d5658; --sourcing: #4d5658;
+    --plan: #4d5658; --req: #4d5658; --source: #4d5658; --test: #4d5658; --ref: #4d5658; --dot: #8a8f90;
+    --accent: #29506b; --accent-tab: #29506b; --tabink: #29506b;
+    --accent-soft: #f3f6f8; --accent-line: #cddae2;
+  }
 </style>
+<link rel="stylesheet" href="./docs.css">
 
 <div class="wrap">
 
@@ -193,14 +212,14 @@
 
     <!-- 1 — Supplier registers (START) -->
     <g>
-      <rect x="1412" y="110" width="240" height="60" rx="30" fill="#b7e585" stroke="var(--stroke)" stroke-width="1.7"/>
-      <circle cx="1412" cy="110" r="13" fill="#1f7a4d"/><text class="step-num" x="1412" y="114" text-anchor="middle">1</text>
+      <rect x="1412" y="110" width="240" height="60" rx="30" fill="#ffffff" stroke="var(--stroke)" stroke-width="1.7"/>
+      <circle cx="1412" cy="110" r="13" fill="#14181b"/><text class="step-num" x="1412" y="114" text-anchor="middle">1</text>
       <text class="node-title" x="1532" y="136" text-anchor="middle">Supplier details captured</text> <text class="node-path" x="1532" y="152" text-anchor="middle">Supplier Management › Onboard</text>
     </g>
 
     <!-- 2 — Procurement approves registration -->
     <g>
-      <rect x="740" y="230" width="240" height="82" rx="10" fill="#b3aaf2" stroke="var(--stroke)" stroke-width="1.7"/>
+      <rect x="740" y="230" width="240" height="82" rx="10" fill="#ffffff" stroke="var(--stroke)" stroke-width="1.7"/>
       <text class="node-title" x="860" y="262" text-anchor="middle">Screen &amp; approve supplier</text>
       <text class="node-path"  x="860" y="281" text-anchor="middle">Supplier Management ›</text>
       <text class="node-path"  x="860" y="295" text-anchor="middle">Pending Review › Approve</text>
@@ -208,23 +227,23 @@
 
     <!-- 3 — Add plan item (START) -->
     <g>
-      <rect x="68" y="370" width="240" height="60" rx="30" fill="#b7e585" stroke="var(--stroke)" stroke-width="1.7"/>
-      <circle cx="68" cy="370" r="13" fill="#1f7a4d"/><text class="step-num" x="68" y="374" text-anchor="middle">2</text>
+      <rect x="68" y="370" width="240" height="60" rx="30" fill="#ffffff" stroke="var(--stroke)" stroke-width="1.7"/>
+      <circle cx="68" cy="370" r="13" fill="#14181b"/><text class="step-num" x="68" y="374" text-anchor="middle">2</text>
       <text class="node-title" x="188" y="396" text-anchor="middle">Add plan item</text>
       <text class="node-path"  x="188" y="412" text-anchor="middle">Purchase Plan › Add Plan Item</text>
     </g>
 
     <!-- 4 — Plan review decision -->
     <g>
-      <polygon points="860,490 990,534 860,578 730,534" fill="#f7dc6f" stroke="var(--stroke)" stroke-width="1.7"/>
+      <polygon points="860,490 990,534 860,578 730,534" fill="#fafaf9" stroke="var(--stroke)" stroke-width="1.7"/>
       <text class="node-title" x="860" y="529" text-anchor="middle">Procurement +</text>
       <text class="node-title" x="860" y="545" text-anchor="middle">Finance approve?</text>
     </g>
 
     <!-- 5 — Raise requisition -->
     <g>
-      <rect x="68" y="630" width="240" height="82" rx="10" fill="#b3aaf2" stroke="var(--stroke)" stroke-width="1.7"/>
-      <circle cx="68" cy="630" r="13" fill="#1f7a4d"/><text class="step-num" x="68" y="634" text-anchor="middle">3</text>
+      <rect x="68" y="630" width="240" height="82" rx="10" fill="#ffffff" stroke="var(--stroke)" stroke-width="1.7"/>
+      <circle cx="68" cy="630" r="13" fill="#14181b"/><text class="step-num" x="68" y="634" text-anchor="middle">3</text>
       <text class="node-title" x="188" y="662" text-anchor="middle">Raise requisition</text>
       <text class="node-path"  x="188" y="681" text-anchor="middle">Purchase Requisitions ›</text>
       <text class="node-path"  x="188" y="695" text-anchor="middle">Add New Requisition</text>
@@ -232,15 +251,15 @@
 
     <!-- 6 — Validation gate -->
     <g>
-      <polygon points="188,762 288,806 188,850 88,806" fill="#f7dc6f" stroke="var(--stroke)" stroke-width="1.7"/>
+      <polygon points="188,762 288,806 188,850 88,806" fill="#fafaf9" stroke="var(--stroke)" stroke-width="1.7"/>
       <text class="node-title" x="188" y="802" text-anchor="middle">Validation</text>
       <text class="node-title" x="188" y="818" text-anchor="middle">passed?</text>
     </g>
 
     <!-- 7 — Approval chain -->
     <g>
-      <rect x="404" y="900" width="240" height="82" rx="10" fill="#b3aaf2" stroke="var(--stroke)" stroke-width="1.7"/>
-      <circle cx="404" cy="900" r="13" fill="#1f7a4d"/><text class="step-num" x="404" y="904" text-anchor="middle">4</text>
+      <rect x="404" y="900" width="240" height="82" rx="10" fill="#ffffff" stroke="var(--stroke)" stroke-width="1.7"/>
+      <circle cx="404" cy="900" r="13" fill="#14181b"/><text class="step-num" x="404" y="904" text-anchor="middle">4</text>
       <text class="node-title" x="524" y="928" text-anchor="middle">Dept Head → Procurement</text>
       <text class="node-title" x="524" y="944" text-anchor="middle">+ Finance → COO</text>
       <text class="node-path"  x="524" y="965" text-anchor="middle">Approvals › Purchase Requisitions</text>
@@ -248,14 +267,14 @@
 
     <!-- 8 — Approved? -->
     <g>
-      <polygon points="524,1030 624,1074 524,1118 424,1074" fill="#f7dc6f" stroke="var(--stroke)" stroke-width="1.7"/>
+      <polygon points="524,1030 624,1074 524,1118 424,1074" fill="#fafaf9" stroke="var(--stroke)" stroke-width="1.7"/>
       <text class="node-title" x="524" y="1079" text-anchor="middle">Approved?</text>
     </g>
 
     <!-- 9 — Sourcing case -->
     <g>
-      <rect x="740" y="1170" width="240" height="82" rx="10" fill="#b3aaf2" stroke="var(--stroke)" stroke-width="1.7"/>
-      <circle cx="740" cy="1170" r="13" fill="#1f7a4d"/><text class="step-num" x="740" y="1174" text-anchor="middle">5</text>
+      <rect x="740" y="1170" width="240" height="82" rx="10" fill="#ffffff" stroke="var(--stroke)" stroke-width="1.7"/>
+      <circle cx="740" cy="1170" r="13" fill="#14181b"/><text class="step-num" x="740" y="1174" text-anchor="middle">5</text>
       <text class="node-title" x="860" y="1198" text-anchor="middle">Sourcing case created</text>
       <text class="node-title" x="860" y="1214" text-anchor="middle">automatically</text>
       <text class="node-path"  x="860" y="1235" text-anchor="middle">Sourcing</text>
@@ -263,8 +282,8 @@
 
     <!-- 10 — Publish / invite -->
     <g>
-      <rect x="740" y="1300" width="240" height="82" rx="10" fill="#b3aaf2" stroke="var(--stroke)" stroke-width="1.7"/>
-      <circle cx="740" cy="1300" r="13" fill="#1f7a4d"/><text class="step-num" x="740" y="1304" text-anchor="middle">6</text>
+      <rect x="740" y="1300" width="240" height="82" rx="10" fill="#ffffff" stroke="var(--stroke)" stroke-width="1.7"/>
+      <circle cx="740" cy="1300" r="13" fill="#14181b"/><text class="step-num" x="740" y="1304" text-anchor="middle">6</text>
       <text class="node-title" x="860" y="1332" text-anchor="middle">Publish tender or</text>
       <text class="node-title" x="860" y="1348" text-anchor="middle">invite bidders</text>
       <text class="node-path"  x="860" y="1369" text-anchor="middle">Sourcing › case › Publish Now</text>
@@ -272,14 +291,14 @@
 
     <!-- 11 — Sealed bid -->
     <g>
-      <rect x="1412" y="1430" width="240" height="82" rx="10" fill="#b3aaf2" stroke="var(--stroke)" stroke-width="1.7"/>
+      <rect x="1412" y="1430" width="240" height="82" rx="10" fill="#ffffff" stroke="var(--stroke)" stroke-width="1.7"/>
       <text class="node-title" x="1532" y="1462" text-anchor="middle">Sealed bid recorded</text> <text class="node-path" x="1532" y="1481" text-anchor="middle">Sourcing › case ›</text> <text class="node-path" x="1532" y="1495" text-anchor="middle">Bid Opening</text>
     </g>
 
     <!-- 12 — Open, evaluate, award -->
     <g>
-      <rect x="740" y="1560" width="240" height="82" rx="10" fill="#b3aaf2" stroke="var(--stroke)" stroke-width="1.7"/>
-      <circle cx="740" cy="1560" r="13" fill="#1f7a4d"/><text class="step-num" x="740" y="1564" text-anchor="middle">7</text>
+      <rect x="740" y="1560" width="240" height="82" rx="10" fill="#ffffff" stroke="var(--stroke)" stroke-width="1.7"/>
+      <circle cx="740" cy="1560" r="13" fill="#14181b"/><text class="step-num" x="740" y="1564" text-anchor="middle">7</text>
       <text class="node-title" x="860" y="1592" text-anchor="middle">Open envelopes,</text>
       <text class="node-title" x="860" y="1608" text-anchor="middle">evaluate, award</text>
       <text class="node-path"  x="860" y="1629" text-anchor="middle">Sourcing › case › Award Contract</text>
@@ -287,8 +306,8 @@
 
     <!-- 13 — Upload deliverable -->
     <g>
-      <rect x="68" y="1690" width="240" height="82" rx="10" fill="#b3aaf2" stroke="var(--stroke)" stroke-width="1.7"/>
-      <circle cx="68" cy="1690" r="13" fill="#1f7a4d"/><text class="step-num" x="68" y="1694" text-anchor="middle">8</text>
+      <rect x="68" y="1690" width="240" height="82" rx="10" fill="#ffffff" stroke="var(--stroke)" stroke-width="1.7"/>
+      <circle cx="68" cy="1690" r="13" fill="#14181b"/><text class="step-num" x="68" y="1694" text-anchor="middle">8</text>
       <text class="node-title" x="188" y="1722" text-anchor="middle">Upload deliverable</text>
       <text class="node-path"  x="188" y="1741" text-anchor="middle">Contract Management ›</text>
       <text class="node-path"  x="188" y="1755" text-anchor="middle">Deliverables › Upload</text>
@@ -296,15 +315,15 @@
 
     <!-- 14 — Second reviewer -->
     <g>
-      <polygon points="524,1820 624,1864 524,1908 424,1864" fill="#f7dc6f" stroke="var(--stroke)" stroke-width="1.7"/>
+      <polygon points="524,1820 624,1864 524,1908 424,1864" fill="#fafaf9" stroke="var(--stroke)" stroke-width="1.7"/>
       <text class="node-title" x="524" y="1859" text-anchor="middle">Accepted by a</text>
       <text class="node-title" x="524" y="1875" text-anchor="middle">2nd reviewer?</text>
     </g>
 
     <!-- 15 — Invoice chain -->
     <g>
-      <rect x="1076" y="1960" width="240" height="82" rx="10" fill="#b3aaf2" stroke="var(--stroke)" stroke-width="1.7"/>
-      <circle cx="1076" cy="1960" r="13" fill="#1f7a4d"/><text class="step-num" x="1076" y="1964" text-anchor="middle">9</text>
+      <rect x="1076" y="1960" width="240" height="82" rx="10" fill="#ffffff" stroke="var(--stroke)" stroke-width="1.7"/>
+      <circle cx="1076" cy="1960" r="13" fill="#14181b"/><text class="step-num" x="1076" y="1964" text-anchor="middle">9</text>
       <text class="node-title" x="1196" y="1988" text-anchor="middle">Four approvals,</text>
       <text class="node-title" x="1196" y="2004" text-anchor="middle">then pay</text>
       <text class="node-path"  x="1196" y="2025" text-anchor="middle">Invoices › Process Payment</text>
@@ -312,8 +331,8 @@
 
     <!-- 16 — Score and close -->
     <g>
-      <rect x="740" y="2090" width="240" height="82" rx="10" fill="#b3aaf2" stroke="var(--stroke)" stroke-width="1.7"/>
-      <circle cx="740" cy="2090" r="13" fill="#1f7a4d"/><text class="step-num" x="740" y="2094" text-anchor="middle">10</text>
+      <rect x="740" y="2090" width="240" height="82" rx="10" fill="#ffffff" stroke="var(--stroke)" stroke-width="1.7"/>
+      <circle cx="740" cy="2090" r="13" fill="#14181b"/><text class="step-num" x="740" y="2094" text-anchor="middle">10</text>
       <text class="node-title" x="860" y="2122" text-anchor="middle">Score supplier,</text>
       <text class="node-title" x="860" y="2138" text-anchor="middle">close the contract</text>
       <text class="node-path"  x="860" y="2159" text-anchor="middle">Performance, then Close-Out</text>
@@ -321,7 +340,7 @@
 
     <!-- 17 — END -->
     <g>
-      <rect x="68" y="2220" width="240" height="60" rx="30" fill="#f5867e" stroke="var(--stroke)" stroke-width="1.7"/>
+      <rect x="68" y="2220" width="240" height="60" rx="30" fill="#fafaf9" stroke="var(--stroke)" stroke-width="1.7"/>
       <text class="node-title" x="188" y="2246" text-anchor="middle">Contract closed</text>
       <text class="node-path"  x="188" y="2262" text-anchor="middle">Rating feeds the next tender</text>
     </g>

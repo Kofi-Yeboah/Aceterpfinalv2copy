@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Paying for something — ACET Finance</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%2314181b'/><text x='16' y='22' font-family='Helvetica,Arial' font-size='16' fill='%23ffffff' text-anchor='middle'>A</text></svg>">
+<link rel="stylesheet" href="./docs.css">
+</head>
+<body>
+
+<div class="wrap">
+
+  <nav class="modtabs" aria-label="Documentation sections">
+    <a class="home" href="./index.html">All docs</a>
+    <a href="./index.html#procurement">Procurement</a>
+    <a class="on" href="./finance.html" aria-current="page">Finance</a>
+    <a href="./mel.html">Monitoring &amp; Evaluation</a>
+  </nav>
+
+  <header>
+    <p class="eyebrow">ACET ERP · Finance · Flow 04 of 9</p>
+    <h1>Paying for something</h1>
+    <p class="lede">Money leaving the organisation. There are several front doors, but they all end in the same place.</p>
+  </header>
+
+      <div class="fd">
+      <div class="fd-row">
+        <div class="fd-box"><b>A claim arrives</b><span>invoice, expense, advance, payroll</span></div>
+        <i class="fd-arr">→</i>
+        <div class="fd-box"><b>Checked</b><span>is it owed, and is it right?</span></div>
+        <i class="fd-arr">→</i>
+        <div class="fd-box"><b>Approved</b><span>authorised to pay</span></div>
+        <i class="fd-arr">→</i>
+        <div class="fd-box"><b>Paid</b><span>money leaves</span></div>
+        <i class="fd-arr">→</i>
+        <div class="fd-box end"><b>Recorded</b><span>written into the books</span></div>
+      </div>
+      <p class="fd-cap">Five doors in, one road out</p>
+    </div>
+
+    <div class="step">
+      <div class="num">1</div>
+      <span class="who">Various</span>
+      <h4>Five things can ask finance for money</h4>
+      <div class="tw">
+        <table>
+          <thead><tr><th>What it is</th><th>Comes from</th><th>Approved at</th></tr></thead>
+          <tbody>
+            <tr><td class="k">Supplier invoice</td><td>A contract in procurement</td><td>Procurement › Invoices — finance is the last of four checks</td></tr>
+            <tr><td class="k">Payment request</td><td>Raised inside finance</td><td>Finance › Approvals › Payment Approvals</td></tr>
+            <tr><td class="k">Expense claim</td><td>A member of staff</td><td>Finance › Approvals › Expense Claims</td></tr>
+            <tr><td class="k">Advance request</td><td>A member of staff, before a trip</td><td>Finance › Approvals › Advance Requests</td></tr>
+            <tr><td class="k">Petty cash</td><td>A member of staff, small amounts</td><td>Finance › Approvals › Petty Cash</td></tr>
+            <tr><td class="k">Payroll run</td><td>Payroll Management</td><td>Finance › Approvals › Payroll</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="why"><b class="tag">Why it matters</b>
+        Different front doors, same standard. Wherever a request came from, it is checked, approved, and written down
+        the same way — there is no route to getting paid that skips the checking.
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num">2</div>
+      <span class="who">Finance</span>
+      <h4>A supplier invoice is the strictest of them</h4>
+      <p>
+        An invoice against a contract passes four different people before finance pays it: the contract coordinator
+        matches it to work that was actually accepted, procurement checks it against the contract, a supervisor gives
+        final approval, and only then does finance pay.
+      </p>
+      <p>
+        Two things the system refuses outright: paying an invoice that would take the contract over its approved value,
+        and paying for work that has not been accepted. Both send you back to fix the cause rather than letting the
+        payment through.
+      </p>
+      <div class="sys"><span class="tag">In the system</span>
+        <p class="path">Procurement › Invoices</p>
+        <p>Each invoice shows where it has got to and only the button for the stage it is actually at.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num">3</div>
+      <span class="who">Finance</span>
+      <h4>The payment is recorded as cash moving</h4>
+      <p>
+        Every receipt and payment is logged with a reference, a description, the method used, the amount, and
+        <strong>the balance immediately after it</strong>. That last column is what makes the sequence checkable — you
+        can see the position after each movement rather than just a list of amounts.
+      </p>
+      <div class="sys"><span class="tag">In the system</span>
+        <p class="path">Finance › Cash Management</p>
+      </div>
+    </div>
+
+    <div class="chg"><b class="tag">What changes when something is paid</b>
+      <ul>
+        <li>The cash balance falls, and the running balance shows it.</li>
+        <li>The fund the money came from has more disbursed and less remaining.</li>
+        <li>The budget line it belongs to moves closer to its limit — and may flip to Over Budget.</li>
+        <li>For a contract invoice, the amount paid against that contract goes up, which affects what can still be invoiced.</li>
+      </ul>
+    </div>
+    <div class="lnk"><b class="tag">Connects to</b>
+      <p><strong>Procurement › Invoices and Contract Management</strong> — supplier payments start there. <strong>Payroll Management</strong> — the payroll run. <strong>Employee Self-Service</strong> — expenses, advances and petty cash. <strong>Funds Management</strong> — the pot the money came out of.</p>
+    </div>
+  <nav class="pager">
+    <span><a href="finance-03.html">← Writing down what happened</a></span>
+    <span><a href="./finance.html">All flows</a></span>
+    <span><a href="finance-05.html">Checking the details still add up →</a></span>
+  </nav>
+  <footer>ACET ERP · Finance · <a href="./finance.html">all nine flows</a></footer>
+
+</div>
+</body>
+</html>

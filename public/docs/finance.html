@@ -5,152 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <title>How money works at ACET — Finance guide</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%2314181b'/><text x='16' y='22' font-family='Helvetica,Arial' font-size='16' fill='%23ffffff' text-anchor='middle'>A</text></svg>">
+<link rel="stylesheet" href="./docs.css">
 </head>
 <body>
-
-<style>
-  :root {
-    --bg: #fbfbfc; --card: #ffffff; --ink: #13171a; --ink-soft: #485257; --muted: #798388;
-    --line: #e2e6e9; --rule: #14181a;
-    --why-bg: #f4f7f9; --why-line: #d3dde5; --why-ink: #23485f;
-    --chg-bg: #eef7f1; --chg-line: #bcdcc8; --chg-ink: #1f6338;
-    --lnk-bg: #f6f2fb; --lnk-line: #ddd0ee; --lnk-ink: #5b4a9e;
-    --warn-bg: #fdf6ec; --warn-line: #e8d3ae; --warn-ink: #7a5410;
-    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    --accent: #1d5b73;
-    --chip-bg: #eef1f4; --chip-ink: #3c464b;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg: #16181a; --card: #1e2124; --ink: #e9edee; --ink-soft: #b7c0c4; --muted: #8d979b;
-      --line: #2c3134; --rule: #e9edee;
-      --why-bg: #1c252b; --why-line: #2f4150; --why-ink: #96c4dd;
-      --chg-bg: #18251d; --chg-line: #2c4535; --chg-ink: #7fc79a;
-      --lnk-bg: #221f2c; --lnk-line: #3a3350; --lnk-ink: #a795e0;
-      --warn-bg: #2a2318; --warn-line: #4d4128; --warn-ink: #dcb974;
-      --accent: #6fb6d2; --chip-bg: #272c30; --chip-ink: #b7c0c4; }
-  }
-  :root[data-theme="dark"] { --bg: #16181a; --card: #1e2124; --ink: #e9edee; --ink-soft: #b7c0c4; --muted: #8d979b;
-    --line: #2c3134; --rule: #e9edee;
-    --why-bg: #1c252b; --why-line: #2f4150; --why-ink: #96c4dd;
-    --chg-bg: #18251d; --chg-line: #2c4535; --chg-ink: #7fc79a;
-    --lnk-bg: #221f2c; --lnk-line: #3a3350; --lnk-ink: #a795e0;
-    --warn-bg: #2a2318; --warn-line: #4d4128; --warn-ink: #dcb974;
-    --accent: #6fb6d2; --chip-bg: #272c30; --chip-ink: #b7c0c4; }
-  :root[data-theme="light"] { --bg: #fbfbfc; --card: #ffffff; --ink: #13171a; --ink-soft: #485257; --muted: #798388;
-    --line: #e2e6e9; --rule: #14181a;
-    --why-bg: #f4f7f9; --why-line: #d3dde5; --why-ink: #23485f;
-    --chg-bg: #eef7f1; --chg-line: #bcdcc8; --chg-ink: #1f6338;
-    --lnk-bg: #f6f2fb; --lnk-line: #ddd0ee; --lnk-ink: #5b4a9e;
-    --warn-bg: #fdf6ec; --warn-line: #e8d3ae; --warn-ink: #7a5410;
-    --accent: #1d5b73; --chip-bg: #eef1f4; --chip-ink: #3c464b; }
-
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 16.5px; line-height: 1.62; -webkit-font-smoothing: antialiased; }
-  .wrap { max-width: 940px; margin: 0 auto; padding: 0 22px 90px; }
-
-  /* ── module tabs ── */
-  .modtabs { position: sticky; top: 0; z-index: 40; background: var(--bg); border-bottom: 1px solid var(--line);
-             margin: 0 -22px 34px; padding: 0 22px; display: flex; gap: 2px; overflow-x: auto; }
-  .modtabs a { flex: 0 0 auto; text-decoration: none; color: var(--muted); font-size: 13.5px; font-weight: 600;
-               padding: 13px 15px; border-bottom: 2px solid transparent; white-space: nowrap; }
-  .modtabs a:hover { color: var(--ink); }
-  .modtabs a.on { color: var(--accent); border-bottom-color: var(--accent); }
-  .modtabs a.home { color: var(--muted); font-weight: 500; padding-left: 0; }
-
-  header { padding: 20px 0 26px; border-bottom: 2px solid var(--rule); margin-bottom: 8px; }
-  .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin: 0 0 13px; }
-  h1 { font-size: clamp(2rem, 5.4vw, 2.9rem); line-height: 1.06; letter-spacing: -0.027em; font-weight: 760; margin: 0 0 15px; text-wrap: balance; }
-  .lede { font-size: 1.12rem; color: var(--ink-soft); margin: 0; max-width: 62ch; }
-
-  nav.toc { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 20px 24px; margin: 30px 0 12px; }
-  nav.toc h2 { font-size: .78rem; letter-spacing: .1em; text-transform: uppercase; font-weight: 750; color: var(--muted); margin: 0 0 12px; }
-  nav.toc ol { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 6px 22px; }
-  nav.toc a { color: var(--ink-soft); text-decoration: none; font-size: 14.5px; }
-  nav.toc a:hover { color: var(--accent); }
-  nav.toc b { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-right: 8px; }
-
-  .flow { margin: 58px 0 0; scroll-margin-top: 62px; }
-  .flow-head { border-bottom: 1px solid var(--line); padding-bottom: 12px; margin-bottom: 18px; }
-  .flow-num { font-family: var(--mono); font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); font-weight: 700; display: block; margin-bottom: 6px; }
-  .flow-head h2 { font-size: 1.6rem; font-weight: 730; letter-spacing: -0.021em; margin: 0 0 8px; text-wrap: balance; }
-  .plain-line { font-size: 1.02rem; color: var(--ink-soft); margin: 0; max-width: 68ch; }
-
-  h3 { font-size: 1rem; font-weight: 700; margin: 30px 0 9px; }
-  p { margin: 0 0 13px; color: var(--ink-soft); max-width: 72ch; }
-  strong { color: var(--ink); font-weight: 640; }
-  ul { margin: 0 0 14px; padding-left: 20px; color: var(--ink-soft); max-width: 72ch; }
-  li { margin-bottom: 6px; }
-
-  /* ── flow diagram ── */
-  .fd { margin: 20px 0 24px; }
-  .fd-row { display: flex; align-items: stretch; gap: 8px; flex-wrap: wrap; }
-  .fd-box { flex: 1 1 130px; min-width: 118px; background: var(--card); border: 1px solid var(--line); border-radius: 11px;
-            padding: 12px 13px; text-align: center; }
-  .fd-box b { display: block; font-size: 13.5px; color: var(--ink); font-weight: 660; margin-bottom: 3px; }
-  .fd-box span { display: block; font-size: 11.5px; color: var(--muted); line-height: 1.4; }
-  .fd-box.end { border-color: var(--accent); }
-  .fd-box.stop { border-color: var(--warn-line); background: var(--warn-bg); }
-  .fd-box.stop b { color: var(--warn-ink); }
-  .fd-arr { flex: 0 0 auto; align-self: center; color: var(--muted); font-size: 17px; line-height: 1; }
-  .fd-cap { font-size: 12.5px; color: var(--muted); margin: 10px 0 0; text-align: center; }
-  .fd-back { font-size: 12.5px; color: var(--muted); margin: 9px 0 0; padding: 8px 13px; background: var(--card);
-             border: 1px dashed var(--line); border-radius: 9px; }
-  .fd-back b { color: var(--ink); font-weight: 640; }
-  @media (max-width: 620px) { .fd-arr { display: none; } .fd-box { flex: 1 1 100%; } }
-
-  /* ── steps ── */
-  .step { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 20px 22px; margin-bottom: 13px; position: relative; }
-  .step .num { position: absolute; left: -13px; top: 20px; width: 27px; height: 27px; border-radius: 50%;
-               background: var(--accent); color: #fff; font-size: 12.5px; font-weight: 700; display: flex;
-               align-items: center; justify-content: center; }
-  .step .who { display: inline-block; font-size: 10.5px; letter-spacing: .09em; text-transform: uppercase; font-weight: 700;
-               color: var(--muted); margin-bottom: 6px; }
-  .step h4 { font-size: 1.12rem; font-weight: 700; margin: 0 0 9px; letter-spacing: -0.012em; }
-  .step > p { margin: 0 0 12px; }
-  @media (max-width: 720px) { .wrap { padding-left: 26px; } }
-
-  .why, .chg, .lnk { border-radius: 0 10px 10px 0; padding: 11px 15px; margin: 12px 0 0; font-size: 14.2px; }
-  .why { background: var(--why-bg); border-left: 3px solid var(--why-ink); color: var(--ink-soft); }
-  .chg { background: var(--chg-bg); border-left: 3px solid var(--chg-ink); color: var(--ink-soft); }
-  .lnk { background: var(--lnk-bg); border-left: 3px solid var(--lnk-ink); color: var(--ink-soft); }
-  .why b.tag, .chg b.tag, .lnk b.tag { display: block; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 4px; }
-  .why b.tag { color: var(--why-ink); } .chg b.tag { color: var(--chg-ink); } .lnk b.tag { color: var(--lnk-ink); }
-  .why p, .chg p, .lnk p { margin: 0 0 7px; font-size: 14.2px; max-width: none; }
-  .why p:last-child, .chg p:last-child, .lnk p:last-child { margin: 0; }
-  .chg ul, .lnk ul { margin: 0; padding-left: 18px; font-size: 14.2px; }
-
-  .sys { margin: 13px 0 0; padding: 13px 16px; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; }
-  .sys .tag { display: block; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; font-weight: 700; color: var(--muted); margin-bottom: 7px; }
-  .sys p { margin: 0 0 7px; font-size: 14.2px; max-width: none; }
-  .sys p:last-child { margin: 0; }
-  .path { font-family: var(--mono); font-size: 12px; background: var(--chip-bg); color: var(--ink); padding: 2px 7px; border-radius: 5px; display: inline-block; }
-  .btn { display: inline-block; font-size: 12.5px; font-weight: 620; background: var(--accent); color: #fff; padding: 1px 9px; border-radius: 6px; }
-
-  .tw { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--card); margin: 16px 0; }
-  table { border-collapse: collapse; width: 100%; min-width: 560px; }
-  th { text-align: left; font-size: 10.5px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); font-weight: 700;
-       padding: 11px 14px; border-bottom: 1px solid var(--line); white-space: nowrap; }
-  td { padding: 11px 14px; font-size: 14px; color: var(--ink-soft); border-bottom: 1px solid var(--line); vertical-align: top; }
-  tr:last-child td { border-bottom: none; }
-  td.k { color: var(--ink); font-weight: 620; white-space: nowrap; }
-
-  .callout { background: var(--why-bg); border: 1px solid var(--why-line); border-radius: 13px; padding: 17px 21px; margin: 26px 0; }
-  .callout .tag { display: block; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; font-weight: 700; color: var(--why-ink); margin-bottom: 8px; }
-  .callout p { font-size: 14.6px; margin: 0 0 9px; } .callout p:last-child { margin: 0; }
-
-  dl.gloss { margin: 0; }
-  dl.gloss > div { display: grid; grid-template-columns: 210px 1fr; gap: 18px; padding: 11px 0; border-bottom: 1px solid var(--line); }
-  dl.gloss > div:last-child { border-bottom: none; }
-  dl.gloss dt { font-weight: 660; color: var(--ink); font-size: 14.5px; }
-  dl.gloss dd { margin: 0; color: var(--ink-soft); font-size: 14.5px; }
-  @media (max-width: 640px) { dl.gloss > div { grid-template-columns: 1fr; gap: 2px; } }
-
-  footer { margin-top: 60px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); }
-
-  @media print { body { background: #fff; } .step, .fd, .tw { break-inside: avoid; } nav.toc, .modtabs { display: none; } }
-</style>
 
 <div class="wrap">
 
@@ -162,845 +20,100 @@
   </nav>
 
   <header>
-    <p class="eyebrow">ACET ERP · Finance</p>
+    <p class="eyebrow">ACET ERP &middot; Finance</p>
     <h1>How money works at ACET</h1>
-    <p class="lede">
-      Nine flows, start to finish. Money arriving, budgets being set, every transaction being written down, bills being
-      paid, the month being closed, and the reports that come out at the end. Each step says what happens, why it
-      matters, where it is done, and what changes in the system when it does.
-    </p>
+    <p class="lede">Nine flows, start to finish. Each is a short page saying what happens, why it matters, where it is done, and what changes in the system when it does.</p>
   </header>
 
-  <nav class="toc">
-    <h2>The nine flows</h2>
-    <ol>
-      <li><b>01</b><a href="#f1">Money arrives</a></li>
-      <li><b>02</b><a href="#f2">Setting the budget</a></li>
-      <li><b>03</b><a href="#f3">Writing down what happened</a></li>
-      <li><b>04</b><a href="#f4">Paying for something</a></li>
-      <li><b>05</b><a href="#f5">Checking the details still add up</a></li>
-      <li><b>06</b><a href="#f6">Working in more than one currency</a></li>
-      <li><b>07</b><a href="#f7">Things we buy that last</a></li>
-      <li><b>08</b><a href="#f8">Closing the month</a></li>
-      <li><b>09</b><a href="#f9">The reports that come out</a></li>
-      <li><b>—</b><a href="#connect">How finance connects to everything else</a></li>
-      <li><b>—</b><a href="#words">Words people use</a></li>
-    </ol>
-  </nav>
-
   <div class="callout">
-    <span class="tag">The one idea behind all of it</span>
+    <span class="tag">Where this is today</span>
     <p>
-      Finance never just records that money moved. It records <strong>where it came from and where it went</strong>, as
-      a matched pair, every single time. That is why the module has so many screens: each one is a different place where
-      that pair gets created, checked, or reported.
+      Everything described here is how the module is designed to work, and the rules it applies — balancing an entry,
+      the order of the month-end checklist, the four checks on an invoice — all genuinely work on screen.
     </p>
     <p>
-      If you remember one thing, remember that <strong>nothing is ever deleted</strong>. A mistake is corrected by
-      adding an opposite entry that cancels it, and both stay on the record. Finance is a history, not a current
-      picture that gets edited.
+      What is not finished is the plumbing <strong>between</strong> screens. Most finance screens still keep their own
+      copy of the data, so an entry created on one screen will not appear on another, and changes are lost when you
+      navigate away. Demonstrate one screen at a time and it holds up; move between two and it will not.
+    </p>
+    <p>
+      The exception is <strong>Finance &rsaquo; Approvals &rsaquo; Procurement requests</strong>, which is fully
+      connected — approving there really does move the requisition forward for everyone else in the system.
     </p>
   </div>
 
-  <!-- ══ FLOW 1 ══ -->
-  <section class="flow" id="f1">
-    <div class="flow-head">
-      <span class="flow-num">Flow 01</span>
-      <h2>Money arrives</h2>
-      <p class="plain-line">A donor commits money. Before anyone can plan to spend it, it has to exist in the system as a fund with a balance.</p>
-    </div>
+  <div class="group">
+    <h2>The nine flows</h2>
+    <p>Each one is a short page. Read them in order the first time, or jump to the one you need.</p>
+    <div class="cards">
 
-    <div class="fd">
-      <div class="fd-row">
-        <div class="fd-box"><b>Donor commits</b><span>grant agreement signed</span></div>
-        <i class="fd-arr">→</i>
-        <div class="fd-box"><b>Fund created</b><span>name, code, donor, project</span></div>
-        <i class="fd-arr">→</i>
-        <div class="fd-box"><b>Available</b><span>balance ready to commit</span></div>
-        <i class="fd-arr">→</i>
-        <div class="fd-box"><b>Drawn down</b><span>disbursed as it is spent</span></div>
-        <i class="fd-arr">→</i>
-        <div class="fd-box end"><b>Depleted or closed</b><span>spent out, or wound up</span></div>
-      </div>
-      <p class="fd-cap">A fund's life, from commitment to close</p>
-    </div>
+      <a class="doc" href="finance-01.html">
+        <div class="doc-top"><h3>Money arrives</h3><span class="meta">Flow 01</span></div>
+        <p>A donor commits money, and it becomes a fund with a balance that budgets can be built against.</p>
+      </a>
 
-    <div class="step">
-      <div class="num">1</div>
-      <span class="who">Finance</span>
-      <h4>The fund is set up</h4>
-      <p>
-        Each pot of donor money gets its own record: a name, a short code, the donor it came from, and the project it
-        belongs to if it is tied to one. Three numbers sit against it — the total committed, how much has gone out so
-        far, and what is left.
-      </p>
-      <div class="why"><b class="tag">Why it matters</b>
-        Donor money is not one big pool. Money given for rural health cannot quietly pay for something else. Keeping
-        each fund separate is what makes that promise real rather than a policy on paper.
-      </div>
-      <div class="sys"><span class="tag">In the system</span>
-        <p class="path">Finance › Funds Management</p>
-        <p>Each row is a fund. The balance column is the number people actually look at.</p>
-      </div>
-    </div>
+      <a class="doc" href="finance-02.html">
+        <div class="doc-top"><h3>Setting the budget</h3><span class="meta">Flow 02</span></div>
+        <p>Deciding in advance what each department and each project may spend, then watching what actually happens against it.</p>
+      </a>
 
-    <div class="step">
-      <div class="num">2</div>
-      <span class="who">Finance</span>
-      <h4>The fund carries a status</h4>
-      <p>A fund is <strong>Available</strong>, <strong>Reserved</strong>, <strong>Depleted</strong> or <strong>Closed</strong>.</p>
-      <ul>
-        <li><strong>Available</strong> — there is money here and it can be committed.</li>
-        <li><strong>Reserved</strong> — the money is spoken for, even though it has not left yet.</li>
-        <li><strong>Depleted</strong> — spent out.</li>
-        <li><strong>Closed</strong> — the grant is finished and the fund is wound up.</li>
-      </ul>
-      <div class="why"><b class="tag">Why it matters</b>
-        Reserved is the status people forget and then regret. A balance that looks healthy but is already committed to
-        three signed contracts is not money you can spend.
-      </div>
-    </div>
+      <a class="doc" href="finance-03.html">
+        <div class="doc-top"><h3>Writing down what happened</h3><span class="meta">Flow 03</span></div>
+        <p>The heart of the module. Every transaction recorded twice, checked by a second person, and corrected by reversal rather than deletion.</p>
+      </a>
 
-    <div class="chg"><b class="tag">What changes when a fund is set up</b>
-      <ul>
-        <li>Budgets can now be built against that money instead of against a hope.</li>
-        <li>The dashboard's funding and grant utilisation figures have something to count.</li>
-        <li>Anyone asking "can we afford this?" has a balance to point at.</li>
-      </ul>
-    </div>
-    <div class="lnk"><b class="tag">Connects to</b>
-      <p><strong>CRM › Grant Management</strong> — the agreement that created the fund. <strong>Finance › Project Budgets</strong> — where the money gets allocated. <strong>MEL › Dashboard</strong> — grant utilisation is this money being drawn down.</p>
-    </div>
-  </section>
+      <a class="doc" href="finance-04.html">
+        <div class="doc-top"><h3>Paying for something</h3><span class="meta">Flow 04</span></div>
+        <p>Money leaving the organisation. Five different front doors — invoices, expenses, advances, petty cash, payroll — and one road out.</p>
+      </a>
 
-  <!-- ══ FLOW 2 ══ -->
-  <section class="flow" id="f2">
-    <div class="flow-head">
-      <span class="flow-num">Flow 02</span>
-      <h2>Setting the budget</h2>
-      <p class="plain-line">Deciding in advance what each department and each project may spend, and then watching what actually happens against it.</p>
+      <a class="doc" href="finance-05.html">
+        <div class="doc-top"><h3>Checking the details still add up</h3><span class="meta">Flow 05</span></div>
+        <p>The books keep one total; the detailed list sits elsewhere. Making sure the two still agree before the month is closed.</p>
+      </a>
+
+      <a class="doc" href="finance-06.html">
+        <div class="doc-top"><h3>Working in more than one currency</h3><span class="meta">Flow 06</span></div>
+        <p>Donors give in dollars, we spend in cedis. Which rate is used when, and what happens when the rate moves.</p>
+      </a>
+
+      <a class="doc" href="finance-07.html">
+        <div class="doc-top"><h3>Things we buy that last</h3><span class="meta">Flow 07</span></div>
+        <p>Spreading the cost of a vehicle or a laptop across the years it is used, and choosing the method that matches how it loses value.</p>
+      </a>
+
+      <a class="doc" href="finance-08.html">
+        <div class="doc-top"><h3>Closing the month</h3><span class="meta">Flow 08</span></div>
+        <p>The twelve-step checklist, why the order cannot be changed, and the difference between a close you can undo and one you cannot.</p>
+      </a>
+
+      <a class="doc" href="finance-09.html">
+        <div class="doc-top"><h3>The reports that come out</h3><span class="meta">Flow 09</span></div>
+        <p>Trial balance, income statement, balance sheet and closing balances — all worked out from the same entries.</p>
+      </a>
+
     </div>
+  </div>
 
-    <div class="fd">
-      <div class="fd-row">
-        <div class="fd-box"><b>Budget drafted</b><span>by department or project</span></div>
-        <i class="fd-arr">→</i>
-        <div class="fd-box"><b>Submitted</b><span>for approval</span></div>
-        <i class="fd-arr">→</i>
-        <div class="fd-box"><b>Approved</b><span>now the line to spend against</span></div>
-        <i class="fd-arr">→</i>
-        <div class="fd-box"><b>Tracked</b><span>spend compared to plan</span></div>
-        <i class="fd-arr">→</i>
-        <div class="fd-box end"><b>Revised</b><span>if it needs to change</span></div>
-      </div>
-      <p class="fd-back"><b>Revising is not editing.</b> A revised budget keeps its earlier versions, with who changed it and why, so the number that was originally approved is still visible.</p>
+  <div class="group">
+    <h2>Reference</h2>
+    <p>Two pages that are not flows but get looked up often.</p>
+    <div class="cards">
+
+      <a class="doc" href="finance-connections.html">
+        <div class="doc-top"><h3>How finance connects to everything else</h3><span class="meta">Reference</span></div>
+        <p>Every point where another module hands something to finance, and what finance does with it.</p>
+      </a>
+
+      <a class="doc" href="finance-words.html">
+        <div class="doc-top"><h3>Words people use</h3><span class="meta">Reference</span></div>
+        <p>Posting, accrual, reversal, variance, unrealised gain, reconciliation — the vocabulary, without the jargon.</p>
+      </a>
+
     </div>
+  </div>
 
-    <div class="step">
-      <div class="num">1</div>
-      <span class="who">Department or project lead</span>
-      <h4>There are two kinds of budget, and they stay separate</h4>
-      <p>
-        <strong>Operational budgets</strong> belong to a department — salaries, rent, software, travel — and run for a
-        financial year. <strong>Project budgets</strong> belong to a project and carry the donor's name alongside the
-        figures.
-      </p>
-      <div class="why"><b class="tag">Why it matters</b>
-        They answer to different people. A department overspending is an internal management issue. A project
-        overspending is a conversation with a donor. Mixing them into one list hides which of those you are looking at.
-      </div>
-      <div class="sys"><span class="tag">In the system</span>
-        <p class="path">Finance › Budgeting &amp; Planning › Operational Budgets</p>
-        <p class="path">Finance › Budgeting &amp; Planning › Project Budgets</p>
-      </div>
-    </div>
-
-    <div class="step">
-      <div class="num">2</div>
-      <span class="who">Finance</span>
-      <h4>The budget is approved before it counts</h4>
-      <p>A budget request shows the department, the year, what is being asked for and what the current budget already is, so the approver sees the increase rather than just the total.</p>
-      <div class="sys"><span class="tag">In the system</span>
-        <p class="path">Finance › Approvals › Budget Approvals</p>
-      </div>
-    </div>
-
-    <div class="step">
-      <div class="num">3</div>
-      <span class="who">The system</span>
-      <h4>The status works itself out</h4>
-      <p>
-        Every budget line reads <strong>On Track</strong>, <strong>Under Budget</strong> or <strong>Over Budget</strong>
-        — and project budgets add <strong>At Risk</strong>. Nobody types these in. They come from comparing what has been
-        spent to what was allocated.
-      </p>
-      <p>
-        Anything within <strong>five per cent</strong> either way counts as on target. Outside that, spending less than
-        planned is favourable and spending more is unfavourable.
-      </p>
-      <div class="why"><b class="tag">Why it matters</b>
-        Two things. First, a status nobody types can never disagree with the numbers next to it. Second, the five per
-        cent band is what stops every tiny rounding difference being flagged as a problem — if everything is an
-        exception, nobody looks at exceptions.
-      </div>
-    </div>
-
-    <div class="chg"><b class="tag">What changes once a budget is approved</b>
-      <ul>
-        <li>It becomes the line that spending is measured against — before this, there is nothing to compare to.</li>
-        <li>Finance can answer the procurement plan question "is there money for this?" with a number.</li>
-        <li>Budget utilisation appears on the dashboard.</li>
-      </ul>
-    </div>
-    <div class="lnk"><b class="tag">Connects to</b>
-      <p><strong>Procurement › Approvals › Plan Approval</strong> — the finance station on a procurement plan checks the activity against this budget. <strong>Project Management</strong> — project budgets belong to projects. <strong>Funds Management</strong> — a project budget should not exceed the fund behind it.</p>
-    </div>
-  </section>
-
-  <!-- ══ FLOW 3 ══ -->
-  <section class="flow" id="f3">
-    <div class="flow-head">
-      <span class="flow-num">Flow 03</span>
-      <h2>Writing down what happened</h2>
-      <p class="plain-line">The heart of the whole module. Every single thing that happens to money gets written down here, and it gets written down twice.</p>
-    </div>
-
-    <h3>Written twice — what that actually means</h3>
-    <p>
-      Pay a supplier ₵5,000 and two things are true at once: the bank account is ₵5,000 lighter, and an expense of
-      ₵5,000 has been incurred. Finance records <em>both</em> halves as one entry. The two halves must be equal — if
-      they are not, something has been missed.
-    </p>
-    <p>
-      The entry form adds up both sides as you type and shows either <strong>Balanced</strong> or the exact amount you
-      are out by. <strong>You cannot save an entry that does not balance.</strong> That is the single most important
-      rule in the module, and it is not a warning you can click past.
-    </p>
-
-    <div class="fd">
-      <div class="fd-row">
-        <div class="fd-box"><b>Draft</b><span>being written, freely editable</span></div>
-        <i class="fd-arr">→</i>
-        <div class="fd-box"><b>Submitted</b><span>sent for checking</span></div>
-        <i class="fd-arr">→</i>
-        <div class="fd-box"><b>Approved</b><span>agreed as correct</span></div>
-        <i class="fd-arr">→</i>
-        <div class="fd-box"><b>Posted</b><span>now part of the official record</span></div>
-        <i class="fd-arr">→</i>
-        <div class="fd-box stop"><b>Reversed</b><span>cancelled — and it ends here</span></div>
-      </div>
-      <p class="fd-back"><b>Going backwards is allowed, but only early.</b> Submitted and Approved can be sent back to Draft. Once something is <b>Posted</b> the only way out is a reversal, and once <b>Reversed</b> nothing further can happen to it at all.</p>
-    </div>
-
-    <div class="step">
-      <div class="num">1</div>
-      <span class="who">Accountant</span>
-      <h4>The entry is written</h4>
-      <p>
-        A date, a description, a reference, and the lines — each naming an account and an amount on one side or the
-        other. The entry also says what <em>kind</em> of entry it is, which matters at month end: a normal transaction,
-        an adjustment, an accrual for something incurred but not yet invoiced, a currency revaluation, and so on.
-      </p>
-      <div class="sys"><span class="tag">In the system</span>
-        <p class="path">Finance › Create Entries</p>
-        <p>Click <span class="btn">Create Entry</span>, fill the lines, then <span class="btn">Save as Draft</span>. The Save button stays greyed out until the two sides balance and every line has an account.</p>
-      </div>
-    </div>
-
-    <div class="step">
-      <div class="num">2</div>
-      <span class="who">Accountant → Manager</span>
-      <h4>Somebody else checks it</h4>
-      <p>The person who writes an entry is not the person who approves it. The accountant submits; a manager or the finance director approves.</p>
-      <div class="why"><b class="tag">Why it matters</b>
-        This is the oldest control in accounting and the reason the four stages exist at all. One person alone should
-        never be able to move money from writing it down to it being final.
-      </div>
-      <div class="sys"><span class="tag">In the system</span>
-        <p>Open the entry and use <span class="btn">Move to Submitted</span>, then <span class="btn">Move to Approved</span>. Each stage records who did it and when.</p>
-      </div>
-    </div>
-
-    <div class="step">
-      <div class="num">3</div>
-      <span class="who">Finance</span>
-      <h4>It is posted</h4>
-      <p>Posting is the moment the entry stops being a proposal and becomes part of the books. Everything after that — the balances, the statements, the reports — includes it.</p>
-      <div class="sys"><span class="tag">In the system</span>
-        <p><span class="btn">Move to Posted</span> on a single entry, or select several on <span class="path">Finance › General Ledger</span> and use <span class="btn">Batch Posting</span> to clear a month's worth at once.</p>
-      </div>
-      <div class="chg"><b class="tag">What changes at this moment</b>
-        <ul>
-          <li>Account balances move.</li>
-          <li>The trial balance, income statement and balance sheet all change.</li>
-          <li>The entry can no longer be edited — only reversed.</li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="step">
-      <div class="num">4</div>
-      <span class="who">Finance</span>
-      <h4>If it was wrong, it gets reversed — never deleted</h4>
-      <p>
-        Reversing does not touch the original. It creates a <strong>new</strong> entry that is the mirror image of it:
-        everything that was on one side goes on the other, so the two cancel out to nothing. It is described as
-        "Reversal of" the original and linked back to it.
-      </p>
-      <p>
-        The reversal arrives as a <strong>Draft</strong>, which means it has to be approved and posted like any other
-        entry. Cancelling a mistake gets the same scrutiny as making the original entry did.
-      </p>
-      <div class="why"><b class="tag">Why it matters</b>
-        The record shows what was thought to be true, and then shows it being corrected. An auditor can see both. If
-        mistakes were simply deleted, the books would look perfect and prove nothing.
-      </div>
-      <div class="sys"><span class="tag">In the system</span>
-        <p>Open a posted entry and click <span class="btn">Reverse</span>. The button only appears on posted entries.</p>
-      </div>
-    </div>
-
-    <h3>Entries that repeat</h3>
-    <p>
-      Rent, depreciation, insurance — the same entry every month with only the date changing. These are saved as
-      templates with a frequency of monthly, quarterly or annually, and generated from the template rather than typed
-      again each time. Fewer keystrokes, and no chance of the amount drifting because somebody mistyped it in March.
-    </p>
-
-    <div class="lnk"><b class="tag">Connects to</b>
-      <p>Everything. Every other flow on this page finishes here — a payment, a depreciation charge, a currency revaluation, a month-end closing adjustment all become entries. This is where the whole system's money story is written down.</p>
-    </div>
-  </section>
-
-  <!-- ══ FLOW 4 ══ -->
-  <section class="flow" id="f4">
-    <div class="flow-head">
-      <span class="flow-num">Flow 04</span>
-      <h2>Paying for something</h2>
-      <p class="plain-line">Money leaving the organisation. There are several front doors, but they all end in the same place.</p>
-    </div>
-
-    <div class="fd">
-      <div class="fd-row">
-        <div class="fd-box"><b>A claim arrives</b><span>invoice, expense, advance, payroll</span></div>
-        <i class="fd-arr">→</i>
-        <div class="fd-box"><b>Checked</b><span>is it owed, and is it right?</span></div>
-        <i class="fd-arr">→</i>
-        <div class="fd-box"><b>Approved</b><span>authorised to pay</span></div>
-        <i class="fd-arr">→</i>
-        <div class="fd-box"><b>Paid</b><span>money leaves</span></div>
-        <i class="fd-arr">→</i>
-        <div class="fd-box end"><b>Recorded</b><span>written into the books</span></div>
-      </div>
-      <p class="fd-cap">Five doors in, one road out</p>
-    </div>
-
-    <div class="step">
-      <div class="num">1</div>
-      <span class="who">Various</span>
-      <h4>Five things can ask finance for money</h4>
-      <div class="tw">
-        <table>
-          <thead><tr><th>What it is</th><th>Comes from</th><th>Approved at</th></tr></thead>
-          <tbody>
-            <tr><td class="k">Supplier invoice</td><td>A contract in procurement</td><td>Procurement › Invoices — finance is the last of four checks</td></tr>
-            <tr><td class="k">Payment request</td><td>Raised inside finance</td><td>Finance › Approvals › Payment Approvals</td></tr>
-            <tr><td class="k">Expense claim</td><td>A member of staff</td><td>Finance › Approvals › Expense Claims</td></tr>
-            <tr><td class="k">Advance request</td><td>A member of staff, before a trip</td><td>Finance › Approvals › Advance Requests</td></tr>
-            <tr><td class="k">Petty cash</td><td>A member of staff, small amounts</td><td>Finance › Approvals › Petty Cash</td></tr>
-            <tr><td class="k">Payroll run</td><td>Payroll Management</td><td>Finance › Approvals › Payroll</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="why"><b class="tag">Why it matters</b>
-        Different front doors, same standard. Wherever a request came from, it is checked, approved, and written down
-        the same way — there is no route to getting paid that skips the checking.
-      </div>
-    </div>
-
-    <div class="step">
-      <div class="num">2</div>
-      <span class="who">Finance</span>
-      <h4>A supplier invoice is the strictest of them</h4>
-      <p>
-        An invoice against a contract passes four different people before finance pays it: the contract coordinator
-        matches it to work that was actually accepted, procurement checks it against the contract, a supervisor gives
-        final approval, and only then does finance pay.
-      </p>
-      <p>
-        Two things the system refuses outright: paying an invoice that would take the contract over its approved value,
-        and paying for work that has not been accepted. Both send you back to fix the cause rather than letting the
-        payment through.
-      </p>
-      <div class="sys"><span class="tag">In the system</span>
-        <p class="path">Procurement › Invoices</p>
-        <p>Each invoice shows where it has got to and only the button for the stage it is actually at.</p>
-      </div>
-    </div>
-
-    <div class="step">
-      <div class="num">3</div>
-      <span class="who">Finance</span>
-      <h4>The payment is recorded as cash moving</h4>
-      <p>
-        Every receipt and payment is logged with a reference, a description, the method used, the amount, and
-        <strong>the balance immediately after it</strong>. That last column is what makes the sequence checkable — you
-        can see the position after each movement rather than just a list of amounts.
-      </p>
-      <div class="sys"><span class="tag">In the system</span>
-        <p class="path">Finance › Cash Management</p>
-      </div>
-    </div>
-
-    <div class="chg"><b class="tag">What changes when something is paid</b>
-      <ul>
-        <li>The cash balance falls, and the running balance shows it.</li>
-        <li>The fund the money came from has more disbursed and less remaining.</li>
-        <li>The budget line it belongs to moves closer to its limit — and may flip to Over Budget.</li>
-        <li>For a contract invoice, the amount paid against that contract goes up, which affects what can still be invoiced.</li>
-      </ul>
-    </div>
-    <div class="lnk"><b class="tag">Connects to</b>
-      <p><strong>Procurement › Invoices and Contract Management</strong> — supplier payments start there. <strong>Payroll Management</strong> — the payroll run. <strong>Employee Self-Service</strong> — expenses, advances and petty cash. <strong>Funds Management</strong> — the pot the money came out of.</p>
-    </div>
-  </section>
-
-  <!-- ══ FLOW 5 ══ -->
-  <section class="flow" id="f5">
-    <div class="flow-head">
-      <span class="flow-num">Flow 05</span>
-      <h2>Checking the details still add up</h2>
-      <p class="plain-line">The books keep one total for "money owed to us". Somewhere else is the list of every customer who owes it. Those two must agree.</p>
-    </div>
-
-    <div class="fd">
-      <div class="fd-row">
-        <div class="fd-box"><b>Summary total</b><span>one line in the books</span></div>
-        <i class="fd-arr">vs</i>
-        <div class="fd-box"><b>Detailed list</b><span>every individual item</span></div>
-        <i class="fd-arr">→</i>
-        <div class="fd-box end"><b>Agree</b><span>nothing to do</span></div>
-      </div>
-      <p class="fd-back"><b>If they do not agree,</b> the gap is shown as an exact amount and the items that could not be matched are listed. It must be fixed before the month can be closed.</p>
-    </div>
-
-    <div class="step">
-      <div class="num">1</div>
-      <span class="who">Finance</span>
-      <h4>Five summary totals, five detailed lists</h4>
-      <p>
-        The books carry a single total for each of: money owed to us, money we owe, our fixed assets, our stock, and
-        payroll. Behind each of those totals is a list of the individual items that make it up.
-      </p>
-      <div class="why"><b class="tag">Why it matters</b>
-        Keeping the detail out of the main books stops them being unreadable. But it means there are now two places
-        where the same fact is recorded, and two places can drift apart.
-      </div>
-      <div class="sys"><span class="tag">In the system</span>
-        <p class="path">Finance › Control Accounts</p>
-      </div>
-    </div>
-
-    <div class="step">
-      <div class="num">2</div>
-      <span class="who">Finance</span>
-      <h4>The check is a subtraction</h4>
-      <p>
-        The summary total minus the sum of the detailed list. If the answer is zero, they agree. Anything else is a
-        break, and it is shown as a number rather than a vague warning.
-      </p>
-      <p>Every item on the detailed list records which part of the system created it, so an unmatched item can be traced back to the document behind it.</p>
-      <div class="why"><b class="tag">Why it matters</b>
-        This is why it is step 4 of the month-end close and not an afterthought. If the two do not agree and you close
-        anyway, every report you produce afterwards is wrong in a way that is very hard to find later.
-      </div>
-    </div>
-
-    <div class="lnk"><b class="tag">Connects to</b>
-      <p><strong>Procurement</strong> — supplier invoices become the "money we owe" list. <strong>Asset Management</strong> — the asset register is the detail behind the fixed asset total. <strong>Payroll</strong> — the payroll list sits behind the payroll total.</p>
-    </div>
-  </section>
-
-  <!-- ══ FLOW 6 ══ -->
-  <section class="flow" id="f6">
-    <div class="flow-head">
-      <span class="flow-num">Flow 06</span>
-      <h2>Working in more than one currency</h2>
-      <p class="plain-line">Donors give in dollars, euros and pounds. We spend in cedis. The books are kept in cedis, so everything else has to be converted — and the rate keeps moving.</p>
-    </div>
-
-    <div class="step">
-      <div class="num">1</div>
-      <span class="who">Finance</span>
-      <h4>There are three kinds of rate, and using the wrong one changes the answer</h4>
-      <div class="tw">
-        <table>
-          <thead><tr><th>Rate</th><th>Used for</th><th>In plain terms</th></tr></thead>
-          <tbody>
-            <tr><td class="k">Spot</td><td>A single transaction</td><td>The rate on the day it happened</td></tr>
-            <tr><td class="k">Average</td><td>Income and spending over a period</td><td>The typical rate across the month or quarter, because the money moved throughout it, not on one day</td></tr>
-            <tr><td class="k">Closing</td><td>What we hold at period end</td><td>The rate on the last day, because that is what the balance is worth now</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <p>
-        Rates are stored with the date they took effect, and a back-dated transaction is converted at the rate that
-        applied <em>then</em> — not at today's rate.
-      </p>
-      <div class="sys"><span class="tag">In the system</span>
-        <p class="path">Finance › Multi-Currency › FX Rates</p>
-      </div>
-    </div>
-
-    <div class="step">
-      <div class="num">2</div>
-      <span class="who">Finance</span>
-      <h4>At month end, foreign balances are restated</h4>
-      <p>
-        Say we hold $10,000. When it arrived the rate was 12, so the books show ₵120,000. At month end the rate is 13,
-        so that same $10,000 is now worth ₵130,000. The books need to say ₵130,000, and the ₵10,000 difference has to be
-        recorded somewhere.
-      </p>
-      <p>
-        That difference is called an <strong>unrealised</strong> gain — unrealised because nothing has actually been
-        converted. We have not made ₵10,000, we simply hold something that is currently worth more. If the rate moves
-        back next month, so does the gain.
-      </p>
-      <div class="why"><b class="tag">Why it matters</b>
-        A donor grant sitting in dollars while costs are paid in cedis means the real value of that grant changes every
-        month without anyone doing anything. Restating it is how the books stay honest about what the money is worth
-        today.
-      </div>
-      <div class="sys"><span class="tag">In the system</span>
-        <p class="path">Finance › Multi-Currency › Revaluation</p>
-        <p>This is step 3 of the month-end close.</p>
-      </div>
-    </div>
-
-    <div class="step">
-      <div class="num">3</div>
-      <span class="who">Finance</span>
-      <h4>The exposure view shows where the risk sits</h4>
-      <p>Holdings grouped by currency, so it is visible how much of the organisation's money is exposed to a rate that could move against it.</p>
-      <div class="sys"><span class="tag">In the system</span>
-        <p class="path">Finance › Multi-Currency › Exposure Report</p>
-      </div>
-    </div>
-
-    <div class="chg"><b class="tag">What changes after a revaluation</b>
-      <ul>
-        <li>Foreign-currency balances are restated at the closing rate.</li>
-        <li>A gain or loss appears that nobody spent or earned — it came purely from the rate moving.</li>
-        <li>The balance sheet changes even though no money moved.</li>
-      </ul>
-    </div>
-  </section>
-
-  <!-- ══ FLOW 7 ══ -->
-  <section class="flow" id="f7">
-    <div class="flow-head">
-      <span class="flow-num">Flow 07</span>
-      <h2>Things we buy that last</h2>
-      <p class="plain-line">A laptop bought this year will still be used in three years. Its cost is spread across those years rather than all charged to the month it was bought.</p>
-    </div>
-
-    <div class="fd">
-      <div class="fd-row">
-        <div class="fd-box"><b>Bought</b><span>through procurement</span></div>
-        <i class="fd-arr">→</i>
-        <div class="fd-box"><b>Registered</b><span>cost, date, useful life</span></div>
-        <i class="fd-arr">→</i>
-        <div class="fd-box"><b>Written down</b><span>a little each month</span></div>
-        <i class="fd-arr">→</i>
-        <div class="fd-box"><b>Fully depreciated</b><span>cost fully spread</span></div>
-        <i class="fd-arr">→</i>
-        <div class="fd-box end"><b>Disposed</b><span>sold or scrapped</span></div>
-      </div>
-      <p class="fd-cap">An asset's life in the books</p>
-    </div>
-
-    <div class="step">
-      <div class="num">1</div>
-      <span class="who">Finance</span>
-      <h4>The asset is registered</h4>
-      <p>Name, category, what it cost, when it was bought, how long it is expected to last, and how its value will be written down.</p>
-      <div class="sys"><span class="tag">In the system</span>
-        <p class="path">Finance › Asset Management › Assets</p>
-        <p>Use <span class="btn">Add New Asset</span>. Categories cover property, IT equipment, vehicles, machinery and furniture.</p>
-      </div>
-    </div>
-
-    <div class="step">
-      <div class="num">2</div>
-      <span class="who">Finance</span>
-      <h4>Choosing how the value is written down</h4>
-      <p>Four ways, and the choice should match how the thing actually loses value:</p>
-      <div class="tw">
-        <table>
-          <thead><tr><th>Method</th><th>In plain terms</th><th>Suits</th></tr></thead>
-          <tbody>
-            <tr><td class="k">Straight line</td><td>The same amount every month for its whole life</td><td>Buildings and furniture — things that wear out evenly. The usual choice.</td></tr>
-            <tr><td class="k">Declining balance</td><td>A lot in the early years, less later</td><td>Cars and laptops, which lose most of their value in the first year or two</td></tr>
-            <tr><td class="k">Units of production</td><td>Based on how much it is used, not how long we have had it</td><td>Machinery — a generator run constantly wears out faster than one barely used</td></tr>
-            <tr><td class="k">Sum of years digits</td><td>Also front-loaded, but on a set schedule rather than a percentage</td><td>Assets with a predictable early decline</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="why"><b class="tag">Why it matters</b>
-        The method decides how much cost lands in each year's accounts. Straight-lining a vehicle makes the early years
-        look better than they are and leaves a nasty surprise when it is sold for far less than the books say it is
-        worth.
-      </div>
-      <div class="sys"><span class="tag">In the system</span>
-        <p class="path">Finance › Asset Management › Depreciation Mgmt</p>
-      </div>
-    </div>
-
-    <div class="chg"><b class="tag">What changes when depreciation runs</b>
-      <ul>
-        <li>Every asset's current value drops by that period's charge.</li>
-        <li>An expense appears in the accounts that nobody paid for in cash.</li>
-        <li>Assets reaching the end of their life flip to Fully Depreciated.</li>
-      </ul>
-      <p style="margin-top:7px">This is <strong>step 1</strong> of the month-end close, which is why the asset register has to be up to date before a month can be closed. An asset bought but never registered is a cost that never gets charged.</p>
-    </div>
-    <div class="lnk"><b class="tag">Connects to</b>
-      <p><strong>Procurement</strong> — assets arrive through a purchase order and a contract. <strong>Control accounts</strong> — the asset register is the detail behind the fixed asset total in the books.</p>
-    </div>
-  </section>
-
-  <!-- ══ FLOW 8 ══ -->
-  <section class="flow" id="f8">
-    <div class="flow-head">
-      <span class="flow-num">Flow 08</span>
-      <h2>Closing the month</h2>
-      <p class="plain-line">Drawing a line under a period so the numbers stop moving and can be reported. It is a checklist, and the order is not optional.</p>
-    </div>
-
-    <div class="fd">
-      <div class="fd-row">
-        <div class="fd-box"><b>Not opened</b><span>on the calendar, not in use</span></div>
-        <i class="fd-arr">→</i>
-        <div class="fd-box"><b>Open</b><span>normal working month</span></div>
-        <i class="fd-arr">→</i>
-        <div class="fd-box"><b>Soft close</b><span>checklist under way — can still reopen</span></div>
-        <i class="fd-arr">→</i>
-        <div class="fd-box stop"><b>Hard close</b><span>locked, permanently</span></div>
-      </div>
-      <p class="fd-back"><b>Soft close is the safety net.</b> While a month is soft-closed it offers both <b>Reopen</b> and <b>Continue Close</b>. Once it is hard-closed there are no buttons at all — just a padlock. That difference is deliberate: a month under review can be pulled back, a month declared final cannot.</p>
-    </div>
-
-    <div class="step">
-      <div class="num">1</div>
-      <span class="who">Finance</span>
-      <h4>The twelve steps, in this order</h4>
-      <ol>
-        <li><strong>Run depreciation</strong> — charge this month's wear on every asset</li>
-        <li><strong>Accrue expenses</strong> — record things we have incurred but not been invoiced for yet</li>
-        <li><strong>Revalue foreign currency</strong> — restate foreign balances at the closing rate</li>
-        <li><strong>Reconcile the detailed lists</strong> — confirm they agree with the summary totals</li>
-        <li><strong>Generate closing entries</strong> — for the accounts that reset each year</li>
-        <li><strong>Post everything outstanding</strong> — nothing approved is left unposted</li>
-        <li><strong>Produce the trial balance</strong> — check the two sides of the books still agree</li>
-        <li><strong>Review final adjustments</strong> — last corrections before the numbers freeze</li>
-        <li><strong>Close income and spending</strong> — sweep them into the year's result</li>
-        <li><strong>Move the result to reserves</strong> — the profit or loss becomes part of accumulated funds</li>
-        <li><strong>Lock the period</strong> — nothing more can be posted</li>
-        <li><strong>Produce the statements</strong> — the reports for the closed month</li>
-      </ol>
-      <div class="sys"><span class="tag">In the system</span>
-        <p class="path">Finance › Period Management</p>
-        <p>Click <span class="btn">Start Close</span> on an open month. A progress bar shows how far through you are, and <strong>a step cannot be ticked while an earlier one is still outstanding</strong>.</p>
-      </div>
-    </div>
-
-    <div class="step">
-      <div class="num">2</div>
-      <span class="who">—</span>
-      <h4>Why that order and no other</h4>
-      <p>
-        Each step depends on the one before it. Depreciation and accruals have to be in before anything is revalued, or
-        you are revaluing an incomplete picture. Revaluation has to be done before the detailed lists are reconciled,
-        or they will not match. Everything has to be posted before a trial balance means anything. And the month is only
-        locked once the numbers it is about to report have stopped moving.
-      </p>
-      <div class="why"><b class="tag">Why it matters</b>
-        Skipping a step does not just miss that step. It quietly invalidates every step after it, and the resulting
-        statements look completely normal.
-      </div>
-    </div>
-
-    <div class="chg"><b class="tag">What changes when a month is hard-closed</b>
-      <ul>
-        <li>Nothing further can be posted into it — a late invoice has to go into the next month instead.</li>
-        <li>The statements for that month become final.</li>
-        <li>The decision cannot be undone.</li>
-      </ul>
-    </div>
-  </section>
-
-  <!-- ══ FLOW 9 ══ -->
-  <section class="flow" id="f9">
-    <div class="flow-head">
-      <span class="flow-num">Flow 09</span>
-      <h2>The reports that come out</h2>
-      <p class="plain-line">Four statements, and they are not typed up separately — each one is worked out from the same underlying entries.</p>
-    </div>
-
-    <div class="fd">
-      <div class="fd-row">
-        <div class="fd-box"><b>Posted entries</b><span>everything written down</span></div>
-        <i class="fd-arr">→</i>
-        <div class="fd-box"><b>Trial balance</b><span>every account's total</span></div>
-        <i class="fd-arr">→</i>
-        <div class="fd-box"><b>Income statement</b><span>did we spend more than we got?</span></div>
-        <i class="fd-arr">→</i>
-        <div class="fd-box end"><b>Balance sheet</b><span>what we own and owe</span></div>
-      </div>
-      <p class="fd-cap">One source, four views of it</p>
-    </div>
-
-    <div class="tw">
-      <table>
-        <thead><tr><th>Report</th><th>Answers</th></tr></thead>
-        <tbody>
-          <tr><td class="k">Trial balance</td><td>Every account and its total, and the proof that the two sides of the books still agree. The check before anything else is produced.</td></tr>
-          <tr><td class="k">Income statement</td><td>What came in, what went out, and the difference — the result for the period.</td></tr>
-          <tr><td class="k">Balance sheet</td><td>What the organisation owns, what it owes, and what is left over, at a point in time.</td></tr>
-          <tr><td class="k">Closing balances</td><td>Each account before closing, the closing adjustment, and the figure it ends on. This is step 10 of the close made visible.</td></tr>
-          <tr><td class="k">Project reports</td><td>Money by project — what was budgeted against what was actually spent.</td></tr>
-          <tr><td class="k">Audit tray</td><td>Things an auditor has queried, held in one place waiting for a response.</td></tr>
-          <tr><td class="k">Audit trail</td><td>Who did what, when, and what the value was before and after they did it.</td></tr>
-          <tr><td class="k">Timesheet reports</td><td>Time booked to projects — the link between what staff cost and what projects cost.</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="why"><b class="tag">Why the audit trail is worth more than it looks</b>
-      It records the value <em>before</em> and <em>after</em> every change, not just that something changed. "Someone
-      edited this" is not evidence. "This was 5,000, and Ama changed it to 8,000 on 14 March" is.
-    </div>
-
-    <h3>The dashboard</h3>
-    <p>
-      The finance dashboard collects the numbers people ask for most — income against spending, cash flow, budget
-      utilisation, where funding comes from, who owes us and how long they have owed it, who we owe, payroll by
-      department, bank balances and anything waiting for a decision. Panels can be switched off, so each person can
-      keep the ones they use.
-    </p>
-    <p>
-      Money owed is grouped by how overdue it is — current, one to two months, two to three, three to four, and beyond
-      four. The older a debt gets, the less likely it is ever to be paid, which is why age is shown rather than just a
-      total.
-    </p>
-  </section>
-
-  <!-- ══ CONNECTIONS ══ -->
-  <section class="flow" id="connect">
-    <div class="flow-head">
-      <span class="flow-num">Across the system</span>
-      <h2>How finance connects to everything else</h2>
-      <p class="plain-line">Finance is the module everything else eventually arrives at. These are the doors between it and the rest of the system.</p>
-    </div>
-
-    <div class="tw">
-      <table>
-        <thead><tr><th>From</th><th>What crosses</th><th>What finance does with it</th></tr></thead>
-        <tbody>
-          <tr>
-            <td class="k">Procurement</td>
-            <td>A purchase requisition that has passed its department head and procurement</td>
-            <td>Finance is the third and final check. It confirms the money exists, and its decision moves the requisition on for everyone else.</td>
-          </tr>
-          <tr>
-            <td class="k">Procurement</td>
-            <td>A procurement plan awaiting budget verification</td>
-            <td>Finance checks the activity against the budget line before it can become a real purchase.</td>
-          </tr>
-          <tr>
-            <td class="k">Procurement</td>
-            <td>A supplier invoice that has passed three checks</td>
-            <td>Finance pays it, which reduces the fund, moves the budget line, and increases what has been paid against that contract.</td>
-          </tr>
-          <tr>
-            <td class="k">Procurement</td>
-            <td>A supplier's bank details</td>
-            <td>Finance verifies them. Until they are verified, that supplier cannot be paid.</td>
-          </tr>
-          <tr>
-            <td class="k">Payroll</td>
-            <td>The monthly payroll run</td>
-            <td>Finance approves it before staff are paid, and the cost appears by department.</td>
-          </tr>
-          <tr>
-            <td class="k">Employee Self-Service</td>
-            <td>Expense claims, travel advances, petty cash</td>
-            <td>Finance approves and pays them.</td>
-          </tr>
-          <tr>
-            <td class="k">Project Management</td>
-            <td>Projects and their budgets, and time booked to them</td>
-            <td>Finance tracks spend by project and reports budget against actual.</td>
-          </tr>
-          <tr>
-            <td class="k">CRM</td>
-            <td>Grant agreements with donors</td>
-            <td>Finance turns them into funds with balances that can be spent against.</td>
-          </tr>
-          <tr>
-            <td class="k">Monitoring &amp; Evaluation</td>
-            <td>Grant utilisation and funding by donor</td>
-            <td>Finance supplies the money side of the picture that MEL reports alongside results.</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="callout">
-      <span class="tag">The pattern worth noticing</span>
-      <p>
-        Finance is almost never the first step and almost always the last. Something is requested somewhere else,
-        checked by the people who understand it, and only then reaches finance — whose job is to confirm the money
-        exists, release it, and write down what happened. That is why finance approvals sit at the <em>end</em> of every
-        chain rather than the beginning.
-      </p>
-    </div>
-  </section>
-
-  <!-- ══ WORDS ══ -->
-  <section class="flow" id="words">
-    <div class="flow-head">
-      <span class="flow-num">Reference</span>
-      <h2>Words people use</h2>
-      <p class="plain-line">The terms that come up in every finance conversation, in plain language.</p>
-    </div>
-
-    <dl class="gloss">
-      <div><dt>Entry</dt><dd>One recorded event — money moving, or a value changing. Always written with two matching halves.</dd></div>
-      <div><dt>Posting</dt><dd>Making an entry final and part of the official books. Before posting it is a proposal; after, it counts.</dd></div>
-      <div><dt>Reversal</dt><dd>Cancelling a posted entry by adding its exact opposite. The original stays visible.</dd></div>
-      <div><dt>Ledger</dt><dd>The complete record of everything posted.</dd></div>
-      <div><dt>Account</dt><dd>A named bucket things are recorded against — a bank account, a category of spending, an asset.</dd></div>
-      <div><dt>Chart of accounts</dt><dd>The full list of those buckets, and how they are organised.</dd></div>
-      <div><dt>Accrual</dt><dd>Recording something in the month it actually happened, even though the invoice has not arrived yet.</dd></div>
-      <div><dt>Depreciation</dt><dd>Spreading the cost of a long-lived item across the years it will be used.</dd></div>
-      <div><dt>Period</dt><dd>A month. Periods are opened, worked in, then closed.</dd></div>
-      <div><dt>Soft close / hard close</dt><dd>Soft close means the checklist is under way and the month can still be reopened. Hard close means locked for good.</dd></div>
-      <div><dt>Trial balance</dt><dd>A list of every account's total, used to check the books still balance before producing anything else.</dd></div>
-      <div><dt>Variance</dt><dd>The gap between what was budgeted and what was spent. Under five per cent is treated as on target.</dd></div>
-      <div><dt>Unrealised gain or loss</dt><dd>A change in what foreign money is worth because the exchange rate moved. Nothing was bought or sold — it is on paper until it is converted.</dd></div>
-      <div><dt>Control account</dt><dd>A single summary total in the books that stands for a long detailed list kept elsewhere.</dd></div>
-      <div><dt>Reconciliation</dt><dd>Confirming that summary total and that detailed list still agree.</dd></div>
-      <div><dt>Fund</dt><dd>A pot of donor money with its own balance, kept separate because it was given for a purpose.</dd></div>
-      <div><dt>Ageing</dt><dd>Grouping money owed by how long it has been outstanding. Old debts are less likely to be collected.</dd></div>
-      <div><dt>Audit trail</dt><dd>The permanent record of who changed what, and what it was before and after.</dd></div>
-    </dl>
-  </section>
-
-  <footer>
-    ACET ERP · Finance guide · nine flows, plain English. For the full approvals list see the
-    <a href="./approvals.html" style="color:var(--accent)">approvals register</a>.
-  </footer>
+  <footer>ACET ERP &middot; Finance guide &middot; nine flows, plain English.</footer>
 
 </div>
 </body>

@@ -4,308 +4,177 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>ACET ERP — Documentation Hub</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
-
+<title>ACET ERP — Documentation</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%2314181b'/><text x='16' y='22' font-family='Helvetica,Arial' font-size='16' fill='%23ffffff' text-anchor='middle'>A</text></svg>">
+<link rel="stylesheet" href="./docs.css">
 </head>
 <body>
 
-<style>
-  :root {
-    --bg: #fbfbfc; --card: #ffffff; --ink: #13171a; --ink-soft: #485257; --muted: #798388;
-    --line: #e2e6e9; --rule: #14181a;
-    --note-bg: #f4f7f9; --note-line: #d3dde5; --note-ink: #23485f;
-    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    --buy: #1f7a4d; --contract: #2f5aa8; --supplier: #14706b; --sourcing: #6a4aa3;
-    --test: #9a6a15; --ref: #444b50;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg: #16181a; --card: #1e2124; --ink: #e9edee; --ink-soft: #b7c0c4; --muted: #8d979b;
-      --line: #2c3134; --rule: #e9edee; --note-bg: #1c252b; --note-line: #2f4150; --note-ink: #96c4dd;
-      --buy: #5fc78e; --contract: #7ea8e8; --supplier: #5cbdb5; --sourcing: #a98fd8;
-      --test: #d6a84a; --ref: #a6b0b5; }
-  }
-  :root[data-theme="dark"] { --bg: #16181a; --card: #1e2124; --ink: #e9edee; --ink-soft: #b7c0c4; --muted: #8d979b;
-    --line: #2c3134; --rule: #e9edee; --note-bg: #1c252b; --note-line: #2f4150; --note-ink: #96c4dd;
-    --buy: #5fc78e; --contract: #7ea8e8; --supplier: #5cbdb5; --sourcing: #a98fd8;
-    --test: #d6a84a; --ref: #a6b0b5; }
-  :root[data-theme="light"] { --bg: #fbfbfc; --card: #ffffff; --ink: #13171a; --ink-soft: #485257; --muted: #798388;
-    --line: #e2e6e9; --rule: #14181a; --note-bg: #f4f7f9; --note-line: #d3dde5; --note-ink: #23485f;
-    --buy: #1f7a4d; --contract: #2f5aa8; --supplier: #14706b; --sourcing: #6a4aa3;
-    --test: #9a6a15; --ref: #444b50; }
-
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
-  .wrap { max-width: 900px; margin: 0 auto; padding: 60px 22px 90px; }
-
-  header { padding-bottom: 26px; border-bottom: 2px solid var(--rule); margin-bottom: 8px; }
-  .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin: 0 0 14px; }
-  h1 { font-size: clamp(2rem, 5.5vw, 2.9rem); line-height: 1.08; letter-spacing: -0.025em; font-weight: 760; margin: 0 0 14px; text-wrap: balance; }
-  .lede { font-size: 1.1rem; color: var(--ink-soft); margin: 0; max-width: 58ch; }
-
-  /* Which one do I use */
-  .picker { margin: 30px 0 6px; padding: 20px 22px; background: var(--note-bg); border: 1px solid var(--note-line); border-radius: 14px; }
-  .picker h2 { font-size: .82rem; letter-spacing: .09em; text-transform: uppercase; font-weight: 750; color: var(--note-ink); margin: 0 0 12px; }
-  .picker dl { margin: 0; display: grid; gap: 9px; }
-  .picker div { display: grid; grid-template-columns: 210px 1fr; gap: 14px; align-items: baseline; }
-  .picker dt { font-weight: 650; font-size: 14px; }
-  .picker dd { margin: 0; font-size: 14px; color: var(--ink-soft); }
-  @media (max-width: 620px) { .picker div { grid-template-columns: 1fr; gap: 1px; } }
-
-  .group { margin: 42px 0 0; }
-  .group > h2 { font-size: .84rem; letter-spacing: .1em; text-transform: uppercase; font-weight: 750; color: var(--muted); margin: 0 0 4px; }
-  .group > p { margin: 0 0 16px; font-size: 14.5px; color: var(--ink-soft); max-width: 60ch; }
-
-  .cards { display: grid; gap: 12px; }
-
-  a.doc {
-    display: block; text-decoration: none; color: inherit;
-    background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--dot, var(--muted));
-    border-radius: 12px; padding: 17px 19px;
-    transition: border-color .12s, box-shadow .12s, transform .12s;
-  }
-  a.doc:hover, a.doc:focus-visible { box-shadow: 0 2px 14px rgba(0,0,0,.07); transform: translateY(-1px); outline: none; }
-  a.doc:focus-visible { border-color: var(--dot); }
-
-  .doc-top { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
-  .doc h3 { font-size: 1.08rem; font-weight: 700; margin: 0; letter-spacing: -0.008em; }
-  .meta { font-family: var(--mono); font-size: 11px; color: var(--muted); white-space: nowrap; }
-  .doc p { margin: 6px 0 0; font-size: 14.5px; color: var(--ink-soft); }
-  .for { display: inline-block; margin-top: 10px; font-size: 11px; font-weight: 650; letter-spacing: .03em; text-transform: uppercase; color: var(--dot); }
-
-  .note { margin: 44px 0 0; padding: 18px 20px; border-left: 3px solid var(--note-ink); background: var(--note-bg); border-radius: 0 12px 12px 0; }
-  .note p { margin: 0 0 9px; font-size: 14.5px; color: var(--ink-soft); }
-  .note p:last-child { margin: 0; }
-  .note b { color: var(--ink); }
-
-  footer { margin-top: 42px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); }
-  code { font-family: var(--mono); font-size: .87em; background: var(--note-bg); padding: 1.5px 5px; border-radius: 4px; }
-
-  @media print { a.doc { break-inside: avoid; } body { background: #fff; } }
-  @media (prefers-reduced-motion: reduce) { a.doc { transition: none; } a.doc:hover { transform: none; } }
-
-  /* ── module tabs ── */
-  .modtabs { position: sticky; top: 0; z-index: 60; background: var(--bg); border-bottom: 1px solid var(--line);
-             display: flex; gap: 2px; overflow-x: auto; margin: 0 0 34px; }
-  .modtabs button { flex: 0 0 auto; background: none; border: none; font: inherit; cursor: pointer;
-                    color: var(--muted); font-size: 14px; font-weight: 600; padding: 14px 16px;
-                    border-bottom: 2px solid transparent; white-space: nowrap; }
-  .modtabs button:hover { color: var(--ink); }
-  .modtabs button[aria-selected="true"] { color: var(--tabink, #6a4aa3); border-bottom-color: var(--tabink, #6a4aa3); }
-  .panel[hidden] { display: none; }
-  @media print { .modtabs { display: none; } .panel[hidden] { display: block !important; } }
-</style>
-
 <div class="wrap">
 
-  <header>
-    <p class="eyebrow">ACET ERP · System documentation</p>
-    <h1>ACET ERP documentation</h1>
-    <p class="lede">
-      Three modules, each documented as a set of flows in plain English. Pick a module above, then
-      pick the depth you need.
-    </p>
-  </header>
-
   <nav class="modtabs" role="tablist" aria-label="Modules">
-    <button role="tab" id="tab-procurement" aria-controls="panel-procurement" aria-selected="true" style="--tabink:#1f7a4d">Procurement</button>
-    <button role="tab" id="tab-finance" aria-controls="panel-finance" aria-selected="false" style="--tabink:#1d5b73">Finance</button>
-    <button role="tab" id="tab-mel" aria-controls="panel-mel" aria-selected="false" style="--tabink:#6a4aa3">Monitoring &amp; Evaluation</button>
+    <button role="tab" id="tab-procurement" aria-controls="panel-procurement" aria-selected="true">Procurement</button>
+    <button role="tab" id="tab-finance" aria-controls="panel-finance" aria-selected="false">Finance</button>
+    <button role="tab" id="tab-mel" aria-controls="panel-mel" aria-selected="false">Monitoring &amp; Evaluation</button>
   </nav>
 
-  <div class="panel" id="panel-procurement" role="tabpanel" aria-labelledby="tab-procurement">
+  <header>
+    <p class="eyebrow">ACET ERP &middot; System documentation</p>
+    <h1>ACET ERP documentation</h1>
+    <p class="lede">
+      Three modules, each documented as a set of flows in plain English. Every step says what happens, why it
+      matters, and the exact screen it is done on. Pick a module above, then pick the depth you need.
+    </p>
+  </header>
 
   <div class="picker">
     <h2>Which one do I need?</h2>
     <dl>
-      <div><dt>Presenting to staff or a board</dt><dd>The plain-English guides, or either diagram.</dd></div>
-      <div><dt>Training someone to use it</dt><dd>The plain-English guides — every step names the screen and button.</dd></div>
-      <div><dt>Testing that it works</dt><dd>The walkthrough. 34 steps, tick as you go.</dd></div>
-      <div><dt>Answering an auditor or donor</dt><dd>The full procurement reference, and the approvals register.</dd></div>
-      <div><dt>"Who approves this?"</dt><dd>The approvals register — every gate, its approver and its screen.</dd></div>
-      <div><dt>Working on finance or M&amp;E</dt><dd>Switch tabs above — each is a flow-by-flow guide in the same style.</dd></div>
+      <div><dt>Presenting to staff or a board</dt><dd>The plain-English guides, or either procurement diagram.</dd></div>
+      <div><dt>Training someone to use the system</dt><dd>Any guide — every step names the screen and the button.</dd></div>
+      <div><dt>Testing that it works</dt><dd>The procurement walkthrough. 34 steps, tick as you go.</dd></div>
+      <div><dt>Answering an auditor or a donor</dt><dd>The procurement reference, and the approvals register.</dd></div>
+      <div><dt>&ldquo;Who approves this?&rdquo;</dt><dd>The approvals register — every gate, its approver and its screen.</dd></div>
     </dl>
   </div>
 
-  <!-- ── EXPLAIN ── -->
-  <div class="group">
-    <h2>Explain it</h2>
-    <p>Four plain-English guides, one per area. Each step says what happens, why it matters, and the exact screen and button in the system.</p>
-    <div class="cards">
+  <div class="panel" id="panel-procurement" role="tabpanel" aria-labelledby="tab-procurement">
 
-      <a class="doc" style="--dot: var(--buy)" href="./buying.html">
-        <div class="doc-top"><h3>How ACET buys things</h3><span class="meta">10 steps</span></div>
-        <p>The whole process end to end — supplier joins, plan, request, approvals, sourcing, bids, award, delivery, payment, rating. The one to read first.</p>
-        <span class="for">Start here</span>
-      </a>
+    <div class="group">
+      <h2>Procurement</h2>
+      <p>Nine documents, from a ten-step explainer to the full traceability reference.</p>
+      <div class="cards">
 
-      <a class="doc" style="--dot: var(--supplier)" href="./suppliers.html">
-        <div class="doc-top"><h3>How ACET manages suppliers</h3><span class="meta">9 steps</span></div>
-        <p>Getting onto the approved list and staying on it — screening, approval, banking, document expiry, scoring, and what happens when a supplier lets us down.</p>
-        <span class="for">Supplier management</span>
-      </a>
+        <a class="doc" href="buying.html">
+          <div class="doc-top"><h3>How ACET buys things</h3><span class="meta">10 steps</span></div>
+          <p>The whole process end to end — a supplier joins, the plan, the request, the approvals, sourcing, bids, award, delivery, payment, rating. The one to read first.</p>
+        </a>
 
-      <a class="doc" style="--dot: var(--sourcing)" href="./sourcing.html">
-        <div class="doc-top"><h3>How ACET finds a supplier</h3><span class="meta">8 steps</span></div>
-        <p>From approved request to signed contract. Opens with the four ways to buy and the money band for each, then sealed bidding and staged envelope opening.</p>
-        <span class="for">Sourcing</span>
-      </a>
+        <a class="doc" href="suppliers.html">
+          <div class="doc-top"><h3>How ACET manages suppliers</h3><span class="meta">9 steps</span></div>
+          <p>Getting onto the approved list and staying on it — screening, approval, banking, document expiry, scoring, and what happens when a supplier lets us down.</p>
+        </a>
 
-      <a class="doc" style="--dot: var(--contract)" href="./contracts.html">
-        <div class="doc-top"><h3>How ACET manages a contract</h3><span class="meta">9 steps</span></div>
-        <p>What happens after the supplier is chosen — setup, deliverables, the four-person invoice chain, variations, scoring and close-out.</p>
-        <span class="for">Contract management</span>
-      </a>
+        <a class="doc" href="sourcing.html">
+          <div class="doc-top"><h3>How ACET finds a supplier</h3><span class="meta">8 steps</span></div>
+          <p>From approved request to signed contract — the four ways to buy, the money band for each, sealed bidding and staged envelope opening.</p>
+        </a>
 
+        <a class="doc" href="contracts.html">
+          <div class="doc-top"><h3>How ACET manages a contract</h3><span class="meta">9 steps</span></div>
+          <p>What happens after the supplier is chosen — setup, deliverables, the four-person invoice chain, variations, scoring and close-out.</p>
+        </a>
+
+        <a class="doc" href="swimlane.html">
+          <div class="doc-top"><h3>Swimlane flow</h3><span class="meta">5 lanes</span></div>
+          <p>The same ten steps by role, with decision points and every loop-back drawn. Best for a slide.</p>
+        </a>
+
+        <a class="doc" href="buying-steps.html">
+          <div class="doc-top"><h3>Step-and-screen flow</h3><span class="meta">10 steps</span></div>
+          <p>The same journey as a vertical spine — what happens on the left, where it is done on the right. Prints cleanly.</p>
+        </a>
+
+        <a class="doc" href="walkthrough.html">
+          <div class="doc-top"><h3>End-to-end walkthrough</h3><span class="meta">34 steps</span></div>
+          <p>A click-by-click test script with tick boxes. Nine steps are deliberate failures — the refusals prove the controls are real.</p>
+        </a>
+
+        <a class="doc" href="approvals.html">
+          <div class="doc-top"><h3>Every approval, and where it comes from</h3><span class="meta">21 gates</span></div>
+          <p>Every decision point in procurement: what is approved, who may approve it, where it comes from and the screen it is decided on.</p>
+        </a>
+
+        <a class="doc" href="reference.html">
+          <div class="doc-top"><h3>End-to-end process flows</h3><span class="meta">16 flows</span></div>
+          <p>The complete specification — every flow with its actors, controls and exception paths, plus the thresholds and a traceability matrix.</p>
+        </a>
+
+      </div>
     </div>
+
   </div>
-
-  <!-- ── SHOW ── -->
-  <div class="group">
-    <h2>Show it</h2>
-    <p>Two views of the same ten steps. Pick the one that suits the room — or use both, the swimlane on screen and the other as a handout.</p>
-    <div class="cards">
-
-      <a class="doc" style="--dot: var(--buy)" href="./swimlane.html">
-        <div class="doc-top"><h3>Swimlane flow</h3><span class="meta">5 lanes</span></div>
-        <p>Classic swimlane by role — Requestor, Approvers, Procurement, Finance, Supplier — with decision diamonds, Yes/No branches and every loop-back drawn. Each box names its screen.</p>
-        <span class="for">Best for a slide</span>
-      </a>
-
-      <a class="doc" style="--dot: var(--buy)" href="./buying-steps.html">
-        <div class="doc-top"><h3>Step-and-screen flow</h3><span class="meta">10 steps</span></div>
-        <p>The same journey as a vertical spine: what happens on the left, where it's done on the right, grouped into four phases. Prints cleanly on A4.</p>
-        <span class="for">Best as a handout</span>
-      </a>
-
-    </div>
-  </div>
-
-  <!-- ── PROVE ── -->
-  <div class="group">
-    <h2>Prove it</h2>
-    <p>Sit at the system and walk the whole thing, including the moments where it should refuse you.</p>
-    <div class="cards">
-
-      <a class="doc" style="--dot: var(--test)" href="./walkthrough.html">
-        <div class="doc-top"><h3>End-to-end walkthrough</h3><span class="meta">34 steps · ~45 min</span></div>
-        <p>Click-by-click test script with tick boxes. Nine steps are deliberate failures — the refusals are what prove the controls are real. Note the flagged gap at the top before you start.</p>
-        <span class="for">Testing &amp; UAT</span>
-      </a>
-
-    </div>
-  </div>
-
-  <!-- ── APPROVALS ── -->
-  <div class="group">
-    <h2>Look it up</h2>
-    <p>Every decision point on one page, for when the question is "who signs this off, and where?"</p>
-    <div class="cards">
-
-      <a class="doc" style="--dot: var(--sourcing)" href="./approvals.html">
-        <div class="doc-top"><h3>Every approval, and where it comes from</h3><span class="meta">21 gates</span></div>
-        <p>The complete approvals register — what is being approved, who may approve it, where the item arrives from and the exact screen the decision is made on. Includes the two stations that live in other departments' menus.</p>
-        <span class="for">Approvals register</span>
-      </a>
-
-    </div>
-  </div>
-
-  </div><!-- /panel-procurement -->
 
   <div class="panel" id="panel-finance" role="tabpanel" aria-labelledby="tab-finance" hidden>
 
     <div class="group">
       <h2>Finance</h2>
-      <p>How money works at ACET, in nine flows. Plain English, no jargon — each step says what happens, why it matters, where it is done, and what changes in the system when it does.</p>
+      <p>How money works at ACET, in nine flows. Start with the overview, or jump to a flow.</p>
       <div class="cards">
 
-        <a class="doc" style="--dot: var(--contract)" href="./finance.html">
+        <a class="doc" href="finance.html">
           <div class="doc-top"><h3>How money works at ACET</h3><span class="meta">9 flows</span></div>
-          <p>The whole module end to end — money arriving, budgets, recording every transaction, paying bills, keeping the details straight, foreign currency, assets, closing the month, and the reports that come out. The one to read first.</p>
-          <span class="for">Start here</span>
+          <p>The whole module — money arriving, budgets, recording every transaction, paying bills, reconciliation, currency, assets, closing the month, and the reports.</p>
         </a>
 
-        <a class="doc" style="--dot: var(--contract)" href="./finance.html#f3">
+        <a class="doc" href="finance-03.html">
           <div class="doc-top"><h3>Writing down what happened</h3><span class="meta">Flow 03</span></div>
-          <p>The heart of finance: why every entry is written twice, why an unbalanced entry cannot be saved, who approves what, and why a mistake is reversed rather than deleted.</p>
-          <span class="for">The core control</span>
+          <p>Why every entry is written twice, why an unbalanced one cannot be saved, who approves what, and why mistakes are reversed rather than deleted.</p>
         </a>
 
-        <a class="doc" style="--dot: var(--contract)" href="./finance.html#f8">
+        <a class="doc" href="finance-08.html">
           <div class="doc-top"><h3>Closing the month</h3><span class="meta">Flow 08</span></div>
-          <p>The twelve-step checklist, why the order cannot be changed, and the difference between a soft close you can undo and a hard close you cannot.</p>
-          <span class="for">Month end</span>
+          <p>The twelve-step checklist, why the order cannot change, and the difference between a close you can undo and one you cannot.</p>
         </a>
 
-        <a class="doc" style="--dot: var(--contract)" href="./finance.html#connect">
-          <div class="doc-top"><h3>How finance connects to everything else</h3><span class="meta">9 doors</span></div>
-          <p>Every point where another module hands something to finance — requisitions, invoices, payroll, expenses, grants — and what finance does with it.</p>
-          <span class="for">Integration</span>
+        <a class="doc" href="finance-connections.html">
+          <div class="doc-top"><h3>How finance connects to everything else</h3><span class="meta">Reference</span></div>
+          <p>Every point where another module hands something to finance, and what finance does with it.</p>
         </a>
 
-        <a class="doc" style="--dot: var(--contract)" href="./finance.html#words">
-          <div class="doc-top"><h3>Words people use</h3><span class="meta">18 terms</span></div>
-          <p>Posting, accrual, reversal, variance, unrealised gain, reconciliation — the vocabulary of every finance conversation, explained without jargon.</p>
-          <span class="for">Glossary</span>
+        <a class="doc" href="finance-words.html">
+          <div class="doc-top"><h3>Words people use</h3><span class="meta">Reference</span></div>
+          <p>Posting, accrual, reversal, variance, unrealised gain, reconciliation — the vocabulary, without the jargon.</p>
         </a>
 
       </div>
     </div>
 
-  </div><!-- /panel-finance -->
+  </div>
 
   <div class="panel" id="panel-mel" role="tabpanel" aria-labelledby="tab-mel" hidden>
 
     <div class="group">
       <h2>Monitoring &amp; Evaluation</h2>
-      <p>How ACET measures its work, in six flows — from deciding what change we want, through to the reports donors ask for.</p>
+      <p>How ACET measures its work, in six flows — from the framework to the donor report.</p>
       <div class="cards">
 
-        <a class="doc" style="--dot: var(--sourcing)" href="./mel.html">
+        <a class="doc" href="mel.html">
           <div class="doc-top"><h3>How ACET measures its work</h3><span class="meta">6 flows</span></div>
-          <p>The whole module end to end — the framework, the indicators, collecting results, proving they are true, and reporting to donors and to ourselves. The one to read first.</p>
-          <span class="for">Start here</span>
+          <p>The whole module — the framework, the indicators, collecting results, proving they are true, and reporting to donors and to ourselves.</p>
         </a>
 
-        <a class="doc" style="--dot: var(--sourcing)" href="./mel.html#which">
-          <div class="doc-top"><h3>Which framework type to use</h3><span class="meta">4 types</span></div>
-          <p>Theory of change, results framework, logframe, logic model — what each one answers, and the structure-versus-performance difference people most often get stuck on.</p>
-          <span class="for">Framework choice</span>
+        <a class="doc" href="mel-frameworks.html">
+          <div class="doc-top"><h3>Which framework type to use</h3><span class="meta">Reference</span></div>
+          <p>Theory of change, results framework, logframe, logic model — what each answers, and the structure-versus-performance difference.</p>
         </a>
 
-        <a class="doc" style="--dot: var(--sourcing)" href="./mel.html#f3">
+        <a class="doc" href="mel-03.html">
           <div class="doc-top"><h3>Collecting the numbers</h3><span class="meta">Flow 03</span></div>
-          <p>Actual against target, the breakdown by sex and location, the evidence that has to be attached, and the 85% rule that forces an explanation when performance falls short.</p>
-          <span class="for">The core control</span>
+          <p>Actual against target, the breakdown by group, the evidence that must be attached, and the rule that demands an explanation when performance falls short.</p>
         </a>
 
-        <a class="doc" style="--dot: var(--sourcing)" href="./mel.html#levels">
-          <div class="doc-top"><h3>The two things called "level"</h3><span class="meta">Reference</span></div>
+        <a class="doc" href="mel-levels.html">
+          <div class="doc-top"><h3>The two things called &ldquo;level&rdquo;</h3><span class="meta">Reference</span></div>
           <p>Indicator level and project level are different questions with different answers. Which is which, and why both columns exist.</p>
-          <span class="for">Common confusion</span>
         </a>
 
-        <a class="doc" style="--dot: var(--sourcing)" href="./mel.html#words">
-          <div class="doc-top"><h3>Words people use</h3><span class="meta">16 terms</span></div>
+        <a class="doc" href="mel-words.html">
+          <div class="doc-top"><h3>Words people use</h3><span class="meta">Reference</span></div>
           <p>Baseline, disaggregation, means of verification, attribution versus contribution — the vocabulary, in plain language.</p>
-          <span class="for">Glossary</span>
         </a>
 
       </div>
     </div>
 
-  </div><!-- /panel-mel -->
+  </div>
 
   <footer>
-    A ninth document lives in the codebase rather than here: <code>docs/PROCUREMENT-FLOWS.md</code>
-    is the same reference in Markdown, versioned alongside the code so it changes when the system
-    does. All eight pages above render in light and dark, and print to A4.
+    Every page here is a public link on the ACET deployment — send this address and colleagues get the whole set,
+    with no sign-in needed.
   </footer>
 
 </div>
-
 
 <script>
 (function () {

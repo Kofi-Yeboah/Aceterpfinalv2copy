@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Things we buy that last — ACET Finance</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%2314181b'/><text x='16' y='22' font-family='Helvetica,Arial' font-size='16' fill='%23ffffff' text-anchor='middle'>A</text></svg>">
+<link rel="stylesheet" href="./docs.css">
+</head>
+<body>
+
+<div class="wrap">
+
+  <nav class="modtabs" aria-label="Documentation sections">
+    <a class="home" href="./index.html">All docs</a>
+    <a href="./index.html#procurement">Procurement</a>
+    <a class="on" href="./finance.html" aria-current="page">Finance</a>
+    <a href="./mel.html">Monitoring &amp; Evaluation</a>
+  </nav>
+
+  <header>
+    <p class="eyebrow">ACET ERP · Finance · Flow 07 of 9</p>
+    <h1>Things we buy that last</h1>
+    <p class="lede">A laptop bought this year will still be used in three years. Its cost is spread across those years rather than all charged to the month it was bought.</p>
+  </header>
+
+      <div class="fd">
+      <div class="fd-row">
+        <div class="fd-box"><b>Bought</b><span>through procurement</span></div>
+        <i class="fd-arr">→</i>
+        <div class="fd-box"><b>Registered</b><span>cost, date, useful life</span></div>
+        <i class="fd-arr">→</i>
+        <div class="fd-box"><b>Written down</b><span>a little each month</span></div>
+        <i class="fd-arr">→</i>
+        <div class="fd-box"><b>Fully depreciated</b><span>cost fully spread</span></div>
+        <i class="fd-arr">→</i>
+        <div class="fd-box end"><b>Disposed</b><span>sold or scrapped</span></div>
+      </div>
+      <p class="fd-cap">An asset's life in the books</p>
+    </div>
+
+    <div class="step">
+      <div class="num">1</div>
+      <span class="who">Finance</span>
+      <h4>The asset is registered</h4>
+      <p>Name, category, what it cost, when it was bought, how long it is expected to last, and how its value will be written down.</p>
+      <div class="sys"><span class="tag">In the system</span>
+        <p class="path">Finance › Asset Management › Assets</p>
+        <p>Use <span class="btn">Add New Asset</span>. Categories cover property, IT equipment, vehicles, machinery and furniture.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num">2</div>
+      <span class="who">Finance</span>
+      <h4>Choosing how the value is written down</h4>
+      <p>Four ways, and the choice should match how the thing actually loses value:</p>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Method</th><th>In plain terms</th><th>Suits</th></tr></thead>
+          <tbody>
+            <tr><td class="k">Straight line</td><td>The same amount every month for its whole life</td><td>Buildings and furniture — things that wear out evenly. The usual choice.</td></tr>
+            <tr><td class="k">Declining balance</td><td>A lot in the early years, less later</td><td>Cars and laptops, which lose most of their value in the first year or two</td></tr>
+            <tr><td class="k">Units of production</td><td>Based on how much it is used, not how long we have had it</td><td>Machinery — a generator run constantly wears out faster than one barely used</td></tr>
+            <tr><td class="k">Sum of years digits</td><td>Also front-loaded, but on a set schedule rather than a percentage</td><td>Assets with a predictable early decline</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="why"><b class="tag">Why it matters</b>
+        The method decides how much cost lands in each year's accounts. Straight-lining a vehicle makes the early years
+        look better than they are and leaves a nasty surprise when it is sold for far less than the books say it is
+        worth.
+      </div>
+      <div class="sys"><span class="tag">In the system</span>
+        <p class="path">Finance › Asset Management › Depreciation Mgmt</p>
+      </div>
+    </div>
+
+    <div class="chg"><b class="tag">What changes when depreciation runs</b>
+      <ul>
+        <li>Every asset's current value drops by that period's charge.</li>
+        <li>An expense appears in the accounts that nobody paid for in cash.</li>
+        <li>Assets reaching the end of their life flip to Fully Depreciated.</li>
+      </ul>
+      <p style="margin-top:7px">This is <strong>step 1</strong> of the month-end close, which is why the asset register has to be up to date before a month can be closed. An asset bought but never registered is a cost that never gets charged.</p>
+    </div>
+    <div class="lnk"><b class="tag">Connects to</b>
+      <p><strong>Procurement</strong> — assets arrive through a purchase order and a contract. <strong>Control accounts</strong> — the asset register is the detail behind the fixed asset total in the books.</p>
+    </div>
+  <nav class="pager">
+    <span><a href="finance-06.html">← Working in more than one currency</a></span>
+    <span><a href="./finance.html">All flows</a></span>
+    <span><a href="finance-08.html">Closing the month →</a></span>
+  </nav>
+  <footer>ACET ERP · Finance · <a href="./finance.html">all nine flows</a></footer>
+
+</div>
+</body>
+</html>

@@ -2,18 +2,70 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "cleanUrls": true,
   "redirects": [
-    { "source": "/buying",       "destination": "/docs/buying",       "permanent": false },
-    { "source": "/suppliers",    "destination": "/docs/suppliers",    "permanent": false },
-    { "source": "/sourcing",     "destination": "/docs/sourcing",     "permanent": false },
-    { "source": "/contracts",    "destination": "/docs/contracts",    "permanent": false },
-    { "source": "/swimlane",     "destination": "/docs/swimlane",     "permanent": false },
-    { "source": "/buying-steps", "destination": "/docs/buying-steps", "permanent": false },
-    { "source": "/walkthrough",  "destination": "/docs/walkthrough",  "permanent": false },
-    { "source": "/reference",    "destination": "/docs/reference",    "permanent": false },
-    { "source": "/approvals",    "destination": "/docs/approvals",    "permanent": false },
-    { "source": "/finance",      "destination": "/docs/finance",      "permanent": false },
-    { "source": "/mel",          "destination": "/docs/mel",          "permanent": false },
-    { "source": "/flows",        "destination": "/docs",              "permanent": false },
-    { "source": "/documentation","destination": "/docs",              "permanent": false }
+    {
+      "source": "/buying",
+      "destination": "/docs/buying",
+      "permanent": false
+    },
+    {
+      "source": "/suppliers",
+      "destination": "/docs/suppliers",
+      "permanent": false
+    },
+    {
+      "source": "/sourcing",
+      "destination": "/docs/sourcing",
+      "permanent": false
+    },
+    {
+      "source": "/contracts",
+      "destination": "/docs/contracts",
+      "permanent": false
+    },
+    {
+      "source": "/swimlane",
+      "destination": "/docs/swimlane",
+      "permanent": false
+    },
+    {
+      "source": "/buying-steps",
+      "destination": "/docs/buying-steps",
+      "permanent": false
+    },
+    {
+      "source": "/walkthrough",
+      "destination": "/docs/walkthrough",
+      "permanent": false
+    },
+    {
+      "source": "/reference",
+      "destination": "/docs/reference",
+      "permanent": false
+    },
+    {
+      "source": "/approvals",
+      "destination": "/docs/approvals",
+      "permanent": false
+    },
+    {
+      "source": "/finance",
+      "destination": "/docs/finance",
+      "permanent": false
+    },
+    {
+      "source": "/mel",
+      "destination": "/docs/mel",
+      "permanent": false
+    },
+    {
+      "source": "/flows",
+      "destination": "/docs",
+      "permanent": false
+    },
+    {
+      "source": "/documentation",
+      "destination": "/docs",
+      "permanent": false
+    }
   ]
 }

@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Writing down what happened — ACET Finance</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%2314181b'/><text x='16' y='22' font-family='Helvetica,Arial' font-size='16' fill='%23ffffff' text-anchor='middle'>A</text></svg>">
+<link rel="stylesheet" href="./docs.css">
+</head>
+<body>
+
+<div class="wrap">
+
+  <nav class="modtabs" aria-label="Documentation sections">
+    <a class="home" href="./index.html">All docs</a>
+    <a href="./index.html#procurement">Procurement</a>
+    <a class="on" href="./finance.html" aria-current="page">Finance</a>
+    <a href="./mel.html">Monitoring &amp; Evaluation</a>
+  </nav>
+
+  <header>
+    <p class="eyebrow">ACET ERP · Finance · Flow 03 of 9</p>
+    <h1>Writing down what happened</h1>
+    <p class="lede">The heart of the whole module. Every single thing that happens to money gets written down here, and it gets written down twice.</p>
+  </header>
+
+      <h3>Written twice — what that actually means</h3>
+    <p>
+      Pay a supplier ₵5,000 and two things are true at once: the bank account is ₵5,000 lighter, and an expense of
+      ₵5,000 has been incurred. Finance records <em>both</em> halves as one entry. The two halves must be equal — if
+      they are not, something has been missed.
+    </p>
+    <p>
+      The entry form adds up both sides as you type and shows either <strong>Balanced</strong> or the exact amount you
+      are out by. <strong>You cannot save an entry that does not balance.</strong> That is the single most important
+      rule in the module, and it is not a warning you can click past.
+    </p>
+
+    <div class="fd">
+      <div class="fd-row">
+        <div class="fd-box"><b>Draft</b><span>being written, freely editable</span></div>
+        <i class="fd-arr">→</i>
+        <div class="fd-box"><b>Submitted</b><span>sent for checking</span></div>
+        <i class="fd-arr">→</i>
+        <div class="fd-box"><b>Approved</b><span>agreed as correct</span></div>
+        <i class="fd-arr">→</i>
+        <div class="fd-box"><b>Posted</b><span>now part of the official record</span></div>
+        <i class="fd-arr">→</i>
+        <div class="fd-box stop"><b>Reversed</b><span>cancelled — and it ends here</span></div>
+      </div>
+      <p class="fd-back"><b>Going backwards is allowed, but only early.</b> Submitted and Approved can be sent back to Draft. Once something is <b>Posted</b> the only way out is a reversal, and once <b>Reversed</b> nothing further can happen to it at all.</p>
+    </div>
+
+    <div class="step">
+      <div class="num">1</div>
+      <span class="who">Accountant</span>
+      <h4>The entry is written</h4>
+      <p>
+        A date, a description, a reference, and the lines — each naming an account and an amount on one side or the
+        other. The entry also says what <em>kind</em> of entry it is, which matters at month end: a normal transaction,
+        an adjustment, an accrual for something incurred but not yet invoiced, a currency revaluation, and so on.
+      </p>
+      <div class="sys"><span class="tag">In the system</span>
+        <p class="path">Finance › Create Entries</p>
+        <p>Click <span class="btn">Create Entry</span>, fill the lines, then <span class="btn">Save as Draft</span>. The Save button stays greyed out until the two sides balance and every line has an account.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num">2</div>
+      <span class="who">Accountant → Manager</span>
+      <h4>Somebody else checks it</h4>
+      <p>The person who writes an entry is not the person who approves it. The accountant submits; a manager or the finance director approves.</p>
+      <div class="why"><b class="tag">Why it matters</b>
+        This is the oldest control in accounting and the reason the four stages exist at all. One person alone should
+        never be able to move money from writing it down to it being final.
+      </div>
+      <div class="sys"><span class="tag">In the system</span>
+        <p>Open the entry and use <span class="btn">Move to Submitted</span>, then <span class="btn">Move to Approved</span>. Each stage records who did it and when.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num">3</div>
+      <span class="who">Finance</span>
+      <h4>It is posted</h4>
+      <p>Posting is the moment the entry stops being a proposal and becomes part of the books. Everything after that — the balances, the statements, the reports — includes it.</p>
+      <div class="sys"><span class="tag">In the system</span>
+        <p><span class="btn">Move to Posted</span> on a single entry, or select several on <span class="path">Finance › General Ledger</span> and use <span class="btn">Batch Posting</span> to clear a month's worth at once.</p>
+      </div>
+      <div class="chg"><b class="tag">What changes at this moment</b>
+        <ul>
+          <li>Account balances move.</li>
+          <li>The trial balance, income statement and balance sheet all change.</li>
+          <li>The entry can no longer be edited — only reversed.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num">4</div>
+      <span class="who">Finance</span>
+      <h4>If it was wrong, it gets reversed — never deleted</h4>
+      <p>
+        Reversing does not touch the original. It creates a <strong>new</strong> entry that is the mirror image of it:
+        everything that was on one side goes on the other, so the two cancel out to nothing. It is described as
+        "Reversal of" the original and linked back to it.
+      </p>
+      <p>
+        The reversal arrives as a <strong>Draft</strong>, which means it has to be approved and posted like any other
+        entry. Cancelling a mistake gets the same scrutiny as making the original entry did.
+      </p>
+      <div class="why"><b class="tag">Why it matters</b>
+        The record shows what was thought to be true, and then shows it being corrected. An auditor can see both. If
+        mistakes were simply deleted, the books would look perfect and prove nothing.
+      </div>
+      <div class="sys"><span class="tag">In the system</span>
+        <p>Open a posted entry and click <span class="btn">Reverse</span>. The button only appears on posted entries.</p>
+      </div>
+    </div>
+
+    <h3>Entries that repeat</h3>
+    <p>
+      Rent, depreciation, insurance — the same entry every month with only the date changing. These are saved as
+      templates with a frequency of monthly, quarterly or annually, and generated from the template rather than typed
+      again each time. Fewer keystrokes, and no chance of the amount drifting because somebody mistyped it in March.
+    </p>
+
+    <div class="lnk"><b class="tag">Connects to</b>
+      <p>Everything. Every other flow on this page finishes here — a payment, a depreciation charge, a currency revaluation, a month-end closing adjustment all become entries. This is where the whole system's money story is written down.</p>
+    </div>
+  <nav class="pager">
+    <span><a href="finance-02.html">← Setting the budget</a></span>
+    <span><a href="./finance.html">All flows</a></span>
+    <span><a href="finance-04.html">Paying for something →</a></span>
+  </nav>
+  <footer>ACET ERP · Finance · <a href="./finance.html">all nine flows</a></footer>
+
+</div>
+</body>
+</html>
